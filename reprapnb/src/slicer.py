@@ -1,0 +1,58 @@
+'''
+Created on Jun 20, 2013
+
+@author: ejefber
+'''
+import os
+import wx
+
+def createSlicerObject(name, app, settings):
+	if name == 'slic3r':
+		return Slic3r(app, settings)
+	
+	return None
+	
+	
+class Slic3r:
+	def __init__(self, app, settings):
+		self.app = app
+		self.settings = settings
+		self.getProfileOptions()
+		p = settings['profile']
+		if p in self.profmap.keys():
+			self.settings['profilefile'] = self.profmap[p]
+		else:
+			self.settings['profilefile'] = None
+		
+	def getProfile(self):
+		return self.settings['profile']
+	
+	def setProfile(self, nprof):
+		self.getProfileOptions()
+		self.settings['profile'] = nprof
+		if nprof in self.profmap.keys():
+			self.settings['profilefile'] = self.profmap[nprof]
+		else:
+			self.settings['profilefile'] = None
+		self.settings.setModified()
+		
+	def buildSliceOutputFile(self, fn):
+		return fn.replace(".stl", ".gcode")
+		
+	def buildSliceCommand(self):
+		s = self.settings['command']
+		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
+		
+	def getProfileOptions(self):
+		try:
+			pdir = os.path.expandvars(os.path.expanduser(self.settings['profiledir']))
+			l = os.listdir(pdir)
+		except:
+			wx.LogError("Unable to get listing from slic3r profile directory: " + self.settings['profiledir'])
+			return []
+		r = {}
+		for f in sorted(l):
+			if not os.path.isdir(f) and f.lower().endswith(".ini"):
+				r[os.path.splitext(os.path.basename(f))[0]] = os.path.join(pdir, f)
+		self.profmap = r
+		return r
