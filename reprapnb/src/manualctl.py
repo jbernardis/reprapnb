@@ -13,8 +13,8 @@ class ManualControl(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
 
-		path = os.path.join(self.settings.cmdfolder, "images/3Daxis.png")
-		bmp = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		path = os.path.join(self.settings.cmdfolder, "images/axis.png")
+		bmp = wx.BitmapFromImage(wx.Image(path, wx.BITMAP_TYPE_PNG), -1)
 		self.axes = ImageMap(self, bmp)
 		self.axes.setHotSpots(self.onImageClick, [[0,0,92,84,"XH"], [388,0,473,84,"YH"], [0,400,92,473,"ZH"], [388,409,473,473,"AH"],
 							[376,232,396,252,"X+3"], [328,232,348,252,"X+2"], [275,232,295,252,"X+1"],
