@@ -235,7 +235,7 @@ class MainFrame(wx.Frame):
 	def doConnect(self, evt):
 		if self.connected:
 			self.reprap.disconnect()
-			self.connected = False
+			self.connected = False 
 			self.announcePrinter()
 			self.bConnect.SetBitmapLabel(self.connectPng)
 		else:
