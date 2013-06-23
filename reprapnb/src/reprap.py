@@ -57,6 +57,9 @@ class RepRap:
 			if(len(line)>1):
 				print "RECV: ",line.rstrip()
 				
+	def send_now(self, cmd):
+		self._send(cmd)
+
 	def _send(self, command, lineno=0, calcchecksum=False):
 		if(calcchecksum):
 			prefix="N"+str(lineno)+" "+command

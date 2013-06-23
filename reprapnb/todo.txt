@@ -1,9 +1,34 @@
 Plater:
 
-
-export
 export to second tab
 
+Fileprep
+
+Slice output -> model and gcodeview
+-> print monitor
+
+
+
+Manual control
+
+xyfeed, z feed
+all motors off
+extract
+reverse
+extract distance
+e speed
+
+temperatures: Set, on, off, choose value
+	bed, extruders
+	
+manual G code entry/reference
+
+
+
+
+Print Monitor
+
+gcode follower, temperature monitor, ETA and all timing information, temperature control, fan control, speed control
 
 
 	

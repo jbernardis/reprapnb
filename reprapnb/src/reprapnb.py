@@ -63,6 +63,7 @@ class MainFrame(wx.Frame):
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer to use")
 		sizerBtns.Add(self.cbPrinter)
+		self.cbPrinter.SetStringSelection(self.settings.printer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
 		
 		sizerBtns.AddSpacer((30,10))
@@ -83,6 +84,7 @@ class MainFrame(wx.Frame):
 		self.cbPort = wx.ComboBox(p, wx.ID_ANY, choice, (-1, -1),  (140, -1), ports, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPort.SetFont(f)
 		self.cbPort.SetToolTipString("Choose the port to which to connect")
+		self.cbPort.SetStringSelection(choice)
 		sizerBtns.Add(self.cbPort)
 		
 		t = wx.StaticText(p, wx.ID_ANY, "@", style=wx.ALIGN_CENTER, size=(40, 35))
@@ -92,6 +94,7 @@ class MainFrame(wx.Frame):
 		self.cbBaud = wx.ComboBox(p, wx.ID_ANY, "115200", (-1, -1), (100, -1), baudChoices, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbBaud.SetFont(f)
 		self.cbBaud.SetToolTipString("Choose the baud rate")
+		self.cbBaud.SetStringSelection("115200")
 		sizerBtns.Add(self.cbBaud)
 		
 		path = os.path.join(self.settings.cmdfolder, "images/connect.png")	
@@ -117,6 +120,7 @@ class MainFrame(wx.Frame):
 		self.cbSlicer.SetFont(f)
 		self.cbSlicer.SetToolTipString("Choose which slicer to use")
 		sizerBtns.Add(self.cbSlicer)
+		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 			
 		t = wx.StaticText(p, wx.ID_ANY, "Profile:  ", style=wx.ALIGN_RIGHT)
@@ -128,6 +132,7 @@ class MainFrame(wx.Frame):
 		self.cbProfile.SetFont(f)
 		self.cbProfile.SetToolTipString("Choose which slicer profile to use")
 		sizerBtns.Add(self.cbProfile)
+		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
 
 		sizerBtns.AddSpacer((60, 20))

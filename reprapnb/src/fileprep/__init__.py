@@ -46,7 +46,9 @@ class SlicerThread:
 		return self.running
 
 	def Run(self):
-		args = shlex.split(str(self.cmd), False, False)
+		print "(%s)" % self.cmd
+		args = shlex.split(str(self.cmd))
+		print args
 		try:
 			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:
@@ -421,16 +423,17 @@ class FilePrepare(wx.Panel):
 	def slicerUpdate(self, evt):
 		if evt.state == SLICER_RUNNING:
 			if evt.msg is not None:
-				wx.LogMessage(evt.msg)
+				wx.LogMessage("SR:" + evt.msg)
 		elif evt.state == SLICER_CANCELLED:
 			if evt.msg is not None:
-				wx.LogMessage(evt.msg)
+				wx.LogMessage("SC: " + evt.msg)
 			self.gcFile = None
 			self.enableButtons(True)
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
-				wx.LogMessage(evt.msg)
+				wx.LogMessage("SF: " + evt.msg)
 			self.enableButtons(True)
+			self.loadFile(self.gcFile)
 		else:
 			wx.LogError("unknown slicer thread state: %s" % evt.state)
 
@@ -462,6 +465,7 @@ class FilePrepare(wx.Panel):
 			for s in l:
 				self.gcode.append(s.rstrip())
 				
+			self.gcFile = fn
 			self.settings.lastdirectory = os.path.dirname(fn)
 			self.settings.setModified()
 			if len(fn) > 60:
@@ -469,7 +473,6 @@ class FilePrepare(wx.Panel):
 			else:
 				lfn = fn
 			self.ipFileName.SetLabel(lfn)
-			self.gcFile = lfn
 			
 		except:
 			self.gcode = []
