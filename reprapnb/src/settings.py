@@ -8,6 +8,7 @@ import os
 import wx
 
 from slicer import createSlicerObject
+from printer import createPrinterObject
 
 INIFILE = "rrh.ini"
 
@@ -23,6 +24,23 @@ def parseBoolean(val, defaultVal):
 	
 	return defaultVal
 
+class PrinterSettings:
+	def __init__(self, app, name):
+		self.app = app
+		self.name = name
+		self.settings = {}
+		self.modified = False
+		self.type = None
+		
+	def setPrinterType(self):
+		self.type = createPrinterObject(self.name, self.app, self)
+		
+	def setModified(self, flag=True):
+		self.modified = flag
+		
+	def checkModified(self):
+		return self.modified
+
 class SlicerSettings:
 	def __init__(self, app, name):
 		self.app = app
@@ -32,7 +50,7 @@ class SlicerSettings:
 		self.type = None
 		
 	def setSlicerType(self):
-		self.type = createSlicerObject(self.name, self.app, self.settings)
+		self.type = createSlicerObject(self.name, self.app, self)
 		
 	def setModified(self, flag=True):
 		self.modified = flag
@@ -44,10 +62,11 @@ class Settings:
 	def __init__(self, app, folder):
 		self.app = app
 		self.cmdfolder = folder
-		self.buildarea = (200, 200)
 		self.inifile = os.path.join(folder, INIFILE)
 		self.slicer = "slic3r"
 		self.slicers = ["slic3r"]
+		self.printer=""
+		self.printers=[]
 		
 		self.cfg = ConfigParser.ConfigParser()
 		if not self.cfg.read(self.inifile):
@@ -58,29 +77,56 @@ class Settings:
 		self.modified = False	
 		if self.cfg.has_section(self.section):
 			for opt, value in self.cfg.items(self.section):
-				if opt == 'buildarea':
-					try:
-						s = (200, 200)
-						exec("s=%s" % value)
-						self.buildarea = s
-					except:
-						wx.LogWarning("invalid value in ini file for buildarea")
-				elif opt == 'slicer':
+				if opt == 'slicer':
 					self.slicer = value
 				elif opt == 'slicers':
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
+				elif opt == 'printer':
+					self.printer = value
+				elif opt == 'printers':
+					s = value.split(',')
+					self.printers = [x.strip() for x in s]
 				else:
 					wx.LogWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
 			wx.LogWarning("Missing %s section - assuming defaults" % self.section)
 
+		self.printersettings = []
+		for printer in self.printers:
+			st = PrinterSettings(self.app, printer)
+			self.printersettings.append(st)
+			sc = "printer." + printer
+			if self.cfg.has_section(sc):
+				for opt, value in self.cfg.items(sc):
+					if opt == 'buildarea':
+						try:
+							exec("s=%s" % value)
+						except:
+							s = (200, 200)
+							wx.LogWarning("invalid buildarea for printer %s" % printer)
+						st.settings[opt] = s
+					else:
+						wx.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
+			else:
+				wx.LogError("No settings for printer %s" % printer)
+
+			err = False					
+			if 'buildarea' not in st.settings.keys():
+				err = True
+				wx.LogError("Settings for printer %s missing buildarea" % printer)
+			
 		self.slicersettings = []
 		for slicer in self.slicers:
 			st = SlicerSettings(self.app, slicer)
+			sc = "slicer." + slicer
 			self.slicersettings.append(st)
-			if self.cfg.has_section(slicer):
-				for opt, value in self.cfg.items(slicer):
+			if self.cfg.has_section(sc):
+				for opt, value in self.cfg.items(sc):
+					if opt in ['profile', 'profiledir', 'command', 'config']:
+						st.settings[opt] = value
+					else:
+						wx.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
 					st.settings[opt] = value
 			else:
 				wx.LogError("No settings for slicer %s" % slicer)
@@ -111,11 +157,20 @@ class Settings:
 				return self.slicersettings[i]
 		return None
 		
+	def getPrinterSettings(self, printer):
+		for i in range(len(self.printers)):
+			if self.printers[i] == printer:
+				return self.printersettings[i]
+		return None
+		
 	def setModified(self):
 		self.modified = True
 		
 	def checkModified(self):
 		if self.modified: return True
+		for p in self.printersettings:
+			if p.checkModified(): return True
+			
 		for s in self.slicersettings:
 			if s.checkModified(): return True
 			
@@ -131,21 +186,38 @@ class Settings:
 			except ConfigParser.DuplicateSectionError:
 				pass
 			
-			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
+			self.cfg.set(self.section, "printer", str(self.printer))
+			self.cfg.set(self.section, "printers", ",".join(self.printers))
 			
+			for i in range(len(self.printers)):
+				p = self.printers[i]
+				sc = "printer." + p
+				try:
+					self.cfg.add_section(sc)
+				except ConfigParser.DuplicateSectionError:
+					pass
+
+				pt = self.printersettings[i]	
+				if pt.checkModified():			
+					for k in pt.settings.keys():
+						if k in ['buildarea']:
+							self.cfg.set(sc, k, pt.settings[k])
+						
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
+				sc = "slicer." + s
 				try:
-					self.cfg.add_section(s)
+					self.cfg.add_section(sc)
 				except ConfigParser.DuplicateSectionError:
 					pass
 
 				sl = self.slicersettings[i]	
 				if sl.checkModified():			
 					for k in sl.settings.keys():
-						self.cfg.set(s, k, sl.settings[k])
+						if k in ['profile', 'profiledir', 'command', 'config']:
+							self.cfg.set(sc, k, sl.settings[k])
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()

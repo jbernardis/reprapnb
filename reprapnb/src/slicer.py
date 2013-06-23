@@ -6,19 +6,20 @@ Created on Jun 20, 2013
 import os
 import wx
 
-def createSlicerObject(name, app, settings):
+def createSlicerObject(name, app, parent):
 	if name == 'slic3r':
-		return Slic3r(app, settings)
+		return Slic3r(app, parent)
 	
 	return None
 	
 	
 class Slic3r:
-	def __init__(self, app, settings):
+	def __init__(self, app, parent):
 		self.app = app
-		self.settings = settings
+		self.parent = parent
+		self.settings = parent.settings
 		self.getProfileOptions()
-		p = settings['profile']
+		p = parent.settings['profile']
 		if p in self.profmap.keys():
 			self.settings['profilefile'] = self.profmap[p]
 		else:
@@ -34,7 +35,7 @@ class Slic3r:
 			self.settings['profilefile'] = self.profmap[nprof]
 		else:
 			self.settings['profilefile'] = None
-		self.settings.setModified()
+		self.parent.setModified()
 		
 	def buildSliceOutputFile(self, fn):
 		return fn.replace(".stl", ".gcode")

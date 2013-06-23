@@ -84,6 +84,7 @@ class FilePrepare(wx.Panel):
 		self.model = None
 		self.app = app
 		self.appsettings = app.settings
+		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
 		self.modified = False
 
@@ -198,10 +199,10 @@ class FilePrepare(wx.Panel):
 		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
 		self.sizerMain.AddSpacer((20,20), pos=(2,0))
 
-		self.gcf = GcFrame(self, self.model, self.settings, self.appsettings.buildarea)
+		self.gcf = GcFrame(self, self.model, self.settings, self.printersettings.settings['buildarea'])
 		self.sizerMain.Add(self.gcf, pos=(3,1))
 		self.sizerMain.AddSpacer((20,20), pos=(4,0))
-		sz = self.appsettings.buildarea[1] * self.settings.gcodescale
+		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
 
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),

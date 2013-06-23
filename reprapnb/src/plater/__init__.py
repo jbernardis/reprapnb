@@ -23,6 +23,7 @@ class Plater(wx.Panel):
 		self.parent = parent
 		self.app = app
 		self.appsettings = app.settings
+		self.printersettings = self.app.printersettings
 		self.settings = app.settings.plater
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
@@ -40,7 +41,7 @@ class Plater(wx.Panel):
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
 
 		
-		self.stlFrame =  StlFrame(self, scale=self.settings.stlscale, buildarea=self.appsettings.buildarea)
+		self.stlFrame =  StlFrame(self, scale=self.settings.stlscale, buildarea=self.printersettings.settings['buildarea'])
 		self.sizerMain.Add(self.stlFrame, pos=(1, 1), span=(6,1))
 
 		self.sizerBtn = wx.BoxSizer(wx.HORIZONTAL)

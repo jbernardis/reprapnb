@@ -43,12 +43,28 @@ class MainFrame(wx.Frame):
 		if self.slicer is None:
 			wx.LogError("Unable to get slicer settings")
 
+		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
+		if self.printersettings is None:
+			wx.LogError("Unable to get printer settings")
+
 		p = wx.Panel(self)
 
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
-		sizerBtns.AddSpacer((20,20))
+		sizerBtns.AddSpacer((10,10))
+			
+		t = wx.StaticText(p, wx.ID_ANY, "Printer:  ", style=wx.ALIGN_RIGHT)
+		t.SetFont(f)
+		sizerBtns.Add(t, 1, wx.EXPAND)
 		
+		self.cbPrinter = wx.ComboBox(p, wx.ID_ANY, self.settings.printer, (-1, -1), (-1, -1), self.settings.printers, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbPrinter.SetFont(f)
+		self.cbPrinter.SetToolTipString("Choose which printer to use")
+		sizerBtns.Add(self.cbPrinter)
+		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
+		
+		sizerBtns.AddSpacer((30,10))
+
 		path = os.path.join(self.settings.cmdfolder, "images/ports.png")	
 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(png, wx.BLUE)
@@ -97,7 +113,7 @@ class MainFrame(wx.Frame):
 		t = wx.StaticText(p, wx.ID_ANY, "Profile:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
 		sizerBtns.Add(t, 1, wx.EXPAND)
-		
+	
 		self.cbProfile = wx.ComboBox(p, wx.ID_ANY, self.slicer.settings['profile'],
 									(-1, -1), (-1, -1), self.slicer.type.getProfileOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbProfile.SetFont(f)
@@ -159,10 +175,16 @@ class MainFrame(wx.Frame):
 		else:
 			evt.Skip()
 		
+	def doChoosePrinter(self, evt):
+		self.settings.printer = self.cbPrinter.GetValue()
+		self.settings.setModified()
+		self.printer = self.settings.getPrinterSettings(self.settings.printer)
+		if self.printer is None:
+			wx.LogError("Unable to get printer settings")
+		
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
-		self.slicer.settings['profile'] = newprof
-		self.slicer.setModified()
+		self.slicer.type.setProfile(newprof)
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
