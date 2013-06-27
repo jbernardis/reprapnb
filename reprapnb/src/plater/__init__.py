@@ -436,8 +436,9 @@ class Plater(wx.Panel):
 	def doExport2Prep(self, evt):
 		suffix = "%05d" % int(random.random() * 99999)
 		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix+suffix)
-		print "temporary file name: ", fn
-		self.exportToFile(fn, "OBJECT")
+		wx.LogMessage("Saving plate to temporary STL file: %s" % fn)
+		self.exportToFile(fn, "OBJECT", clearModified = False)
+		self.app.switchToFilePrep(fn)
 		
 	def doExport(self, evt):
 			
@@ -474,7 +475,7 @@ class Plater(wx.Panel):
 
 		self.exportToFile(fn, objname)
 
-	def exportToFile(self, fn, objname):
+	def exportToFile(self, fn, objname, clearModified = True):
 		self.stlFrame.applyDeltas()
 		objs = self.stlFrame.getStls()
 		facets = []
@@ -482,7 +483,8 @@ class Plater(wx.Panel):
 			facets.extend(o.facets)
 
 		stltool.emitstl(fn, facets=facets, objname=objname, binary=False)
-		self.setModified(False)
+		if clearModified:
+			self.setModified(False)
 		
 	def setModified(self, flag=True, itmId=None):
 		self.modified = flag

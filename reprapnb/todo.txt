@@ -1,17 +1,16 @@
 Plater:
 
-export to second tab
+export to second tab - done, but need to test
 
 Fileprep
 
-Slice output -> model and gcodeview
+Slice output -> model and gcodeview - done - need to test
 -> print monitor
 
 
 
 Manual control
 
-all motors off
 extract
 reverse
 extract distance

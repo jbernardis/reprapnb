@@ -89,6 +89,7 @@ class FilePrepare(wx.Panel):
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
 		self.modified = False
+		self.temporaryFile = False		
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -412,8 +413,12 @@ class FilePrepare(wx.Panel):
 
 		dlg.Destroy()
 		
-	def sliceFile(self, fn):
+	def loadTempSTL(self, fn):
+		self.sliceFile(fn, tempFile=True)
+		
+	def sliceFile(self, fn, tempFile = False):
 		self.stlFile = fn
+		self.temporaryFile = tempFile
 		self.gcFile = self.app.slicer.type.buildSliceOutputFile(fn)
 		cmd = self.app.slicer.type.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
@@ -432,15 +437,23 @@ class FilePrepare(wx.Panel):
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
 				wx.LogMessage("SF: " + evt.msg)
-			self.enableButtons(True)
+			if self.temporaryFile:
+				try:
+					wx.LogMessage("Removing temporary STL file: %s" % self.stlFile)
+					os.unlink(self.stlFile)
+				except:
+					pass
+				self.stlFile = None
 			self.loadFile(self.gcFile)
+			self.enableButtons(True)
 		else:
 			wx.LogError("unknown slicer thread state: %s" % evt.state)
 
 	def fileOpen(self, event):
 		if self.checkModified(message='Close file without saving changes?'):
 			return
-		
+
+		self.temporaryFile = False		
 		dlg = wx.FileDialog(
 			self, message="Choose a G Code file",
 			defaultDir=self.settings.lastdirectory, 
@@ -468,7 +481,9 @@ class FilePrepare(wx.Panel):
 			self.gcFile = fn
 			self.settings.lastdirectory = os.path.dirname(fn)
 			self.settings.setModified()
-			if len(fn) > 60:
+			if self.temporaryFile:
+				lfn = "<temporary>"
+			elif len(fn) > 60:
 				lfn = os.path.basename(fn)
 			else:
 				lfn = fn
@@ -486,6 +501,13 @@ class FilePrepare(wx.Panel):
 			return
 		self.buildModel()
 		self.setModified(False)
+		
+		if self.temporaryFile:
+			try:
+				wx.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
+				os.unlink(self.gcFile)
+			except:
+				pass
 
 	def buildModel(self, layer=0):
 		self.model = GCode(self.gcode)

@@ -304,6 +304,10 @@ class MainFrame(wx.Frame):
 			
 		s = s.replace('""', '')
 		return s
+	
+	def switchToFilePrep(self, fn):
+		self.nb.SetSelection(self.pxFilePrep)
+		self.pgFilePrep.loadTempSTL(fn)
 
 		
 	def onClose(self, evt):
