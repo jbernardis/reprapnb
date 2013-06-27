@@ -20,6 +20,10 @@ from plater import Plater
 from settings import Settings
 from reprap import RepRap
 
+TB_TOOL_PORTS = 10
+TB_TOOL_CONNECT = 11
+TB_TOOL_LOG = 19
+
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
@@ -38,7 +42,7 @@ class MainFrame(wx.Frame):
 		
 		self.settings = Settings(self, cmd_folder)
 		
-		self.reprap = RepRap()
+		self.reprap = RepRap(self, self.evtRepRap)
 		self.connected = False
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
@@ -51,101 +55,107 @@ class MainFrame(wx.Frame):
 
 		p = wx.Panel(self)
 
+		self.tb = wx.ToolBar(p, style=wx.TB_HORIZONTAL | wx.TB_FLAT)
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		sizerBtns.AddSpacer((10,10))
+		sizerBtns.Add(self.tb)
 			
-		t = wx.StaticText(p, wx.ID_ANY, "Printer:  ", style=wx.ALIGN_RIGHT)
+		t = wx.StaticText(self.tb, wx.ID_ANY, "  Printer:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
-		sizerBtns.Add(t, 1, wx.EXPAND)
+		self.tb.AddControl(t)
 		
-		self.cbPrinter = wx.ComboBox(p, wx.ID_ANY, self.settings.printer, (-1, -1), (100, -1), self.settings.printers, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbPrinter = wx.ComboBox(self.tb, wx.ID_ANY, self.settings.printer, (-1, -1), (100, -1), self.settings.printers, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer to use")
-		sizerBtns.Add(self.cbPrinter)
+		self.tb.AddControl(self.cbPrinter)
 		self.cbPrinter.SetStringSelection(self.settings.printer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
 		
-		sizerBtns.AddSpacer((30,10))
+		self.tb.AddSeparator()
+			
+		t = wx.StaticText(self.tb, wx.ID_ANY, " Port:  ", style=wx.ALIGN_RIGHT)
+		t.SetFont(f)
+		self.tb.AddControl(t)
 
 		path = os.path.join(self.settings.cmdfolder, "images/ports.png")	
 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(png, wx.BLUE)
 		png.SetMask(mask)
-		self.bPort = wx.BitmapButton(p, wx.ID_ANY, png, size=BUTTONDIM)
-		self.bPort.SetToolTipString("Refresh the list of available USB ports")
-		sizerBtns.Add(self.bPort)
+		self.tb.AddSimpleTool(TB_TOOL_PORTS, png, "Refresh list of available ports", "")
+		self.Bind(wx.EVT_TOOL, self.doPort, id=TB_TOOL_PORTS)
+
 		ports = self.scanSerial()	
 		choice = ""
 		if len(ports) > 0:
 			choice = ports[0]
-		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
 		
-		self.cbPort = wx.ComboBox(p, wx.ID_ANY, choice, (-1, -1),  (140, -1), ports, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbPort = wx.ComboBox(self.tb, wx.ID_ANY, choice, (-1, -1),  (140, -1), ports, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPort.SetFont(f)
 		self.cbPort.SetToolTipString("Choose the port to which to connect")
 		self.cbPort.SetStringSelection(choice)
-		sizerBtns.Add(self.cbPort)
+		self.tb.AddControl(self.cbPort)
 		
-		t = wx.StaticText(p, wx.ID_ANY, "@", style=wx.ALIGN_CENTER, size=(40, 35))
+		t = wx.StaticText(self.tb, wx.ID_ANY, " @ ", style=wx.ALIGN_CENTER, size=(40, 35))
 		t.SetFont(f)
-		sizerBtns.Add(t)
+		self.tb.AddControl(t)
 		
-		self.cbBaud = wx.ComboBox(p, wx.ID_ANY, "115200", (-1, -1), (100, -1), baudChoices, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbBaud = wx.ComboBox(self.tb, wx.ID_ANY, "115200", (-1, -1), (100, -1), baudChoices, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbBaud.SetFont(f)
 		self.cbBaud.SetToolTipString("Choose the baud rate")
 		self.cbBaud.SetStringSelection("115200")
-		sizerBtns.Add(self.cbBaud)
+		self.tb.AddControl(self.cbBaud)
 		
 		path = os.path.join(self.settings.cmdfolder, "images/connect.png")	
 		self.connectPng = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(self.connectPng, wx.BLUE)
 		self.connectPng.SetMask(mask)
-		self.bConnect = wx.BitmapButton(p, wx.ID_ANY, self.connectPng, size=BUTTONDIM)
-		self.bConnect.SetToolTipString("Connect to the printer")
-		sizerBtns.Add(self.bConnect)
-		self.Bind(wx.EVT_BUTTON, self.doConnect, self.bConnect)
+		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.connectPng, "Connect to the Printer", "")
+		self.Bind(wx.EVT_TOOL, self.doConnect, id=TB_TOOL_CONNECT)
+		
+		self.tb.AddSeparator()
+
 		if len(ports) < 1:
-			self.bConnect.Enable(False)
+			self.tb.EnableTool(TB_TOOL_CONNECT, False)
 		path = os.path.join(self.settings.cmdfolder, "images/disconnect.png")	
 		self.disconnectPng = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(self.disconnectPng, wx.BLUE)
 		self.disconnectPng.SetMask(mask)
 			
-		t = wx.StaticText(p, wx.ID_ANY, "Slicer:  ", style=wx.ALIGN_RIGHT)
+		t = wx.StaticText(self.tb, wx.ID_ANY, " Slicer:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
-		sizerBtns.Add(t, 1, wx.EXPAND)
+		self.tb.AddControl(t)
 		
-		self.cbSlicer = wx.ComboBox(p, wx.ID_ANY, self.settings.slicer, (-1, -1), (120, -1), self.settings.slicers, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbSlicer = wx.ComboBox(self.tb, wx.ID_ANY, self.settings.slicer, (-1, -1), (120, -1), self.settings.slicers, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbSlicer.SetFont(f)
 		self.cbSlicer.SetToolTipString("Choose which slicer to use")
-		sizerBtns.Add(self.cbSlicer)
+		self.tb.AddControl(self.cbSlicer)
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 			
-		t = wx.StaticText(p, wx.ID_ANY, "Profile:  ", style=wx.ALIGN_RIGHT)
+		t = wx.StaticText(self.tb, wx.ID_ANY, " Profile:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
-		sizerBtns.Add(t, 1, wx.EXPAND)
+		self.tb.AddControl(t)
 	
-		self.cbProfile = wx.ComboBox(p, wx.ID_ANY, self.slicer.settings['profile'],
+		self.cbProfile = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['profile'],
 									(-1, -1), (120, -1), self.slicer.type.getProfileOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbProfile.SetFont(f)
 		self.cbProfile.SetToolTipString("Choose which slicer profile to use")
-		sizerBtns.Add(self.cbProfile)
+		self.tb.AddControl(self.cbProfile)
 		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
 
-		sizerBtns.AddSpacer((60, 20))
+		self.tb.AddSeparator()
 				
 		path = os.path.join(self.settings.cmdfolder, "images/log.png")	
 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(png, wx.BLUE)
 		png.SetMask(mask)
-		self.bLog = wx.BitmapButton(p, wx.ID_ANY, png, size=BUTTONDIM)
-		self.bLog.SetToolTipString("Hide/Show logging window")
-		sizerBtns.Add(self.bLog)
-		self.Bind(wx.EVT_BUTTON, self.doShowHideLog, self.bLog)
+		self.tb.AddSimpleTool(TB_TOOL_LOG, png, "Hide/Show log window", "")
+		self.Bind(wx.EVT_TOOL, self.doShowHideLog, id=TB_TOOL_LOG)
 		self.logShowing = True
+
+		self.tb.Realize()
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		self.nb = wx.Notebook(p, style=wx.NB_TOP)
@@ -175,6 +185,8 @@ class MainFrame(wx.Frame):
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
 
+	def evtRepRap(self, evt):
+		print "Reprap evnt received, event = ", evt.event
 	
 	def doShowHideLog(self, evt):
 		self.logShowing = not self.logShowing
@@ -184,8 +196,8 @@ class MainFrame(wx.Frame):
 		newPage = evt.GetSelection()
 		currentPage = evt.GetOldSelection()
 		if newPage in [self.pxManCtl, self.pxPrtMon] and not self.connected:
-			wx.LogWarning("Tab is inaccessible unless printer is connected")
-			self.nb.SetSelection(currentPage)
+# 			wx.LogWarning("Tab is inaccessible unless printer is connected")
+# 			self.nb.SetSelection(currentPage)
 			evt.Veto()
 		else:
 			evt.Skip()
@@ -218,10 +230,10 @@ class MainFrame(wx.Frame):
 		if len(l) > 0:
 			self.cbPort.AppendItems(l)
 			self.cbPort.SetStringSelection(l[0])
-			self.bConnect.Enable(True)
+			self.tb.EnableTool(TB_TOOL_CONNECT, True)
 		else:
 			self.cbPort.SetStringSelection("")
-			self.bConnect.Enable(False)
+			self.tb.EnableTool(TB_TOOL_CONNECT, False)
 	
 	def scanSerial(self):
 		"""scan for available ports. return a list of device names."""
@@ -242,14 +254,14 @@ class MainFrame(wx.Frame):
 			self.reprap.disconnect()
 			self.connected = False 
 			self.announcePrinter()
-			self.bConnect.SetBitmapLabel(self.connectPng)
+			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.connectPng)
 		else:
 			port = 	self.cbPort.GetStringSelection()
 			baud = 	self.cbBaud.GetStringSelection()
 
 			self.reprap.connect(port, baud)
 			self.connected = True
-			self.bConnect.SetBitmapLabel(self.disconnectPng)
+			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.disconnectPng)
 			self.announcePrinter()
 
 	def announcePrinter(self):
@@ -295,6 +307,9 @@ class MainFrame(wx.Frame):
 
 		
 	def onClose(self, evt):
+		if self.connected:
+			self.reprap.disconnect()
+			
 		if not self.pgPlater.onClose(evt):
 			self.nb.SetSelection(self.pxPlater)
 			return

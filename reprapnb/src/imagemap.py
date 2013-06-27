@@ -1,11 +1,11 @@
 import wx
 	
 class ImageMap(wx.Panel):
-	def __init__(self, parent, bmp):
+	def __init__(self, parent, bmp, style=wx.NO_BORDER):
 		self.bmp = bmp
 		self.mask = wx.Mask(self.bmp, wx.BLUE)
 		self.bmp.SetMask(self.mask)
-		wx.Panel.__init__(self,parent,size=(self.bmp.GetWidth(), self.bmp.GetHeight()), style=wx.SIMPLE_BORDER)
+		wx.Panel.__init__(self,parent,size=(self.bmp.GetWidth(), self.bmp.GetHeight()), style=style)
 		self.Bind(wx.EVT_SIZE, self.onSize)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
 		self.Bind(wx.EVT_MOTION, self.onMouseMove)

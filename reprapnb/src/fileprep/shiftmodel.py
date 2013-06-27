@@ -16,9 +16,9 @@ class ShiftModelDlg(wx.Dialog):
 		self.shifty = 0
 		
 		self.minx = -self.model.xmin
-		self.maxx = self.app.printersettings.buildarea[0] - self.model.xmax
+		self.maxx = self.app.printersettings.settings['buildarea'][0] - self.model.xmax
 		self.miny = -self.model.ymin
-		self.maxy = self.app.printersettings.buildarea[1] - self.model.ymax
+		self.maxy = self.app.printersettings.settings['buildarea'][1] - self.model.ymax
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		slidesizer = wx.GridSizer(rows=1, cols=2)

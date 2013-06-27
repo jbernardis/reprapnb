@@ -71,6 +71,11 @@ class Settings:
 		self.cfg = ConfigParser.ConfigParser()
 		if not self.cfg.read(self.inifile):
 			wx.LogWarning("Settings file %s does not exist.  Using default values" % INIFILE)
+			self.modified = True
+			
+			self.fileprep = SettingsFilePrep(self.app, None, folder, "fileprep")
+			self.plater = SettingsPlater(self.app, None, folder, "plater")
+			self.manualctl = SettingsManualCtl(self.app, None, folder, "manualctl")
 			return
 
 		self.section = "global"	
@@ -150,6 +155,7 @@ class Settings:
 			
 		self.fileprep = SettingsFilePrep(self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self.app, self.cfg, folder, "plater")
+		self.manualctl = SettingsManualCtl(self.app, self.cfg, folder, "manualctl")
 		
 	def getSlicerSettings(self, slicer):
 		for i in range(len(self.slicers)):
@@ -176,6 +182,7 @@ class Settings:
 			
 		if self.fileprep.checkModified(): return True
 		if self.plater.checkModified(): return True
+		if self.manualctl.checkModified(): return True
 		
 		return False
 		
@@ -221,6 +228,7 @@ class Settings:
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()
+			self.manualctl.cleanUp()
 		
 			cfp = open(self.inifile, 'wb')
 			self.cfg.write(cfp)
@@ -237,6 +245,10 @@ class SettingsFilePrep:
 		self.showprevious = True
 		self.showmoves = True
 		self.usebuffereddc = True
+		
+		if cfg is None:
+			self.modified = True
+			return
 
 		self.cfg = cfg		
 		self.section = section
@@ -265,6 +277,7 @@ class SettingsFilePrep:
 					wx.LogWarning("Unknown %s option: %s - ignoring" % (section, opt))
 		else:
 			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.modified = True
 		
 	def setModified(self):
 		self.modified = True
@@ -294,6 +307,10 @@ class SettingsPlater:
 		self.stlscale = 2
 		self.lastdirectory="."
 		self.autoarrange = False
+		
+		if cfg is None:
+			self.modified = True
+			return
 
 		self.cfg = cfg
 		self.modified = False
@@ -317,6 +334,7 @@ class SettingsPlater:
 					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
 			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.modified = True
 
 
 	def setModified(self):
@@ -335,4 +353,77 @@ class SettingsPlater:
 			self.cfg.set(self.section, "stlscale", str(self.stlscale))
 			self.cfg.set(self.section, "lastdirectory", str(self.lastdirectory))
 			self.cfg.set(self.section, "autoarrange", str(self.autoarrange))
+	
+	
+class SettingsManualCtl:
+	def __init__(self, app, cfg, folder, section):
+		self.app = app
+		self.cmdfolder = os.path.join(folder, section)
+
+		self.xyspeed = 2000
+		self.zspeed = 300
+		self.espeed = 300
+		self.edistance = 5
+		
+		if cfg is None:
+			self.modified = True
+			return
+		
+		self.cfg = cfg
+		self.modified = False
+		self.section = section	
+		if cfg.has_section(section):
+			for opt, value in cfg.items(section):
+				if opt == 'xyspeed':
+					try:
+						self.xyspeed = int(value)
+					except:
+						print "Non-integer value in ini file for xyspeed"
+						self.xyspeed = 2000
+			
+				elif opt == 'zspeed':
+					try:
+						self.zspeed = int(value)
+					except:
+						print "Non-integer value in ini file for zspeed"
+						self.zspeed = 300
+			
+				elif opt == 'espeed':
+					try:
+						self.espeed = int(value)
+					except:
+						print "Non-integer value in ini file for espeed"
+						self.espeed = 300
+			
+				elif opt == 'edistance':
+					try:
+						self.edistance = int(value)
+					except:
+						print "Non-integer value in ini file for edistance"
+						self.edistance = 3
+						
+				else:
+					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+		else:
+			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.modified = True
+
+
+	def setModified(self):
+		self.modified = True
+
+	def checkModified(self):
+		return self.modified
+			
+	def cleanUp(self):
+		if self.modified:
+			try:
+				self.cfg.add_section(self.section)
+			except ConfigParser.DuplicateSectionError:
+				pass
+			
+			self.cfg.set(self.section, "xyspeed", str(self.xyspeed))
+			self.cfg.set(self.section, "zspeed", str(self.zspeed))
+			self.cfg.set(self.section, "espeed", str(self.espeed))
+			self.cfg.set(self.section, "edistance", str(self.edistance))
 	
