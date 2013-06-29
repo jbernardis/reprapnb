@@ -45,12 +45,13 @@ class Slic3r:
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 		
 	def getProfileOptions(self):
+		self.profmap = {}
 		try:
 			pdir = os.path.expandvars(os.path.expanduser(self.settings['profiledir']))
 			l = os.listdir(pdir)
 		except:
 			wx.LogError("Unable to get listing from slic3r profile directory: " + self.settings['profiledir'])
-			return []
+			return {}
 		r = {}
 		for f in sorted(l):
 			if not os.path.isdir(f) and f.lower().endswith(".ini"):
