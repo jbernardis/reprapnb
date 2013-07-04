@@ -184,6 +184,7 @@ class RepRap:
 		return self._send(cmd)
 
 	def _send(self, command, lineno=0, checksum=False, priority=False):
+		wx.LogMessage("Sending (%s)" % command)
 		if not self.printer:
 			return False
 		

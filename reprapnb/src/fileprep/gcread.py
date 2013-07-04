@@ -148,7 +148,7 @@ class Layer:
 			
 		#print "  Move ", self.currentx, self.currenty, self.currentz, self.currente, " -> ", cx, cy, cz, ce, " (", cspeed, ")"
 			
-		self.moves.append([cx, cy, cz, ce, cspeed, line])
+		self.moves.append([cx, cy, cz, ce, cspeed, line, False])
 		
 		self.currentx = cx
 		self.currenty = cy
@@ -176,7 +176,7 @@ class Layer:
 		return self.prevLayer
 		
 		
-	def resetAxis(self, x=None, y=None, z=None, e=None):
+	def resetAxis(self, x=None, y=None, z=None, e=None, line=0):
 		if x is not None:
 			self.currentx = x
 			
@@ -189,6 +189,8 @@ class Layer:
 		if e is not None:
 			self.currente = e
 		
+		self.moves.append([self.currentx, self.currenty, self.currentz,
+			self.currente, self.currentspeed, line, True])
 					
 
 class GCode(object):
@@ -229,7 +231,7 @@ class GCode(object):
 			elif ln.command() == "G90":
 				relative = False
 			elif ln.command() == "G92":
-				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e)
+				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e, lx)
 			elif ln.is_move():
 				ln.setRelative(relative)
 				if ln.z is not None and ((not relative and ln.z != self.currentheight) or (relative and ln.z != 0)):

@@ -28,12 +28,6 @@ BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
-		
-class DataPage(wx.Panel):
-	def __init__(self, parent):
-		wx.Panel.__init__(self, parent)	
-		t = wx.StaticText(self, -1, "Temperature graphs, usage", (60,60))
-
 class MainFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
@@ -164,19 +158,16 @@ class MainFrame(wx.Frame):
 		self.pxFilePrep = 1
 		self.pxManCtl = 2
 		self.pxPrtMon = 3
-		self.pxData = 4
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
 		self.pgManCtl = ManualControl(self.nb, self)
 		self.pgPrtMon = PrintMonitor(self.nb, self)
-		pgData = DataPage(self.nb)
 
 		self.nb.AddPage(self.pgPlater, "Plating")
 		self.nb.AddPage(self.pgFilePrep, "File Preparation")
 		self.nb.AddPage(self.pgManCtl, "Manual Control")
 		self.nb.AddPage(self.pgPrtMon, "Print/Monitor")
-		self.nb.AddPage(pgData, "Data")
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
 
 		sizer.AddSpacer((20,20))
@@ -218,7 +209,7 @@ class MainFrame(wx.Frame):
 		self.settings.setModified()
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
-			wx.LogError("Unable to get slicer settings")
+			wx.LogError("Unable to get slicer settings") 
 			
 		self.cbProfile.Clear()
 		self.cbProfile.AppendItems(self.slicer.type.getProfileOptions().keys())
@@ -255,6 +246,8 @@ class MainFrame(wx.Frame):
 			self.connected = False 
 			self.announcePrinter()
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.connectPng)
+			if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
+				self.nb.SetSelection(self.pxFilePrep)
 		else:
 			port = 	self.cbPort.GetStringSelection()
 			baud = 	self.cbBaud.GetStringSelection()
@@ -305,9 +298,16 @@ class MainFrame(wx.Frame):
 		s = s.replace('""', '')
 		return s
 	
+	def setPrinterBusy(self, flag=True):
+		self.filePrep.setPrinterBusy(flag)
+	
 	def switchToFilePrep(self, fn):
 		self.nb.SetSelection(self.pxFilePrep)
 		self.pgFilePrep.loadTempSTL(fn)
+
+	def forwardToPrintMon(self, model):
+		self.nb.SetSelection(self.pxPrtMon)
+		self.pgPrtMon.forwardModel(model)
 
 		
 	def onClose(self, evt):

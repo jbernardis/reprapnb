@@ -18,6 +18,7 @@ GCODELINETEXT = "Current G Code Line: (%d)"
 
 TITLETEXT = "G Code Viewer"
 BUTTONDIM = (64, 64)
+BUTTONDIMWIDE = (96,64)
 
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
@@ -81,7 +82,6 @@ class SlicerThread:
 		self.running = False
 
 class FilePrepare(wx.Panel):
-
 	def __init__(self, parent, app):
 		self.model = None
 		self.app = app
@@ -89,7 +89,9 @@ class FilePrepare(wx.Panel):
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
 		self.modified = False
-		self.temporaryFile = False		
+		self.temporaryFile = False	
+		self.printerBusy = True	
+		self.gcodeLoaded = False
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -199,13 +201,27 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
-		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
+		self.sizerBtns.AddSpacer((20, 20))
+	
+		path = os.path.join(self.settings.cmdfolder, "images/toprinter.png")	
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		self.bToPrinter = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIMWIDE)
+		self.bToPrinter.SetToolTipString("Send this GCode file to the printer")
+		self.sizerBtns.Add(self.bToPrinter)
+		self.Bind(wx.EVT_BUTTON, self.toPrinter, self.bToPrinter)
+		self.bToPrinter.Enable(False)
+		
+		self.sizerMain.Add(self.sizerBtns, pos=(1,1), span=(1,4))
 		self.sizerMain.AddSpacer((20,20), pos=(2,0))
 
 		self.gcf = GcFrame(self, self.model, self.settings, self.printersettings.settings['buildarea'])
 		self.sizerMain.Add(self.gcf, pos=(3,1))
 		self.sizerMain.AddSpacer((20,20), pos=(4,0))
 		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
+		
+		self.sizerMain.AddSpacer((20, 20), pos=(3,2))
 
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
@@ -216,7 +232,7 @@ class FilePrepare(wx.Panel):
 		self.slideLayer.SetValue(1)
 		self.slideLayer.SetPageSize(1);
 		self.slideLayer.Disable()
-		self.sizerMain.Add(self.slideLayer, pos=(3,2), flag=wx.ALIGN_RIGHT)
+		self.sizerMain.Add(self.slideLayer, pos=(3,3), flag=wx.ALIGN_RIGHT)
 
 		self.slideGCode = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 99999, size=(80, sz),
@@ -227,7 +243,7 @@ class FilePrepare(wx.Panel):
 		self.slideGCode.SetValue(1)
 		self.slideGCode.SetPageSize(1);
 		self.slideGCode.Disable()
-		self.sizerMain.Add(self.slideGCode, pos=(3,3))
+		self.sizerMain.Add(self.slideGCode, pos=(3,4))
 
 		self.sizerOpts = wx.BoxSizer(wx.HORIZONTAL)
 				
@@ -381,8 +397,8 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeSource.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeSource, pos=(23, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
-		self.sizerMain.Add(self.infoPane, pos=(0,4), span=(6,1))
-		self.sizerMain.AddSpacer((40, 20), pos=(0,5))
+		self.sizerMain.Add(self.infoPane, pos=(2,5), span=(4,1))
+		self.sizerMain.AddSpacer((40, 20), pos=(0,6))
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()
@@ -393,6 +409,9 @@ class FilePrepare(wx.Panel):
 			return False
 	
 		return True
+	
+	def toPrinter(self, evt):
+		self.app.forwardToPrintMon(GCode(self.gcode))
 		
 	def fileSlice(self, event):
 		if self.checkModified(message='Close file without saving changes?'):
@@ -422,7 +441,8 @@ class FilePrepare(wx.Panel):
 		self.gcFile = self.app.slicer.type.buildSliceOutputFile(fn)
 		cmd = self.app.slicer.type.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
-		self.enableButtons(False)
+		self.setGCodeLoaded(False)
+		self.bOpen.Enable(False)
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -433,7 +453,7 @@ class FilePrepare(wx.Panel):
 			if evt.msg is not None:
 				wx.LogMessage("SC: " + evt.msg)
 			self.gcFile = None
-			self.enableButtons(True)
+			self.bOpen.Enable(True)
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
 				wx.LogMessage("SF: " + evt.msg)
@@ -445,7 +465,6 @@ class FilePrepare(wx.Panel):
 					pass
 				self.stlFile = None
 			self.loadFile(self.gcFile)
-			self.enableButtons(True)
 		else:
 			wx.LogError("unknown slicer thread state: %s" % evt.state)
 
@@ -488,12 +507,14 @@ class FilePrepare(wx.Panel):
 			else:
 				lfn = fn
 			self.ipFileName.SetLabel(lfn)
+			self.setGCodeLoaded(True)
 			
 		except:
 			self.gcode = []
 			self.filename = None
 			self.ipFileName.SetLabel("")
 			self.gcFile = None
+			self.setGCodeLoaded(False)
 			
 		self.Fit()
 			
@@ -548,22 +569,24 @@ class FilePrepare(wx.Panel):
 		self.Fit()
 		
 		self.gcf.loadModel(self.model, layer=layer)
+		
+	def setGCodeLoaded(self, flag=True):
+		self.gcodeLoaded = flag
 		self.enableButtons()
 		
-	def enableButtons(self, flag=True):
-		self.bSlice.Enable(flag)
-		self.bOpen.Enable(flag)
-		self.bZoomIn.Enable(flag)
-		self.bZoomOut.Enable(flag)
-		if self.gcFile is None:
-			f = False
-		else:
-			f = flag
-		self.bSave.Enable(f)
-		self.bSaveLayer.Enable(f)
-		self.bFilamentChange.Enable(f)
-		self.bShift.Enable(f)
-		self.bEdit.Enable(f)
+	def setPrinterBusy(self, flag=True):
+		self.printerBusy = flag
+		self.enableButtons()
+		
+	def enableButtons(self):
+		self.bSlice.Enable(self.gcodeLoaded)
+		self.bOpen.Enable(True)
+		self.bSave.Enable(self.gcodeLoaded)
+		self.bSaveLayer.Enable(self.gcodeLoaded)
+		self.bFilamentChange.Enable(self.gcodeLoaded)
+		self.bShift.Enable(self.gcodeLoaded)
+		self.bEdit.Enable(self.gcodeLoaded)
+		self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 
 	def editGCode(self, event):
 		dlg = EditGCodeDlg(self)

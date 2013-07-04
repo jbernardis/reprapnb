@@ -156,6 +156,7 @@ class Settings:
 		self.fileprep = SettingsFilePrep(self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self.app, self.cfg, folder, "plater")
 		self.manualctl = SettingsManualCtl(self.app, self.cfg, folder, "manualctl")
+		self.printmon = SettingsPrintMon(self.app, self.cfg, folder, "printmon")
 		
 	def getSlicerSettings(self, slicer):
 		for i in range(len(self.slicers)):
@@ -183,6 +184,7 @@ class Settings:
 		if self.fileprep.checkModified(): return True
 		if self.plater.checkModified(): return True
 		if self.manualctl.checkModified(): return True
+		if self.printmon.checkModified(): return True
 		
 		return False
 		
@@ -229,6 +231,7 @@ class Settings:
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()
 			self.manualctl.cleanUp()
+			self.printmon.cleanUp()
 		
 			cfp = open(self.inifile, 'wb')
 			self.cfg.write(cfp)
@@ -260,7 +263,7 @@ class SettingsFilePrep:
 						self.gcodescale = int(value)
 					except:
 						wx.LogWarning("Non-integer value in ini file for gcodescale")
-						self.gcodescale = 4
+						self.gcodescale = 3
 			
 				elif opt == 'lastdirectory':
 					self.lastdirectory = value
@@ -360,10 +363,10 @@ class SettingsManualCtl:
 		self.app = app
 		self.cmdfolder = os.path.join(folder, section)
 
-		self.xyspeed = 2000
-		self.zspeed = 300
-		self.espeed = 300
-		self.edistance = 5
+		self.xyspeed = 2000.0
+		self.zspeed = 300.0
+		self.espeed = 300.0
+		self.edistance = 5.0
 		
 		if cfg is None:
 			self.modified = True
@@ -376,31 +379,31 @@ class SettingsManualCtl:
 			for opt, value in cfg.items(section):
 				if opt == 'xyspeed':
 					try:
-						self.xyspeed = int(value)
+						self.xyspeed = float(value)
 					except:
-						print "Non-integer value in ini file for xyspeed"
-						self.xyspeed = 2000
+						print "Invalid value in ini file for xyspeed"
+						self.xyspeed = 2000.0
 			
 				elif opt == 'zspeed':
 					try:
-						self.zspeed = int(value)
+						self.zspeed = float(value)
 					except:
-						print "Non-integer value in ini file for zspeed"
-						self.zspeed = 300
+						print "Invalid value in ini file for zspeed"
+						self.zspeed = 300.0
 			
 				elif opt == 'espeed':
 					try:
-						self.espeed = int(value)
+						self.espeed = float(value)
 					except:
-						print "Non-integer value in ini file for espeed"
-						self.espeed = 300
+						print "Invalid value in ini file for espeed"
+						self.espeed = 300.0
 			
 				elif opt == 'edistance':
 					try:
-						self.edistance = int(value)
+						self.edistance = float(value)
 					except:
-						print "Non-integer value in ini file for edistance"
-						self.edistance = 3
+						print "Invalid value in ini file for edistance"
+						self.edistance = 3.0
 						
 				else:
 					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
@@ -426,4 +429,50 @@ class SettingsManualCtl:
 			self.cfg.set(self.section, "zspeed", str(self.zspeed))
 			self.cfg.set(self.section, "espeed", str(self.espeed))
 			self.cfg.set(self.section, "edistance", str(self.edistance))
+	
+	
+class SettingsPrintMon:
+	def __init__(self, app, cfg, folder, section):
+		self.app = app
+		self.cmdfolder = os.path.join(folder, section)
+		
+		self.gcodescale = 3
+		
+		if cfg is None:
+			self.modified = True
+			return
+		
+		self.cfg = cfg
+		self.modified = False
+		self.section = section	
+		if cfg.has_section(section):
+			for opt, value in cfg.items(section):
+				if opt == 'gcodescale':
+					try:
+						self.gcodescale = int(value)
+					except:
+						wx.LogWarning("Non-integer value in ini file for gcodescale")
+						self.gcodescale = 3
+			
+				else:
+					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+		else:
+			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.modified = True
+
+
+	def setModified(self):
+		self.modified = True
+
+	def checkModified(self):
+		return self.modified
+			
+	def cleanUp(self):
+		if self.modified:
+			try:
+				self.cfg.add_section(self.section)
+			except ConfigParser.DuplicateSectionError:
+				pass
+			
+			self.cfg.set(self.section, "gcodescale", str(self.gcodescale))
 	

@@ -17,7 +17,7 @@ orange = wx.Colour(237, 139, 33)
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
-class GcFrame (wx.Window):
+class GcmFrame (wx.Window):
 	def __init__(self, parent, model, settings, buildarea):
 		self.parent = parent
 		self.settings = settings
