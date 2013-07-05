@@ -14,9 +14,9 @@ imageMap = [[0,0,92,84,"XH"], [388,0,473,84,"YH"], [0,400,92,473,"ZH"], [388,409
 
 dispatch = { "XH": "G28 X0", "YH": "G28 Y0", "ZH": "G28 Z0", "AH": "G28",
 	"X-3": "G1 X-100", "X-2": "G1 X-10", "X-1": "G1 X-1",
-	"X+1": "G1 X1",    "X+2": "G1 X10",  "X+3": "G1 X100",
+	"X+1": "G1 X1",	"X+2": "G1 X10",  "X+3": "G1 X100",
 	"Y-3": "G1 Y-100", "Y-2": "G1 Y-10", "Y-1": "G1 Y-1",
-	"Y+1": "G1 Y1",    "Y+2": "G1 Y10",  "Y+3": "G1 Y100",
+	"Y+1": "G1 Y1",	"Y+2": "G1 Y10",  "Y+3": "G1 Y100",
 	"Z-2": "G1 Z-10",  "Z-1": "G1 Z-1",  "Z+1": "G1 Z1",  "Z+2": "G1 Z10",
 	"STOP": "M84"}
 
@@ -27,8 +27,10 @@ class MoveAxis(wx.Window):
 		self.model = None
 		self.parent = parent
 		self.app = app
+		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
+		self.printersettings = self.app.printersettings
 
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 
@@ -52,7 +54,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(4,2))
 		
-		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.xyspeed), size=(60, -1), style=wx.TE_RIGHT)
+		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["xyspeed"]), size=(60, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tXYSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tXYSpeed, pos=(4,3))
@@ -65,7 +67,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(6,2))
 		
-		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.zspeed), size=(60, -1), style=wx.TE_RIGHT)
+		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["zspeed"]), size=(60, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tZSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tZSpeed, pos=(6,3))
@@ -83,14 +85,14 @@ class MoveAxis(wx.Window):
 					try:
 						v = float(self.tXYSpeed.GetValue())
 					except:
-						wx.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
+						self.logger.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
 						v = 0.0
 					speed = " F%.3f" % v
 				elif "Z" in label:
 					try:
 						v = float(self.tZSpeed.GetValue())
 					except:
-						wx.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())
+						self.logger.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())
 						v = 0.0
 					speed = " F%.3f" % v
 				else:
@@ -101,26 +103,26 @@ class MoveAxis(wx.Window):
 			else:
 				self.app.reprap.send_now(cmd)
 		else:
-			wx.LogError("unknown label: (%s)" % label)
+			self.logger.LogError("unknown label: (%s)" % label)
 			
 	def evtXYSpeedKillFocus(self, evt):
 		try:
 			v = float(self.tXYSpeed.GetValue())
 		except:
-			wx.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
+			self.logger.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
 			v = 0.0
 			
-		if v != self.settings.xyspeed:
-			self.settings.xyspeed = v
-			self.settings.setModified()
+		if v != self.printersettings.settings["xyspeed"]:
+			self.printersettings.settings["xyspeed"] = v
+			self.printersettings.setModified()
 			
 	def evtZSpeedKillFocus(self, evt):
 		try:
 			v = float(self.tZSpeed.GetValue())
 		except:
-			wx.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())
+			self.logger.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())
 			v = 0.0
 			
-		if v != self.settings.zspeed:
-			self.settings.zspeed = v
-			self.settings.setModified()
+		if v != self.printersettings.settings["zspeed"]:
+			self.printersettings.settings["zspeed"] = v
+			self.printersettings.setModified()

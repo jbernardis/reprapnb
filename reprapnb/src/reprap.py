@@ -129,6 +129,7 @@ class ListenThread:
 class RepRap:
 	def __init__(self, win, handler):
 		self.win = win
+		self.logger = self.win.logger
 		self.printer = None
 		self.online = False
 		self.printing = False
@@ -184,7 +185,7 @@ class RepRap:
 		return self._send(cmd)
 
 	def _send(self, command, lineno=0, checksum=False, priority=False):
-		wx.LogMessage("Sending (%s)" % command)
+		self.logger.LogMessage("Sending (%s)" % command)
 		if not self.printer:
 			return False
 		

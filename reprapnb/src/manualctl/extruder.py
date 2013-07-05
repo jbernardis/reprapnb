@@ -4,20 +4,23 @@ import os.path
 BUTTONDIM = (64, 64)
 
 class Extruder(wx.Window): 
-	def __init__(self, parent, app, name=""):
+	def __init__(self, parent, app, name="", axis="E"):
 		self.parent = parent
 		self.app = app
+		self.logger = self.app.logger
+		self.printersettings = self.app.printersettings
+
 		self.name = name
+		self.axis = axis
 		self.range = range
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerExtrude = wx.GridBagSizer()
 
-		t = wx.StaticText(self, wx.ID_ANY, "E Speed (mm/min):", style=wx.ALIGN_RIGHT, size=(200, -1))
+		t = wx.StaticText(self, wx.ID_ANY, "%s Speed (mm/min):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(1,0), span=(1,3))
-		
-		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.espeed), size=(60, -1), style=wx.TE_RIGHT)
+		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"speed"]), size=(60, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tESpeed.SetFont(f)
 		sizerExtrude.Add(self.tESpeed, pos=(1,3))
@@ -25,12 +28,12 @@ class Extruder(wx.Window):
 
 		sizerExtrude.AddSpacer((10,10), pos=(2,1))
 		
-		t = wx.StaticText(self, wx.ID_ANY, "E Distance (mm):", style=wx.ALIGN_RIGHT, size=(200, -1))
+		t = wx.StaticText(self, wx.ID_ANY, "%s Distance (mm):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(3,0), span=(1,3))
 		
-		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.edistance), size=(60, -1), style=wx.TE_RIGHT)
+		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"distance"]), size=(60, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tEDistance.SetFont(f)
 		sizerExtrude.Add(self.tEDistance, pos=(3,3))
@@ -65,52 +68,52 @@ class Extruder(wx.Window):
 		try:
 			v = float(self.tESpeed.GetValue())
 		except:
-			wx.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
+			self.logger.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
 			v = 0
 			
-		if v != self.settings.espeed:
-			self.settings.espeed = v
-			self.settings.setModified()
+		if v != self.printersettings.settings[self.axis+"speed"]:
+			self.printersettings.settings[self.axis+"speed"] = v
+			self.printersettings.setModified()
 		
 	def evtEDistanceKillFocus(self, evt):
 		try:
 			v = float(self.tEDistance.GetValue())
 		except:
-			wx.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
+			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			v = 0
 			
-		if v != self.settings.edistance:
-			self.settings.edistance = v
-			self.settings.setModified()
+		if v != self.printersettings.settings[self.axis+"distance"]:
+			self.printersettings.settings[self.axis+"distance"] = v
+			self.printersettings.setModified()
 			
 	def doExtrude(self, evt):
 		try:
 			sp = float(self.tESpeed.GetValue())
 		except:
-			wx.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
+			self.logger.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
 			sp = 0
 		try:
 			dst = float(self.tEDistance.GetValue())
 		except:
-			wx.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
+			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			dst = 0
 		self.app.reprap.send_now("G91")
-		self.app.reprap.send_now("G1 E%.3f F%.3f" % (dst, sp))
+		self.app.reprap.send_now("G1 %s%.3f F%.3f" % (self.axis.upper(), dst, sp))
 		self.app.reprap.send_now("G90")
 		
 	def doRetract(self, evt):
 		try:
 			sp = float(self.tESpeed.GetValue())
 		except:
-			wx.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
+			self.logger.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
 			sp = 0
 		try:
 			dst = float(self.tEDistance.GetValue())
 		except:
-			wx.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
+			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			dst = 0
 		self.app.reprap.send_now("G91")
-		self.app.reprap.send_now("G1 E-%.3f F%.3f" % (dst, sp))
+		self.app.reprap.send_now("G1 %s-%.3f F%.3f" % (self.axis.upper(), dst, sp))
 		self.app.reprap.send_now("G90")
 		
 

@@ -22,6 +22,7 @@ class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
 		self.app = app
+		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.plater
@@ -436,7 +437,7 @@ class Plater(wx.Panel):
 	def doExport2Prep(self, evt):
 		suffix = "%05d" % int(random.random() * 99999)
 		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix+suffix)
-		wx.LogMessage("Saving plate to temporary STL file: %s" % fn)
+		self.logger.LogMessage("Saving plate to temporary STL file: %s" % fn)
 		self.exportToFile(fn, "OBJECT", clearModified = False)
 		self.app.switchToFilePrep(fn)
 		
@@ -509,4 +510,3 @@ class Plater(wx.Panel):
 							   )
 		dlg.ShowModal()
 		dlg.Destroy()
-

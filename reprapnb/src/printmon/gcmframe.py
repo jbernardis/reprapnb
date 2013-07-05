@@ -3,17 +3,11 @@ Created on Apr 10, 2013
 
 @author: Jeff
 '''
-import wx, math
+import wx
+import math
 
 MAXZOOM = 10
 			
-def triangulate(p1, p2):
-	dx = p2[0] - p1[0]
-	dy = p2[1] - p1[1]
-	d = math.sqrt(dx*dx + dy*dy)
-	return d
-
-orange = wx.Colour(237, 139, 33)
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
@@ -32,9 +26,9 @@ class GcmFrame (wx.Window):
 		self.model = None
 		self.currentlayer = None
 		self.currentlx = 0
-		self.highlightX = None
 		self.shiftX = 0
 		self.shiftY = 0
+		self.printPosition = 0
 		
 		sz = [x * self.scale for x in self.buildarea]
 		
@@ -93,20 +87,7 @@ class GcmFrame (wx.Window):
 		evt.Skip()
 		
 	def onMouseWheel(self, evt):
-		if evt.ShiftDown(): # scroll through lines
-			if self.model is not None:
-				if evt.GetWheelRotation() < 0:
-					if self.hilite < self.lastGLine:
-						self.hilite += 1
-						self.parent.setGCode(self.hilite)
-						self.redrawCurrentLayer()
-				else:
-					if self.hilite > self.firstGLine:
-						self.hilite -= 1
-						self.parent.setGCode(self.hilite)
-						self.redrawCurrentLayer()
-						
-		elif evt.ControlDown(): # scroll through layers
+		if evt.ControlDown(): # scroll through layers
 			if self.model is not None:
 				if evt.GetWheelRotation() < 0:
 					if self.currentlx < self.layercount-1:
@@ -139,6 +120,7 @@ class GcmFrame (wx.Window):
 		self.model = model
 		self.shiftX = 0
 		self.shiftY = 0
+		self.printPosition = 0
 		self.currentlx = layer
 		self.currentlayer = self.model.getLayer(self.currentlx)
 		self.layercount = self.model.countLayers()
@@ -167,11 +149,12 @@ class GcmFrame (wx.Window):
 		if self.model is None:
 			return
 		
+		self.parent.setLayer(lyr)
+		
 		self.layerInfo = self.model.getLayerInfo(lyr)
 		if self.layerInfo is None:
 			return
 
-		self.hilite = self.layerInfo[4][0]
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
 		
@@ -195,10 +178,19 @@ class GcmFrame (wx.Window):
 			self.offsety = self.buildarea[1]-self.buildarea[1]/self.zoom
 
 		self.redrawCurrentLayer()
+	
+	def setPrintPosition(self, p):
+		if self.model is None:
+			return
+		l = self.model.findLayerByLine(p)
+		if l is None:
+			return
 
-	def setGCode(self, l):
-		self.hilite = l
-		self.redrawCurrentLayer()
+		self.printPosition = p
+		if l == self.currentlx:
+			self.redrawCurrentLayer()
+		else:
+			self.setLayer(l)
 		
 	def redrawCurrentLayer(self):
 		if self.settings.usebuffereddc:
@@ -291,42 +283,19 @@ class GcmFrame (wx.Window):
 		if background and (p[3] is None):
 			return
 			
-		if background:
-			c = "gray"
-			w = 1.0
-			
-		elif p[3] is None or p[3] == 0:
+		if p[3] is None or p[3] == 0:
 			if not self.settings.showmoves:
 				return
-			
 			c = "white"	
-			w = 1.0
-
+		elif p[5] <= self.printPosition:
+			c = "red"
 		else:
-			edist = p[3] - last_e
-			evolume = edist * 1.5 * 1.5 * 3.14159
-			dist = triangulate(prev, p)
-				
-			if p[4] < 1200:
-				c = orange
-			elif p[4] < 3000:
-						c = "red"
-			elif p[4] < 3600:
-				c = "blue"
-			elif p[4] >= 7200:
-				c = "green"
-			else:
-				c = "purple"
-
-			if dist == 0:
-				w = 1.0
-			else:				
-				w = evolume/dist * 10
-				
-			w = w * self.zoom
-				
-		if p[5] == self.hilite:
-			w = w * 3
+			c = "blue"
+					
+		if background:
+			c = "gray"
+			
+		w = self.zoom
 
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])
@@ -334,9 +303,6 @@ class GcmFrame (wx.Window):
 
 			dc.SetPen(wx.Pen(c, w))
 			dc.DrawLine(x1, y1, x2, y2)
-			if p[5] == self.hilite:
-				dc.SetPen(wx.Pen("white", 1))
-				dc.DrawLine(x1, y1, x2, y2)
 				
 		if p[3] is not None and p[3] < prev[3]:
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
@@ -348,8 +314,3 @@ class GcmFrame (wx.Window):
 		x = (ptx - self.offsetx + self.shiftX)*self.zoom*self.scale
 		y = (pty - self.offsety - self.shiftY)*self.zoom*self.scale
 		return (x, y)
-		
-	def setShift(self, sx, sy):
-		self.shiftX = sx
-		self.shiftY = sy
-		self.redrawCurrentLayer()

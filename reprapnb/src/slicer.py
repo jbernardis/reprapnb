@@ -16,6 +16,7 @@ def createSlicerObject(name, app, parent):
 class Slic3r:
 	def __init__(self, app, parent):
 		self.app = app
+		self.logger = self.app.logger
 		self.parent = parent
 		self.settings = parent.settings
 		self.getProfileOptions()
@@ -27,6 +28,10 @@ class Slic3r:
 		
 	def getProfile(self):
 		return self.settings['profile']
+	
+	def getProfileTemps(self):
+		#FIXIT
+		return [60, 185]
 	
 	def setProfile(self, nprof):
 		self.getProfileOptions()
@@ -50,7 +55,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.settings['profiledir']))
 			l = os.listdir(pdir)
 		except:
-			wx.LogError("Unable to get listing from slic3r profile directory: " + self.settings['profiledir'])
+			self.logger.LogError("Unable to get listing from slic3r profile directory: " + self.settings['profiledir'])
 			return {}
 		r = {}
 		for f in sorted(l):

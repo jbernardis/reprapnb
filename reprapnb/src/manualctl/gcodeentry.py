@@ -17,3 +17,4 @@ class GCodeEntry(wx.Window):
 		self.Layout()
 		self.Fit()
 		
+#FIXIT

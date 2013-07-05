@@ -85,6 +85,7 @@ class FilePrepare(wx.Panel):
 	def __init__(self, parent, app):
 		self.model = None
 		self.app = app
+		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
@@ -411,7 +412,8 @@ class FilePrepare(wx.Panel):
 		return True
 	
 	def toPrinter(self, evt):
-		self.app.forwardToPrintMon(GCode(self.gcode))
+		name = self.ipFileName.GetLabel()
+		self.app.forwardToPrintMon(GCode(self.gcode), name=name)
 		
 	def fileSlice(self, event):
 		if self.checkModified(message='Close file without saving changes?'):
@@ -448,25 +450,25 @@ class FilePrepare(wx.Panel):
 	def slicerUpdate(self, evt):
 		if evt.state == SLICER_RUNNING:
 			if evt.msg is not None:
-				wx.LogMessage("SR:" + evt.msg)
+				self.logger.LogMessage(evt.msg)
 		elif evt.state == SLICER_CANCELLED:
 			if evt.msg is not None:
-				wx.LogMessage("SC: " + evt.msg)
+				self.logger.LogMessage(evt.msg)
 			self.gcFile = None
 			self.bOpen.Enable(True)
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
-				wx.LogMessage("SF: " + evt.msg)
+				self.logger.LogMessage(evt.msg)
 			if self.temporaryFile:
 				try:
-					wx.LogMessage("Removing temporary STL file: %s" % self.stlFile)
+					self.logger.LogMessage("Removing temporary STL file: %s" % self.stlFile)
 					os.unlink(self.stlFile)
 				except:
 					pass
 				self.stlFile = None
 			self.loadFile(self.gcFile)
 		else:
-			wx.LogError("unknown slicer thread state: %s" % evt.state)
+			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
 
 	def fileOpen(self, event):
 		if self.checkModified(message='Close file without saving changes?'):
@@ -525,7 +527,7 @@ class FilePrepare(wx.Panel):
 		
 		if self.temporaryFile:
 			try:
-				wx.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
+				self.logger.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
 				os.unlink(self.gcFile)
 			except:
 				pass

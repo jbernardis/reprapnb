@@ -290,6 +290,14 @@ class GCode(object):
 			
 		return self.lines[x].e
 	
+	def findLayerByLine(self, lx):
+		for i in range(len(self.layerlines)):
+			s = self.layerlines[i]
+			if lx >= s[0] and lx <= s[1]:
+				return i
+		
+		return None
+	
 	def getLayerName(self, x):
 		return "Layer " + str(x)
 	
@@ -571,6 +579,13 @@ class GCode(object):
 					if f is not None: lastf = f
 				
 		self.layer_time.append(self.duration-layerbeginduration)
+		
+	def getLayerHeight(self, lx):
+		if lx < 0 or lx >= len(self.layer_e):
+			return None
+		
+		return self.layer_z[lx]
+		
 		
 	def getLayerInfo(self, lx):
 		if lx < 0 or lx >= len(self.layer_e):

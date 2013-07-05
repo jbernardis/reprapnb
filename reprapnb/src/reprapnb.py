@@ -19,6 +19,7 @@ from manualctl import ManualControl
 from plater import Plater
 from settings import Settings
 from reprap import RepRap
+from logger import Logger
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
@@ -32,7 +33,11 @@ class MainFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		self.log_window = wx.LogWindow(self, 'Log Window', bShow=True)
+
+		self.logger = Logger(self, wx.ID_ANY, "logger")
+		self.logger.Show()
+		
+		self.logger.LogMessage("Hello there")
 		
 		self.settings = Settings(self, cmd_folder)
 		
@@ -41,11 +46,11 @@ class MainFrame(wx.Frame):
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
-			wx.LogError("Unable to get slicer settings")
+			self.logger.LogError("Unable to get slicer settings")
 
 		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
 		if self.printersettings is None:
-			wx.LogError("Unable to get printer settings")
+			self.logger.LogError("Unable to get printer settings")
 
 		p = wx.Panel(self)
 
@@ -181,13 +186,17 @@ class MainFrame(wx.Frame):
 	
 	def doShowHideLog(self, evt):
 		self.logShowing = not self.logShowing
-		self.log_window.Show(self.logShowing)
+		if self.logShowing:
+			self.logger.Show()
+		else:
+			self.logger.Hide()
 		
 	def checkPageChanged(self, evt):
 		newPage = evt.GetSelection()
 		currentPage = evt.GetOldSelection()
 		if newPage in [self.pxManCtl, self.pxPrtMon] and not self.connected:
-# 			wx.LogWarning("Tab is inaccessible unless printer is connected")
+#FIXIT
+# 			self.logger.LogMessage("Tab is inaccessible unless printer is connected")
 # 			self.nb.SetSelection(currentPage)
 			evt.Veto()
 		else:
@@ -196,24 +205,27 @@ class MainFrame(wx.Frame):
 	def doChoosePrinter(self, evt):
 		self.settings.printer = self.cbPrinter.GetValue()
 		self.settings.setModified()
-		self.printer = self.settings.getPrinterSettings(self.settings.printer)
-		if self.printer is None:
-			wx.LogError("Unable to get printer settings")
+		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
+		if self.printersettings is None:
+			self.logger.LogError("Unable to get printer settings")
+		self.pgManCtl.changePrinter()
 		
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
 		self.slicer.type.setProfile(newprof)
+		#FIXIT - notify MANCTL and prtmin
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
 		self.settings.setModified()
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
-			wx.LogError("Unable to get slicer settings") 
+			self.logger.LogError("Unable to get slicer settings") 
 			
 		self.cbProfile.Clear()
 		self.cbProfile.AppendItems(self.slicer.type.getProfileOptions().keys())
 		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
+		#FIXIT - notify MANCTL and prtmin
 		
 	def doPort(self, evt):
 		l = self.scanSerial()
@@ -258,11 +270,12 @@ class MainFrame(wx.Frame):
 			self.announcePrinter()
 
 	def announcePrinter(self):
+		#FIXIT
 		pass
 	
 	def replace(self, s):
 		d = {}
-					
+# FIXIT					
 # 		d['%starttime%'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
 # 		d['%endtime%'] = time.strftime('%H:%M:%S', time.localtime(self.endTime))
 # 		d['%elapsed%'] = formatElapsed(self.elapsedTime)
@@ -299,15 +312,15 @@ class MainFrame(wx.Frame):
 		return s
 	
 	def setPrinterBusy(self, flag=True):
-		self.filePrep.setPrinterBusy(flag)
+		self.pgFilePrep.setPrinterBusy(flag)
 	
 	def switchToFilePrep(self, fn):
 		self.nb.SetSelection(self.pxFilePrep)
 		self.pgFilePrep.loadTempSTL(fn)
 
-	def forwardToPrintMon(self, model):
+	def forwardToPrintMon(self, model, name=""):
 		self.nb.SetSelection(self.pxPrtMon)
-		self.pgPrtMon.forwardModel(model)
+		self.pgPrtMon.forwardModel(model, name=name)
 
 		
 	def onClose(self, evt):
@@ -331,8 +344,6 @@ class MainFrame(wx.Frame):
 			return
 	
 		self.settings.cleanUp()	
-		self.log_window.this.disown()
-		wx.Log.SetActiveTarget(None)
 		self.Destroy()
 		
 

@@ -10,9 +10,10 @@ import os
 BUTTONDIM = (64, 64)
 
 class Heater(wx.Window):
-    def __init__(self, parent, app, name="", range=(0, 100), oncmd = "G104"):
+    def __init__(self, parent, app, name="", target=20, range=(0, 100), oncmd = "G104"):
         self.parent = parent
         self.app = app
+        self.logger = self.app.logger
         self.name = name
         self.range = range
         self.onCmd = oncmd
@@ -40,7 +41,7 @@ class Heater(wx.Window):
         sizerHtr.Add(self.tTarget, pos=(1,2))
         
         self.slTarget = wx.Slider(
-            self, wx.ID_ANY, range[0], range[0], range[1], size=(280, -1), 
+            self, wx.ID_ANY, target, range[0], range[1], size=(280, -1), 
             style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
             )
         self.slTarget.SetTickFreq(5, 1)
@@ -78,7 +79,7 @@ class Heater(wx.Window):
             ft = float(t)
             self.tTemp.SetValue("%.1f" % ft)
         except:
-            wx.LogError("Unknown value for %s temperature: '%s'" % (self.name, t))
+            self.logger.LogError("Unknown value for %s temperature: '%s'" % (self.name, t))
         
     def onTargetChanged(self, evt):
         pass

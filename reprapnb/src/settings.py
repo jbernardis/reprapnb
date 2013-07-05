@@ -61,6 +61,7 @@ class SlicerSettings:
 class Settings:
 	def __init__(self, app, folder):
 		self.app = app
+		self.logger = self.app.logger
 		self.cmdfolder = folder
 		self.inifile = os.path.join(folder, INIFILE)
 		self.slicer = "slic3r"
@@ -69,8 +70,9 @@ class Settings:
 		self.printers=[]
 		
 		self.cfg = ConfigParser.ConfigParser()
+		self.cfg.optionxform = str
 		if not self.cfg.read(self.inifile):
-			wx.LogWarning("Settings file %s does not exist.  Using default values" % INIFILE)
+			self.logger.LogWarning("Settings file %s does not exist.  Using default values" % INIFILE)
 			self.modified = True
 			
 			self.fileprep = SettingsFilePrep(self.app, None, folder, "fileprep")
@@ -93,15 +95,17 @@ class Settings:
 					s = value.split(',')
 					self.printers = [x.strip() for x in s]
 				else:
-					wx.LogWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
+					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
-			wx.LogWarning("Missing %s section - assuming defaults" % self.section)
+			self.logger.LogWarning("Missing %s section - assuming defaults" % self.section)
 
 		self.printersettings = []
 		for printer in self.printers:
 			st = PrinterSettings(self.app, printer)
 			self.printersettings.append(st)
 			sc = "printer." + printer
+			distNames = ["Edistance"]
+			speedNames = ["ESpeed"]
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
 					if opt == 'buildarea':
@@ -109,17 +113,73 @@ class Settings:
 							exec("s=%s" % value)
 						except:
 							s = (200, 200)
-							wx.LogWarning("invalid buildarea for printer %s" % printer)
+							self.logger.LogWarning("invalid buildarea for printer %s" % printer)
 						st.settings[opt] = s
-					else:
-						wx.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
-			else:
-				wx.LogError("No settings for printer %s" % printer)
+						
+					elif opt == 'axisletters':
+						try:
+							exec("s=%s" % value)
+						except:
+							s = ['E']
+							self.logger.LogWarning("invalid axis letter spec for printer %s" % printer)
+						st.settings[opt] = s
+						distNames = []
+						speedNames = []
+						for n in s:
+							distNames.append(n+"distance")
+							speedNames.append(n+"speed")
+							
+					elif opt in distNames or opt in speedNames or opt in ["xyspeed", "zspeed"]:
+						try:
+							v = float(value)
+						except:
+							self.logger.LogError("Invalid value for %s for printer %s" % (opt, printer))
+							v = 0
+						st.settings[opt] = v
 
-			err = False					
+					elif opt == 'extruders':
+						try:
+							st.settings[opt] = int(value)
+						except:
+							self.logger.LogWarning("Invalid extruders value for printer %s" % printer)
+							st.settings[opt] = 1
+					else:
+						self.logger.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
+			else:
+				self.logger.LogError("No settings for printer %s" % printer)
+
 			if 'buildarea' not in st.settings.keys():
-				err = True
-				wx.LogError("Settings for printer %s missing buildarea" % printer)
+				self.logger.LogWarning("Settings for printer %s missing buildarea" % printer)
+				st.settings['buildarea'] = (200,200)
+				st.setModified(True)
+			if 'extruders' not in st.settings.keys():
+				self.logger.LogWarning("Settings for printer %s missing extruders" % printer)
+				st.settings['extruders'] = 1
+				st.setModified(True)
+			if 'axisletters' not in st.settings.keys():
+				self.logger.LogWarning("Settings for printer %s missing axis letters" % printer)
+				st.settings['axisletters'] = ['E']
+				st.setModified(True)
+			if len(st.settings['axisletters']) != st.settings['extruders']:
+				self.logger.LogError("Printer %s does not have enough axis letters defined" % printer)
+			for n in distNames:
+				if n not in st.settings.keys():
+					self.logger.LogWarning("%s not specified for printer %s" % (n, printer))
+					st.settings[n] = 5
+					st.setModified(True)
+			for n in speedNames:
+				if n not in st.settings.keys():
+					self.logger.LogWarning("%s not specified for printer %s" % (n, printer))
+					st.settings[n] = 1800
+					st.setModified(True)
+			if "xyspeed" not in st.settings.keys():
+				self.logger.LogWarning("xyspeed not specified for printer %s" % (n, printer))
+				st.settings["xyspeed"] = 1800
+				st.setModified(True)
+			if "zspeed" not in st.settings.keys():
+				self.logger.LogWarning("xyspeed not specified for printer %s" % (n, printer))
+				st.settings["zspeed"] = 300
+				st.setModified(True)
 			
 		self.slicersettings = []
 		for slicer in self.slicers:
@@ -131,24 +191,24 @@ class Settings:
 					if opt in ['profile', 'profiledir', 'command', 'config']:
 						st.settings[opt] = value
 					else:
-						wx.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
+						self.logger.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
 					st.settings[opt] = value
 			else:
-				wx.LogError("No settings for slicer %s" % slicer)
+				self.logger.LogError("No settings for slicer %s" % slicer)
 
 			err = False					
 			if 'profile' not in st.settings.keys():
 				err = True
-				wx.LogError("Settings for slicer %s missing profile" % slicer)
+				self.logger.LogError("Settings for slicer %s missing profile" % slicer)
 			if 'profiledir' not in st.settings.keys():
 				err = True
-				wx.LogError("Settings for slicer %s missing profiledir" % slicer)
+				self.logger.LogError("Settings for slicer %s missing profiledir" % slicer)
 			if 'command' not in st.settings.keys():
 				err = True
-				wx.LogError("Settings for slicer %s missing command" % slicer)
+				self.logger.LogError("Settings for slicer %s missing command" % slicer)
 			if 'config' not in st.settings.keys():
 				err = True
-				wx.LogError("Settings for slicer %s missing config" % slicer)
+				self.logger.LogError("Settings for slicer %s missing config" % slicer)
 				
 			if not err:
 				st.setSlicerType()
@@ -209,9 +269,14 @@ class Settings:
 					pass
 
 				pt = self.printersettings[i]	
-				if pt.checkModified():			
+				if pt.checkModified():
+					spds = []
+					dsts = []
+					for n in pt.settings['axisletters']:
+						spds.append(n+"speed")
+						dsts.append(n+"distance")			
 					for k in pt.settings.keys():
-						if k in ['buildarea']:
+						if k in ['buildarea', 'extruders', 'axisletters', 'xyspeed', 'zspeed'] or k in dsts or k in spds:
 							self.cfg.set(sc, k, pt.settings[k])
 						
 			for i in range(len(self.slicers)):
@@ -241,6 +306,7 @@ class Settings:
 class SettingsFilePrep:
 	def __init__(self, app, cfg, folder, section):
 		self.app = app
+		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.gcodescale = 3
@@ -262,7 +328,7 @@ class SettingsFilePrep:
 					try:
 						self.gcodescale = int(value)
 					except:
-						wx.LogWarning("Non-integer value in ini file for gcodescale")
+						self.logger.LogWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
 			
 				elif opt == 'lastdirectory':
@@ -277,9 +343,9 @@ class SettingsFilePrep:
 				elif opt == 'usebuffereddc':
 					self.usebuffereddc = parseBoolean(value, False)
 				else:
-					wx.LogWarning("Unknown %s option: %s - ignoring" % (section, opt))
+					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section, opt))
 		else:
-			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 		
 	def setModified(self):
@@ -305,6 +371,7 @@ class SettingsFilePrep:
 class SettingsPlater:
 	def __init__(self, app, cfg, folder, section):
 		self.app = app
+		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.stlscale = 2
@@ -324,7 +391,7 @@ class SettingsPlater:
 					try:
 						self.stlscale = int(value)
 					except:
-						wx.LogWarning("Non-integer value in ini file for stlscale")
+						self.logger.LogWarning("Non-integer value in ini file for stlscale")
 						self.stlscale = 2
 			
 				elif opt == 'lastdirectory':
@@ -334,9 +401,9 @@ class SettingsPlater:
 					self.autoarrange = parseBoolean(value, False)
 					
 				else:
-					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 
@@ -361,13 +428,9 @@ class SettingsPlater:
 class SettingsManualCtl:
 	def __init__(self, app, cfg, folder, section):
 		self.app = app
+		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 
-		self.xyspeed = 2000.0
-		self.zspeed = 300.0
-		self.espeed = 300.0
-		self.edistance = 5.0
-		
 		if cfg is None:
 			self.modified = True
 			return
@@ -377,38 +440,12 @@ class SettingsManualCtl:
 		self.section = section	
 		if cfg.has_section(section):
 			for opt, value in cfg.items(section):
-				if opt == 'xyspeed':
-					try:
-						self.xyspeed = float(value)
-					except:
-						print "Invalid value in ini file for xyspeed"
-						self.xyspeed = 2000.0
-			
-				elif opt == 'zspeed':
-					try:
-						self.zspeed = float(value)
-					except:
-						print "Invalid value in ini file for zspeed"
-						self.zspeed = 300.0
-			
-				elif opt == 'espeed':
-					try:
-						self.espeed = float(value)
-					except:
-						print "Invalid value in ini file for espeed"
-						self.espeed = 300.0
-			
-				elif opt == 'edistance':
-					try:
-						self.edistance = float(value)
-					except:
-						print "Invalid value in ini file for edistance"
-						self.edistance = 3.0
-						
+				if opt == 'xxxxxxxxxx':
+					pass
 				else:
-					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 
@@ -424,19 +461,18 @@ class SettingsManualCtl:
 				self.cfg.add_section(self.section)
 			except ConfigParser.DuplicateSectionError:
 				pass
-			
-			self.cfg.set(self.section, "xyspeed", str(self.xyspeed))
-			self.cfg.set(self.section, "zspeed", str(self.zspeed))
-			self.cfg.set(self.section, "espeed", str(self.espeed))
-			self.cfg.set(self.section, "edistance", str(self.edistance))
 	
 	
 class SettingsPrintMon:
 	def __init__(self, app, cfg, folder, section):
 		self.app = app
+		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 		
 		self.gcodescale = 3
+		self.showprevious = True
+		self.showmoves = True
+		self.usebuffereddc = True
 		
 		if cfg is None:
 			self.modified = True
@@ -451,13 +487,20 @@ class SettingsPrintMon:
 					try:
 						self.gcodescale = int(value)
 					except:
-						wx.LogWarning("Non-integer value in ini file for gcodescale")
+						self.logger.LogWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
-			
+				elif opt == 'showprevious':
+					self.showprevious = parseBoolean(value, True)
+						
+				elif opt == 'showmoves':
+					self.showmoves = parseBoolean(value, True)
+						
+				elif opt == 'usebuffereddc':
+					self.usebuffereddc = parseBoolean(value, False)
 				else:
-					wx.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			wx.LogWarning("Missing %s section - assuming defaults" % section)
+			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 
@@ -475,4 +518,7 @@ class SettingsPrintMon:
 				pass
 			
 			self.cfg.set(self.section, "gcodescale", str(self.gcodescale))
+			self.cfg.set(self.section, "showprevious", str(self.showprevious))
+			self.cfg.set(self.section, "showmoves", str(self.showmoves))
+			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
 	
