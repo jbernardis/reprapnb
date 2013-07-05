@@ -68,6 +68,7 @@ class Settings:
 		self.slicers = ["slic3r"]
 		self.printer=""
 		self.printers=[]
+		self.startpane=0
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -84,7 +85,19 @@ class Settings:
 		self.modified = False	
 		if self.cfg.has_section(self.section):
 			for opt, value in self.cfg.items(self.section):
-				if opt == 'slicer':
+				if opt == 'startpane':
+					try:
+						self.startpane = int(value)
+					except:
+						self.logger.LogWarning("Invalid value for startpane")
+						self.startpane = 0
+						self.modified = True
+					if self.startpane not in [0, 1]:
+						self.logger.LogWarning("Startpane may only be 0, or 1")
+						self.startpane = 0
+						self.modified = True
+						
+				elif opt == 'slicer':
 					self.slicer = value
 				elif opt == 'slicers':
 					s = value.split(',')
@@ -255,6 +268,7 @@ class Settings:
 			except ConfigParser.DuplicateSectionError:
 				pass
 			
+			self.cfg.set(self.section, "startpane", str(self.startpane))
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
 			self.cfg.set(self.section, "printer", str(self.printer))

@@ -180,6 +180,12 @@ class MainFrame(wx.Frame):
 		sizer.AddSpacer((10,10))
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
+		
+		if self.settings.startpane == self.pxPlater:
+			self.nb.SetSelection(self.pxPlater)
+		elif self.settings.startpane == self.pxFilePrep:
+			self.nb.SetSelection(self.pxFilePrep)
+
 
 	def evtRepRap(self, evt):
 		print "Reprap evnt received, event = ", evt.event

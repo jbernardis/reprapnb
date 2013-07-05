@@ -16,12 +16,20 @@ bedColors = {
 			"PLA": [[39, wx.BLUE], [59, wx.Colour(255, 255, 0)], [999, wx.RED]],
 			"ABS": [[59, wx.BLUE], [109, wx.Colour(255, 255, 0)], [999, wx.RED]]}
 
+PAUSE_MODE_PAUSE = 1
+PAUSE_MODE_RESUME = 2
+
+PRINT_MODE_PRINT = 1
+PRINT_MODE_RESTART = 2
+
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app):
 		self.model = None
 		self.app = app
 		self.logger = self.app.logger
 		self.printPos = 0
+		self.printing = False
+		self.paused = False
 		self.appsettings = app.settings
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.printmon
@@ -36,15 +44,51 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerBtns.AddSpacer((20, 20))
 		
+		path = os.path.join(self.settings.cmdfolder, "images/restart.png")
+		self.pngRestart = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(self.pngRestart, wx.BLUE)
+		self.pngRestart.SetMask(mask)
+		
 		path = os.path.join(self.settings.cmdfolder, "images/print.png")
+		self.pngPrint = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(self.pngPrint, wx.BLUE)
+		self.pngPrint.SetMask(mask)
+		
+		self.bPrint = wx.BitmapButton(self, wx.ID_ANY, self.pngPrint, size=BUTTONDIM)
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.sizerBtns.Add(self.bPrint)
+		self.Bind(wx.EVT_BUTTON, self.doPrint, self.bPrint)
+		
+		path = os.path.join(self.settings.cmdfolder, "images/pause.png")
 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 		mask = wx.Mask(png, wx.BLUE)
 		png.SetMask(mask)
-		self.bTest = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
-		self.bTest.SetToolTipString("")
-		self.sizerBtns.Add(self.bTest)
-		self.Bind(wx.EVT_BUTTON, self.test, self.bTest)
+		self.bPause = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.sizerBtns.Add(self.bPause)
+		self.Bind(wx.EVT_BUTTON, self.doPause, self.bPause)
+		self.bPause.Enable(False)
 		
+		
+		self.sizerBtns.AddSpacer((20, 20))
+	
+		path = os.path.join(self.settings.cmdfolder, "images/zoomin.png")	
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bZoomIn.SetToolTipString("Zoom the view in")
+		self.sizerBtns.Add(self.bZoomIn)
+		self.Bind(wx.EVT_BUTTON, self.viewZoomIn, self.bZoomIn)
+		
+		path = os.path.join(self.settings.cmdfolder, "images/zoomout.png")	
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bZoomOut.SetToolTipString("Zoom the view out")
+		self.sizerBtns.Add(self.bZoomOut)
+		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 
 
 		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
@@ -64,6 +108,34 @@ class PrintMonitor(wx.Panel):
 		self.tHeight.SetFont(f)
 		self.sizerMain.Add(self.tHeight, pos=(5,1), flag=wx.EXPAND | wx.ALL)
 		
+		self.sizerOpts = wx.BoxSizer(wx.HORIZONTAL)
+				
+		self.cbPrevious = wx.CheckBox(self, wx.ID_ANY, "Show Previous Layer")
+		self.cbPrevious.SetToolTipString("Turn on/off drawing of the previous layer in the background")
+		self.Bind(wx.EVT_CHECKBOX, self.checkPrevious, self.cbPrevious)
+		self.cbPrevious.SetValue(self.settings.showprevious)
+		self.sizerOpts.Add(self.cbPrevious)
+		
+		self.sizerOpts.AddSpacer((20, 10))
+
+		self.cbMoves = wx.CheckBox(self, wx.ID_ANY, "Show Moves")
+		self.cbMoves.SetToolTipString("Turn on/off the drawing of non-extrusion moves")
+		self.Bind(wx.EVT_CHECKBOX, self.checkMoves, self.cbMoves)
+		self.cbMoves.SetValue(self.settings.showmoves)
+		self.sizerOpts.Add(self.cbMoves)
+		
+		self.sizerOpts.AddSpacer((20, 10))
+
+		self.cbBuffDC = wx.CheckBox(self, wx.ID_ANY, "Use Buffered DC")
+		self.Bind(wx.EVT_CHECKBOX, self.checkBuffDC, self.cbBuffDC)
+		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
+		self.sizerOpts.Add(self.cbBuffDC)
+
+		self.sizerMain.AddSpacer((10,10), pos=(6,1))		
+		self.sizerMain.Add(self.sizerOpts, pos=(7, 1), flag=wx.EXPAND | wx.ALL)
+		
+		
+		
 		self.sizerMain.AddSpacer((20,20), pos=(3,2))
 
 		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
@@ -81,10 +153,52 @@ class PrintMonitor(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		
 #FIXIT
-		#self.app.setPrinterBusy(True)
 		self.app.setPrinterBusy(False)
+
+	def setPrintMode(self, mode):
+		if mode == PRINT_MODE_PRINT:
+			self.bPrint.SetToolTipString("Start the print")
+			self.bPrint.SetBitmapLabel(self.pngPrint)
+		elif mode == PRINT_MODE_RESTART:
+			self.bPrint.SetToolTipString("Restart the print")
+			self.bPrint.SetBitmapLabel(self.pngRestart)
+
+	def setPauseMode(self, mode):
+		if mode == PAUSE_MODE_PAUSE:
+			self.bPause.SetToolTipString("Pause the print")
+		elif mode == PAUSE_MODE_RESUME:
+			self.bPause.SetToolTipString("Resume the print from the paused point")
+
 		
-	def test(self, evt):
+	def doPrint(self, evt):
+		#FIXIT
+		self.printPos = 0
+		self.printing = True
+		self.paused = False
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.bPrint.Enable(False)
+		self.bPause.Enable(True)
+		self.app.setPrinterBusy(True)
+		
+	def doPause(self, evt):
+		#FIXIT
+		if self.paused:
+			self.paused = False
+			self.printing = True
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPrint.Enable(False)
+			self.app.setPrinterBusy(True)
+		else:
+			self.paused = True
+			self.printing = False
+			self.setPrintMode(PRINT_MODE_RESTART)
+			self.setPauseMode(PAUSE_MODE_RESUME)
+			self.bPrint.Enable(True)
+			self.app.setPrinterBusy(False)
+		
+	def test(self):
 		self.printPos += 10
 		self.gcf.setPrintPosition(self.printPos)
 		
@@ -114,6 +228,27 @@ class PrintMonitor(wx.Panel):
 
 	def onClose(self, evt):
 		return True
+		
+	def viewZoomIn(self, evt):
+		self.gcf.zoomIn()
+		
+	def viewZoomOut(self, evt):
+		self.gcf.zoomOut()
+		
+	def checkBuffDC(self, evt):
+		self.settings.usebuffereddc = evt.IsChecked()
+		self.settings.setModified()
+		self.gcf.redrawCurrentLayer()
+		
+	def checkPrevious(self, evt):
+		self.settings.showprevious = evt.IsChecked()
+		self.settings.setModified()
+		self.gcf.redrawCurrentLayer()
+		
+	def checkMoves(self, evt):
+		self.settings.showmoves = evt.IsChecked()
+		self.settings.setModified()
+		self.gcf.redrawCurrentLayer()
 	
 	def forwardModel(self, model, name=""):
 		self.model = model
@@ -139,7 +274,18 @@ class PrintMonitor(wx.Panel):
 		self.enableButtons()
 		self.setLayer(layer)
 		
-	# need to handle change printer, slicer, profile
+		self.printPos = 0
+		self.printing = False
+		self.paused = False
+
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.bPrint.Enable(True)
+		self.bPause.Enable(False)
+		
+		self.app.setPrinterBusy(False)
+		
+	#FIXIT need to handle change printer, slicer, profile
 		
 	def enableButtons(self, flag=True):
 		if flag:
