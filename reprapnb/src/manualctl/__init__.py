@@ -17,34 +17,26 @@ class ManualControl(wx.Panel):
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
 		self.printersettings = self.app.printersettings
-		self.temperatures = self.app.slicer.type.getProfileTemps()
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
-		
 
 		self.moveAxis = MoveAxis(self, self.app)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
-
-
-
-		
 		
 		self.sizerExtrude = self.addExtruders()
 		self.sizerHeat = self.addHeaters()
 		
 		self.sizerGCode = self.addGCEntry()
-			
-
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
 		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(2,1))
-		self.sizerMain.AddSpacer((20,20), pos=(0,2))
+		self.sizerMain.AddSpacer((10,10), pos=(0,2))
 		self.sizerMain.Add(self.sizerExtrude, pos=(1,3))
-		self.sizerMain.AddSpacer((20,20), pos=(0,4))
+		self.sizerMain.AddSpacer((10,10), pos=(0,4))
 		self.sizerMain.Add(self.sizerHeat,pos=(1,5))
 		self.sizerMain.Add(self.sizerGCode, pos=(2,3),span=(1,3))
 
@@ -76,13 +68,9 @@ class ManualControl(wx.Panel):
 			sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude
-			
-	def addHeaters(self):
-		sizerHeat = wx.BoxSizer(wx.VERTICAL)
-		sizerHeat.AddSpacer((10,10))
-
-		self.hotend = []
-		self.heLabel = []		
+	
+	def getProfileHeaterValue(self, idx=None):
+		self.temperatures = self.app.slicer.type.getProfileTemps()
 		maxExt = self.printersettings.settings['extruders']
 		if len(self.temperatures) < 2:
 			self.logger.LogError("No hot end temperatures configured in your profile")
@@ -92,6 +80,17 @@ class ManualControl(wx.Panel):
 			ntemps = len(self.temperatures)
 			for i in range(maxExt - ntemps + 1):
 				self.temperatures.append(t)
+		if idx is not None:
+			return self.temperatures[idx]
+			
+	def addHeaters(self):
+		sizerHeat = wx.BoxSizer(wx.VERTICAL)
+		sizerHeat.AddSpacer((10,10))
+
+		self.hotend = []
+		self.heLabel = []		
+		maxExt = self.printersettings.settings['extruders']
+		self.getProfileHeaterValue()
 
 		for i in range(maxExt):
 			name = "Hot End"
@@ -104,7 +103,7 @@ class ManualControl(wx.Panel):
 			self.heLabel.append(t)
 			sizerHeat.AddSpacer((10,10))
 		
-			he = Heater(self, self.app, name="Hot End", target=self.temperatures[i+1], range=(20, 250), oncmd="G104")
+			he = Heater(self, self.app, i+1, name="Hot End", target=self.temperatures[i+1], range=(20, 250), oncmd="G104")
 			sizerHeat.Add(he)
 			self.hotend.append(he)
 			sizerHeat.AddSpacer((10,10))
@@ -119,7 +118,7 @@ class ManualControl(wx.Panel):
 		
 		sizerHeat.AddSpacer((10,10))
 		
-		self.BuildPlatform = Heater(self, self.app, name="Build Platform", target=self.temperatures[0], range=(20, 130), oncmd="G140")
+		self.BuildPlatform = Heater(self, self.app, 0, name="Build Platform", target=self.temperatures[0], range=(20, 130), oncmd="G140")
 		sizerHeat.Add(self.BuildPlatform)
 		return sizerHeat
 

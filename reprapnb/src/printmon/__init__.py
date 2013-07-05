@@ -1,5 +1,6 @@
 import wx, os
 from gcmframe import GcmFrame
+from tempgraph import TempGraph
 
 BUTTONDIM = (64, 64)
 #		t = wx.StaticText(self, -1, "(if connected) Start/Pause/Restart, SD printing, follow print progress, fan control, speed control", (60,60))
@@ -39,10 +40,10 @@ class PrintMonitor(wx.Panel):
 		self.gcFile = None
 
 		self.sizerMain = wx.GridBagSizer()
-		self.sizerMain.AddSpacer((20, 20), pos=(0,0))
+		self.sizerMain.AddSpacer((10,10), pos=(0,0))
 		
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns.AddSpacer((10,10))
 		
 		path = os.path.join(self.settings.cmdfolder, "images/restart.png")
 		self.pngRestart = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
@@ -69,8 +70,7 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doPause, self.bPause)
 		self.bPause.Enable(False)
 		
-		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns.AddSpacer((10,10))
 	
 		path = os.path.join(self.settings.cmdfolder, "images/zoomin.png")	
 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
@@ -90,10 +90,8 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 
-
 		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
-		self.sizerMain.AddSpacer((20,20), pos=(2,0))
-		
+		self.sizerMain.AddSpacer((10,10), pos=(2,0))
 
 		self.gcf = GcmFrame(self, self.model, self.settings, self.printersettings.settings['buildarea'])
 		self.sizerMain.Add(self.gcf, pos=(3,1))
@@ -116,7 +114,7 @@ class PrintMonitor(wx.Panel):
 		self.cbPrevious.SetValue(self.settings.showprevious)
 		self.sizerOpts.Add(self.cbPrevious)
 		
-		self.sizerOpts.AddSpacer((20, 10))
+		self.sizerOpts.AddSpacer((10, 10))
 
 		self.cbMoves = wx.CheckBox(self, wx.ID_ANY, "Show Moves")
 		self.cbMoves.SetToolTipString("Turn on/off the drawing of non-extrusion moves")
@@ -124,7 +122,7 @@ class PrintMonitor(wx.Panel):
 		self.cbMoves.SetValue(self.settings.showmoves)
 		self.sizerOpts.Add(self.cbMoves)
 		
-		self.sizerOpts.AddSpacer((20, 10))
+		self.sizerOpts.AddSpacer((10, 10))
 
 		self.cbBuffDC = wx.CheckBox(self, wx.ID_ANY, "Use Buffered DC")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBuffDC, self.cbBuffDC)
@@ -134,9 +132,7 @@ class PrintMonitor(wx.Panel):
 		self.sizerMain.AddSpacer((10,10), pos=(6,1))		
 		self.sizerMain.Add(self.sizerOpts, pos=(7, 1), flag=wx.EXPAND | wx.ALL)
 		
-		
-		
-		self.sizerMain.AddSpacer((20,20), pos=(3,2))
+		self.sizerMain.AddSpacer((10,10), pos=(3,2))
 
 		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
 		self.slideLayer = wx.Slider(
@@ -149,6 +145,13 @@ class PrintMonitor(wx.Panel):
 		self.slideLayer.SetPageSize(1);
 		self.slideLayer.Disable()
 		self.sizerMain.Add(self.slideLayer, pos=(3,3), flag=wx.ALIGN_RIGHT)
+		
+		self.sizerMain.AddSpacer((10,10), pos=(3,4))
+
+		self.gTemp = TempGraph(self, self.settings)
+		self.sizerMain.Add(self.gTemp, pos=(3,5))
+
+		self.sizerMain.AddSpacer((10,10), pos=(3,6))
 
 		self.SetSizer(self.sizerMain)
 		
