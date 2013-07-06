@@ -10,13 +10,13 @@ import os
 BUTTONDIM = (64, 64)
 
 class Heater(wx.Window):
-    def __init__(self, parent, app, idx, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
+    def __init__(self, parent, app, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
         self.parent = parent
         self.app = app
-        self.index = idx
         self.logger = self.app.logger
         self.name = name
         self.shortname = shortname
+        self.profileTarget = target
         self.range = range
         self.onCmd = oncmd
         wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)        
@@ -27,7 +27,7 @@ class Heater(wx.Window):
         t.SetFont(f)
         sizerHtr.Add(t, pos=(0,2)) 
         
-        self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
+        self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "0.0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
         f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.tTemp.SetFont(f)
         sizerHtr.Add(self.tTemp, pos=(0,3))
@@ -37,7 +37,7 @@ class Heater(wx.Window):
         t.SetFont(f)
         sizerHtr.Add(t, pos=(1,2))
         
-        self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
+        self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "0.0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
         f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.tTarget.SetFont(f)
         sizerHtr.Add(self.tTarget, pos=(1,3))
@@ -88,10 +88,15 @@ class Heater(wx.Window):
         self.slTarget.SetRange(trange[0], trange[1])
         
     def importProfile(self, evt):
-        self.logger.LogMessage("Import for index %d" % self.index)
-        t = self.parent.getProfileHeaterValue(self.index)
-        self.slTarget.SetValue(t)
-       
+        self.slTarget.SetValue(self.profileTarget)
+        
+    def setHeatTarget(self, t):
+        try:
+            ft = float(t)
+            self.tTarget.SetValue("%.1f" % ft)
+        except:
+            self.logger.LogError("Invalid value for %s temperature: '%s'" % (self.name, t))
+      
     def setTemp(self, t):
         try:
             ft = float(t)
@@ -114,12 +119,8 @@ class Heater(wx.Window):
     
     def heaterOn(self, evt):
         t = self.slTarget.GetValue()
-        self.tTarget.SetValue("%d" % t)
         self.app.reprap.send_now("%s S%d" % (self.onCmd, t))
-        self.app.setTargetTemp(self.shortname, t)
         
     def heaterOff(self, evt):
-        self.tTarget.SetValue("0")
         self.app.reprap.send_now("%s S0" % self.onCmd)
-        self.app.setTargetTemp(self.shortname, None)
-
+ 

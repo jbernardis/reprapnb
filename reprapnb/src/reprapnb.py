@@ -31,6 +31,7 @@ baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
 class MainFrame(wx.Frame):
 	def __init__(self):
+		self.ctr = 0
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -181,6 +182,8 @@ class MainFrame(wx.Frame):
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
 		
+		self.doChoosePrinter(None)
+		
 		if self.settings.startpane == self.pxPlater:
 			self.nb.SetSelection(self.pxPlater)
 		elif self.settings.startpane == self.pxFilePrep:
@@ -214,8 +217,36 @@ class MainFrame(wx.Frame):
 		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
 		if self.printersettings is None:
 			self.logger.LogError("Unable to get printer settings")
-		self.pgManCtl.changePrinter()
-		self.pgPrtMon.changePrinter()
+			return
+		
+		extruders = []
+		heaters = []
+		temps = self.slicer.type.getProfileTemps()
+		maxExt = self.printersettings.settings['extruders']
+		axes = self.printersettings.settings['axisletters']
+		if len(temps) < 2:
+			self.logger.LogError("No hot end temperatures configured in profile")
+			return
+		hbpTemp = temps[0]
+		temps = temps[1:]
+		if len(temps) != maxExt:
+			self.logger.LogWarning("Profile does not have the correct number of extruders configured")
+			t = temps[0]
+			for i in range(maxExt - len(temps)):
+				temps.append(t)
+				
+		if maxExt == 1:
+			extruders.append(["Ext", "Extruder", axes[0]])
+			heaters.append(["HE", "Hot End", temps[0], (20, 250), "G104"])
+		else:
+			for i in range(maxExt):
+				extruders.append(["Ext%d" % i, "Extruder %d" % i, axes[i]])
+				heaters.append(["HE%d" % i, "Hot End %d" % i, temps[i], (20, 250), "G104"])
+			
+		heaters.append(["HBP", "Build Platform", hbpTemp, (20, 150), "G140"])
+
+		self.pgManCtl.changePrinter(heaters, extruders)
+		self.pgPrtMon.changePrinter(heaters, extruders)
 		
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
@@ -235,6 +266,19 @@ class MainFrame(wx.Frame):
 		#FIXIT - notify MANCTL and prtmin
 		
 	def doPort(self, evt):
+		if self.ctr == 0:
+			self.setHeatTarget("HBP", 60)
+		elif self.ctr == 1:
+			self.setHeatTarget("HE0", 185)
+		elif self.ctr == 2:
+			self.setHeatTarget("HE1", 155)
+		elif self.ctr == 3:
+			self.setHeatTarget("HBP", 0)
+		
+		self.ctr += 1
+		if self.ctr == 9:
+			self.ctr = 0
+			
 		l = self.scanSerial()
 		self.cbPort.Clear()
 		if len(l) > 0:
@@ -329,9 +373,9 @@ class MainFrame(wx.Frame):
 		self.nb.SetSelection(self.pxPrtMon)
 		self.pgPrtMon.forwardModel(model, name=name)
 		
-	def setTargetTemp(self, name, temp):
-		self.pgPrtMon.setTarget(name, temp)
-
+	def setHeatTarget(self, name, temp):
+		self.pgManCtl.setHeatTarget(name, temp)
+		self.pgPrtMon.setHeatTarget(name, temp)
 		
 	def onClose(self, evt):
 		if self.connected:

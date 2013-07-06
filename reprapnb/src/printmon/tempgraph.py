@@ -4,9 +4,7 @@ Created on Apr 10, 2013
 @author: Jeff
 '''
 import wx
-import os
 
-MAXZOOM = 10
 MAXX = 240
 MAXY = 250
 
@@ -65,15 +63,16 @@ class TempGraph (wx.Window):
 		self.targets = []			
 		for tgt in ntargets.keys():
 			y = ntargets[tgt]
-			ty = (MAXY - y) * scale
-			t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (y, tgt), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
-			if tgt not in colors.keys():
-				c = "red"
-			else:
-				c = colors[tgt]
-			t.SetForegroundColour(c)
-			t.SetFont(f)
-			self.targets.append(t)
+			if y > 0:
+				ty = (MAXY - y) * scale
+				t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (y, tgt), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
+				if tgt not in colors.keys():
+					c = "red"
+				else:
+					c = colors[tgt]
+				t.SetForegroundColour(c)
+				t.SetFont(f)
+				self.targets.append(t)
 			
 		self.graph.updateTargets(ntargets)
 
@@ -151,7 +150,7 @@ class Graph (wx.Window):
 				c = colors[tgt]
 			dc.SetPen(wx.Pen(c, 1, wx.SHORT_DASH))
 			y = self.targets[tgt]
-			if y >= 0 and y <= MAXY:
+			if y > 0 and y <= MAXY:
 				self.drawLine(dc, (xleft, y), (xright, y))
 
 	def drawLine(self, dc, pa, pb):				

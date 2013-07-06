@@ -86,7 +86,6 @@ class FilePrepare(wx.Panel):
 		self.model = None
 		self.app = app
 		self.logger = self.app.logger
-		self.appsettings = app.settings
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
 		self.modified = False

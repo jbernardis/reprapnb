@@ -3,7 +3,7 @@ from gcmframe import GcmFrame
 from tempgraph import TempGraph
 
 BUTTONDIM = (64, 64)
-#		t = wx.StaticText(self, -1, "(if connected) Start/Pause/Restart, SD printing, follow print progress, fan control, speed control", (60,60))
+#Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
 	
 myRed = wx.Colour(254, 142, 82, 179)
 myBlue = wx.Colour(51, 115, 254, 179)
@@ -31,14 +31,11 @@ class PrintMonitor(wx.Panel):
 		self.printPos = 0
 		self.printing = False
 		self.paused = False
-		self.appsettings = app.settings
 		self.printersettings = self.app.printersettings
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
 		self.targets = {}
-		
-		self.gcFile = None
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -136,6 +133,7 @@ class PrintMonitor(wx.Panel):
 		self.sizerMain.AddSpacer((10,10), pos=(3,2))
 
 		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
+		
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
@@ -288,18 +286,14 @@ class PrintMonitor(wx.Panel):
 		
 		self.app.setPrinterBusy(False)
 		
-	def changePrinter(self):
+	def changePrinter(self, heaters, extruders):
 		self.targets = {}
 		self.gTemp.setTargets({})
 		
 	#FIXIT need to handle change printer, slicer, profile
 	#FIXIT target temps should come from the printer
-	def setTarget(self, name, temp):
-		if temp is not None:
-			self.targets[name] = temp
-		else:
-			del self.targets[name]
-			
+	def setHeatTarget(self, name, temp):
+		self.targets[name] = temp
 		self.gTemp.setTargets(self.targets)
 		
 	def enableButtons(self, flag=True):

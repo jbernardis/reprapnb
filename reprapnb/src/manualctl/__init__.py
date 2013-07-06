@@ -17,6 +17,12 @@ class ManualControl(wx.Panel):
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
 		self.printersettings = self.app.printersettings
+		self.htrWin = []
+		self.htrLabel = []	
+		self.heaters = []	
+		self.extWin = []
+		self.extLabel = []
+		self.extruders = []
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -26,39 +32,37 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruders()
-		self.sizerHeat = self.addHeaters()
-		
-		self.sizerGCode = self.addGCEntry()
+		self.sizerExtrude = None
+		self.sizerHeat = None
+		self.sizerGCode = None
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
 		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(2,1))
 		self.sizerMain.AddSpacer((10,10), pos=(0,2))
-		self.sizerMain.Add(self.sizerExtrude, pos=(1,3))
 		self.sizerMain.AddSpacer((10,10), pos=(0,4))
-		self.sizerMain.Add(self.sizerHeat,pos=(1,5))
-		self.sizerMain.Add(self.sizerGCode, pos=(2,3),span=(1,3))
 
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
 		
+	def setHeatTarget(self, name, temp):
+		if name not in self.htrMap.keys():
+			self.logger.LogError("Unknown heater name: %s" % name)
+			return
+		
+		self.htrMap[name].setHeatTarget(temp)
+		
 	def addExtruders(self):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
-		self.extruder = []
+		self.extWin = []
 		self.extLabel = []
 		
-		maxExt = self.printersettings.settings['extruders']
-		axes = self.printersettings.settings['axisletters']				
-		for i in range(maxExt):
-			ex = Extruder(self, self.app, axis=axes[i])
-			self.extruder.append(ex)
-			name = "Extruder"
-			if maxExt > 1:
-				name += " " + str(i)
-			t = wx.StaticText(self, wx.ID_ANY, name, style=wx.ALIGN_LEFT, size=(200, -1))
+		for e in self.extruders:
+			ex = Extruder(self, self.app, axis=e[2])
+			self.extWin.append(ex)
+			t = wx.StaticText(self, wx.ID_ANY, e[1], style=wx.ALIGN_LEFT, size=(200, -1))
 			f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 			t.SetFont(f)
 			self.extLabel.append(t)
@@ -68,62 +72,31 @@ class ManualControl(wx.Panel):
 			sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude
-	
-	def getProfileHeaterValue(self, idx=None):
-		self.temperatures = self.app.slicer.type.getProfileTemps()
-		maxExt = self.printersettings.settings['extruders']
-		if len(self.temperatures) < 2:
-			self.logger.LogError("No hot end temperatures configured in your profile")
-		if len(self.temperatures) != maxExt+1:
-			self.logger.LogWarning("Your profile does not have the same number of extruders configured")
-			t = self.temperatures[1]
-			ntemps = len(self.temperatures)
-			for i in range(maxExt - ntemps + 1):
-				self.temperatures.append(t)
-		if idx is not None:
-			return self.temperatures[idx]
 			
 	def addHeaters(self):
 		sizerHeat = wx.BoxSizer(wx.VERTICAL)
 		sizerHeat.AddSpacer((10,10))
 
-		self.hotend = []
-		self.heLabel = []		
-		maxExt = self.printersettings.settings['extruders']
-		self.getProfileHeaterValue()
+		self.htrWin = []
+		self.htrLabel = []	
+		
+		self.htrMap = {}	
 
-		for i in range(maxExt):
-			name = "Hot End"
-			shortname = "HE"
-			if maxExt > 1:
-				name += " " + str(i)
-				shortname += str(i)
-			t = wx.StaticText(self, wx.ID_ANY, name, style=wx.ALIGN_LEFT, size=(200, -1))
+		for h in self.heaters:
+			t = wx.StaticText(self, wx.ID_ANY, h[1], style=wx.ALIGN_LEFT, size=(200, -1))
 			f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 			t.SetFont(f)
 			sizerHeat.Add(t, flag=wx.LEFT)
-			self.heLabel.append(t)
+			self.htrLabel.append(t)
 			sizerHeat.AddSpacer((10,10))
 		
-			he = Heater(self, self.app, i+1, name=name, shortname=shortname, 
-					target=self.temperatures[i+1], range=(20, 250), oncmd="G104")
+			he = Heater(self, self.app, name=h[1], shortname=h[0], 
+					target=h[2], range=h[3], oncmd=h[4])
 			sizerHeat.Add(he)
-			self.hotend.append(he)
+			self.htrWin.append(he)
+			self.htrMap[h[0]] = he
 			sizerHeat.AddSpacer((10,10))
-		
-		sizerHeat.AddSpacer((20,20))
-		
-		t = wx.StaticText(self, wx.ID_ANY, "Build Platform", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		t.SetFont(f)
-		sizerHeat.Add(t, flag=wx.LEFT)
-		self.bpLabel = t
-		
-		sizerHeat.AddSpacer((10,10))
-		
-		self.BuildPlatform = Heater(self, self.app, 0, name="Build Platform", shortname="HBP",
-								target=self.temperatures[0], range=(20, 130), oncmd="G140")
-		sizerHeat.Add(self.BuildPlatform)
+
 		return sizerHeat
 
 	def addGCEntry(self):
@@ -142,57 +115,57 @@ class ManualControl(wx.Panel):
 		sizerGCode.Add(self.GCEntry)
 		
 		return sizerGCode
-
 		
-	def changePrinter(self):
-		self.printersettings = self.app.printersettings
+	def changePrinter(self, heaters, extruders):
+		self.heaters = heaters
+		self.extruders = extruders
 
-		item = self.sizerMain.FindItem(self.sizerExtrude)
-		if item is None:
-			self.logger.LogError("Unable to locate Extruder sizer")
-			return False
-		
-		oldPos = item.GetPos()
-		oldSpan = item.GetSpan()
-		self.sizerMain.Detach(self.sizerExtrude)
-		for ex in self.extruder:
-			ex.Destroy()
-		for exl in self.extLabel:
-			exl.Destroy()
+		oldPos = (1,3)
+		oldSpan = (1,1)
+		if self.sizerExtrude is not None:
+			item = self.sizerMain.FindItem(self.sizerExtrude)
+			if item is not None:
+				oldPos = item.GetPos()
+				oldSpan = item.GetSpan()
+				self.sizerMain.Detach(self.sizerExtrude)
+				for ex in self.extWin:
+					ex.Destroy()
+				for exl in self.extLabel:
+					exl.Destroy()
+				
 		self.sizerExtrude = self.addExtruders()
 		self.sizerMain.Add(self.sizerExtrude, pos=oldPos, span=oldSpan)
 
-		item = self.sizerMain.FindItem(self.sizerHeat)
-		if item is None:
-			self.logger.LogError("Unable to locate Heater sizer")
-			return False
-		
-		oldPos = item.GetPos()
-		oldSpan = item.GetSpan()
-		self.sizerMain.Detach(self.sizerHeat)
-		for he in self.hotend:
-			he.Destroy()
-		for hel in self.heLabel:
-			hel.Destroy()
-		self.BuildPlatform.Destroy()
-		self.bpLabel.Destroy()
+		oldPos = (1,5)
+		oldSpan = (1,1)
+		if self.sizerHeat is not None:
+			item = self.sizerMain.FindItem(self.sizerHeat)
+			if item is not None:
+				oldPos = item.GetPos()
+				oldSpan = item.GetSpan()
+				self.sizerMain.Detach(self.sizerHeat)
+				for he in self.htrWin:
+					he.Destroy()
+				for hel in self.htrLabel:
+					hel.Destroy()
+			
 		self.sizerHeat = self.addHeaters()
 		self.sizerMain.Add(self.sizerHeat, pos=oldPos, span=oldSpan)
 
-		item = self.sizerMain.FindItem(self.sizerGCode)
-		if item is None:
-			self.logger.LogError("Unable to locate G Code sizer")
-			return False
-		
-		oldPos = item.GetPos()
-		oldSpan = item.GetSpan()
-		self.sizerMain.Detach(self.sizerGCode)
-		self.GCEntry.Destroy()
-		self.GCELabel.Destroy()
+		oldPos = (2,3)
+		oldSpan = (1,3)
+		if self.sizerGCode is not None:
+			item = self.sizerMain.FindItem(self.sizerGCode)
+			if item is not None:
+				oldPos = item.GetPos()
+				oldSpan = item.GetSpan()
+				self.sizerMain.Detach(self.sizerGCode)
+				self.GCEntry.Destroy()
+				self.GCELabel.Destroy()
+			
 		self.sizerGCode = self.addGCEntry()
 		self.sizerMain.Add(self.sizerGCode, pos=oldPos, span=oldSpan)
 
-		self.sizerMain.RecalcSizes()	
 		self.Layout()
 		self.Fit()
 	
