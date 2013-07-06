@@ -36,6 +36,7 @@ class PrintMonitor(wx.Panel):
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
+		self.targets = {}
 		
 		self.gcFile = None
 
@@ -154,8 +155,7 @@ class PrintMonitor(wx.Panel):
 		self.sizerMain.AddSpacer((10,10), pos=(3,6))
 
 		self.SetSizer(self.sizerMain)
-		
-#FIXIT
+
 		self.app.setPrinterBusy(False)
 
 	def setPrintMode(self, mode):
@@ -288,7 +288,19 @@ class PrintMonitor(wx.Panel):
 		
 		self.app.setPrinterBusy(False)
 		
+	def changePrinter(self):
+		self.targets = {}
+		self.gTemp.setTargets({})
+		
 	#FIXIT need to handle change printer, slicer, profile
+	#FIXIT target temps should come from the printer
+	def setTarget(self, name, temp):
+		if temp is not None:
+			self.targets[name] = temp
+		else:
+			del self.targets[name]
+			
+		self.gTemp.setTargets(self.targets)
 		
 	def enableButtons(self, flag=True):
 		if flag:

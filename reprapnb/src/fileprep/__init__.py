@@ -445,6 +445,7 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.setGCodeLoaded(False)
 		self.bOpen.Enable(False)
+		self.bSlice.Enable(False)
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -456,6 +457,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage(evt.msg)
 			self.gcFile = None
 			self.bOpen.Enable(True)
+			self.bSlice.Enable(True)
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
@@ -524,6 +526,8 @@ class FilePrepare(wx.Panel):
 			return
 		self.buildModel()
 		self.setModified(False)
+		self.bOpen.Enable(True)
+		self.bSlice.Enable(True)
 		
 		if self.temporaryFile:
 			try:
@@ -581,8 +585,6 @@ class FilePrepare(wx.Panel):
 		self.enableButtons()
 		
 	def enableButtons(self):
-		self.bSlice.Enable(self.gcodeLoaded)
-		self.bOpen.Enable(True)
 		self.bSave.Enable(self.gcodeLoaded)
 		self.bSaveLayer.Enable(self.gcodeLoaded)
 		self.bFilamentChange.Enable(self.gcodeLoaded)

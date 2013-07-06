@@ -15,6 +15,8 @@ scale = 1.5
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
+colors = { "HBP": "blue", "HE": "red", "HE0": "red", "HE1": "yellow"}
+
 class TempGraph (wx.Window):
 	def __init__(self, parent, settings):
 		self.settings = settings
@@ -38,7 +40,6 @@ class TempGraph (wx.Window):
 		self.yLegend()
 		self.xLegend()
 		#FIXIT
-		self.setTargets([[60, "HBP", "blue"], [235, "HE1", "red"]])
 		
 	def yLegend(self):
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
@@ -55,43 +56,34 @@ class TempGraph (wx.Window):
 			t = wx.StaticText(self, wx.ID_ANY, "%dm" % (x-xf), pos=(tx*60+30, MAXY*scale+10), size=(30, -1), style=wx.ALIGN_CENTER)
 			t.SetFont(f)
 			
-	def setTargets(self, newTargets):
+	def setTargets(self, ntargets):
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		for i in self.targets:
 			i.Destroy()
 
 		tx = MAXX*scale+45
 		self.targets = []			
-		for tgt in newTargets:
-			ty = (MAXY - tgt[0]) * scale
-			t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (tgt[0], tgt[1]), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
-			t.SetForegroundColour(tgt[2])
+		for tgt in ntargets.keys():
+			y = ntargets[tgt]
+			ty = (MAXY - y) * scale
+			t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (y, tgt), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
+			if tgt not in colors.keys():
+				c = "red"
+			else:
+				c = colors[tgt]
+			t.SetForegroundColour(c)
 			t.SetFont(f)
 			self.targets.append(t)
 			
-		self.graph.updateTargets(newTargets)
+		self.graph.updateTargets(ntargets)
 
-	#FIXIT			
-	def getProfileHeaterValue(self, idx=None):
-		self.temperatures = self.app.slicer.type.getProfileTemps()
-		maxExt = self.printersettings.settings['extruders']
-		if len(self.temperatures) < 2:
-			self.logger.LogError("No hot end temperatures configured in your profile")
-		if len(self.temperatures) != maxExt+1:
-			self.logger.LogWarning("Your profile does not have the same number of extruders configured")
-			t = self.temperatures[1]
-			ntemps = len(self.temperatures)
-			for i in range(maxExt - ntemps + 1):
-				self.temperatures.append(t)
-		if idx is not None:
-			return self.temperatures[idx]
 		
 class Graph (wx.Window):
 	def __init__(self, parent, settings, printersettings):
 		self.parent = parent
 		self.settings = settings
 		self.printersettings = printersettings
-		self.targets = []
+		self.targets = {}
 		
 		sz = [x * scale for x in [MAXX, MAXY]]
 		wx.Window.__init__(self,parent,wx.ID_ANY,size=sz)
@@ -111,8 +103,8 @@ class Graph (wx.Window):
 		self.buffer = wx.EmptyBitmap(w, h)
 		self.redrawGraph()
 		
-	def updateTargets(self, newTargets):
-		self.targets = newTargets[:]
+	def updateTargets(self, targets):
+		self.targets = targets.copy()
 		self.redrawGraph()
 	
 	def redrawGraph(self):
@@ -152,9 +144,13 @@ class Graph (wx.Window):
 			if x >= 0 and x <= MAXX:
 				self.drawLine(dc, (x, ytop), (x, ybottom))
 				
-		for tgt in self.targets:
-			dc.SetPen(wx.Pen(tgt[2], 2))
-			y = tgt[0]
+		for tgt in self.targets.keys():
+			if tgt not in colors.keys():
+				c = "red"
+			else:
+				c = colors[tgt]
+			dc.SetPen(wx.Pen(c, 1, wx.SHORT_DASH))
+			y = self.targets[tgt]
 			if y >= 0 and y <= MAXY:
 				self.drawLine(dc, (xleft, y), (xright, y))
 

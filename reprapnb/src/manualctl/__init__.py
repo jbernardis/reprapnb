@@ -94,8 +94,10 @@ class ManualControl(wx.Panel):
 
 		for i in range(maxExt):
 			name = "Hot End"
+			shortname = "HE"
 			if maxExt > 1:
 				name += " " + str(i)
+				shortname += str(i)
 			t = wx.StaticText(self, wx.ID_ANY, name, style=wx.ALIGN_LEFT, size=(200, -1))
 			f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 			t.SetFont(f)
@@ -103,7 +105,8 @@ class ManualControl(wx.Panel):
 			self.heLabel.append(t)
 			sizerHeat.AddSpacer((10,10))
 		
-			he = Heater(self, self.app, i+1, name="Hot End", target=self.temperatures[i+1], range=(20, 250), oncmd="G104")
+			he = Heater(self, self.app, i+1, name=name, shortname=shortname, 
+					target=self.temperatures[i+1], range=(20, 250), oncmd="G104")
 			sizerHeat.Add(he)
 			self.hotend.append(he)
 			sizerHeat.AddSpacer((10,10))
@@ -118,7 +121,8 @@ class ManualControl(wx.Panel):
 		
 		sizerHeat.AddSpacer((10,10))
 		
-		self.BuildPlatform = Heater(self, self.app, 0, name="Build Platform", target=self.temperatures[0], range=(20, 130), oncmd="G140")
+		self.BuildPlatform = Heater(self, self.app, 0, name="Build Platform", shortname="HBP",
+								target=self.temperatures[0], range=(20, 130), oncmd="G140")
 		sizerHeat.Add(self.BuildPlatform)
 		return sizerHeat
 

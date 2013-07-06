@@ -215,6 +215,7 @@ class MainFrame(wx.Frame):
 		if self.printersettings is None:
 			self.logger.LogError("Unable to get printer settings")
 		self.pgManCtl.changePrinter()
+		self.pgPrtMon.changePrinter()
 		
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
@@ -327,6 +328,9 @@ class MainFrame(wx.Frame):
 	def forwardToPrintMon(self, model, name=""):
 		self.nb.SetSelection(self.pxPrtMon)
 		self.pgPrtMon.forwardModel(model, name=name)
+		
+	def setTargetTemp(self, name, temp):
+		self.pgPrtMon.setTarget(name, temp)
 
 		
 	def onClose(self, evt):

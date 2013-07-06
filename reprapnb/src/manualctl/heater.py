@@ -10,12 +10,13 @@ import os
 BUTTONDIM = (64, 64)
 
 class Heater(wx.Window):
-    def __init__(self, parent, app, idx, name="", target=20, range=(0, 100), oncmd = "G104"):
+    def __init__(self, parent, app, idx, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
         self.parent = parent
         self.app = app
         self.index = idx
         self.logger = self.app.logger
         self.name = name
+        self.shortname = shortname
         self.range = range
         self.onCmd = oncmd
         wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)        
@@ -115,8 +116,10 @@ class Heater(wx.Window):
         t = self.slTarget.GetValue()
         self.tTarget.SetValue("%d" % t)
         self.app.reprap.send_now("%s S%d" % (self.onCmd, t))
+        self.app.setTargetTemp(self.shortname, t)
         
     def heaterOff(self, evt):
         self.tTarget.SetValue("0")
         self.app.reprap.send_now("%s S0" % self.onCmd)
+        self.app.setTargetTemp(self.shortname, None)
 

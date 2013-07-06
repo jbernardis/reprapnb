@@ -10,7 +10,7 @@ import string
 class Logger(wx.Frame):
     def __init__(
             self, parent, ID, title, pos=wx.DefaultPosition,
-            size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE
+            size=wx.DefaultSize, style=wx.RESIZE_BORDER | wx.CAPTION
             ):
 
         wx.Frame.__init__(self, parent, ID, title, pos, size, style)
