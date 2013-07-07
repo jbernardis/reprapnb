@@ -29,6 +29,19 @@ BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
+class Images:
+	def __init__(self, settings):
+		self.pngPorts = self.loadImg(os.path.join(settings.cmdfolder, "images/ports.png"))
+		self.pngConnect = self.loadImg(os.path.join(settings.cmdfolder, "images/connect.png"))
+		self.pngDisconnect = self.loadImg(os.path.join(settings.cmdfolder, "images/disconnect.png"))
+		self.pngLog = self.loadImg(os.path.join(settings.cmdfolder, "images/log.png"))
+		
+	def loadImg(self, path):
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		return png
+
 class MainFrame(wx.Frame):
 	def __init__(self):
 		self.ctr = 0
@@ -52,6 +65,8 @@ class MainFrame(wx.Frame):
 		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
 		if self.printersettings is None:
 			self.logger.LogError("Unable to get printer settings")
+			
+		self.images = Images(self.settings)
 
 		p = wx.Panel(self)
 
@@ -78,11 +93,7 @@ class MainFrame(wx.Frame):
 		t.SetFont(f)
 		self.tb.AddControl(t)
 
-		path = os.path.join(self.settings.cmdfolder, "images/ports.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.tb.AddSimpleTool(TB_TOOL_PORTS, png, "Refresh list of available ports", "")
+		self.tb.AddSimpleTool(TB_TOOL_PORTS, self.images.pngPorts, "Refresh list of available ports", "")
 		self.Bind(wx.EVT_TOOL, self.doPort, id=TB_TOOL_PORTS)
 
 		ports = self.scanSerial()	
@@ -106,21 +117,13 @@ class MainFrame(wx.Frame):
 		self.cbBaud.SetStringSelection("115200")
 		self.tb.AddControl(self.cbBaud)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/connect.png")	
-		self.connectPng = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(self.connectPng, wx.BLUE)
-		self.connectPng.SetMask(mask)
-		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.connectPng, "Connect to the Printer", "")
+		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Connect to the Printer", "")
 		self.Bind(wx.EVT_TOOL, self.doConnect, id=TB_TOOL_CONNECT)
 		
 		self.tb.AddSeparator()
 
 		if len(ports) < 1:
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-		path = os.path.join(self.settings.cmdfolder, "images/disconnect.png")	
-		self.disconnectPng = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(self.disconnectPng, wx.BLUE)
-		self.disconnectPng.SetMask(mask)
 			
 		t = wx.StaticText(self.tb, wx.ID_ANY, " Slicer:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
@@ -147,11 +150,7 @@ class MainFrame(wx.Frame):
 
 		self.tb.AddSeparator()
 				
-		path = os.path.join(self.settings.cmdfolder, "images/log.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.tb.AddSimpleTool(TB_TOOL_LOG, png, "Hide/Show log window", "")
+		self.tb.AddSimpleTool(TB_TOOL_LOG, self.images.pngLog, "Hide/Show log window", "")
 		self.Bind(wx.EVT_TOOL, self.doShowHideLog, id=TB_TOOL_LOG)
 		self.logShowing = True
 
@@ -312,7 +311,7 @@ class MainFrame(wx.Frame):
 			self.reprap.disconnect()
 			self.connected = False 
 			self.announcePrinter()
-			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.connectPng)
+			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
 			if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 				self.nb.SetSelection(self.pxFilePrep)
 		else:
@@ -321,7 +320,7 @@ class MainFrame(wx.Frame):
 
 			self.reprap.connect(port, baud)
 			self.connected = True
-			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.disconnectPng)
+			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
 			self.announcePrinter()
 
 	def announcePrinter(self):

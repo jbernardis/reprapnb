@@ -9,6 +9,18 @@ import os
 
 BUTTONDIM = (64, 64)
 
+class Images:
+    def __init__(self, settings):
+        self.pngHeatOn = self.loadImg(os.path.join(settings.cmdfolder, "images/heaton.png"))   
+        self.pngHeatOff = self.loadImg(os.path.join(settings.cmdfolder, "images/heatoff.png"))   
+        self.pngProfile = self.loadImg(os.path.join(settings.cmdfolder, "images/profile.png"))   
+        
+    def loadImg(self, path):
+        png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        mask = wx.Mask(png, wx.BLUE)
+        png.SetMask(mask)
+        return png
+
 class Heater(wx.Window):
     def __init__(self, parent, app, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
         self.parent = parent
@@ -51,30 +63,20 @@ class Heater(wx.Window):
         self.slTarget.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
         self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
         sizerHtr.Add(self.slTarget, pos=(2,0), span=(1,5))
+        
+        self.images = Images(self.parent.settings)
                  
-        path = os.path.join(self.parent.settings.cmdfolder, "images/heaton.png")    
-        png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        mask = wx.Mask(png, wx.BLUE)
-        png.SetMask(mask)
-        self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+        self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatOn, size=BUTTONDIM)
         self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
         sizerHtr.Add(self.bHeatOn, pos=(0,0),span=(2,1))
         self.Bind(wx.EVT_BUTTON, self.heaterOn, self.bHeatOn)
                 
-        path = os.path.join(self.parent.settings.cmdfolder, "images/heatoff.png")    
-        png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        mask = wx.Mask(png, wx.BLUE)
-        png.SetMask(mask)
-        self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+        self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatOff, size=BUTTONDIM)
         self.bHeatOff.SetToolTipString("Turn %s heater off" % self.name)
         sizerHtr.Add(self.bHeatOff, pos=(0,1),span=(2,1))
         self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
                 
-        path = os.path.join(self.parent.settings.cmdfolder, "images/profile.png")    
-        png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        mask = wx.Mask(png, wx.BLUE)
-        png.SetMask(mask)
-        self.bProfile = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+        self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.images.pngProfile, size=BUTTONDIM)
         self.bProfile.SetToolTipString("Import from profile")
         sizerHtr.Add(self.bProfile, pos=(0,4),span=(2,1))
         self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)

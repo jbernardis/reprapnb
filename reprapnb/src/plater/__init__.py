@@ -18,6 +18,26 @@ TITLETEXT = "Plater"
 BUTTONDIM = (64,64)
 BUTTONDIMWIDE = (96,64)
 
+class Images:
+	def __init__(self, settings):
+		self.pngAdd = self.loadImg(os.path.join(settings.cmdfolder, "images/add.png"))	
+		self.pngClone = self.loadImg(os.path.join(settings.cmdfolder, "images/clone.png"))	
+		self.pngArrange = self.loadImg(os.path.join(settings.cmdfolder, "images/arrange.png"))	
+		self.pngDel = self.loadImg(os.path.join(settings.cmdfolder, "images/del.png"))	
+		self.pngDelAll = self.loadImg(os.path.join(settings.cmdfolder, "images/delall.png"))
+		self.pngRotCW = self.loadImg(os.path.join(settings.cmdfolder, "images/rotCW.png"))	
+		self.pngRotCCW = self.loadImg(os.path.join(settings.cmdfolder, "images/rotCCW.png"))	
+		self.pngRotate = self.loadImg(os.path.join(settings.cmdfolder, "images/rotate.png"))	
+		self.pngScale = self.loadImg(os.path.join(settings.cmdfolder, "images/scale.png"))	
+		self.pngExport = self.loadImg(os.path.join(settings.cmdfolder, "images/export.png"))	
+		self.pngExport2Prep = self.loadImg(os.path.join(settings.cmdfolder, "images/export2prep.png"))	
+		
+	def loadImg(self, path):
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		return png
+
 class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
@@ -47,30 +67,20 @@ class Plater(wx.Panel):
 
 		self.sizerBtn = wx.BoxSizer(wx.HORIZONTAL)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/add.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bAdd = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.images = Images(self.settings)
+		
+		self.bAdd = wx.BitmapButton(self, wx.ID_ANY, self.images.pngAdd, size=BUTTONDIM)
 		self.bAdd.SetToolTipString("Add an STL file to the plate")
 		self.sizerBtn.Add(self.bAdd)
 		self.Bind(wx.EVT_BUTTON, self.doAdd, self.bAdd)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/clone.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bClone = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bClone = wx.BitmapButton(self, wx.ID_ANY, self.images.pngClone, size=BUTTONDIM)
 		self.bClone.SetToolTipString("Create a copy of the currently selected object")
 		self.sizerBtn.Add(self.bClone)
 		self.Bind(wx.EVT_BUTTON, self.doClone, self.bClone)
 		self.bClone.Enable(False)
 
-		path = os.path.join(self.settings.cmdfolder, "images/arrange.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bArrange = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bArrange = wx.BitmapButton(self, wx.ID_ANY, self.images.pngArrange, size=BUTTONDIM)
 		self.bArrange.SetToolTipString("Arrange objects so they fit on the plate")
 		self.sizerBtn.Add(self.bArrange)
 		self.Bind(wx.EVT_BUTTON, self.doArrange, self.bArrange)
@@ -86,21 +96,13 @@ class Plater(wx.Panel):
 
 		self.sizerBtn.AddSpacer((20, 20))
 				
-		path = os.path.join(self.settings.cmdfolder, "images/del.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bDel = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bDel = wx.BitmapButton(self, wx.ID_ANY, self.images.pngDel, size=BUTTONDIM)
 		self.bDel.SetToolTipString("Delete the currently selected object from the plate")
 		self.sizerBtn.Add(self.bDel)
 		self.Bind(wx.EVT_BUTTON, self.doDelete, self.bDel)
 		self.bDel.Enable(False)
 
-		path = os.path.join(self.settings.cmdfolder, "images/delall.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bDelAll = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bDelAll = wx.BitmapButton(self, wx.ID_ANY, self.images.pngDelAll, size=BUTTONDIM)
 		self.bDelAll.SetToolTipString("Delete all objects from the plate")
 		self.sizerBtn.Add(self.bDelAll)
 		self.Bind(wx.EVT_BUTTON, self.doDelAll, self.bDelAll)
@@ -121,41 +123,25 @@ class Plater(wx.Panel):
 
 		self.sizerBtn2 = wx.BoxSizer(wx.HORIZONTAL)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/rotCW.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bRotate45CW = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bRotate45CW = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRotCW, size=BUTTONDIM)
 		self.bRotate45CW.SetToolTipString("Rotate the selected object 45 degrees Clockwise")
 		self.sizerBtn2.Add(self.bRotate45CW)
 		self.Bind(wx.EVT_BUTTON, self.doRotate45CW, self.bRotate45CW)
 		self.bRotate45CW.Enable(False)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/rotCCW.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bRotate45CCW = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bRotate45CCW = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRotCCW, size=BUTTONDIM)
 		self.bRotate45CCW.SetToolTipString("Rotate the selected object 45 degrees Counter-Clockwise")
 		self.sizerBtn2.Add(self.bRotate45CCW)
 		self.Bind(wx.EVT_BUTTON, self.doRotate45CCW, self.bRotate45CCW)
 		self.bRotate45CCW.Enable(False)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/rotate.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bRotate = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bRotate = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRotate, size=BUTTONDIM)
 		self.bRotate.SetToolTipString("Rotate the selected object a specified amount")
 		self.sizerBtn2.Add(self.bRotate)
 		self.Bind(wx.EVT_BUTTON, self.doRotate, self.bRotate)
 		self.bRotate.Enable(False)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/scale.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bScale = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bScale = wx.BitmapButton(self, wx.ID_ANY, self.images.pngScale, size=BUTTONDIM)
 		self.bScale.SetToolTipString("Scale the selected object by specified percent")
 		self.sizerBtn2.Add(self.bScale)
 		self.Bind(wx.EVT_BUTTON, self.doScale, self.bScale)
@@ -163,21 +149,13 @@ class Plater(wx.Panel):
 		
 		self.sizerBtn2.AddSpacer((20, 20))
 		
-		path = os.path.join(self.settings.cmdfolder, "images/export.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bExport = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIMWIDE)
+		self.bExport = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExport, size=BUTTONDIMWIDE)
 		self.bExport.SetToolTipString("Export the plate to a single STL file")
 		self.sizerBtn2.Add(self.bExport)
 		self.Bind(wx.EVT_BUTTON, self.doExport, self.bExport)
 		self.bExport.Enable(False)
 		
-		path = os.path.join(self.settings.cmdfolder, "images/export2prep.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bExport2Prep = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIMWIDE)
+		self.bExport2Prep = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExport2Prep, size=BUTTONDIMWIDE)
 		self.bExport2Prep.SetToolTipString("Export the plate to the file preparation tab")
 		self.sizerBtn2.Add(self.bExport2Prep)
 		self.Bind(wx.EVT_BUTTON, self.doExport2Prep, self.bExport2Prep)

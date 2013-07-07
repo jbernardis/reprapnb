@@ -3,6 +3,17 @@ import os.path
 
 BUTTONDIM = (64, 64)
 
+class Images:
+	def __init__(self, settings):
+		self.pngExtrude = self.loadImg(os.path.join(settings.cmdfolder, "images/extrude.png"))	
+		self.pngRetract = self.loadImg(os.path.join(settings.cmdfolder, "images/retract.png"))	
+	
+	def loadImg(self, path):
+		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
+		return png
+
 class Extruder(wx.Window): 
 	def __init__(self, parent, app, name="", axis="E"):
 		self.parent = parent
@@ -41,21 +52,15 @@ class Extruder(wx.Window):
 		
 		sizerExtrude.AddSpacer((10,10), pos=(4,0))
 		sizerExtrude.AddSpacer((64, 64), pos=(5,0))
+		
+		self.images = Images(self.parent.settings)
 				
-		path = os.path.join(self.parent.settings.cmdfolder, "images/extrude.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")
 		sizerExtrude.Add(self.bExtrude, pos=(5,1))
 		self.Bind(wx.EVT_BUTTON, self.doExtrude, self.bExtrude)
 				
-		path = os.path.join(self.parent.settings.cmdfolder, "images/retract.png")	
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		self.bRetract = wx.BitmapButton(self, wx.ID_ANY, png, size=BUTTONDIM)
+		self.bRetract = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRetract, size=BUTTONDIM)
 		self.bRetract.SetToolTipString("Retract filament")
 		sizerExtrude.Add(self.bRetract, pos=(5,2))
 		self.Bind(wx.EVT_BUTTON, self.doRetract, self.bRetract)

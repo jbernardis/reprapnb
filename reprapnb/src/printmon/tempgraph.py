@@ -171,23 +171,17 @@ class Graph (wx.Window):
 		lx = len(data)
 		for i in range(lx):
 			if data[i] is not None:
-				points.append([MAXX - lx + i, data[i]])
+				points.append(wx.Point((MAXX - lx + i) * scale, (MAXY - data[i]) * scale))
 				
 		if len(points) < 2: return
 		
 		dc.SetPen(wx.Pen(c, 3))
-		prev = points[0]
-		for i in range(1, len(points)):
-			self.drawLine(dc, prev, points[i])
-			prev = points[i]
+		dc.DrawLines(points)
 
 	def drawLine(self, dc, pa, pb):				
-		(x1, y1) = self.transform(pa[0], MAXY-pa[1])
-		(x2, y2) = self.transform(pb[0], MAXY-pb[1])
+		x1 = pa[0] * scale
+		y1 = (MAXY-pa[1]) * scale
+		x2 = pb[0] * scale
+		y2 = (MAXY-pb[1]) * scale
 
 		dc.DrawLine(x1, y1, x2, y2)
-
-	def transform(self, ptx, pty):
-		x = ptx * scale
-		y = pty * scale
-		return (x, y)
