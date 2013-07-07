@@ -23,6 +23,7 @@ class ManualControl(wx.Panel):
 		self.extWin = []
 		self.extLabel = []
 		self.extruders = []
+		self.htrMap = {}	
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -52,6 +53,13 @@ class ManualControl(wx.Panel):
 			return
 		
 		self.htrMap[name].setHeatTarget(temp)
+		
+	def setHeatTemp(self, name, temp):
+		if name not in self.htrMap.keys():
+			self.logger.LogError("Unknown heater name: %s" % name)
+			return
+		
+		self.htrMap[name].setHeatTemp(temp)
 		
 	def addExtruders(self):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)

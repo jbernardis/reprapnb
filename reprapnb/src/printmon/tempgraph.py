@@ -15,6 +15,12 @@ lt_Gray = wx.Colour(138, 138, 138)
 
 colors = { "HBP": "blue", "HE": "red", "HE0": "red", "HE1": "yellow"}
 
+def htrToColor(h):
+	if h not in colors.keys():
+		return "red"
+	else:
+		return colors[h]
+
 class TempGraph (wx.Window):
 	def __init__(self, parent, settings):
 		self.settings = settings
@@ -54,6 +60,9 @@ class TempGraph (wx.Window):
 			t = wx.StaticText(self, wx.ID_ANY, "%dm" % (x-xf), pos=(tx*60+30, MAXY*scale+10), size=(30, -1), style=wx.ALIGN_CENTER)
 			t.SetFont(f)
 			
+	def setHeaters(self, heaters):
+		self.heaters = heaters
+			
 	def setTargets(self, ntargets):
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		for i in self.targets:
@@ -66,15 +75,14 @@ class TempGraph (wx.Window):
 			if y > 0:
 				ty = (MAXY - y) * scale
 				t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (y, tgt), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
-				if tgt not in colors.keys():
-					c = "red"
-				else:
-					c = colors[tgt]
-				t.SetForegroundColour(c)
+				t.SetForegroundColour(htrToColor(tgt))
 				t.SetFont(f)
 				self.targets.append(t)
 			
 		self.graph.updateTargets(ntargets)
+		
+	def setTemps(self, tempData):
+		self.graph.updateData(tempData)
 
 		
 class Graph (wx.Window):
@@ -83,6 +91,7 @@ class Graph (wx.Window):
 		self.settings = settings
 		self.printersettings = printersettings
 		self.targets = {}
+		self.tempData = {}
 		
 		sz = [x * scale for x in [MAXX, MAXY]]
 		wx.Window.__init__(self,parent,wx.ID_ANY,size=sz)
@@ -106,6 +115,10 @@ class Graph (wx.Window):
 		self.targets = targets.copy()
 		self.redrawGraph()
 	
+	def updateData(self, data):
+		self.tempData = data.copy()
+		self.redrawGraph()
+	
 	def redrawGraph(self):
 		dc = wx.BufferedDC(wx.ClientDC(self), self.buffer)
 		self.drawGraph(dc)
@@ -118,6 +131,8 @@ class Graph (wx.Window):
 		dc.Clear()
 		
 		self.drawGrid(dc)
+		for h in self.tempData.keys():
+			self.draw1Graph(dc, h, self.tempData[h])
 
 	def drawGrid(self, dc):
 		xleft = 0
@@ -144,14 +159,27 @@ class Graph (wx.Window):
 				self.drawLine(dc, (x, ytop), (x, ybottom))
 				
 		for tgt in self.targets.keys():
-			if tgt not in colors.keys():
-				c = "red"
-			else:
-				c = colors[tgt]
+			c = htrToColor(tgt)
 			dc.SetPen(wx.Pen(c, 1, wx.SHORT_DASH))
 			y = self.targets[tgt]
 			if y > 0 and y <= MAXY:
 				self.drawLine(dc, (xleft, y), (xright, y))
+				
+	def draw1Graph(self, dc, htr, data):
+		c = htrToColor(htr)
+		points = []
+		lx = len(data)
+		for i in range(lx):
+			if data[i] is not None:
+				points.append([MAXX - lx + i, data[i]])
+				
+		if len(points) < 2: return
+		
+		dc.SetPen(wx.Pen(c, 3))
+		prev = points[0]
+		for i in range(1, len(points)):
+			self.drawLine(dc, prev, points[i])
+			prev = points[i]
 
 	def drawLine(self, dc, pa, pb):				
 		(x1, y1) = self.transform(pa[0], MAXY-pa[1])

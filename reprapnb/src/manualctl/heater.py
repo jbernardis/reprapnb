@@ -27,7 +27,7 @@ class Heater(wx.Window):
         t.SetFont(f)
         sizerHtr.Add(t, pos=(0,2)) 
         
-        self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "0.0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
+        self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
         f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.tTemp.SetFont(f)
         sizerHtr.Add(self.tTemp, pos=(0,3))
@@ -37,7 +37,7 @@ class Heater(wx.Window):
         t.SetFont(f)
         sizerHtr.Add(t, pos=(1,2))
         
-        self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "0.0", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
+        self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
         f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.tTarget.SetFont(f)
         sizerHtr.Add(self.tTarget, pos=(1,3))
@@ -91,19 +91,31 @@ class Heater(wx.Window):
         self.slTarget.SetValue(self.profileTarget)
         
     def setHeatTarget(self, t):
+        if t is None:
+            self.tTemp.SetValue("???")
+            return
+        
         try:
             ft = float(t)
-            self.tTarget.SetValue("%.1f" % ft)
         except:
             self.logger.LogError("Invalid value for %s temperature: '%s'" % (self.name, t))
+            return
+        
+        self.tTarget.SetValue("%.1f" % ft)
       
-    def setTemp(self, t):
+    def setHeatTemp(self, t):
+        if t is None:
+            self.tTemp.SetValue("???")
+            return
+        
         try:
             ft = float(t)
-            self.tTemp.SetValue("%.1f" % ft)
         except:
-            self.logger.LogError("Unknown value for %s temperature: '%s'" % (self.name, t))
+            self.logger.LogError("Invalid value for %s temperature: '%s'" % (self.name, t))
+            return
         
+        self.tTemp.SetValue("%.1f" % ft)
+         
     def onTargetChanged(self, evt):
         pass
     

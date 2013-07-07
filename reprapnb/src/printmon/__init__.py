@@ -36,6 +36,8 @@ class PrintMonitor(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
 		self.targets = {}
+		self.temps = {}
+		self.tempData = {}
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -155,6 +157,10 @@ class PrintMonitor(wx.Panel):
 		self.SetSizer(self.sizerMain)
 
 		self.app.setPrinterBusy(False)
+
+		self.timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
+		self.timer.Start(1000)
 
 	def setPrintMode(self, mode):
 		if mode == PRINT_MODE_PRINT:
@@ -288,13 +294,41 @@ class PrintMonitor(wx.Panel):
 		
 	def changePrinter(self, heaters, extruders):
 		self.targets = {}
+		self.temps = {}
+		self.tempData = {}
+		self.knownHeaters = [h[0] for h in heaters]
+		for h in self.knownHeaters:
+			self.temps[h] = None
+			self.targets[h] = 0
+			self.tempData[h] = []
+
+		self.gTemp.setHeaters(self.knownHeaters)			
+		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
+			
 		
 	#FIXIT need to handle change printer, slicer, profile
 	#FIXIT target temps should come from the printer
 	def setHeatTarget(self, name, temp):
+		if name not in self.knownHeaters:
+			self.logger.LogWarning("Ignoring target temperature for unknown heater: %s" % name)
+			return
 		self.targets[name] = temp
 		self.gTemp.setTargets(self.targets)
+		
+	def setHeatTemp(self, name, temp):
+		if name not in self.knownHeaters:
+			self.logger.LogWarning("Ignoring temperature for unknown heater: %s" % name)
+			return
+		self.temps[name] = temp
+		
+	def onTimer(self, evt):
+		for h in self.knownHeaters:
+			self.tempData[h].append(self.temps[h])
+			l = len(self.tempData[h])
+			if l > 240: # 4 minutes data
+				self.tempData[h] = self.tempData[h][l-240:]
+		self.gTemp.setTemps(self.tempData)
 		
 	def enableButtons(self, flag=True):
 		if flag:

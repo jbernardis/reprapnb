@@ -273,7 +273,11 @@ class MainFrame(wx.Frame):
 		elif self.ctr == 2:
 			self.setHeatTarget("HE1", 155)
 		elif self.ctr == 3:
-			self.setHeatTarget("HBP", 0)
+			self.setHeatTemp("HBP", 40)
+		elif self.ctr == 4:
+			self.setHeatTemp("HBP", 50)
+		elif self.ctr == 5:
+			self.setHeatTemp("HBP", None)
 		
 		self.ctr += 1
 		if self.ctr == 9:
@@ -376,6 +380,10 @@ class MainFrame(wx.Frame):
 	def setHeatTarget(self, name, temp):
 		self.pgManCtl.setHeatTarget(name, temp)
 		self.pgPrtMon.setHeatTarget(name, temp)
+		
+	def setHeatTemp(self, name, temp):
+		self.pgManCtl.setHeatTemp(name, temp)
+		self.pgPrtMon.setHeatTemp(name, temp)
 		
 	def onClose(self, evt):
 		if self.connected:
