@@ -12,6 +12,8 @@ from shiftmodel import ShiftModelDlg
 from editgcode import EditGCodeDlg
 from images import Images
 
+from settings import TEMPFILELABEL
+
 wildcard = "G Code (*.gcode)|*.gcode"
 STLwildcard = "STL (*.stl)|*.stl"
 
@@ -374,7 +376,11 @@ class FilePrepare(wx.Panel):
 		return True
 	
 	def toPrinter(self, evt):
-		name = self.ipFileName.GetLabel()
+		if self.temporaryFile:
+			name = TEMPFILELABEL
+		else:
+			name = self.gcFile
+		#name = self.ipFileName.GetLabel()
 		self.app.forwardToPrintMon(GCode(self.gcode), name=name)
 		
 	def fileSlice(self, event):
@@ -467,7 +473,7 @@ class FilePrepare(wx.Panel):
 			self.settings.lastdirectory = os.path.dirname(fn)
 			self.settings.setModified()
 			if self.temporaryFile:
-				lfn = "<temporary>"
+				lfn = TEMPFILELABEL
 			elif len(fn) > 60:
 				lfn = os.path.basename(fn)
 			else:

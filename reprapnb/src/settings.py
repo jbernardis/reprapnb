@@ -12,6 +12,8 @@ from printer import createPrinterObject
 
 INIFILE = "rrh.ini"
 
+TEMPFILELABEL = "<temporary>"
+
 
 def parseBoolean(val, defaultVal):
 	lval = val.lower();

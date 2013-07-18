@@ -2,6 +2,7 @@ import wx, os
 from gcmframe import GcmFrame
 from tempgraph import TempGraph
 from images import Images
+from settings import TEMPFILELABEL
 
 BUTTONDIM = (64, 64)
 #Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
@@ -39,6 +40,7 @@ class PrintMonitor(wx.Panel):
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
+		self.gcFile = None
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -241,7 +243,15 @@ class PrintMonitor(wx.Panel):
 	def forwardModel(self, model, name=""):
 		self.model = model
 		self.name = name
-		self.tName.SetLabel(name)
+		if self.name == TEMPFILELABEL:
+			self.gcFile = None
+		elif len(self.name) > 40:
+			self.gcFile = self.name
+			self.name = os.path.basename(self.gcFile)
+		else:
+			self.gcFile = self.name
+			
+		self.tName.SetLabel(self.name)
 		layer = 0
 
 		self.layerCount = self.model.countLayers()

@@ -20,31 +20,35 @@ from plater import Plater
 from settings import Settings
 from reprap import RepRap
 from logger import Logger
+from images import Images
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
 TB_TOOL_LOG = 19
 
+TEMPINTERVAL = 3
+
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
-class Images:
-	def __init__(self, settings):
-		self.pngPorts = self.loadImg(os.path.join(settings.cmdfolder, "images/ports.png"))
-		self.pngConnect = self.loadImg(os.path.join(settings.cmdfolder, "images/connect.png"))
-		self.pngDisconnect = self.loadImg(os.path.join(settings.cmdfolder, "images/disconnect.png"))
-		self.pngLog = self.loadImg(os.path.join(settings.cmdfolder, "images/log.png"))
-		
-	def loadImg(self, path):
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		return png
+# class Images:
+# 	def __init__(self, settings):
+# 		self.pngPorts = self.loadImg(os.path.join(settings.cmdfolder, "images/ports.png"))
+# 		self.pngConnect = self.loadImg(os.path.join(settings.cmdfolder, "images/connect.png"))
+# 		self.pngDisconnect = self.loadImg(os.path.join(settings.cmdfolder, "images/disconnect.png"))
+# 		self.pngLog = self.loadImg(os.path.join(settings.cmdfolder, "images/log.png"))
+# 		
+# 	def loadImg(self, path):
+# 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+# 		mask = wx.Mask(png, wx.BLUE)
+# 		png.SetMask(mask)
+# 		return png
 
 class MainFrame(wx.Frame):
 	def __init__(self):
 		self.ctr = 0
+		self.timer = None
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -66,7 +70,8 @@ class MainFrame(wx.Frame):
 		if self.printersettings is None:
 			self.logger.LogError("Unable to get printer settings")
 			
-		self.images = Images(self.settings)
+		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
+#		self.images = Images(self.settings)
 
 		p = wx.Panel(self)
 
@@ -203,9 +208,8 @@ class MainFrame(wx.Frame):
 		newPage = evt.GetSelection()
 		currentPage = evt.GetOldSelection()
 		if newPage in [self.pxManCtl, self.pxPrtMon] and not self.connected:
-#FIXIT
-# 			self.logger.LogMessage("Tab is inaccessible unless printer is connected")
-# 			self.nb.SetSelection(currentPage)
+			self.logger.LogMessage("Tab is inaccessible unless printer is connected")
+			self.nb.SetSelection(currentPage)
 			evt.Veto()
 		else:
 			evt.Skip()
@@ -236,13 +240,13 @@ class MainFrame(wx.Frame):
 				
 		if maxExt == 1:
 			extruders.append(["Ext", "Extruder", axes[0]])
-			heaters.append(["HE", "Hot End", temps[0], (20, 250), "G104"])
+			heaters.append(["HE", "Hot End", temps[0], (20, 250), "M104"])
 		else:
 			for i in range(maxExt):
 				extruders.append(["Ext%d" % i, "Extruder %d" % i, axes[i]])
-				heaters.append(["HE%d" % i, "Hot End %d" % i, temps[i], (20, 250), "G104"])
+				heaters.append(["HE%d" % i, "Hot End %d" % i, temps[i], (20, 250), "M104"])
 			
-		heaters.append(["HBP", "Build Platform", hbpTemp, (20, 150), "G140"])
+		heaters.append(["HBP", "Build Platform", hbpTemp, (20, 150), "M140"])
 
 		self.pgManCtl.changePrinter(heaters, extruders)
 		self.pgPrtMon.changePrinter(heaters, extruders)
@@ -312,6 +316,9 @@ class MainFrame(wx.Frame):
 			self.connected = False 
 			self.announcePrinter()
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
+			self.cbPrinter.Enable(True)
+			self.timer.Stop()
+			self.timer = None
 			if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 				self.nb.SetSelection(self.pxFilePrep)
 		else:
@@ -320,8 +327,14 @@ class MainFrame(wx.Frame):
 
 			self.reprap.connect(port, baud)
 			self.connected = True
+			
+			self.timer = wx.Timer(self)
+			self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
+			self.timer.Start(1000)
+
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
 			self.announcePrinter()
+			self.cbPrinter.Enable(False)
 
 	def announcePrinter(self):
 		#FIXIT
@@ -383,6 +396,13 @@ class MainFrame(wx.Frame):
 	def setHeatTemp(self, name, temp):
 		self.pgManCtl.setHeatTemp(name, temp)
 		self.pgPrtMon.setHeatTemp(name, temp)
+		
+	def onTimer(self, evt):
+		self.cycle += 1
+		
+		if self.cycle % TEMPINTERVAL == 0:
+			self.reprap.send_now("M105")
+
 		
 	def onClose(self, evt):
 		if self.connected:

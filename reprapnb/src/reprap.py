@@ -179,13 +179,17 @@ class RepRap:
 		self._sendCmd(CMD_STARTPRINT)
 				
 	def send_now(self, cmd):
-		return self._send(cmd, priority=True)
+		if not self.printer:
+			self.logger.LogWarning("Printer is off-line")
+			return False
+		else:
+			self.logger.LogMessage("Sending (%s)" % cmd)
+			return self._send(cmd, priority=True)
 				
 	def send(self, cmd):
 		return self._send(cmd)
 
 	def _send(self, command, lineno=0, checksum=False, priority=False):
-		self.logger.LogMessage("Sending (%s)" % command)
 		if not self.printer:
 			return False
 		
