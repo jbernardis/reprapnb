@@ -10,6 +10,7 @@ from savelayer import SaveLayerDlg
 from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
 from editgcode import EditGCodeDlg
+from images import Images
 
 wildcard = "G Code (*.gcode)|*.gcode"
 STLwildcard = "STL (*.stl)|*.stl"
@@ -81,25 +82,6 @@ class SlicerThread:
 
 		self.running = False
 
-class Images:
-	def __init__(self, settings):
-		self.pngSlice = self.loadImg(os.path.join(settings.cmdfolder, "images/slice.png"))	
-		self.pngFileOpen = self.loadImg(os.path.join(settings.cmdfolder, "images/fileopen.png"))	
-		self.pngFileSave = self.loadImg(os.path.join(settings.cmdfolder, "images/filesave.png"))	
-		self.pngSaveLayers = self.loadImg(os.path.join(settings.cmdfolder, "images/savelayers.png"))
-		self.pngFilChange = self.loadImg(os.path.join(settings.cmdfolder, "images/filchange.png"))	
-		self.pngShift = self.loadImg(os.path.join(settings.cmdfolder, "images/shift.png")	)
-		self.pngEdit = self.loadImg(os.path.join(settings.cmdfolder, "images/edit.png"))	
-		self.pngZoomIn = self.loadImg(os.path.join(settings.cmdfolder, "images/zoomin.png"))	
-		self.pngZoomOut = self.loadImg(os.path.join(settings.cmdfolder, "images/zoomout.png"))	
-		self.pngToPrinter = self.loadImg(os.path.join(settings.cmdfolder, "images/toprinter.png"))	
-		
-	def loadImg(self, path):
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		return png
-
 class FilePrepare(wx.Panel):
 	def __init__(self, parent, app):
 		self.model = None
@@ -128,7 +110,7 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerBtns.AddSpacer((20, 20))
 		
-		self.images = Images(self.settings)
+		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		
 		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
 		self.bSlice.SetToolTipString("Slice a file using the currently configured slicer")
@@ -137,12 +119,12 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerBtns.AddSpacer((20, 20))
 		
-		self.bOpen = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFileOpen, size=BUTTONDIM)
+		self.bOpen = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFileopen, size=BUTTONDIM)
 		self.bOpen.SetToolTipString("Open a G Code file directly")
 		self.sizerBtns.Add(self.bOpen)
 		self.Bind(wx.EVT_BUTTON, self.fileOpen, self.bOpen)
 		
-		self.bSave = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFileSave, size=BUTTONDIM)
+		self.bSave = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFilesave, size=BUTTONDIM)
 		self.bSave.SetToolTipString("Save the modified G Code file")
 		self.sizerBtns.Add(self.bSave)
 		self.Bind(wx.EVT_BUTTON, self.fileSave, self.bSave)
@@ -150,13 +132,13 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerBtns.AddSpacer((20, 20))
 		
-		self.bSaveLayer = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSaveLayers, size=BUTTONDIM)
+		self.bSaveLayer = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSavelayers, size=BUTTONDIM)
 		self.bSaveLayer.SetToolTipString("Save specific layers out of this G Code")
 		self.sizerBtns.Add(self.bSaveLayer)
 		self.Bind(wx.EVT_BUTTON, self.editSaveLayer, self.bSaveLayer)
 		self.bSaveLayer.Enable(False)
 		
-		self.bFilamentChange = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFilChange, size=BUTTONDIM)
+		self.bFilamentChange = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFilchange, size=BUTTONDIM)
 		self.bFilamentChange.SetToolTipString("Insert G Code at the current location to change filament")
 		self.sizerBtns.Add(self.bFilamentChange)
 		self.Bind(wx.EVT_BUTTON, self.editFilamentChange, self.bFilamentChange)
@@ -176,19 +158,19 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerBtns.AddSpacer((20, 20))
 	
-		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomIn, size=BUTTONDIM)
+		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomin, size=BUTTONDIM)
 		self.bZoomIn.SetToolTipString("Zoom the view in")
 		self.sizerBtns.Add(self.bZoomIn)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomIn, self.bZoomIn)
 		
-		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomOut, size=BUTTONDIM)
+		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomout, size=BUTTONDIM)
 		self.bZoomOut.SetToolTipString("Zoom the view out")
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
 		self.sizerBtns.AddSpacer((20, 20))
 	
-		self.bToPrinter = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToPrinter, size=BUTTONDIMWIDE)
+		self.bToPrinter = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToprinter, size=BUTTONDIMWIDE)
 		self.bToPrinter.SetToolTipString("Send this GCode file to the printer")
 		self.sizerBtns.Add(self.bToPrinter)
 		self.Bind(wx.EVT_BUTTON, self.toPrinter, self.bToPrinter)

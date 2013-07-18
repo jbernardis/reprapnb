@@ -1,18 +1,9 @@
 import wx
 import os.path
 
-BUTTONDIM = (64, 64)
+from images import Images
 
-class Images:
-	def __init__(self, settings):
-		self.pngExtrude = self.loadImg(os.path.join(settings.cmdfolder, "images/extrude.png"))	
-		self.pngRetract = self.loadImg(os.path.join(settings.cmdfolder, "images/retract.png"))	
-	
-	def loadImg(self, path):
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		return png
+BUTTONDIM = (64, 64)
 
 class Extruder(wx.Window): 
 	def __init__(self, parent, app, name="", axis="E"):
@@ -53,7 +44,7 @@ class Extruder(wx.Window):
 		sizerExtrude.AddSpacer((10,10), pos=(4,0))
 		sizerExtrude.AddSpacer((64, 64), pos=(5,0))
 		
-		self.images = Images(self.parent.settings)
+		self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
 				
 		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")

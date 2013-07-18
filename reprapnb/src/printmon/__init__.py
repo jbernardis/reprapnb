@@ -1,6 +1,7 @@
 import wx, os
 from gcmframe import GcmFrame
 from tempgraph import TempGraph
+from images import Images
 
 BUTTONDIM = (64, 64)
 #Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
@@ -22,20 +23,6 @@ PAUSE_MODE_RESUME = 2
 
 PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
-
-class Images:
-	def __init__(self, settings):
-		self.pngRestart = self.loadImg(os.path.join(settings.cmdfolder, "images/restart.png"))
-		self.pngPrint = self.loadImg(os.path.join(settings.cmdfolder, "images/print.png"))
-		self.pngPause = self.loadImg(os.path.join(settings.cmdfolder, "images/pause.png"))
-		self.pngZoomIn = self.loadImg(os.path.join(settings.cmdfolder, "images/zoomin.png"))
-		self.pngZoomOut = self.loadImg(os.path.join(settings.cmdfolder, "images/zoomout.png"))
-		
-	def loadImg(self, path):
-		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
-		return png
 
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app):
@@ -59,7 +46,7 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerBtns.AddSpacer((10,10))
 
-		self.images = Images(self.settings)		
+		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))		
 		
 		self.bPrint = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrint, size=BUTTONDIM)
 		self.setPrintMode(PRINT_MODE_PRINT)
@@ -74,12 +61,12 @@ class PrintMonitor(wx.Panel):
 		
 		self.sizerBtns.AddSpacer((10,10))
 	
-		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomIn, size=BUTTONDIM)
+		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomin, size=BUTTONDIM)
 		self.bZoomIn.SetToolTipString("Zoom the view in")
 		self.sizerBtns.Add(self.bZoomIn)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomIn, self.bZoomIn)
 		
-		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomOut, size=BUTTONDIM)
+		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomout, size=BUTTONDIM)
 		self.bZoomOut.SetToolTipString("Zoom the view out")
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)

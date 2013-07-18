@@ -34,7 +34,7 @@ class MoveAxis(wx.Window):
 
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 
-		path = os.path.join(self.settings.cmdfolder, "images/axis.png")
+		path = os.path.join(self.settings.cmdfolder, "images", "axis.png")
 		bmp = wx.BitmapFromImage(wx.Image(path, wx.BITMAP_TYPE_PNG), -1)
 		self.axes = ImageMap(self, bmp)
 		self.axes.setHotSpots(self.onImageClick, imageMap)

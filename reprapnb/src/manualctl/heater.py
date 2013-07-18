@@ -7,19 +7,9 @@ Created on Jun 30, 2013
 import wx
 import os
 
-BUTTONDIM = (64, 64)
+from images import Images
 
-class Images:
-    def __init__(self, settings):
-        self.pngHeatOn = self.loadImg(os.path.join(settings.cmdfolder, "images/heaton.png"))   
-        self.pngHeatOff = self.loadImg(os.path.join(settings.cmdfolder, "images/heatoff.png"))   
-        self.pngProfile = self.loadImg(os.path.join(settings.cmdfolder, "images/profile.png"))   
-        
-    def loadImg(self, path):
-        png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        mask = wx.Mask(png, wx.BLUE)
-        png.SetMask(mask)
-        return png
+BUTTONDIM = (64, 64)
 
 class Heater(wx.Window):
     def __init__(self, parent, app, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
@@ -64,14 +54,14 @@ class Heater(wx.Window):
         self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
         sizerHtr.Add(self.slTarget, pos=(2,0), span=(1,5))
         
-        self.images = Images(self.parent.settings)
+        self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
                  
-        self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatOn, size=BUTTONDIM)
+        self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeaton, size=BUTTONDIM)
         self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
         sizerHtr.Add(self.bHeatOn, pos=(0,0),span=(2,1))
         self.Bind(wx.EVT_BUTTON, self.heaterOn, self.bHeatOn)
                 
-        self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatOff, size=BUTTONDIM)
+        self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatoff, size=BUTTONDIM)
         self.bHeatOff.SetToolTipString("Turn %s heater off" % self.name)
         sizerHtr.Add(self.bHeatOff, pos=(0,1),span=(2,1))
         self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
