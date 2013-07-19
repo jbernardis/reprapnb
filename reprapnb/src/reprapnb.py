@@ -21,6 +21,7 @@ from settings import Settings
 from reprap import RepRap
 from logger import Logger
 from images import Images
+from parser import RepRapParser
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
@@ -48,7 +49,9 @@ baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 class MainFrame(wx.Frame):
 	def __init__(self):
 		self.ctr = 0
+		self.cycle = 0
 		self.timer = None
+		self.discPending = False
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -60,6 +63,7 @@ class MainFrame(wx.Frame):
 		self.settings = Settings(self, cmd_folder)
 		
 		self.reprap = RepRap(self, self.evtRepRap)
+		self.parser = RepRapParser(self)
 		self.connected = False
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
@@ -195,7 +199,8 @@ class MainFrame(wx.Frame):
 
 
 	def evtRepRap(self, evt):
-		print "Reprap evnt received, event = ", evt.event
+		print "Reprap evnt received, event = ", evt.state, evt.msg
+		self.parser.parseMsg(evt.msg)
 	
 	def doShowHideLog(self, evt):
 		self.logShowing = not self.logShowing
@@ -250,6 +255,7 @@ class MainFrame(wx.Frame):
 
 		self.pgManCtl.changePrinter(heaters, extruders)
 		self.pgPrtMon.changePrinter(heaters, extruders)
+		self.parser.setPrinter(heaters, extruders)
 		
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
@@ -313,14 +319,9 @@ class MainFrame(wx.Frame):
 	def doConnect(self, evt):
 		if self.connected:
 			self.reprap.disconnect()
-			self.connected = False 
-			self.announcePrinter()
-			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-			self.cbPrinter.Enable(True)
-			self.timer.Stop()
-			self.timer = None
-			if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
-				self.nb.SetSelection(self.pxFilePrep)
+			self.discPending = True
+			self.tb.EnableTool(TB_TOOL_CONNECT, False)
+
 		else:
 			port = 	self.cbPort.GetStringSelection()
 			baud = 	self.cbBaud.GetStringSelection()
@@ -335,6 +336,22 @@ class MainFrame(wx.Frame):
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
 			self.announcePrinter()
 			self.cbPrinter.Enable(False)
+
+	def finishDisconnection(self):
+		if not self.reprap.checkDisconnection():
+			return
+					
+		self.tb.EnableTool(TB_TOOL_CONNECT, True)
+		self.connected = False 
+		self.discPending = False
+		self.announcePrinter()
+		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
+		self.cbPrinter.Enable(True)
+		self.timer.Stop()
+		self.timer = None
+		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
+			self.nb.SetSelection(self.pxFilePrep)
+
 
 	def announcePrinter(self):
 		#FIXIT
@@ -399,6 +416,9 @@ class MainFrame(wx.Frame):
 		
 	def onTimer(self, evt):
 		self.cycle += 1
+		
+		if self.discPending:
+			self.finishDisconnection()
 		
 		if self.cycle % TEMPINTERVAL == 0:
 			self.reprap.send_now("M105")

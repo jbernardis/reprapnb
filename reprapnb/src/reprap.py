@@ -30,11 +30,15 @@ class SendThread:
 		self.win = win
 		self.printer = printer
 		self.isRunning = False
+		self.endoflife = False
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
 		self.isRunning = False
 		self.printer = None
+		
+	def isKilled(self):
+		return self.endoflife
 	
 	def Run(self):
 		self.isRunning = True
@@ -43,7 +47,6 @@ class SendThread:
 				if not self.priQ.empty():
 					try:
 						(cmd, string) = self.priQ.get(True, 0.01)
-						print "got ", cmd, " from pri q"
 						self.processCmd(cmd, string)
 					except Queue.Empty:
 						pass
@@ -51,7 +54,6 @@ class SendThread:
 				elif not self.mainQ.empty():
 					try:
 						(cmd, string) = self.mainQ.get(True, 0.01)
-						print "got ", cmd, string, " from main q"
 						self.processCmd(cmd, string)
 					except Queue.Empty:
 						pass
@@ -61,11 +63,11 @@ class SendThread:
 			else:
 				try:
 					(cmd, string) = self.priQ.get(True, 0.01)
-					print "got ", cmd, " from pri q"
 					self.processCmd(cmd, string)
 				except Queue.Empty:
 					time.sleep(0.01)
 		print "sender ending"
+		self.endoflife = True
 				
 	def processCmd(self, cmd, string):
 		if cmd == CMD_GCODE:
@@ -95,11 +97,15 @@ class ListenThread:
 		self.win = win
 		self.printer = printer
 		self.isRunning = False
+		self.endoflife = False
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
 		self.isRunning = False
 		self.printer = None
+		
+	def isKilled(self):
+		return self.endoflife
 		
 	def Run(self):
 		self.isRunning = True
@@ -123,8 +129,14 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
-				print "RECV: ",line.rstrip()
+				if line.strip().lower() == "ok":
+					continue
+				
+				evt = RepRapEvent(msg = line.rstrip(), state = 1)
+				wx.PostEvent(self.win, evt)
+
 		print "listener ending"
+		self.endoflife = True
 
 class RepRap:
 	def __init__(self, win, handler):
@@ -157,14 +169,22 @@ class RepRap:
 		if self.listener and self.listener.isRunning:
 			self.listener.kill()
 			
-		self.listener = None
 		if self.sender and self.sender.isRunning:
 			self.sender.kill()
-			
+	
+	def checkDisconnection(self):
+		if self.listener is None or self.sender is None:
+			return True
+				
+		if not self.listener.isKilled() or not self.sender.isKilled():
+			return False
+		self.listener = None
 		self.sender = None
 		self.printer = None
 		self.online = False
 		self.printing = False
+		
+		return True
 		
 	def _checksum(self,command):
 		return reduce(lambda x,y:x^y, map(ord,command))

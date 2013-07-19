@@ -54,7 +54,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(4,2))
 		
-		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["xyspeed"]), size=(60, -1), style=wx.TE_RIGHT)
+		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["xyspeed"]), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tXYSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tXYSpeed, pos=(4,3))
@@ -67,7 +67,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(6,2))
 		
-		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["zspeed"]), size=(60, -1), style=wx.TE_RIGHT)
+		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["zspeed"]), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tZSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tZSpeed, pos=(6,3))

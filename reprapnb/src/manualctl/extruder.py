@@ -22,7 +22,7 @@ class Extruder(wx.Window):
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(1,0), span=(1,3))
-		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"speed"]), size=(60, -1), style=wx.TE_RIGHT)
+		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"speed"]), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tESpeed.SetFont(f)
 		sizerExtrude.Add(self.tESpeed, pos=(1,3))
@@ -35,7 +35,7 @@ class Extruder(wx.Window):
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(3,0), span=(1,3))
 		
-		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"distance"]), size=(60, -1), style=wx.TE_RIGHT)
+		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"distance"]), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tEDistance.SetFont(f)
 		sizerExtrude.Add(self.tEDistance, pos=(3,3))
