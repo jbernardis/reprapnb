@@ -1,8 +1,10 @@
 import wx, os
 from gcmframe import GcmFrame
-from tempgraph import TempGraph
+from tempgraph import TempGraph, MAXX
 from images import Images
 from settings import TEMPFILELABEL
+from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
+					PRINT_RESUMED)
 
 BUTTONDIM = (64, 64)
 #Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
@@ -26,9 +28,10 @@ PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
 
 class PrintMonitor(wx.Panel):
-	def __init__(self, parent, app):
+	def __init__(self, parent, app, reprap):
 		self.model = None
 		self.app = app
+		self.reprap = reprap
 		self.logger = self.app.logger
 		self.printPos = 0
 		self.printing = False
@@ -41,6 +44,7 @@ class PrintMonitor(wx.Panel):
 		self.temps = {}
 		self.tempData = {}
 		self.gcFile = None
+		self.printMode = None
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -54,6 +58,7 @@ class PrintMonitor(wx.Panel):
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.sizerBtns.Add(self.bPrint)
 		self.Bind(wx.EVT_BUTTON, self.doPrint, self.bPrint)
+		self.bPrint.Enable(False)
 		
 		self.bPause = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPause, size=BUTTONDIM)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -144,8 +149,37 @@ class PrintMonitor(wx.Panel):
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
+		
+	def reprapEvent(self, evt):
+		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
+			self.printing = True
+			self.paused = False
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPrint.Enable(True)
+			self.bPause.Enable(True)
+			self.app.setPrinterBusy(True)
+			
+		elif evt.event == PRINT_STOPPED:
+			self.paused = True
+			self.printing = False
+			self.setPrintMode(PRINT_MODE_RESTART)
+			self.setPauseMode(PAUSE_MODE_RESUME)
+			self.bPrint.Enable(True)
+			self.bPause.Enable(True)
+			self.app.setPrinterBusy(False)
+			
+		elif evt.event == PRINT_COMPLETE:
+			self.printing = False
+			self.paused = False
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPrint.Enable(True)
+			self.bPause.Enable(True)
+			self.app.setPrinterBusy(False)
 
 	def setPrintMode(self, mode):
+		self.printMode = mode
 		if mode == PRINT_MODE_PRINT:
 			self.bPrint.SetToolTipString("Start the print")
 			self.bPrint.SetBitmapLabel(self.images.pngPrint)
@@ -158,38 +192,28 @@ class PrintMonitor(wx.Panel):
 			self.bPause.SetToolTipString("Pause the print")
 		elif mode == PAUSE_MODE_RESUME:
 			self.bPause.SetToolTipString("Resume the print from the paused point")
-
 		
 	def doPrint(self, evt):
-		#FIXIT
 		self.printPos = 0
-		self.printing = True
-		self.paused = False
-		self.setPrintMode(PRINT_MODE_PRINT)
-		self.setPauseMode(PAUSE_MODE_PAUSE)
+		if self.printMode == PRINT_MODE_RESTART:
+			self.reprap.restartPrint(self.model)
+		else:
+			self.reprap.startPrint(self.model)
 		self.bPrint.Enable(False)
-		self.bPause.Enable(True)
-		self.app.setPrinterBusy(True)
+		self.bPause.Enable(False)
 		
 	def doPause(self, evt):
-		#FIXIT
 		if self.paused:
-			self.paused = False
-			self.printing = True
-			self.setPrintMode(PRINT_MODE_PRINT)
-			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPause.Enable(False)
 			self.bPrint.Enable(False)
-			self.app.setPrinterBusy(True)
+			self.reprap.resumePrint()
 		else:
-			self.paused = True
-			self.printing = False
-			self.setPrintMode(PRINT_MODE_RESTART)
-			self.setPauseMode(PAUSE_MODE_RESUME)
-			self.bPrint.Enable(True)
-			self.app.setPrinterBusy(False)
+			self.bPause.Enable(False)
+			self.bPrint.Enable(False)
+			self.reprap.pausePrint()
 		
-	def test(self):
-		self.printPos += 10
+	def updatePrintPosition(self, pos):
+		self.printPos = pos
 		self.gcf.setPrintPosition(self.printPos)
 		
 	def onMouseLayer(self, evt):
@@ -297,9 +321,6 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
 			
-		
-	#FIXIT need to handle change printer, slicer, profile
-	#FIXIT target temps should come from the printer
 	def setHeatTarget(self, name, temp):
 		if name not in self.knownHeaters:
 			self.logger.LogWarning("Ignoring target temperature for unknown heater: %s" % name)
@@ -317,8 +338,8 @@ class PrintMonitor(wx.Panel):
 		for h in self.knownHeaters:
 			self.tempData[h].append(self.temps[h])
 			l = len(self.tempData[h])
-			if l > 240: # 4 minutes data
-				self.tempData[h] = self.tempData[h][l-240:]
+			if l > MAXX: # 4 minutes data
+				self.tempData[h] = self.tempData[h][l-MAXX:]
 		self.gTemp.setTemps(self.tempData)
 		
 	def enableButtons(self, flag=True):

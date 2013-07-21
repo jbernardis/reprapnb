@@ -14,12 +14,20 @@ dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
 colors = { "HBP": "blue", "HE": "red", "HE0": "red", "HE1": "yellow"}
+columns = { "HBP": 150, "HE": 100, "HE0": 100, "HE1": 50}
+rowOffset = { "HBP": 30, "HE": -30, "HE0": -30, "HE1": -30}
 
 def htrToColor(h):
 	if h not in colors.keys():
 		return "red"
 	else:
 		return colors[h]
+	
+def htrToColumn(h):
+	if h not in columns.keys():
+		return None
+	else:
+		return columns[h]
 
 class TempGraph (wx.Window):
 	def __init__(self, parent, settings):
@@ -174,6 +182,14 @@ class Graph (wx.Window):
 				points.append(wx.Point((MAXX - lx + i) * scale, (MAXY - data[i]) * scale))
 				
 		if len(points) < 2: return
+		
+		hcol = htrToColumn(htr)
+		if hcol is not None and data[lx-1] is not None:
+			dc.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
+			dc.SetTextBackground(wx.Colour(255, 255, 255))
+			dc.SetTextForeground(c)
+			hrow = data[lx] + rowOffset[htr]
+			dc.DrawText("%s: %.1f" % (htr, hrow), hcol, (MAXY-hrow) * scale)
 		
 		dc.SetPen(wx.Pen(c, 3))
 		dc.DrawLines(points)

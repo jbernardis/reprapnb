@@ -18,33 +18,21 @@ from printmon import PrintMonitor
 from manualctl import ManualControl
 from plater import Plater
 from settings import Settings
-from reprap import RepRap
 from logger import Logger
 from images import Images
 from parser import RepRapParser
+from reprap import RepRap, RECEIVED_MSG
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
 TB_TOOL_LOG = 19
 
 TEMPINTERVAL = 3
+POSITIONINTERVAL = 1
 
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
-
-# class Images:
-# 	def __init__(self, settings):
-# 		self.pngPorts = self.loadImg(os.path.join(settings.cmdfolder, "images/ports.png"))
-# 		self.pngConnect = self.loadImg(os.path.join(settings.cmdfolder, "images/connect.png"))
-# 		self.pngDisconnect = self.loadImg(os.path.join(settings.cmdfolder, "images/disconnect.png"))
-# 		self.pngLog = self.loadImg(os.path.join(settings.cmdfolder, "images/log.png"))
-# 		
-# 	def loadImg(self, path):
-# 		png = wx.Image(path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-# 		mask = wx.Mask(png, wx.BLUE)
-# 		png.SetMask(mask)
-# 		return png
 
 class MainFrame(wx.Frame):
 	def __init__(self):
@@ -75,7 +63,6 @@ class MainFrame(wx.Frame):
 			self.logger.LogError("Unable to get printer settings")
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
-#		self.images = Images(self.settings)
 
 		p = wx.Panel(self)
 
@@ -176,7 +163,7 @@ class MainFrame(wx.Frame):
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
 		self.pgManCtl = ManualControl(self.nb, self)
-		self.pgPrtMon = PrintMonitor(self.nb, self)
+		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
 		self.nb.AddPage(self.pgPlater, "Plating")
 		self.nb.AddPage(self.pgFilePrep, "File Preparation")
@@ -197,10 +184,12 @@ class MainFrame(wx.Frame):
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)
 
-
 	def evtRepRap(self, evt):
-		print "Reprap evnt received, event = ", evt.state, evt.msg
-		self.parser.parseMsg(evt.msg)
+		if evt.event == RECEIVED_MSG:
+			if not self.parser.parseMsg(evt.msg):
+				self.logger.logMessage(evt.message)
+		else:
+			self.pgPrtMon.reprapEvent(evt)
 	
 	def doShowHideLog(self, evt):
 		self.logShowing = not self.logShowing
@@ -260,7 +249,6 @@ class MainFrame(wx.Frame):
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
 		self.slicer.type.setProfile(newprof)
-		#FIXIT - notify MANCTL and prtmin
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -272,26 +260,8 @@ class MainFrame(wx.Frame):
 		self.cbProfile.Clear()
 		self.cbProfile.AppendItems(self.slicer.type.getProfileOptions().keys())
 		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
-		#FIXIT - notify MANCTL and prtmin
 		
 	def doPort(self, evt):
-		if self.ctr == 0:
-			self.setHeatTarget("HBP", 60)
-		elif self.ctr == 1:
-			self.setHeatTarget("HE0", 185)
-		elif self.ctr == 2:
-			self.setHeatTarget("HE1", 155)
-		elif self.ctr == 3:
-			self.setHeatTemp("HBP", 40)
-		elif self.ctr == 4:
-			self.setHeatTemp("HBP", 50)
-		elif self.ctr == 5:
-			self.setHeatTemp("HBP", None)
-		
-		self.ctr += 1
-		if self.ctr == 9:
-			self.ctr = 0
-			
 		l = self.scanSerial()
 		self.cbPort.Clear()
 		if len(l) > 0:
@@ -351,7 +321,6 @@ class MainFrame(wx.Frame):
 		self.timer = None
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
-
 
 	def announcePrinter(self):
 		#FIXIT
@@ -422,7 +391,11 @@ class MainFrame(wx.Frame):
 		
 		if self.cycle % TEMPINTERVAL == 0:
 			self.reprap.send_now("M105")
-
+			
+		if self.cycle % POSITIONINTERVAL == 0:
+			n = self.reprap.getPrintPosition()
+			if n is not None:
+				self.pgPrtMon.updatePrintPosition(n)
 		
 	def onClose(self, evt):
 		if self.connected:
@@ -446,7 +419,6 @@ class MainFrame(wx.Frame):
 	
 		self.settings.cleanUp()	
 		self.Destroy()
-		
 
 class App(wx.App):
 	def OnInit(self):
@@ -454,7 +426,6 @@ class App(wx.App):
 		self.frame.Show()
 		self.SetTopWindow(self.frame)
 		return True
-#----------------------------------------------------------------------------
 
 app = App(False)
 app.MainLoop()

@@ -14,14 +14,14 @@ BUTTONDIM = (64, 64)
 orange = wx.Colour(237, 139, 33)
 
 class Heater(wx.Window):
-	def __init__(self, parent, app, name="", shortname="", target=20, range=(0, 100), oncmd = "G104"):
+	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100), oncmd = "G104"):
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.name = name
 		self.shortname = shortname
 		self.profileTarget = target
-		self.range = range
+		self.range = trange
 		self.onCmd = oncmd
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
@@ -37,6 +37,8 @@ class Heater(wx.Window):
 		self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTemp.SetFont(f)
+		self.tTemp.SetBackgroundColour("blue")
+		self.tTemp.SetForegroundColour(wx.Colour(255, 255, 255))
 		sizerHtr.Add(self.tTemp, pos=(0,3))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Target: ", style=wx.ALIGN_RIGHT, size=(90, -1))
@@ -44,9 +46,11 @@ class Heater(wx.Window):
 		t.SetFont(f)
 		sizerHtr.Add(t, pos=(1,2))
 		
-		self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
+		self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTarget.SetFont(f)
+		self.tTarget.SetBackgroundColour(wx.Colour(0, 0, 0))
+		self.tTarget.SetForegroundColour(wx.Colour(255, 255, 255))
 		sizerHtr.Add(self.tTarget, pos=(1,3))
 		
 		self.slTarget = wx.Slider(
@@ -88,8 +92,8 @@ class Heater(wx.Window):
 		self.slTarget.SetValue(self.profileTarget)
 		
 	def setHeatTarget(self, t):
-		if t is None:
-			self.tTemp.SetValue("???")
+		if t is None or t == 0:
+			self.tTemp.SetValue("")
 			return
 		
 		try:

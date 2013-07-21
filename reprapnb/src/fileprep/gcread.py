@@ -202,6 +202,21 @@ class GCode(object):
 			
 		self.process()
 		
+	def __iter__(self):
+		self.__lx__ = 0
+		return self
+	
+	def next(self):
+		if self.__lx__ < self.__len__():
+			i = self.__lx__
+			self.__lx__ += 1
+			return self.lines[i]
+
+		raise StopIteration
+	
+	def __len__(self):
+		return len(self.lines)
+		
 	def insertGCode(self, line, g):
 		nl = []
 		for l in g:

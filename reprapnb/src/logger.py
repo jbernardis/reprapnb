@@ -12,6 +12,8 @@ class Logger(wx.Frame):
             self, parent, ID, title, pos=wx.DefaultPosition,
             size=wx.DefaultSize, style=wx.RESIZE_BORDER | wx.CAPTION
             ):
+        
+        self.traceLevel = 0
 
         wx.Frame.__init__(self, parent, ID, title, pos, size, style)
         panel = wx.Panel(self, -1)
@@ -24,6 +26,16 @@ class Logger(wx.Frame):
         panel.SetSizer(sz)
         panel.Layout()
         panel.Fit()
+
+    def setTraceLevel(self, l):
+        self.traceLevel = l
+        
+    def logTrace(self, level, text):
+        if level > self.traceLevel:
+            return
+        
+        self.LogMessage(("Trace[%d] - " % level) +string.rstrip(text)+"\n")
+       
 #FIXIT       
     def LogMessage(self, text):
         s = time.strftime('%H:%M:%S', time.localtime(time.time()))

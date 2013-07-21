@@ -99,7 +99,7 @@ class ManualControl(wx.Panel):
 			sizerHeat.AddSpacer((10,10))
 		
 			he = Heater(self, self.app, name=h[1], shortname=h[0], 
-					target=h[2], range=h[3], oncmd=h[4])
+					target=h[2], trange=h[3], oncmd=h[4])
 			sizerHeat.Add(he)
 			self.htrWin.append(he)
 			self.htrMap[h[0]] = he

@@ -15,12 +15,15 @@ import wx.lib.newevent
 PRINT_COMPLETE = 1
 PRINT_STOPPED = 2
 PRINT_STARTED = 3
+PRINT_RESUMED = 4
+RECEIVED_MSG = 10
 
 CMD_GCODE = 1
 CMD_STARTPRINT = 2
 CMD_STOPPRINT = 3
 CMD_DRAINQUEUE = 4
 CMD_ENDOFPRINT = 5
+CMD_RESUMEPRINT = 6
 
 class SendThread:
 	def __init__(self, win, printer, priQ, mainQ):
@@ -31,6 +34,7 @@ class SendThread:
 		self.printer = printer
 		self.isRunning = False
 		self.endoflife = False
+		self.printIndex = 0
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -40,6 +44,9 @@ class SendThread:
 	def isKilled(self):
 		return self.endoflife
 	
+	def getPrintIndex(self):
+		return self.printIndex
+	
 	def Run(self):
 		self.isRunning = True
 		while self.isRunning:
@@ -47,14 +54,14 @@ class SendThread:
 				if not self.priQ.empty():
 					try:
 						(cmd, string) = self.priQ.get(True, 0.01)
-						self.processCmd(cmd, string)
+						self.processCmd(cmd, string, True)
 					except Queue.Empty:
 						pass
 					
 				elif not self.mainQ.empty():
 					try:
 						(cmd, string) = self.mainQ.get(True, 0.01)
-						self.processCmd(cmd, string)
+						self.processCmd(cmd, string, False)
 					except Queue.Empty:
 						pass
 				else:
@@ -63,26 +70,38 @@ class SendThread:
 			else:
 				try:
 					(cmd, string) = self.priQ.get(True, 0.01)
-					self.processCmd(cmd, string)
+					self.processCmd(cmd, string, True)
 				except Queue.Empty:
 					time.sleep(0.01)
 		print "sender ending"
 		self.endoflife = True
 				
-	def processCmd(self, cmd, string):
+	def processCmd(self, cmd, string, pflag):
 		if cmd == CMD_GCODE:
+			if not pflag:
+				self.printIndex += 1
 			self.printer.write(str(string+"\n"))
+			
 		elif cmd == CMD_STARTPRINT:
 			self.isPrinting = True
+			self.printIndex = 0
 			evt = RepRapEvent(event = PRINT_STARTED)
 			wx.PostEvent(self.win, evt)
+			
+		elif cmd == CMD_RESUMEPRINT:
+			self.isPrinting = True
+			evt = RepRapEvent(event = PRINT_RESUMED)
+			wx.PostEvent(self.win, evt)
+			
 		elif cmd == CMD_STOPPRINT:
 			self.isPrinting = False
 			evt = RepRapEvent(event = PRINT_STOPPED)
 			wx.PostEvent(self.win, evt)
+			
 		elif cmd == CMD_ENDOFPRINT:
 			evt = RepRapEvent(event = PRINT_COMPLETE)
 			wx.PostEvent(self.win, evt)
+			
 		elif cmd == CMD_DRAINQUEUE:
 			while True:
 				try:
@@ -132,7 +151,7 @@ class ListenThread:
 				if line.strip().lower() == "ok":
 					continue
 				
-				evt = RepRapEvent(msg = line.rstrip(), state = 1)
+				evt = RepRapEvent(event=RECEIVED_MSG, msg = line.rstrip(), state = 1)
 				wx.PostEvent(self.win, evt)
 
 		print "listener ending"
@@ -154,6 +173,9 @@ class RepRap:
 		self.port = port
 		self.baud = baud
 		
+		self.printing = False
+		self.paused = False
+		
 		if self.port is not None and self.baud is not None:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
@@ -162,6 +184,12 @@ class RepRap:
 			self.sender = SendThread(self.win, self.printer, self.priQ, self.mainQ)
 			self.send_now("M105")
 			self.online = True
+			
+	def getPrintPosition(self):
+		if self.sender and self.sender.isPrinting:
+			return self.sender.getPrintIndex()
+		else:
+			return None
 
 	def disconnect(self):
 		if(self.printer):
@@ -183,6 +211,7 @@ class RepRap:
 		self.printer = None
 		self.online = False
 		self.printing = False
+		self.paused = False
 		
 		return True
 		
@@ -197,6 +226,29 @@ class RepRap:
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
 		self._sendCmd(CMD_STARTPRINT)
+		self.printing = True
+		self.paused = False
+		
+	def pausePrint(self):
+		self._sendCmd(CMD_STOPPRINT)
+		self.printing = False
+		self.paused = True
+		
+	def resumePrint(self):
+		self._sendCmd(CMD_RESUMEPRINT)
+		self.printing = True
+		self.paused = False
+		
+	def restartPrint(self, data):
+		self._sendCmd(CMD_DRAINQUEUE)
+		self.startPrint(data)
+		self.printing = True
+		self.paused = False
+		
+	def resetPrint(self):
+		self._sendCmd(CMD_DRAINQUEUE)
+		self.printing = False
+		self.paused = False
 				
 	def send_now(self, cmd):
 		if not self.printer:

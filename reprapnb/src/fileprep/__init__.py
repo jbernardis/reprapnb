@@ -95,6 +95,7 @@ class FilePrepare(wx.Panel):
 		self.temporaryFile = False	
 		self.printerBusy = True	
 		self.gcodeLoaded = False
+		self.sliceActive = False
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -115,9 +116,9 @@ class FilePrepare(wx.Panel):
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		
 		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
-		self.bSlice.SetToolTipString("Slice a file using the currently configured slicer")
 		self.sizerBtns.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
+		self.setSliceMode(True)
 		
 		self.sizerBtns.AddSpacer((20, 20))
 		
@@ -368,6 +369,14 @@ class FilePrepare(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+
+	def setSliceMode(self, flag=True):
+		if flag:
+			self.bSlice.SetBitmapLabel(self.images.pngSlice)
+			self.bSlice.SetToolTipString("Slice a file using the currently configured slicer")
+		else:
+			self.bSlice.SetBitmapLabel(self.images.pngCancelslice)
+			self.bSlice.SetToolTipString("Cancel slicer")
 		
 	def onClose(self, evt):
 		if self.checkModified():
@@ -384,6 +393,11 @@ class FilePrepare(wx.Panel):
 		self.app.forwardToPrintMon(GCode(self.gcode), name=name)
 		
 	def fileSlice(self, event):
+		if self.sliceActive:
+			self.sliceThread.Stop()
+			self.bSlice.Enable(False)
+			return
+		
 		if self.checkModified(message='Close file without saving changes?'):
 			return
 		
@@ -413,7 +427,8 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.setGCodeLoaded(False)
 		self.bOpen.Enable(False)
-		self.bSlice.Enable(False)
+		self.setSliceMode(False)
+		self.sliceActive = True
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -425,7 +440,9 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage(evt.msg)
 			self.gcFile = None
 			self.bOpen.Enable(True)
+			self.setSliceMode()
 			self.bSlice.Enable(True)
+			self.sliceActive = False
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
@@ -436,6 +453,9 @@ class FilePrepare(wx.Panel):
 				except:
 					pass
 				self.stlFile = None
+			self.setSliceMode()
+			self.sliceActive = False
+			self.bSlice.Enable(True)
 			self.loadFile(self.gcFile)
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)

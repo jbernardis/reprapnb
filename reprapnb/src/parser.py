@@ -28,13 +28,13 @@ class RepRapParser:
             elif h[0] == "HE0":
                 self.heaters['T'] = "HE0"
             elif h[0] == "HE1":
+                #FIXIT - need to know axis number for second hot end
                 self.heaters['K'] = "HE1"
             elif h[0] == "HBP":
                 self.heaters['B'] = "HBP"
         
         
     def parseMsg(self, msg):
-        print "Parsing (%s)" % msg
         m = self.rpt1re.search(msg)
         if m:
             t = m.groups()
@@ -46,6 +46,9 @@ class RepRapParser:
                 self.app.setHeatTemp(self.heaters['B'], float(t[2]))
             if len(t) >= 4:
                 self.app.setHeatTarget(self.heaters['B'], float(t[3]))
+            return True
+        
+        return False
 
 
         
