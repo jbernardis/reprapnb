@@ -14,7 +14,6 @@ class Extruder(wx.Window):
 
 		self.name = name
 		self.axis = axis
-		self.range = range
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerExtrude = wx.GridBagSizer()
 

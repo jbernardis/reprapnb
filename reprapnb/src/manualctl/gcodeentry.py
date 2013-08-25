@@ -4,7 +4,6 @@ class GCodeEntry(wx.Window):
 	def __init__(self, parent, name=""):
 		self.parent = parent
 		self.name = name
-		self.range = range
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerGCode = wx.BoxSizer(wx.HORIZONTAL)
 		self.tGCode = wx.TextCtrl(self, wx.ID_ANY, "", size=(550, -1), style=wx.TE_LEFT)

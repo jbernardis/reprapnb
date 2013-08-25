@@ -21,7 +21,7 @@ class Heater(wx.Window):
 		self.name = name
 		self.shortname = shortname
 		self.profileTarget = target
-		self.range = trange
+		self.trange = trange
 		self.onCmd = oncmd
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
@@ -54,7 +54,7 @@ class Heater(wx.Window):
 		sizerHtr.Add(self.tTarget, pos=(1,3))
 		
 		self.slTarget = wx.Slider(
-			self, wx.ID_ANY, target, range[0], range[1], size=(340, -1), 
+			self, wx.ID_ANY, target, self.trange[0], self.trange[1], size=(340, -1), 
 			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
 			)
 		self.slTarget.SetTickFreq(5, 1)
@@ -85,7 +85,7 @@ class Heater(wx.Window):
 		self.Fit()
 		
 	def setRange(self, trange):
-		self.range = trange
+		self.trange = trange
 		self.slTarget.SetRange(trange[0], trange[1])
 		
 	def importProfile(self, evt):
@@ -145,7 +145,7 @@ class Heater(wx.Window):
 			l -= 1
 		else:
 			l += 1
-		if l >= self.range[0] and l <= self.range[1]:
+		if l >= self.trange[0] and l <= self.trange[1]:
 			self.slTarget.SetValue(l)
 
 	
