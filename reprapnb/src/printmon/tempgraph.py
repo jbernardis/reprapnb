@@ -188,8 +188,8 @@ class Graph (wx.Window):
 			dc.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
 			dc.SetTextBackground(wx.Colour(255, 255, 255))
 			dc.SetTextForeground(c)
-			hrow = data[lx] + rowOffset[htr]
-			dc.DrawText("%s: %.1f" % (htr, hrow), hcol, (MAXY-hrow) * scale)
+			hrow = data[lx-1] + rowOffset[htr]
+			dc.DrawText("%s: %.1f" % (htr, data[lx-1]), hcol, (MAXY-hrow) * scale)
 		
 		dc.SetPen(wx.Pen(c, 3))
 		dc.DrawLines(points)

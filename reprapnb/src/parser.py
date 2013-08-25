@@ -11,9 +11,9 @@ class RepRapParser:
 	'''
 	def __init__(self, app):
 		self.app = app
-		self.rpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
-		self.rptnre = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *B:([0-9\.]+)")
-		self.rpt2re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *W:.*")
+		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
+		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *B:([0-9\.]+)")
+		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *W:.*")
 		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
 		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
 		
@@ -35,22 +35,50 @@ class RepRapParser:
 		
 		
 	def parseMsg(self, msg):
-		m = self.rpt1re.search(msg)
-		self.app.logger.logMsg("Parsing MSG: " + msg)
+		self.app.logger.LogMessage("Parsing MSG: " + msg)
+		m = self.trpt1re.search(msg)
 		if m:
+			self.app.logger.LogMessage("Match temperature report 1")
 			t = m.groups()
 			if len(t) >= 1:
-				self.app.logger.logMsg("0: " + t[0])
+				self.app.logger.LogMessage("0: " + t[0])
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
 			if len(t) >= 2:
-				self.app.logger.logMsg("1: " + t[1])
+				self.app.logger.LogMessage("1: " + t[1])
 				self.app.setHeatTarget(self.heaters['T'], float(t[1]))
 			if len(t) >= 3:
-				self.app.logger.logMsg("2: " + t[2])
+				self.app.logger.LogMessage("2: " + t[2])
 				self.app.setHeatTemp(self.heaters['B'], float(t[2]))
 			if len(t) >= 4:
-				self.app.logger.logMsg("3: " + t[3])
+				self.app.logger.LogMessage("3: " + t[3])
 				self.app.setHeatTarget(self.heaters['B'], float(t[3]))
+			return True
+		
+		m = self.trpt2re.search(msg)
+		if m:
+			self.app.logger.LogMessage("Match temperature report 2")
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.logger.LogMessage("0: " + t[0])
+				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
+			if len(t) >= 2:
+				self.app.logger.LogMessage("1: " + t[1])
+				self.app.logger.LogMessage("Don't know what this temp is")
+			if len(t) >= 3:
+				self.app.logger.LogMessage("2: " + t[2])
+				self.app.setHeatTemp(self.heaters['B'], float(t[2]))
+			return True
+		
+		m = self.trpt3re.search(msg)
+		if m:
+			self.app.logger.LogMessage("Match temperature report 3")
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.logger.LogMessage("0: " + t[0])
+				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
+			if len(t) >= 2:
+				self.app.logger.LogMessage("1: " + t[1])
+				self.app.logger.LogMessage("Don't know what this temp is")
 			return True
 		
 		return False

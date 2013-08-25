@@ -18,12 +18,12 @@ Edistance = 5
 buildarea = (200, 200)
 extruders = 2
 axisletters = ['E', 'K']
-xyspeed = 2000.0
+xyspeed = 2500.0
 zspeed = 3000.0
-Espeed = 1800
-Edistance = 5
-Kspeed = 1800
-Kdistance = 5
+Espeed = 1800.0
+Edistance = 5.0
+Kspeed = 1800.0
+Kdistance = 5.0
 
 [slicer.slic3r]
 command = ~\Slic3r\bin\slic3r --load "%profile%" "%stl%" -o "%slicegcode%"
@@ -33,9 +33,9 @@ profiledir = c:\tmp\slic3r
 
 [fileprep]
 gcodescale = 3
-lastdirectory = C:\workspace\gcodeview\src
-showprevious = True
-showmoves = True
+lastdirectory = O:\OpenSCAD\Snap-Together_Robohand
+showprevious = False
+showmoves = False
 usebuffereddc = False
 
 [plater]
