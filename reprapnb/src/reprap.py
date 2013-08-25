@@ -150,7 +150,8 @@ class ListenThread:
 			if(len(line)>1):
 				if line.strip().lower() == "ok":
 					continue
-				
+
+				print "received (%s)" % line.rstrip()				
 				evt = RepRapEvent(event=RECEIVED_MSG, msg = line.rstrip(), state = 1)
 				wx.PostEvent(self.win, evt)
 
