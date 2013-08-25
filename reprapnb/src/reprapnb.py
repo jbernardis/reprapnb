@@ -2,6 +2,7 @@ import os.path
 import sys, inspect
 import wx
 import glob
+import time
 
 if os.name=="nt":
 	try:
@@ -34,12 +35,34 @@ BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
+secpday = 60 * 60 * 24
+secphour = 60 * 60
+
+def formatElapsed(secs):
+	ndays = int(secs/secpday)
+	secday = secs % secpday
+	
+	nhour = int(secday/secphour)
+	sechour = secday % secphour
+	
+	nmin = int(sechour/60)
+	nsec = sechour % 60
+
+	if ndays == 0:
+		if nhour == 0:
+			return "%d:%02d" % (nmin, nsec)
+		else:
+			return "%d:%02d:%02d" % (nhour, nmin, nsec)
+	else:
+		return "%d-%d:%02d:%02d" % (ndays, nhour, nmin, nsec)	
+
 class MainFrame(wx.Frame):
 	def __init__(self):
 		self.ctr = 0
 		self.cycle = 0
 		self.timer = None
 		self.discPending = False
+		self.printPosition = None
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -328,10 +351,14 @@ class MainFrame(wx.Frame):
 	
 	def replace(self, s):
 		d = {}
-# FIXIT					
-# 		d['%starttime%'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
-# 		d['%endtime%'] = time.strftime('%H:%M:%S', time.localtime(self.endTime))
-# 		d['%elapsed%'] = formatElapsed(self.elapsedTime)
+		
+		st, et = self.pgPrtMon.getPrintTimes()
+		if st is not None:				
+			d['%starttime%'] = time.strftime('%H:%M:%S', time.localtime(st))
+		if et is not None:
+			d['%endtime%'] = time.strftime('%H:%M:%S', time.localtime(et))
+		if st is not None and et is not None:
+			d['%elapsed%'] = formatElapsed(et - st)
 			
 		d['%profile%'] = self.slicer.settings['profilefile']
 		d['%slicer%'] = self.settings.slicer
@@ -365,6 +392,8 @@ class MainFrame(wx.Frame):
 		return s
 	
 	def setPrinterBusy(self, flag=True):
+		if flag:
+			self.printPosition = None
 		self.pgFilePrep.setPrinterBusy(flag)
 	
 	def switchToFilePrep(self, fn):
@@ -394,7 +423,8 @@ class MainFrame(wx.Frame):
 			
 		if self.cycle % POSITIONINTERVAL == 0:
 			n = self.reprap.getPrintPosition()
-			if n is not None:
+			if n is not None and n != self.printPosition:
+				self.printPosition = n
 				self.pgPrtMon.updatePrintPosition(n)
 		
 	def onClose(self, evt):

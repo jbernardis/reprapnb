@@ -30,13 +30,12 @@ class Logger(wx.Frame):
     def setTraceLevel(self, l):
         self.traceLevel = l
         
-    def logTrace(self, level, text):
+    def LogTrace(self, level, text):
         if level > self.traceLevel:
             return
         
         self.LogMessage(("Trace[%d] - " % level) +string.rstrip(text)+"\n")
        
-#FIXIT       
     def LogMessage(self, text):
         s = time.strftime('%H:%M:%S', time.localtime(time.time()))
         self.t.AppendText(s+" - " +string.rstrip(text)+"\n")

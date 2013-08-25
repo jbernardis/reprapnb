@@ -11,7 +11,8 @@ def createSlicerObject(name, app, parent):
 		return Slic3r(app, parent)
 	
 	return None
-	
+
+#FIXIT - work with slic3r ini files - 3 files	
 	
 class Slic3r:
 	def __init__(self, app, parent):

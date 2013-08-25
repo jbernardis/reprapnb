@@ -51,7 +51,6 @@ class TempGraph (wx.Window):
 		self.Fit()
 		self.yLegend()
 		self.xLegend()
-		#FIXIT
 		
 	def yLegend(self):
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)

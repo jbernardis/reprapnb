@@ -6,7 +6,7 @@ from heater import Heater
 from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
 	
-# G code ref
+#FIXIT  G code ref
 
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app):
@@ -176,8 +176,6 @@ class ManualControl(wx.Panel):
 
 		self.Layout()
 		self.Fit()
-	
-	#FIXIT need similar logic for slicer change and profile chnage
 
 	def onClose(self, evt):
 		return True

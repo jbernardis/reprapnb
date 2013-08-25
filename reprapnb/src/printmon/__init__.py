@@ -1,4 +1,5 @@
 import wx, os
+import time
 from gcmframe import GcmFrame
 from tempgraph import TempGraph, MAXX
 from images import Images
@@ -7,7 +8,7 @@ from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
 					PRINT_RESUMED)
 
 BUTTONDIM = (64, 64)
-#Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
+#FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
 	
 myRed = wx.Colour(254, 142, 82, 179)
 myBlue = wx.Colour(51, 115, 254, 179)
@@ -43,6 +44,8 @@ class PrintMonitor(wx.Panel):
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
+		self.startTime = None
+		self.endTime = None
 		self.gcFile = None
 		self.printMode = None
 
@@ -177,6 +180,10 @@ class PrintMonitor(wx.Panel):
 			self.bPrint.Enable(True)
 			self.bPause.Enable(True)
 			self.app.setPrinterBusy(False)
+			self.endTime = time.time()
+			
+	def getPrintTimes(self):
+		return self.startTime, self.endTime
 
 	def setPrintMode(self, mode):
 		self.printMode = mode
@@ -195,6 +202,8 @@ class PrintMonitor(wx.Panel):
 		
 	def doPrint(self, evt):
 		self.printPos = 0
+		self.startTime = time.time()
+		self.endTime = None
 		if self.printMode == PRINT_MODE_RESTART:
 			self.reprap.restartPrint(self.model)
 		else:
