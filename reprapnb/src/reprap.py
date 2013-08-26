@@ -222,7 +222,7 @@ class RepRap:
 	def startPrint(self, data):
 		ln = 0
 		for l in data:
-			self._send(l, ln, checksum=True)
+			self._send(l.raw, lineno=ln, checksum=True)
 			ln += 1
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
@@ -278,6 +278,6 @@ class RepRap:
 	
 	def _sendCmd(self, cmd, priority=True):
 		if priority:
-			self.priQ((cmd, ""))
+			self.priQ.put((cmd, ""))
 		else:
-			self.mainQ((cmd, ""))
+			self.mainQ.put((cmd, ""))
