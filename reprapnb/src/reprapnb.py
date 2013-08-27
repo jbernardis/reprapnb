@@ -62,6 +62,7 @@ class MainFrame(wx.Frame):
 		self.cycle = 0
 		self.timer = None
 		self.discPending = False
+		self.M105pending = False
 		self.printPosition = None
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -80,10 +81,8 @@ class MainFrame(wx.Frame):
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
 			self.logger.LogError("Unable to get slicer settings")
-
-		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
-		if self.printersettings is None:
-			self.logger.LogError("Unable to get printer settings")
+			
+		self.buildarea = self.slicer.type.getSlicerSettings()[0]
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 
@@ -94,19 +93,6 @@ class MainFrame(wx.Frame):
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		sizerBtns.AddSpacer((10,10))
 		sizerBtns.Add(self.tb)
-			
-		t = wx.StaticText(self.tb, wx.ID_ANY, "  Printer:  ", style=wx.ALIGN_RIGHT)
-		t.SetFont(f)
-		self.tb.AddControl(t)
-		
-		self.cbPrinter = wx.ComboBox(self.tb, wx.ID_ANY, self.settings.printer, (-1, -1), (100, -1), self.settings.printers, wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbPrinter.SetFont(f)
-		self.cbPrinter.SetToolTipString("Choose which printer to use")
-		self.tb.AddControl(self.cbPrinter)
-		self.cbPrinter.SetStringSelection(self.settings.printer)
-		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
-		
-		self.tb.AddSeparator()
 			
 		t = wx.StaticText(self.tb, wx.ID_ANY, " Port:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
@@ -155,6 +141,19 @@ class MainFrame(wx.Frame):
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 			
+		self.tb.AddSeparator()
+			
+		t = wx.StaticText(self.tb, wx.ID_ANY, "  Printer:  ", style=wx.ALIGN_RIGHT)
+		t.SetFont(f)
+		self.tb.AddControl(t)
+		
+		self.cbPrinter = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['printer'], (-1, -1), (100, -1), self.slicer.type.getPrinterOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbPrinter.SetFont(f)
+		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
+		self.tb.AddControl(self.cbPrinter)
+		self.cbPrinter.SetStringSelection(self.slicer.settings['printer'])
+		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
+		
 		t = wx.StaticText(self.tb, wx.ID_ANY, " Profile:  ", style=wx.ALIGN_RIGHT)
 		t.SetFont(f)
 		self.tb.AddControl(t)
@@ -162,10 +161,22 @@ class MainFrame(wx.Frame):
 		self.cbProfile = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['profile'],
 									(-1, -1), (120, -1), self.slicer.type.getProfileOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbProfile.SetFont(f)
-		self.cbProfile.SetToolTipString("Choose which slicer profile to use")
+		self.cbProfile.SetToolTipString("Choose which print profile to use")
 		self.tb.AddControl(self.cbProfile)
 		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
+		
+		t = wx.StaticText(self.tb, wx.ID_ANY, " Filament:  ", style=wx.ALIGN_RIGHT)
+		t.SetFont(f)
+		self.tb.AddControl(t)
+	
+		self.cbFilament = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['filament'],
+									(-1, -1), (120, -1), self.slicer.type.getFilamentOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbFilament.SetFont(f)
+		self.cbFilament.SetToolTipString("Choose which filament profile to use")
+		self.tb.AddControl(self.cbFilament)
+		self.cbFilament.SetStringSelection(self.slicer.settings['filament'])
+		self.Bind(wx.EVT_COMBOBOX, self.doChooseFilament, self.cbFilament)
 
 		self.tb.AddSeparator()
 				
@@ -232,38 +243,41 @@ class MainFrame(wx.Frame):
 			evt.Skip()
 		
 	def doChoosePrinter(self, evt):
-		self.settings.printer = self.cbPrinter.GetValue()
-		self.settings.setModified()
-		self.printersettings = self.settings.getPrinterSettings(self.settings.printer)
-		if self.printersettings is None:
-			self.logger.LogError("Unable to get printer settings")
-			return
+		newprinter = self.cbPrinter.GetValue()
+		self.slicer.type.setPrinter(newprinter)
 		
 		extruders = []
 		heaters = []
-		temps = self.slicer.type.getProfileTemps()
-		maxExt = self.printersettings.settings['extruders']
-		axes = self.printersettings.settings['axisletters']
-		if len(temps) < 2:
-			self.logger.LogError("No hot end temperatures configured in profile")
+		(buildarea, nextr, axes, hetemps, bedtemp) = self.slicer.type.getSlicerSettings()
+		if len(hetemps) < 1:
+			self.logger.LogError("No hot end temperatures configured in slicer")
 			return
-		hbpTemp = temps[0]
-		temps = temps[1:]
-		if len(temps) != maxExt:
-			self.logger.LogWarning("Profile does not have the correct number of extruders configured")
-			t = temps[0]
-			for i in range(maxExt - len(temps)):
-				temps.append(t)
+	
+		if len(hetemps) != nextr:
+			self.logger.LogWarning("Slicer does not have the correct number of extruders configured")
+			if len(hetemps) < nextr:
+				t = hetemps[0]
+				r = range(nextr - len(hetemps))
+				for i in r:
+					hetemps.append(t)
+
+		if len(axes) != nextr:
+			self.logger.LogWarning("Slicer does not have the correct number of axis letters configured")
+			if len(axes) < nextr:
+				t = axes[0]
+				r = range(nextr - len(axes))
+				for i in r:
+					axes.append(t)
 				
-		if maxExt == 1:
+		if nextr == 1:
 			extruders.append(["Ext", "Extruder", axes[0]])
-			heaters.append(["HE", "Hot End", temps[0], (20, 250), "M104"])
+			heaters.append(["HE", "Hot End", hetemps[0], (20, 250), "M104"])
 		else:
-			for i in range(maxExt):
+			for i in range(nextr):
 				extruders.append(["Ext%d" % i, "Extruder %d" % i, axes[i]])
-				heaters.append(["HE%d" % i, "Hot End %d" % i, temps[i], (20, 250), "M104"])
+				heaters.append(["HE%d" % i, "Hot End %d" % i, hetemps[i], (20, 250), "M104"])
 			
-		heaters.append(["HBP", "Build Platform", hbpTemp, (20, 150), "M140"])
+		heaters.append(["HBP", "Build Platform", bedtemp, (20, 150), "M140"])
 
 		self.pgManCtl.changePrinter(heaters, extruders)
 		self.pgPrtMon.changePrinter(heaters, extruders)
@@ -272,6 +286,10 @@ class MainFrame(wx.Frame):
 	def doChooseProfile(self, evt):
 		newprof = self.cbProfile.GetValue()
 		self.slicer.type.setProfile(newprof)
+		
+	def doChooseFilament(self, evt):
+		newfilament = self.cbFilament.GetValue()
+		self.slicer.type.setFilament(newfilament)
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -328,7 +346,7 @@ class MainFrame(wx.Frame):
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
 			self.announcePrinter()
-			self.cbPrinter.Enable(False)
+			#self.cbPrinter.Enable(False)
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
@@ -339,7 +357,7 @@ class MainFrame(wx.Frame):
 		self.discPending = False
 		self.announcePrinter()
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-		self.cbPrinter.Enable(True)
+		#self.cbPrinter.Enable(True)
 		self.timer.Stop()
 		self.timer = None
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
@@ -361,6 +379,8 @@ class MainFrame(wx.Frame):
 			d['%elapsed%'] = formatElapsed(et - st)
 			
 		d['%profile%'] = self.slicer.settings['profilefile']
+		d['%printer%'] = self.slicer.settings['printerfile']
+		d['%filament%'] = self.slicer.settings['filamentfile']
 		d['%slicer%'] = self.settings.slicer
 		
 		if self.pgFilePrep.stlFile is not None:
@@ -419,7 +439,9 @@ class MainFrame(wx.Frame):
 			self.finishDisconnection()
 		
 		if self.cycle % TEMPINTERVAL == 0:
-			self.reprap.send_now("M105")
+			if not self.M105pending:
+				self.M105pending = True
+				self.reprap.send_now("M105")
 			
 		if self.cycle % POSITIONINTERVAL == 0:
 			n = self.reprap.getPrintPosition()

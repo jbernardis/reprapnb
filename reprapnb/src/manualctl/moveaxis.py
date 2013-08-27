@@ -30,7 +30,6 @@ class MoveAxis(wx.Window):
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
-		self.printersettings = self.app.printersettings
 
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 
@@ -54,7 +53,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(4,2))
 		
-		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["xyspeed"]), size=(80, -1), style=wx.TE_RIGHT)
+		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.xyspeed), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tXYSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tXYSpeed, pos=(4,3))
@@ -67,7 +66,7 @@ class MoveAxis(wx.Window):
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(6,2))
 		
-		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings["zspeed"]), size=(80, -1), style=wx.TE_RIGHT)
+		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.zspeed), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tZSpeed.SetFont(f)
 		sizerMoveFrame.Add(self.tZSpeed, pos=(6,3))
@@ -110,19 +109,9 @@ class MoveAxis(wx.Window):
 			v = float(self.tXYSpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
-			v = 0.0
-			
-		if v != self.printersettings.settings["xyspeed"]:
-			self.printersettings.settings["xyspeed"] = v
-			self.printersettings.setModified()
 			
 	def evtZSpeedKillFocus(self, evt):
 		try:
 			v = float(self.tZSpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())
-			v = 0.0
-			
-		if v != self.printersettings.settings["zspeed"]:
-			self.printersettings.settings["zspeed"] = v
-			self.printersettings.setModified()

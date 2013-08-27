@@ -32,12 +32,12 @@ class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app, reprap):
 		self.model = None
 		self.app = app
+		self.buildarea = self.app.buildarea
 		self.reprap = reprap
 		self.logger = self.app.logger
 		self.printPos = 0
 		self.printing = False
 		self.paused = False
-		self.printersettings = self.app.printersettings
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -84,11 +84,11 @@ class PrintMonitor(wx.Panel):
 		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
 		self.sizerMain.AddSpacer((10,10), pos=(2,0))
 
-		self.gcf = GcmFrame(self, self.model, self.settings, self.printersettings.settings['buildarea'])
+		self.gcf = GcmFrame(self, self.model, self.settings, self.buildarea)
 		self.sizerMain.Add(self.gcf, pos=(3,1))
 		
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
-		sz = self.printersettings.settings['buildarea'][0] * self.settings.gcodescale
+		sz = self.buildarea[0] * self.settings.gcodescale
 		self.tName = wx.StaticText(self, wx.ID_ANY, "", size=(sz, -1), style=wx.ST_NO_AUTORESIZE | wx.ALIGN_CENTER_HORIZONTAL)
 		self.tName.SetFont(f)
 		self.sizerMain.Add(self.tName, pos=(4,1), flag=wx.EXPAND | wx.ALL)
@@ -125,7 +125,7 @@ class PrintMonitor(wx.Panel):
 		
 		self.sizerMain.AddSpacer((10,10), pos=(3,2))
 
-		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
+		sz = self.buildarea[1] * self.settings.gcodescale
 		
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),

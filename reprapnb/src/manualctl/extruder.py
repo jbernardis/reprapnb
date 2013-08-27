@@ -10,7 +10,6 @@ class Extruder(wx.Window):
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
-		self.printersettings = self.app.printersettings
 
 		self.name = name
 		self.axis = axis
@@ -21,7 +20,7 @@ class Extruder(wx.Window):
 		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(1,0), span=(1,3))
-		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"speed"]), size=(80, -1), style=wx.TE_RIGHT)
+		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.espeed), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tESpeed.SetFont(f)
 		sizerExtrude.Add(self.tESpeed, pos=(1,3))
@@ -34,7 +33,7 @@ class Extruder(wx.Window):
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(3,0), span=(1,3))
 		
-		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.printersettings.settings[self.axis+"distance"]), size=(80, -1), style=wx.TE_RIGHT)
+		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.edistance), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tEDistance.SetFont(f)
 		sizerExtrude.Add(self.tEDistance, pos=(3,3))
@@ -64,22 +63,12 @@ class Extruder(wx.Window):
 			v = float(self.tESpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
-			v = 0
-			
-		if v != self.printersettings.settings[self.axis+"speed"]:
-			self.printersettings.settings[self.axis+"speed"] = v
-			self.printersettings.setModified()
 		
 	def evtEDistanceKillFocus(self, evt):
 		try:
 			v = float(self.tEDistance.GetValue())
 		except:
 			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
-			v = 0
-			
-		if v != self.printersettings.settings[self.axis+"distance"]:
-			self.printersettings.settings[self.axis+"distance"] = v
-			self.printersettings.setModified()
 			
 	def doExtrude(self, evt):
 		try:

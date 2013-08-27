@@ -16,7 +16,6 @@ class ManualControl(wx.Panel):
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
-		self.printersettings = self.app.printersettings
 		self.htrWin = []
 		self.htrLabel = []	
 		self.heaters = []	

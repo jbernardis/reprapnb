@@ -88,8 +88,8 @@ class FilePrepare(wx.Panel):
 	def __init__(self, parent, app):
 		self.model = None
 		self.app = app
+		self.buildarea = self.app.buildarea
 		self.logger = self.app.logger
-		self.printersettings = self.app.printersettings
 		self.settings = app.settings.fileprep
 		self.modified = False
 		self.temporaryFile = False	
@@ -182,10 +182,10 @@ class FilePrepare(wx.Panel):
 		self.sizerMain.Add(self.sizerBtns, pos=(1,1), span=(1,4))
 		self.sizerMain.AddSpacer((20,20), pos=(2,0))
 
-		self.gcf = GcFrame(self, self.model, self.settings, self.printersettings.settings['buildarea'])
+		self.gcf = GcFrame(self, self.model, self.settings, self.buildarea)
 		self.sizerMain.Add(self.gcf, pos=(3,1))
 		self.sizerMain.AddSpacer((20,20), pos=(4,0))
-		sz = self.printersettings.settings['buildarea'][1] * self.settings.gcodescale
+		sz = self.buildarea[1] * self.settings.gcodescale
 		
 		self.sizerMain.AddSpacer((20, 20), pos=(3,2))
 

@@ -1,35 +1,15 @@
 [global]
 slicers = slic3r
 slicer = slic3r
-printers = ob1,delta
-printer = delta
+printers = ob1,mi3
+printer = ob1
 startpane = 1
 
-[printer.ob1]
-buildarea = (200, 200)
-extruders = 1
-axisletters = ['E']
-xyspeed = 2000.0
-zspeed = 3000.0
-Espeed = 1800
-Edistance = 5
-
-[printer.delta]
-buildarea = (200, 200)
-extruders = 2
-axisletters = ['E', 'K']
-xyspeed = 2500.0
-zspeed = 3000.0
-Espeed = 1800.0
-Edistance = 5.0
-Kspeed = 1800.0
-Kdistance = 5.0
-
 [slicer.slic3r]
-command = ~\Slic3r\bin\slic3r --load "%profile%" "%stl%" -o "%slicegcode%"
-config = ~\Slic3r\bin\slic3r --load "%profile%"
+command = /home/jeff/Slic3r/bin/slic3r --load "%profile%"  --load "%printer%" --load "%filament%" "%stl%" -o "%slicegcode%"
+config = /home/jeff/Slic3r/bin/slic3r 
 profile = PLA
-profiledir = c:\tmp\slic3r
+profiledir = /home/jeff/.Slic3r
 
 [fileprep]
 gcodescale = 3
@@ -44,6 +24,10 @@ lastdirectory = O:\stl files
 autoarrange = True
 
 [manualctl]
+xyspeed = 2000.0
+zspeed = 300
+espeed = 300
+edistance = 5
 
 [printmon]
 gcodescale = 3

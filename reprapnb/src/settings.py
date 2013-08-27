@@ -8,7 +8,6 @@ import os
 import wx
 
 from slicer import createSlicerObject
-from printer import createPrinterObject
 
 INIFILE = "rrh.ini"
 
@@ -25,23 +24,6 @@ def parseBoolean(val, defaultVal):
 		return False
 	
 	return defaultVal
-
-class PrinterSettings:
-	def __init__(self, app, name):
-		self.app = app
-		self.name = name
-		self.settings = {}
-		self.modified = False
-		self.type = None
-		
-	def setPrinterType(self):
-		self.type = createPrinterObject(self.name, self.app, self)
-		
-	def setModified(self, flag=True):
-		self.modified = flag
-		
-	def checkModified(self):
-		return self.modified
 
 class SlicerSettings:
 	def __init__(self, app, name):
@@ -60,6 +42,20 @@ class SlicerSettings:
 	def checkModified(self):
 		return self.modified
 
+class PrinterSettings:
+	def __init__(self, app, name):
+		self.app = app
+		self.name = name
+		self.settings = {}
+		self.modified = False
+		self.type = None
+		
+	def setModified(self, flag=True):
+		self.modified = flag
+		
+	def checkModified(self):
+		return self.modified
+
 class Settings:
 	def __init__(self, app, folder):
 		self.app = app
@@ -68,8 +64,6 @@ class Settings:
 		self.inifile = os.path.join(folder, INIFILE)
 		self.slicer = "slic3r"
 		self.slicers = ["slic3r"]
-		self.printer=""
-		self.printers=[]
 		self.startpane=0
 		
 		self.cfg = ConfigParser.ConfigParser()
@@ -104,97 +98,10 @@ class Settings:
 				elif opt == 'slicers':
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
-				elif opt == 'printer':
-					self.printer = value
-				elif opt == 'printers':
-					s = value.split(',')
-					self.printers = [x.strip() for x in s]
 				else:
 					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
 			self.logger.LogWarning("Missing %s section - assuming defaults" % self.section)
-
-		self.printersettings = []
-		for printer in self.printers:
-			st = PrinterSettings(self.app, printer)
-			self.printersettings.append(st)
-			sc = "printer." + printer
-			distNames = ["Edistance"]
-			speedNames = ["ESpeed"]
-			if self.cfg.has_section(sc):
-				for opt, value in self.cfg.items(sc):
-					if opt == 'buildarea':
-						try:
-							exec("s=%s" % value)
-						except:
-							s = (200, 200)
-							self.logger.LogWarning("invalid buildarea for printer %s" % printer)
-						st.settings[opt] = s
-						
-					elif opt == 'axisletters':
-						try:
-							exec("s=%s" % value)
-						except:
-							s = ['E']
-							self.logger.LogWarning("invalid axis letter spec for printer %s" % printer)
-						st.settings[opt] = s
-						distNames = []
-						speedNames = []
-						for n in s:
-							distNames.append(n+"distance")
-							speedNames.append(n+"speed")
-							
-					elif opt in distNames or opt in speedNames or opt in ["xyspeed", "zspeed"]:
-						try:
-							v = float(value)
-						except:
-							self.logger.LogError("Invalid value for %s for printer %s" % (opt, printer))
-							v = 0
-						st.settings[opt] = v
-
-					elif opt == 'extruders':
-						try:
-							st.settings[opt] = int(value)
-						except:
-							self.logger.LogWarning("Invalid extruders value for printer %s" % printer)
-							st.settings[opt] = 1
-					else:
-						self.logger.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
-			else:
-				self.logger.LogError("No settings for printer %s" % printer)
-
-			if 'buildarea' not in st.settings.keys():
-				self.logger.LogWarning("Settings for printer %s missing buildarea" % printer)
-				st.settings['buildarea'] = (200,200)
-				st.setModified(True)
-			if 'extruders' not in st.settings.keys():
-				self.logger.LogWarning("Settings for printer %s missing extruders" % printer)
-				st.settings['extruders'] = 1
-				st.setModified(True)
-			if 'axisletters' not in st.settings.keys():
-				self.logger.LogWarning("Settings for printer %s missing axis letters" % printer)
-				st.settings['axisletters'] = ['E']
-				st.setModified(True)
-			if len(st.settings['axisletters']) != st.settings['extruders']:
-				self.logger.LogError("Printer %s does not have enough axis letters defined" % printer)
-			for n in distNames:
-				if n not in st.settings.keys():
-					self.logger.LogWarning("%s not specified for printer %s" % (n, printer))
-					st.settings[n] = 5
-					st.setModified(True)
-			for n in speedNames:
-				if n not in st.settings.keys():
-					self.logger.LogWarning("%s not specified for printer %s" % (n, printer))
-					st.settings[n] = 1800
-					st.setModified(True)
-			if "xyspeed" not in st.settings.keys():
-				self.logger.LogWarning("xyspeed not specified for printer %s" % (n, printer))
-				st.settings["xyspeed"] = 1800
-				st.setModified(True)
-			if "zspeed" not in st.settings.keys():
-				self.logger.LogWarning("xyspeed not specified for printer %s" % (n, printer))
-				st.settings["zspeed"] = 300
-				st.setModified(True)
 			
 		self.slicersettings = []
 		for slicer in self.slicers:
@@ -203,7 +110,7 @@ class Settings:
 			self.slicersettings.append(st)
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
-					if opt in ['profile', 'profiledir', 'command', 'config']:
+					if opt in ['profile', 'profiledir', 'filament', 'printer', 'command', 'config']:
 						st.settings[opt] = value
 					else:
 						self.logger.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
@@ -215,6 +122,12 @@ class Settings:
 			if 'profile' not in st.settings.keys():
 				err = True
 				self.logger.LogError("Settings for slicer %s missing profile" % slicer)
+			if 'printer' not in st.settings.keys():
+				err = True
+				self.logger.LogError("Settings for slicer %s missing printer" % slicer)
+			if 'filament' not in st.settings.keys():
+				err = True
+				self.logger.LogError("Settings for slicer %s missing filament" % slicer)
 			if 'profiledir' not in st.settings.keys():
 				err = True
 				self.logger.LogError("Settings for slicer %s missing profiledir" % slicer)
@@ -238,20 +151,12 @@ class Settings:
 			if self.slicers[i] == slicer:
 				return self.slicersettings[i]
 		return None
-		
-	def getPrinterSettings(self, printer):
-		for i in range(len(self.printers)):
-			if self.printers[i] == printer:
-				return self.printersettings[i]
-		return None
-		
+	
 	def setModified(self):
 		self.modified = True
 		
 	def checkModified(self):
 		if self.modified: return True
-		for p in self.printersettings:
-			if p.checkModified(): return True
 			
 		for s in self.slicersettings:
 			if s.checkModified(): return True
@@ -273,28 +178,7 @@ class Settings:
 			self.cfg.set(self.section, "startpane", str(self.startpane))
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
-			self.cfg.set(self.section, "printer", str(self.printer))
-			self.cfg.set(self.section, "printers", ",".join(self.printers))
 			
-			for i in range(len(self.printers)):
-				p = self.printers[i]
-				sc = "printer." + p
-				try:
-					self.cfg.add_section(sc)
-				except ConfigParser.DuplicateSectionError:
-					pass
-
-				pt = self.printersettings[i]	
-				if pt.checkModified():
-					spds = []
-					dsts = []
-					for n in pt.settings['axisletters']:
-						spds.append(n+"speed")
-						dsts.append(n+"distance")			
-					for k in pt.settings.keys():
-						if k in ['buildarea', 'extruders', 'axisletters', 'xyspeed', 'zspeed'] or k in dsts or k in spds:
-							self.cfg.set(sc, k, pt.settings[k])
-						
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
 				sc = "slicer." + s
@@ -306,7 +190,7 @@ class Settings:
 				sl = self.slicersettings[i]	
 				if sl.checkModified():			
 					for k in sl.settings.keys():
-						if k in ['profile', 'profiledir', 'command', 'config']:
+						if k in ['profile', 'printer', 'filament', 'profiledir', 'command', 'config']:
 							self.cfg.set(sc, k, sl.settings[k])
 			
 			self.fileprep.cleanUp()
@@ -446,6 +330,11 @@ class SettingsManualCtl:
 		self.app = app
 		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
+		
+		self.xyspeed = 2000
+		self.zspeed = 300
+		self.espeed = 300
+		self.edistance = 5
 
 		if cfg is None:
 			self.modified = True
@@ -456,8 +345,31 @@ class SettingsManualCtl:
 		self.section = section	
 		if cfg.has_section(section):
 			for opt, value in cfg.items(section):
-				if opt == 'xxxxxxxxxx':
-					pass
+			
+				if opt == 'xyspeed':
+					try:
+						self.xyspeed = int(value)
+					except:
+						print "Non-integer value in ini file for xyspeed"
+						self.xyspeed = 2000
+				elif opt == 'zspeed':
+					try:
+						self.zspeed = int(value)
+					except:
+						print "Non-integer value in ini file for zspeed"
+						self.zspeed = 300
+				elif opt == 'espeed':
+					try:
+						self.espeed = int(value)
+					except:
+						print "Non-integer value in ini file for espeed"
+						self.zspeed = 300
+				elif opt == 'edistance':
+					try:
+						self.edistance = int(value)
+					except:
+						print "Non-integer value in ini file for edistance"
+						self.edistance = 5
 				else:
 					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
@@ -477,6 +389,11 @@ class SettingsManualCtl:
 				self.cfg.add_section(self.section)
 			except ConfigParser.DuplicateSectionError:
 				pass
+			
+			self.cfg.set(self.section, "xyspeed", str(self.xyspeed))
+			self.cfg.set(self.section, "zspeed", str(self.zspeed))
+			self.cfg.set(self.section, "espeed", str(self.espeed))
+			self.cfg.set(self.section, "edistance", str(self.edistance))
 	
 	
 class SettingsPrintMon:

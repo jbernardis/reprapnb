@@ -52,7 +52,11 @@ class RepRapParser:
 			if len(t) >= 4:
 				self.app.logger.LogMessage("3: " + t[3])
 				self.app.setHeatTarget(self.heaters['B'], float(t[3]))
-			return True
+			if self.app.M105pending:
+				self.app.M105pending = False
+				return True
+			else:
+				return False
 		
 		m = self.trpt2re.search(msg)
 		if m:

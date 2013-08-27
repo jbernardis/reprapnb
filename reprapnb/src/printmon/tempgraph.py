@@ -39,7 +39,7 @@ class TempGraph (wx.Window):
 		sz = [x * scale + 100 for x in [MAXX, MAXY]]
 		wx.Window.__init__(self,parent,wx.ID_ANY,size=sz,style=wx.SIMPLE_BORDER)
 		
-		self.graph = Graph(self, settings, self.parent.printersettings)
+		self.graph = Graph(self, settings)
 		
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,1))
@@ -93,10 +93,9 @@ class TempGraph (wx.Window):
 
 		
 class Graph (wx.Window):
-	def __init__(self, parent, settings, printersettings):
+	def __init__(self, parent, settings):
 		self.parent = parent
 		self.settings = settings
-		self.printersettings = printersettings
 		self.targets = {}
 		self.tempData = {}
 		
