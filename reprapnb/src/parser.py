@@ -63,10 +63,7 @@ class RepRapParser:
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
 			if len(t) >= 2:
 				self.app.logger.LogMessage("1: " + t[1])
-				self.app.logger.LogMessage("Don't know what this temp is")
-			if len(t) >= 3:
-				self.app.logger.LogMessage("2: " + t[2])
-				self.app.setHeatTemp(self.heaters['B'], float(t[2]))
+				self.app.setHeatTemp(self.heaters['B'], float(t[1]))
 			return True
 		
 		m = self.trpt3re.search(msg)
@@ -76,9 +73,6 @@ class RepRapParser:
 			if len(t) >= 1:
 				self.app.logger.LogMessage("0: " + t[0])
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
-			if len(t) >= 2:
-				self.app.logger.LogMessage("1: " + t[1])
-				self.app.logger.LogMessage("Don't know what this temp is")
 			return True
 		
 		return False

@@ -35,11 +35,16 @@ class SendThread:
 		self.isRunning = False
 		self.endoflife = False
 		self.printIndex = 0
+		self.okWait = False
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
 		self.isRunning = False
 		self.printer = None
+		
+	def endWait(self):
+		print "end wait"
+		self.okWait = False
 		
 	def isKilled(self):
 		return self.endoflife
@@ -58,12 +63,15 @@ class SendThread:
 					except Queue.Empty:
 						pass
 					
-				elif not self.mainQ.empty():
-					try:
-						(cmd, string) = self.mainQ.get(True, 0.01)
-						self.processCmd(cmd, string, False)
-					except Queue.Empty:
-						pass
+				elif not self.okWait:
+					if not self.mainQ.empty():
+						try:
+							(cmd, string) = self.mainQ.get(True, 0.01)
+							self.processCmd(cmd, string, False)
+						except Queue.Empty:
+							pass
+					else:
+						time.sleep(0.001)
 				else:
 					time.sleep(0.001)
 
@@ -80,6 +88,8 @@ class SendThread:
 		if cmd == CMD_GCODE:
 			if not pflag:
 				self.printIndex += 1
+				self.okWait = True
+			print "Sending (%s)" % string
 			self.printer.write(str(string+"\n"))
 			
 		elif cmd == CMD_STARTPRINT:
@@ -112,11 +122,12 @@ class SendThread:
 					break
 
 class ListenThread:
-	def __init__(self, win, printer):
+	def __init__(self, win, printer, sender):
 		self.win = win
 		self.printer = printer
 		self.isRunning = False
 		self.endoflife = False
+		self.sender = sender
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -148,10 +159,12 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
+				print "received (%s)" % line
+#				if line.strip().lower().startswith("ok"):
 				if line.strip().lower() == "ok":
+					self.sender.endWait()
 					continue
 
-				print "received (%s)" % line.rstrip()				
 				evt = RepRapEvent(event=RECEIVED_MSG, msg = line.rstrip(), state = 1)
 				wx.PostEvent(self.win, evt)
 
@@ -181,8 +194,8 @@ class RepRap:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
 			self.printer = Serial(self.port, self.baud, timeout=5)
-			self.listener = ListenThread(self.win, self.printer)
 			self.sender = SendThread(self.win, self.printer, self.priQ, self.mainQ)
+			self.listener = ListenThread(self.win, self.printer, self.sender)
 			self.send_now("M105")
 			self.online = True
 			
@@ -221,10 +234,14 @@ class RepRap:
 	
 	def startPrint(self, data):
 		ln = 0
+		print "Starting print"
+		self._send("M110", lineno=-1, checksum=True)
 		for l in data:
-			self._send(l.raw, lineno=ln, checksum=True)
-			ln += 1
+			if l.raw.rstrip() != "":
+				self._send(l.raw, lineno=ln, checksum=True)
+				ln += 1
 
+		print "write %d lines to queue" % ln
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
 		self._sendCmd(CMD_STARTPRINT)
 		self.printing = True

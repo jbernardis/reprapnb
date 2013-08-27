@@ -210,7 +210,7 @@ class MainFrame(wx.Frame):
 	def evtRepRap(self, evt):
 		if evt.event == RECEIVED_MSG:
 			if not self.parser.parseMsg(evt.msg):
-				self.logger.LogMessage(evt.message)
+				self.logger.LogMessage(evt.msg)
 		else:
 			self.pgPrtMon.reprapEvent(evt)
 	
