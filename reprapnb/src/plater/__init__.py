@@ -23,6 +23,7 @@ class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
 		self.app = app
+		self.buildarea = self.app.buildarea
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.plater
@@ -42,7 +43,7 @@ class Plater(wx.Panel):
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
 
 		
-		self.stlFrame =  StlFrame(self, scale=self.settings.stlscale, buildarea=self.settings.buildarea)
+		self.stlFrame =  StlFrame(self, scale=self.settings.stlscale, buildarea=self.buildarea)
 		self.sizerMain.Add(self.stlFrame, pos=(1, 1), span=(6,1))
 
 		self.sizerBtn = wx.BoxSizer(wx.HORIZONTAL)

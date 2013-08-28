@@ -81,7 +81,6 @@ class SendThread:
 					self.processCmd(cmd, string, True)
 				except Queue.Empty:
 					time.sleep(0.01)
-		print "sender ending"
 		self.endoflife = True
 				
 	def processCmd(self, cmd, string, pflag):
@@ -89,7 +88,6 @@ class SendThread:
 			if not pflag:
 				self.printIndex += 1
 				self.okWait = True
-			print "Sending (%s)" % string
 			self.printer.write(str(string+"\n"))
 			
 		elif cmd == CMD_STARTPRINT:
@@ -159,8 +157,6 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
-				print "received (%s)" % line
-#				if line.strip().lower().startswith("ok"):
 				if line.strip().lower() == "ok":
 					self.sender.endWait()
 					continue
@@ -168,7 +164,6 @@ class ListenThread:
 				evt = RepRapEvent(event=RECEIVED_MSG, msg = line.rstrip(), state = 1)
 				wx.PostEvent(self.win, evt)
 
-		print "listener ending"
 		self.endoflife = True
 
 class RepRap:
@@ -234,14 +229,12 @@ class RepRap:
 	
 	def startPrint(self, data):
 		ln = 0
-		print "Starting print"
 		self._send("M110", lineno=-1, checksum=True)
 		for l in data:
 			if l.raw.rstrip() != "":
 				self._send(l.raw, lineno=ln, checksum=True)
 				ln += 1
 
-		print "write %d lines to queue" % ln
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
 		self._sendCmd(CMD_STARTPRINT)
 		self.printing = True
@@ -273,7 +266,7 @@ class RepRap:
 			self.logger.LogWarning("Printer is off-line")
 			return False
 		else:
-			self.logger.LogMessage("Sending (%s)" % cmd)
+			self.logger.LogMessage("Sending %s" % cmd)
 			return self._send(cmd, priority=True)
 				
 	def send(self, cmd):

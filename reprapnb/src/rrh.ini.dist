@@ -1,26 +1,29 @@
 [global]
 slicers = slic3r
 slicer = slic3r
-printers = ob1,mi3
-printer = ob1
 startpane = 1
 
 [slicer.slic3r]
 command = /home/jeff/Slic3r/bin/slic3r --load "%profile%"  --load "%printer%" --load "%filament%" "%stl%" -o "%slicegcode%"
 config = /home/jeff/Slic3r/bin/slic3r 
-profile = PLA
+profile = normal
+profilefile = /home/jeff/.Slic3r/print/normal.ini
+filament = PLA
+filamentfile = /home/jeff/.Slic3r/filament/PLA.ini
+printer = ob1
+printerfile = /home/jeff/.Slic3r/filament/ob1.ini
 profiledir = /home/jeff/.Slic3r
 
 [fileprep]
 gcodescale = 3
-lastdirectory = O:\OpenSCAD\Snap-Together_Robohand
+lastdirectory = 
 showprevious = False
 showmoves = False
 usebuffereddc = False
 
 [plater]
 stlscale = 2
-lastdirectory = O:\stl files
+lastdirectory = 
 autoarrange = True
 
 [manualctl]

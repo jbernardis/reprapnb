@@ -25,6 +25,8 @@ def parseBoolean(val, defaultVal):
 	
 	return defaultVal
 
+slicerKeys = ['profiledir', 'profile', 'profilefile', 'filament', 'filamentfile', 'printer', 'printerfile', 'command', 'config']
+
 class SlicerSettings:
 	def __init__(self, app, name):
 		self.app = app
@@ -35,20 +37,6 @@ class SlicerSettings:
 		
 	def setSlicerType(self):
 		self.type = createSlicerObject(self.name, self.app, self)
-		
-	def setModified(self, flag=True):
-		self.modified = flag
-		
-	def checkModified(self):
-		return self.modified
-
-class PrinterSettings:
-	def __init__(self, app, name):
-		self.app = app
-		self.name = name
-		self.settings = {}
-		self.modified = False
-		self.type = None
 		
 	def setModified(self, flag=True):
 		self.modified = flag
@@ -69,7 +57,8 @@ class Settings:
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
 		if not self.cfg.read(self.inifile):
-			self.logger.LogWarning("Settings file %s does not exist.  Using default values" % INIFILE)
+			self.showWarning("Settings file %s does not exist.  Using default values" % INIFILE)
+			
 			self.modified = True
 			
 			self.fileprep = SettingsFilePrep(self.app, None, folder, "fileprep")
@@ -85,11 +74,11 @@ class Settings:
 					try:
 						self.startpane = int(value)
 					except:
-						self.logger.LogWarning("Invalid value for startpane")
+						self.showWatrning("Invalid value for startpane")
 						self.startpane = 0
 						self.modified = True
 					if self.startpane not in [0, 1]:
-						self.logger.LogWarning("Startpane may only be 0, or 1")
+						self.showWarning("Startpane may only be 0, or 1")
 						self.startpane = 0
 						self.modified = True
 						
@@ -99,53 +88,48 @@ class Settings:
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
 				else:
-					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
+					self.showWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
-			self.logger.LogWarning("Missing %s section - assuming defaults" % self.section)
+			self.showWarning("Missing %s section - assuming defaults" % self.section)
 			
 		self.slicersettings = []
 		for slicer in self.slicers:
+			err = False	
 			st = SlicerSettings(self.app, slicer)
 			sc = "slicer." + slicer
 			self.slicersettings.append(st)
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
-					if opt in ['profile', 'profiledir', 'filament', 'printer', 'command', 'config']:
+					if opt in slicerKeys:
 						st.settings[opt] = value
 					else:
-						self.logger.LogWarning("Unknown %s option: %s - ignoring" % (sc, opt))
+						self.showWarning("Unknown %s option: %s - ignoring" % (sc, opt))
 					st.settings[opt] = value
 			else:
-				self.logger.LogError("No settings for slicer %s" % slicer)
+				self.showError("No settings for slicer %s" % slicer)
+				err = True
 
-			err = False					
-			if 'profile' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing profile" % slicer)
-			if 'printer' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing printer" % slicer)
-			if 'filament' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing filament" % slicer)
-			if 'profiledir' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing profiledir" % slicer)
-			if 'command' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing command" % slicer)
-			if 'config' not in st.settings.keys():
-				err = True
-				self.logger.LogError("Settings for slicer %s missing config" % slicer)
+			for k in slicerKeys:				
+				if k not in st.settings.keys():
+					err = True
+					self.showError("Settings for slicer %s missing %s" % (slicer, k))
 				
 			if not err:
 				st.setSlicerType()
 			
-		self.fileprep = SettingsFilePrep(self.app, self.cfg, folder, "fileprep")
-		self.plater = SettingsPlater(self.app, self.cfg, folder, "plater")
-		self.manualctl = SettingsManualCtl(self.app, self.cfg, folder, "manualctl")
-		self.printmon = SettingsPrintMon(self.app, self.cfg, folder, "printmon")
+		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
+		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
+		self.manualctl = SettingsManualCtl(self, self.app, self.cfg, folder, "manualctl")
+		self.printmon = SettingsPrintMon(self, self.app, self.cfg, folder, "printmon")
+
+	def showWarning(self, msg):
+		print msg
+		self.logger.LogWarning(msg)
 		
+	def showError(self, msg):
+		print msg
+		self.logger.LogWarning(msg)
+				
 	def getSlicerSettings(self, slicer):
 		for i in range(len(self.slicers)):
 			if self.slicers[i] == slicer:
@@ -190,7 +174,7 @@ class Settings:
 				sl = self.slicersettings[i]	
 				if sl.checkModified():			
 					for k in sl.settings.keys():
-						if k in ['profile', 'printer', 'filament', 'profiledir', 'command', 'config']:
+						if k in slicerKeys:
 							self.cfg.set(sc, k, sl.settings[k])
 			
 			self.fileprep.cleanUp()
@@ -204,7 +188,8 @@ class Settings:
 
 
 class SettingsFilePrep:
-	def __init__(self, app, cfg, folder, section):
+	def __init__(self, parent, app, cfg, folder, section):
+		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
@@ -228,7 +213,7 @@ class SettingsFilePrep:
 					try:
 						self.gcodescale = int(value)
 					except:
-						self.logger.LogWarning("Non-integer value in ini file for gcodescale")
+						self.parent.showWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
 			
 				elif opt == 'lastdirectory':
@@ -243,9 +228,9 @@ class SettingsFilePrep:
 				elif opt == 'usebuffereddc':
 					self.usebuffereddc = parseBoolean(value, False)
 				else:
-					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section, opt))
+					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section, opt))
 		else:
-			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
+			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 		
 	def setModified(self):
@@ -269,7 +254,8 @@ class SettingsFilePrep:
 						
 	
 class SettingsPlater:
-	def __init__(self, app, cfg, folder, section):
+	def __init__(self, parent, app, cfg, folder, section):
+		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
@@ -291,7 +277,7 @@ class SettingsPlater:
 					try:
 						self.stlscale = int(value)
 					except:
-						self.logger.LogWarning("Non-integer value in ini file for stlscale")
+						self.parent.showWarning("Non-integer value in ini file for stlscale")
 						self.stlscale = 2
 			
 				elif opt == 'lastdirectory':
@@ -301,9 +287,9 @@ class SettingsPlater:
 					self.autoarrange = parseBoolean(value, False)
 					
 				else:
-					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
+			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 
@@ -326,7 +312,8 @@ class SettingsPlater:
 	
 	
 class SettingsManualCtl:
-	def __init__(self, app, cfg, folder, section):
+	def __init__(self, parent, app, cfg, folder, section):
+		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
@@ -350,30 +337,30 @@ class SettingsManualCtl:
 					try:
 						self.xyspeed = int(value)
 					except:
-						print "Non-integer value in ini file for xyspeed"
+						self.parent.showWarning("Non-integer value in ini file for xyspeed")
 						self.xyspeed = 2000
 				elif opt == 'zspeed':
 					try:
 						self.zspeed = int(value)
 					except:
-						print "Non-integer value in ini file for zspeed"
+						self.parent.showWarning("Non-integer value in ini file for zspeed")
 						self.zspeed = 300
 				elif opt == 'espeed':
 					try:
 						self.espeed = int(value)
 					except:
-						print "Non-integer value in ini file for espeed"
+						self.parent.showWarning("Non-integer value in ini file for espeed")
 						self.zspeed = 300
 				elif opt == 'edistance':
 					try:
 						self.edistance = int(value)
 					except:
-						print "Non-integer value in ini file for edistance"
+						self.parent.showWarning("Non-integer value in ini file for edistance")
 						self.edistance = 5
 				else:
-					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
+			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 
@@ -397,7 +384,8 @@ class SettingsManualCtl:
 	
 	
 class SettingsPrintMon:
-	def __init__(self, app, cfg, folder, section):
+	def __init__(self, parent, app, cfg, folder, section):
+		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
@@ -420,7 +408,7 @@ class SettingsPrintMon:
 					try:
 						self.gcodescale = int(value)
 					except:
-						self.logger.LogWarning("Non-integer value in ini file for gcodescale")
+						self.parent.showWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
 				elif opt == 'showprevious':
 					self.showprevious = parseBoolean(value, True)
@@ -431,9 +419,9 @@ class SettingsPrintMon:
 				elif opt == 'usebuffereddc':
 					self.usebuffereddc = parseBoolean(value, False)
 				else:
-					self.logger.LogWarning("Unknown %s option: %s - ignoring" % (section,  opt))
+					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
-			self.logger.LogWarning("Missing %s section - assuming defaults" % section)
+			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
 

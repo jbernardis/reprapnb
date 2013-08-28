@@ -35,22 +35,16 @@ class RepRapParser:
 		
 		
 	def parseMsg(self, msg):
-		self.app.logger.LogMessage("Parsing MSG: " + msg)
 		m = self.trpt1re.search(msg)
 		if m:
-			self.app.logger.LogMessage("Match temperature report 1")
 			t = m.groups()
 			if len(t) >= 1:
-				self.app.logger.LogMessage("0: " + t[0])
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
 			if len(t) >= 2:
-				self.app.logger.LogMessage("1: " + t[1])
 				self.app.setHeatTarget(self.heaters['T'], float(t[1]))
 			if len(t) >= 3:
-				self.app.logger.LogMessage("2: " + t[2])
 				self.app.setHeatTemp(self.heaters['B'], float(t[2]))
 			if len(t) >= 4:
-				self.app.logger.LogMessage("3: " + t[3])
 				self.app.setHeatTarget(self.heaters['B'], float(t[3]))
 			if self.app.M105pending:
 				self.app.M105pending = False
@@ -60,22 +54,17 @@ class RepRapParser:
 		
 		m = self.trpt2re.search(msg)
 		if m:
-			self.app.logger.LogMessage("Match temperature report 2")
 			t = m.groups()
 			if len(t) >= 1:
-				self.app.logger.LogMessage("0: " + t[0])
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
 			if len(t) >= 2:
-				self.app.logger.LogMessage("1: " + t[1])
 				self.app.setHeatTemp(self.heaters['B'], float(t[1]))
 			return True
 		
 		m = self.trpt3re.search(msg)
 		if m:
-			self.app.logger.LogMessage("Match temperature report 3")
 			t = m.groups()
 			if len(t) >= 1:
-				self.app.logger.LogMessage("0: " + t[0])
 				self.app.setHeatTemp(self.heaters['T'], float(t[0]))
 			return True
 		
