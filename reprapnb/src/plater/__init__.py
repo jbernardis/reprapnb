@@ -16,8 +16,8 @@ wildcard = "STL (*.stl)|*.stl"
 
 
 TITLETEXT = "Plater"
-BUTTONDIM = (64,64)
-BUTTONDIMWIDE = (96,64)
+BUTTONDIM = (48, 48)
+BUTTONDIMWIDE = (72,48)
 
 class Plater(wx.Panel):
 	def __init__(self, parent, app):

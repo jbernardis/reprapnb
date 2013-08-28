@@ -13,6 +13,23 @@ def createSlicerObject(name, app, parent):
 	return None
 
 #FIXIT - work with slic3r ini files - 3 files	
+def checkTagInt(s, tag):
+	if not s.startswith(tag):
+		return None
+	
+	try:
+		r = int(s[len(tag):].strip())
+		return r
+	except:
+		return None
+
+def checkTagList(s, tag):
+	if not s.startswith(tag):
+		return None
+
+		
+	r = s[len(tag):].strip().split(',')
+	return r
 	
 class Slic3r:
 	def __init__(self, app, parent):
@@ -51,9 +68,53 @@ class Slic3r:
 		return self.settings['printer']
 	
 	def getSlicerSettings(self):
-		#FIXIT
-		#       buildarea  next axes  hotendtemp  bedtemp
-		return [[200, 200], 1, ['E'], [185], 60]
+		heTemp = None
+		bedTemp = None
+		f = self.settings['filamentfile']
+		if f is not None:
+			idata = list(open(f))
+			
+			for i in idata:
+				a = checkTagInt(i, "first_layer_temperature = ")
+				if a is not None:
+					heTemp = a
+				else:
+					a = checkTagInt(i, "first_layer_bed_temperature = ")
+					if a is not None:
+						bedTemp = a
+	
+		bedSize = None
+		nExtruders = None
+		f = self.settings['printerfile']
+		if f is not None:
+			idata = list(open(f))
+			
+		for i in idata:
+			a = checkTagList(i, "bed_size = ")
+			if a is not None:
+				bedSize = a
+			else:
+				a = checkTagList(i, "retract_speed = ")
+				if a is not None:
+					nExtruders = len(a)
+		
+		if bedSize is None:
+			bedSize = [200, 200]
+			
+		if nExtruders is None or nExtruders < 1:
+			nExtruders = 1
+			
+		axes = ['E' for i in range(nExtruders)]
+		
+		if heTemp == None:
+			heTemp = 185
+			
+		heTemps = [heTemp for i in range(nExtruders)]
+		
+		if bedTemp is None:
+			bedTemp = 60
+			
+		return [bedSize, nExtruders, axes, heTemps, bedTemp]
 	
 	def setProfile(self, nprof):
 		self.getProfileOptions()

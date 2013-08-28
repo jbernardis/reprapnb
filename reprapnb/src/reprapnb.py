@@ -261,7 +261,19 @@ class MainFrame(wx.Frame):
 	def doChoosePrinter(self, evt):
 		newprinter = self.cbPrinter.GetValue()
 		self.slicer.type.setPrinter(newprinter)
+		self.updateWithNewSlicerInfo()
 		
+	def doChooseProfile(self, evt):
+		newprof = self.cbProfile.GetValue()
+		self.slicer.type.setProfile(newprof)
+		self.updateWithNewSlicerInfo()
+		
+	def doChooseFilament(self, evt):
+		newfilament = self.cbFilament.GetValue()
+		self.slicer.type.setFilament(newfilament)
+		self.updateWithNewSlicerInfo()
+
+	def updateWithNewSlicerInfo(self):		
 		extruders = []
 		heaters = []
 		(buildarea, nextr, axes, hetemps, bedtemp) = self.slicer.type.getSlicerSettings()
@@ -298,14 +310,6 @@ class MainFrame(wx.Frame):
 		self.pgManCtl.changePrinter(heaters, extruders)
 		self.pgPrtMon.changePrinter(heaters, extruders)
 		self.parser.setPrinter(heaters, extruders)
-		
-	def doChooseProfile(self, evt):
-		newprof = self.cbProfile.GetValue()
-		self.slicer.type.setProfile(newprof)
-		
-	def doChooseFilament(self, evt):
-		newfilament = self.cbFilament.GetValue()
-		self.slicer.type.setFilament(newfilament)
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -362,6 +366,7 @@ class MainFrame(wx.Frame):
 			self.timer.Start(1000)
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
+			self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Disconnect from the Printer", "")
 			self.setPrinterBusy(False)
 
 	def finishDisconnection(self):
@@ -371,6 +376,7 @@ class MainFrame(wx.Frame):
 		self.tb.EnableTool(TB_TOOL_CONNECT, True)
 		self.connected = False 
 		self.discPending = False
+		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Connect to the Printer", "")
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
 		self.timer.Stop()
 		self.timer = None

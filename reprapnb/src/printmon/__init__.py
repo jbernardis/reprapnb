@@ -7,7 +7,7 @@ from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
 					PRINT_RESUMED)
 
-BUTTONDIM = (64, 64)
+BUTTONDIM = (48, 48)
 #FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
 	
 myRed = wx.Colour(254, 142, 82, 179)

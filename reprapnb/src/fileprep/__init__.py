@@ -21,7 +21,7 @@ GCODELINETEXT = "Current G Code Line: (%d)"
 
 TITLETEXT = "G Code Viewer"
 BUTTONDIM = (48, 48)
-BUTTONDIMWIDE = (72,48)
+BUTTONDIMWIDE = (144, 80)
 
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
