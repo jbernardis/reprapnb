@@ -88,13 +88,18 @@ class MainFrame(wx.Frame):
 
 		p = wx.Panel(self)
 
-		self.tb = wx.ToolBar(p, style=wx.TB_HORIZONTAL | wx.TB_FLAT)
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		self.tb = wx.ToolBar(p, style=wx.TB_HORIZONTAL) # | wx.TB_FLAT)
+		f = wx.Font(12, wx.SWISS, wx.BOLD, wx.NORMAL)
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		sizerBtns.AddSpacer((10,10))
 		sizerBtns.Add(self.tb)
+
+		dc = wx.WindowDC(self)
+		dc.SetFont(f)
+		text = "Port:"
+		w, h = dc.GetTextExtent(text)
 			
-		t = wx.StaticText(self.tb, wx.ID_ANY, " Port:  ", style=wx.ALIGN_RIGHT)
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 
@@ -111,8 +116,10 @@ class MainFrame(wx.Frame):
 		self.cbPort.SetToolTipString("Choose the port to which to connect")
 		self.cbPort.SetStringSelection(choice)
 		self.tb.AddControl(self.cbPort)
+		text = "@"
+		w, h = dc.GetTextExtent(text)
 		
-		t = wx.StaticText(self.tb, wx.ID_ANY, " @ ", style=wx.ALIGN_CENTER, size=(40, 35))
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 		
@@ -130,7 +137,9 @@ class MainFrame(wx.Frame):
 		if len(ports) < 1:
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
 			
-		t = wx.StaticText(self.tb, wx.ID_ANY, " Slicer:  ", style=wx.ALIGN_RIGHT)
+		text = " Slicer:"
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 		
@@ -143,7 +152,9 @@ class MainFrame(wx.Frame):
 			
 		self.tb.AddSeparator()
 			
-		t = wx.StaticText(self.tb, wx.ID_ANY, "  Printer:  ", style=wx.ALIGN_RIGHT)
+		text = " Printer:"
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 		
@@ -154,7 +165,9 @@ class MainFrame(wx.Frame):
 		self.cbPrinter.SetStringSelection(self.slicer.settings['printer'])
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
 		
-		t = wx.StaticText(self.tb, wx.ID_ANY, " Profile:  ", style=wx.ALIGN_RIGHT)
+		text = " Profile:"
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 	
@@ -166,7 +179,9 @@ class MainFrame(wx.Frame):
 		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
 		
-		t = wx.StaticText(self.tb, wx.ID_ANY, " Filament:  ", style=wx.ALIGN_RIGHT)
+		text = " Filament:"
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		self.tb.AddControl(t)
 	

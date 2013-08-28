@@ -20,8 +20,8 @@ STLwildcard = "STL (*.stl)|*.stl"
 GCODELINETEXT = "Current G Code Line: (%d)"
 
 TITLETEXT = "G Code Viewer"
-BUTTONDIM = (64, 64)
-BUTTONDIMWIDE = (96,64)
+BUTTONDIM = (48, 48)
+BUTTONDIMWIDE = (72,48)
 
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
@@ -30,6 +30,8 @@ reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
 SLICER_RUNNING = 1
 SLICER_FINISHED = 2
 SLICER_CANCELLED = 3
+
+TEXT_PAD = 10
 
 class SlicerThread:
 	def __init__(self, win, cmd):
@@ -246,16 +248,20 @@ class FilePrepare(wx.Panel):
 		
 		self.infoPane.AddSpacer((40, 40), pos=(2,0))
 		
-		ipHeight = 30
 		ipfont = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		
+		dc = wx.WindowDC(self)
+		dc.SetFont(ipfont)
+
 		self.ipFileName = wx.StaticText(self, wx.ID_ANY, "")
 		self.ipFileName.SetFont(ipfont)
 		self.infoPane.Add(self.ipFileName, pos=(3,0), span=(1,2), flag=wx.ALIGN_LEFT)
 		
 		self.infoPane.AddSpacer((40, 40), pos=(4,0))
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Layer Number:  ", size=(-1, ipHeight))
+		text = "Layer Number: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(5,0), flag=wx.ALIGN_RIGHT)
 		
@@ -263,7 +269,9 @@ class FilePrepare(wx.Panel):
 		self.ipLayerNum.SetFont(ipfont)
 		self.infoPane.Add(self.ipLayerNum, pos=(5,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Height (mm):  ", size=(-1, ipHeight))
+		text = "Height (mm): " 
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(6,0), flag=wx.ALIGN_RIGHT)
 		
@@ -271,7 +279,9 @@ class FilePrepare(wx.Panel):
 		self.ipLayerHeight.SetFont(ipfont)
 		self.infoPane.Add(self.ipLayerHeight, pos=(6,1), flag=wx.ALIGN_LEFT)
 
-		t = wx.StaticText(self, wx.ID_ANY, "Min/Max X (mm):  ", size=(-1, ipHeight))
+		text = "Min/Max X (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(7,0), flag=wx.ALIGN_RIGHT)
 		
@@ -279,7 +289,9 @@ class FilePrepare(wx.Panel):
 		self.ipMinMaxX.SetFont(ipfont)
 		self.infoPane.Add(self.ipMinMaxX, pos=(7,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Min/Max Y (mm):  ", size=(-1, ipHeight))
+		text = "Min/Max Y (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(8,0), flag=wx.ALIGN_RIGHT)
 		
@@ -287,7 +299,9 @@ class FilePrepare(wx.Panel):
 		self.ipMinMaxY.SetFont(ipfont)
 		self.infoPane.Add(self.ipMinMaxY, pos=(8,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Filament (mm):  ", size=(-1, ipHeight))
+		text = "Filament (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(9,0), flag=wx.ALIGN_RIGHT)
 		
@@ -295,7 +309,9 @@ class FilePrepare(wx.Panel):
 		self.ipFilament.SetFont(ipfont)
 		self.infoPane.Add(self.ipFilament, pos=(9,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "G Code Line from/to:  ", size=(-1, ipHeight))
+		text = "G Code Line from/to: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(10,0), flag=wx.ALIGN_RIGHT)
 		
@@ -303,7 +319,9 @@ class FilePrepare(wx.Panel):
 		self.ipGCLines.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCLines, pos=(10,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Print Time:  ", size=(-1, ipHeight))
+		text = "Print Time: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(11,0), flag=wx.ALIGN_RIGHT)
 		
@@ -311,10 +329,13 @@ class FilePrepare(wx.Panel):
 		self.ipPrintTime.SetFont(ipfont)
 		self.infoPane.Add(self.ipPrintTime, pos=(11,1), flag=wx.ALIGN_LEFT)
 		
-		t = wx.StaticText(self, wx.ID_ANY, "Extrusion Speeds:  ", size=(-1, ipHeight))
+		text = "Extrusion Speeds: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(12,0), flag=wx.ALIGN_RIGHT)
 		
+		ipHeight = dc.GetTextExtent("20")[1] + TEXT_PAD
 		t = wx.TextCtrl(self, wx.ID_ANY, "< 20 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour(wx.Colour(237, 139, 33))
