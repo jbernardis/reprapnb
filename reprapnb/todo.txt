@@ -1,32 +1,17 @@
-Plater:
-
-export to second tab - done, but need to test
-
-Fileprep
-
-Slice output -> model and gcodeview - done - need to test
--> print monitor
-
-
-
-Manual control
-
-extract
-reverse
-extract distance
-e speed
-
-temperatures: Set, on, off, choose value
-	bed, extruders
-	
-manual G code entry/reference
-
-
-
-
-Print Monitor
-
-gcode follower, temperature monitor, ETA and all timing information, temperature control, fan control, speed control
+1) Pull temperatures from slicer in manual control
+2) Proper information from slicer:  number extruders, axes, buildarea??, hotend temps, bed temp
+3) turn print following on/off
+4) implement send gcode
+5) remove "echo" and "ok" from printed received messages
+6) text size - why is it disappearing from linux screen
+7) disable the -> printer button in fileprep if printer is not connected(FNT) - also give it a new image
+8) HBP temps -> cyan
+9) Display additional info on monitor screen:  Z Height, Layer#/Total Layers, ETA, lines printed/total, % printed, % ahead/behind estimate, filename
+10) grouping of port/connection info on toolbar, slicer information on toolbar
+11) figure out how to include skeinforge
+12) fan control
+13) speed control
+14) SD support
 
 
 	
