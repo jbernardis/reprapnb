@@ -147,8 +147,6 @@ class PrintMonitor(wx.Panel):
 
 		self.SetSizer(self.sizerMain)
 
-		self.app.setPrinterBusy(False)
-
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)

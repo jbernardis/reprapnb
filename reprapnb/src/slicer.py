@@ -77,7 +77,7 @@ class Slic3r:
 		self.getFilamentOptions()
 		self.settings['filament'] = nfil
 		if nfil in self.filmap.keys():
-			self.settings['filamentfile'] = self.profmap[nfil]
+			self.settings['filamentfile'] = self.filmap[nfil]
 		else:
 			self.settings['filamentfile'] = None
 		self.parent.setModified()

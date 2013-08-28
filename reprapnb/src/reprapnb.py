@@ -212,6 +212,7 @@ class MainFrame(wx.Frame):
 		p.SetSizer(sizer)
 		
 		self.doChoosePrinter(None)
+		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
 		
 		if self.settings.startpane == self.pxPlater:
 			self.nb.SetSelection(self.pxPlater)
@@ -331,6 +332,7 @@ class MainFrame(wx.Frame):
 		if self.connected:
 			self.reprap.disconnect()
 			self.discPending = True
+			self.setPrinterBusy(True)
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
 
 		else:
@@ -345,8 +347,7 @@ class MainFrame(wx.Frame):
 			self.timer.Start(1000)
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
-			self.announcePrinter()
-			#self.cbPrinter.Enable(False)
+			self.setPrinterBusy(False)
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
@@ -355,18 +356,12 @@ class MainFrame(wx.Frame):
 		self.tb.EnableTool(TB_TOOL_CONNECT, True)
 		self.connected = False 
 		self.discPending = False
-		self.announcePrinter()
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-		#self.cbPrinter.Enable(True)
 		self.timer.Stop()
 		self.timer = None
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 
-	def announcePrinter(self):
-		#FIXIT
-		pass
-	
 	def replace(self, s):
 		d = {}
 		
