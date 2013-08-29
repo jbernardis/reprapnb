@@ -1,14 +1,12 @@
-1) Pull temperatures from slicer in manual control
-2) Proper information from slicer:  number extruders, axes, buildarea??, hotend temps, bed temp
+2) Proper information from slicer: still need to figure out what to do about multiple axes
 3) turn print following on/off
 4) implement send gcode
-5) remove "echo" and "ok" from printed received messages
-8) HBP temps -> cyan
 9) Display additional info on monitor screen:  Z Height, Layer#/Total Layers, ETA, lines printed/total, % printed, % ahead/behind estimate, filename
 11) figure out how to include skeinforge
 12) fan control
 13) speed control
 14) SD support
+15) layout of extruder and heater widgets needs to be fixed
 
 
 	

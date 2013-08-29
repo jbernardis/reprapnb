@@ -160,6 +160,9 @@ class ListenThread:
 				if line.strip().lower() == "ok":
 					self.sender.endWait()
 					continue
+						
+				if line.startswith("echo:"):
+					line = line[5:]
 
 				evt = RepRapEvent(event=RECEIVED_MSG, msg = line.rstrip(), state = 1)
 				wx.PostEvent(self.win, evt)

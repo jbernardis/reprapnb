@@ -13,7 +13,7 @@ scale = 1.5
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
-colors = { "HBP": "blue", "HE": "red", "HE0": "red", "HE1": "yellow"}
+colors = { "HBP": "cyan", "HE": "red", "HE0": "red", "HE1": "yellow"}
 columns = { "HBP": 150, "HE": 100, "HE0": 100, "HE1": 50}
 rowOffset = { "HBP": 30, "HE": -30, "HE0": -30, "HE1": -30}
 

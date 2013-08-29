@@ -28,6 +28,27 @@ PAUSE_MODE_RESUME = 2
 PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
 
+secpday = 60 * 60 * 24
+secphour = 60 * 60
+
+def formatElapsed(secs):
+	ndays = int(secs/secpday)
+	secday = secs % secpday
+	
+	nhour = int(secday/secphour)
+	sechour = secday % secphour
+	
+	nmin = int(sechour/60)
+	nsec = sechour % 60
+
+	if ndays == 0:
+		if nhour == 0:
+			return "%d:%02d" % (nmin, nsec)
+		else:
+			return "%d:%02d:%02d" % (nhour, nmin, nsec)
+	else:
+		return "%d-%d:%02d:%02d" % (ndays, nhour, nmin, nsec)	
+
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app, reprap):
 		self.model = None
@@ -48,6 +69,8 @@ class PrintMonitor(wx.Panel):
 		self.endTime = None
 		self.gcFile = None
 		self.printMode = None
+		self.origEta = None
+		self.countGLines = None
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -179,6 +202,8 @@ class PrintMonitor(wx.Panel):
 			self.bPause.Enable(True)
 			self.app.setPrinterBusy(False)
 			self.endTime = time.time()
+			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
+			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
 			
 	def getPrintTimes(self):
 		return self.startTime, self.endTime
@@ -203,9 +228,14 @@ class PrintMonitor(wx.Panel):
 		self.startTime = time.time()
 		self.endTime = None
 		if self.printMode == PRINT_MODE_RESTART:
+			action = "restarted"
 			self.reprap.restartPrint(self.model)
 		else:
+			action = "started"
 			self.reprap.startPrint(self.model)
+		self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
+		self.origEta = self.startTime + self.model.duration
+		self.countGLines = len(self.model)
 		self.bPrint.Enable(False)
 		self.bPause.Enable(False)
 		
@@ -222,6 +252,9 @@ class PrintMonitor(wx.Panel):
 	def updatePrintPosition(self, pos):
 		self.printPos = pos
 		self.gcf.setPrintPosition(self.printPos)
+		print "Line position = %d/%d (%f)" % (pos, self.countGLines, float(pos)/float(self.countGLines))
+		elapsed = time.time() - self.startTime
+		print "Time %% = %f" % float(elapsed)/float(self.model.duration)
 		
 	def onMouseLayer(self, evt):
 		l = self.slideLayer.GetValue()-1
@@ -241,7 +274,14 @@ class PrintMonitor(wx.Panel):
 	def setLayer(self, l):
 		if l >=0 and l < self.layerCount:
 			self.slideLayer.SetValue(l+1)
-			zh = self.model.getLayerHeight(l)
+			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
+			print "z=", zh
+			print "min=", xymin
+			print "max=", xymax
+			print "filament=", filament
+			print "G code lines=", glines
+			print "time=", time
+			print "filstart=", filstart
 			if zh is None:
 				self.tHeight.SetLabel("")
 			else:

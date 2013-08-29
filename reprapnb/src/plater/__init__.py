@@ -354,21 +354,12 @@ class Plater(wx.Panel):
 
 			if rc != wx.ID_YES:
 				return
-		print "About to delete selection ", self.lbSelection, len(self.lbMap)
+
 		self.lb.Delete(self.lbSelection)
-		print "after deletion from listbox", self.lbSelection, len(self.lbMap)
 		del(self.lbMap[self.lbSelection])
-		print "after deletion from map, mapsize now ", self.lbSelection, len(self.lbMap)
 		self.stlFrame.delStl()
-		print "after delstl", self.lbSelection, len(self.lbMap)
-		l = len(self.lbMap)
-		print "after delstl2", self.lbSelection, len(self.lbMap), l
-		if self.lbSelection >= l:
-			self.lbSelection = l-1
-			print "Last one was deleted - selection now set to ", self.lbSelection, len(self.lbMap)
 		
-		if self.lbSelection < 0:
-			print "There are none left - cleaning up everything", self.lbSelection, len(self.lbMap)
+		if len(self.lbMap) == 0:
 			self.lbSelection = None
 			self.setModified(False)
 			self.enableButtons(False)
@@ -376,12 +367,10 @@ class Plater(wx.Panel):
 			self.lbMap = []
 			self.lbModified = []
 		else:
-			print "There are some left - resetting selection in listbox and on screen"
-			print "selection = ", self.lbSelection
+			self.lbSelection = 0
 			self.setModified()
 			self.lb.SetSelection(self.lbSelection)
 			self.stlFrame.setSelection(self.lbMap[self.lbSelection][1])
-			print "at end - size of map is ", len(self.lbMap)
 
 	def doDelAll(self, evt):
 		dlg = wx.MessageDialog(self, "Are you sure you want to delete everything?",
