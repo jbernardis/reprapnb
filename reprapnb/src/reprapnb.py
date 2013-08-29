@@ -366,7 +366,7 @@ class MainFrame(wx.Frame):
 			self.timer.Start(1000)
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
-			self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Disconnect from the Printer", "")
+			self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Disconnect from the Printer")
 			self.setPrinterBusy(False)
 
 	def finishDisconnection(self):
@@ -376,7 +376,7 @@ class MainFrame(wx.Frame):
 		self.tb.EnableTool(TB_TOOL_CONNECT, True)
 		self.connected = False 
 		self.discPending = False
-		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Connect to the Printer", "")
+		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
 		self.timer.Stop()
 		self.timer = None

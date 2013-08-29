@@ -70,7 +70,7 @@ class ManualControl(wx.Panel):
 			ex = Extruder(self, self.app, axis=e[2])
 			self.extWin.append(ex)
 			t = wx.StaticText(self, wx.ID_ANY, e[1], style=wx.ALIGN_LEFT, size=(200, -1))
-			f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+			f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
 			t.SetFont(f)
 			self.extLabel.append(t)
 			sizerExtrude.Add(t, flag=wx.LEFT)
@@ -91,7 +91,7 @@ class ManualControl(wx.Panel):
 
 		for h in self.heaters:
 			t = wx.StaticText(self, wx.ID_ANY, h[1], style=wx.ALIGN_LEFT, size=(200, -1))
-			f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+			f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
 			t.SetFont(f)
 			sizerHeat.Add(t, flag=wx.LEFT)
 			self.htrLabel.append(t)

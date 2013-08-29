@@ -3,7 +3,7 @@ import os.path
 
 from images import Images
 
-BUTTONDIM = (64, 64)
+BUTTONDIM = (48, 48)
 
 class Extruder(wx.Window): 
 	def __init__(self, parent, app, name="", axis="E"):
@@ -17,7 +17,7 @@ class Extruder(wx.Window):
 		sizerExtrude = wx.GridBagSizer()
 
 		t = wx.StaticText(self, wx.ID_ANY, "%s Speed (mm/min):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(1,0), span=(1,3))
 		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.espeed), size=(80, -1), style=wx.TE_RIGHT)
@@ -29,7 +29,7 @@ class Extruder(wx.Window):
 		sizerExtrude.AddSpacer((10,10), pos=(2,1))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "%s Distance (mm):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerExtrude.Add(t, pos=(3,0), span=(1,3))
 		

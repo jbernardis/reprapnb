@@ -9,7 +9,7 @@ import os
 
 from images import Images
 
-BUTTONDIM = (64, 64)
+BUTTONDIM = (48, 48)
 
 orange = wx.Colour(237, 139, 33)
 
@@ -30,7 +30,7 @@ class Heater(wx.Window):
 		sizerHtr = wx.GridBagSizer(vgap=5)
 
 		t = wx.StaticText(self, wx.ID_ANY, "Current: ", style=wx.ALIGN_RIGHT, size=(90, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerHtr.Add(t, pos=(0,2)) 
 		
@@ -42,7 +42,7 @@ class Heater(wx.Window):
 		sizerHtr.Add(self.tTemp, pos=(0,3))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Target: ", style=wx.ALIGN_RIGHT, size=(90, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerHtr.Add(t, pos=(1,2))
 		

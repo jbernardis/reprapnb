@@ -29,6 +29,11 @@ def checkTagList(s, tag):
 
 		
 	r = s[len(tag):].strip().split(',')
+	for i in range(len(r)):
+		try:
+			r[i] = int(r[i])
+		except:
+			return None
 	return r
 	
 class Slic3r:
