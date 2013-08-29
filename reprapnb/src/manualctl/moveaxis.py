@@ -49,7 +49,7 @@ class MoveAxis(wx.Window):
 		sizerMoveFrame.Add(t, pos=(3,3))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "XY Speed:", style=wx.ALIGN_RIGHT, size=(160, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(4,2))
 		
@@ -62,7 +62,7 @@ class MoveAxis(wx.Window):
 		sizerMoveFrame.AddSpacer((10, 10), pos=(5,0))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "Z Speed:", style=wx.ALIGN_RIGHT, size=(160, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		t.SetFont(f)
 		sizerMoveFrame.Add(t, pos=(6,2))
 		
