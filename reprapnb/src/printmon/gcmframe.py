@@ -293,7 +293,7 @@ class GcmFrame (wx.Window):
 			c = "blue"
 					
 		if background:
-			c = "gray"
+			c = "dimgray"
 			
 		w = self.zoom
 

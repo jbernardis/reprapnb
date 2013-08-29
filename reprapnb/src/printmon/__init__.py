@@ -6,6 +6,7 @@ from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
 					PRINT_RESUMED)
+from reprapnb import formatElapsed
 
 BUTTONDIM = (48, 48)
 #FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
@@ -27,27 +28,6 @@ PAUSE_MODE_RESUME = 2
 
 PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
-
-secpday = 60 * 60 * 24
-secphour = 60 * 60
-
-def formatElapsed(secs):
-	ndays = int(secs/secpday)
-	secday = secs % secpday
-	
-	nhour = int(secday/secphour)
-	sechour = secday % secphour
-	
-	nmin = int(sechour/60)
-	nsec = sechour % 60
-
-	if ndays == 0:
-		if nhour == 0:
-			return "%d:%02d" % (nmin, nsec)
-		else:
-			return "%d:%02d:%02d" % (nhour, nmin, nsec)
-	else:
-		return "%d-%d:%02d:%02d" % (ndays, nhour, nmin, nsec)	
 
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app, reprap):
@@ -180,7 +160,7 @@ class PrintMonitor(wx.Panel):
 			self.paused = False
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
-			self.bPrint.Enable(True)
+			self.bPrint.Enable(False)
 			self.bPause.Enable(True)
 			self.app.setPrinterBusy(True)
 			
@@ -204,6 +184,7 @@ class PrintMonitor(wx.Panel):
 			self.endTime = time.time()
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
+			self.updatePrintPosition(0)
 			
 	def getPrintTimes(self):
 		return self.startTime, self.endTime
@@ -235,6 +216,7 @@ class PrintMonitor(wx.Panel):
 			self.reprap.startPrint(self.model)
 		self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
 		self.origEta = self.startTime + self.model.duration
+		self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration))), formatElapsed(self.model.duration))
 		self.countGLines = len(self.model)
 		self.bPrint.Enable(False)
 		self.bPause.Enable(False)
@@ -254,7 +236,7 @@ class PrintMonitor(wx.Panel):
 		self.gcf.setPrintPosition(self.printPos)
 		print "Line position = %d/%d (%f)" % (pos, self.countGLines, float(pos)/float(self.countGLines))
 		elapsed = time.time() - self.startTime
-		print "Time %% = %f" % float(elapsed)/float(self.model.duration)
+		print "Time %% = %f" % (float(elapsed)/float(self.model.duration))
 		
 	def onMouseLayer(self, evt):
 		l = self.slideLayer.GetValue()-1
@@ -282,6 +264,7 @@ class PrintMonitor(wx.Panel):
 			print "G code lines=", glines
 			print "time=", time
 			print "filstart=", filstart
+			print "Layer %d/%d" % (l+1, self.layerCount)
 			if zh is None:
 				self.tHeight.SetLabel("")
 			else:

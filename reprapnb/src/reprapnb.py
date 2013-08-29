@@ -15,7 +15,7 @@ if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
 from fileprep import FilePrepare
-from printmon import PrintMonitor, formatElapsed
+from printmon import PrintMonitor
 from manualctl import ManualControl
 from plater import Plater
 from settings import Settings
@@ -34,6 +34,27 @@ POSITIONINTERVAL = 1
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
+
+secpday = 60 * 60 * 24
+secphour = 60 * 60
+
+def formatElapsed(secs):
+	ndays = int(secs/secpday)
+	secday = secs % secpday
+	
+	nhour = int(secday/secphour)
+	sechour = secday % secphour
+	
+	nmin = int(sechour/60)
+	nsec = sechour % 60
+
+	if ndays == 0:
+		if nhour == 0:
+			return "%d:%02d" % (nmin, nsec)
+		else:
+			return "%d:%02d:%02d" % (nhour, nmin, nsec)
+	else:
+		return "%d-%d:%02d:%02d" % (ndays, nhour, nmin, nsec)	
 
 class MainFrame(wx.Frame):
 	def __init__(self):

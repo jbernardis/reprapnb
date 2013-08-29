@@ -7,6 +7,12 @@
 13) speed control
 14) SD support
 15) layout of extruder and heater widgets needs to be fixed
+16) previous layer in prtmon is too bright
+17) filstart is always 0 - added debugging statements
+18) read G code in a thread
+19) widen log
 
+
+BUG - print start button was enabled while printing - I think I found it - need to test
 
 	

@@ -462,6 +462,7 @@ class GCode(object):
 			elif line.is_move():
 				if line.z and line.z != cur_z:
 					self.layer_e.append(layer_e+(segment_e - segment_start_e))
+					print "appending %d to layer_e_start" % cur_e
 					self.layer_e_start.append(cur_e)
 					self.layer_e_end.append(cur_e)
 					cur_z = line.z
@@ -605,5 +606,7 @@ class GCode(object):
 	def getLayerInfo(self, lx):
 		if lx < 0 or lx >= len(self.layer_e):
 			return None
+		
+		print "returning layer_e_start of %d for layer %d" % (self.layer_e_start[lx], lx)
 		
 		return [self.layer_z[lx], self.layer_min[lx], self.layer_max[lx], self.layer_e[lx], self.layerlines[lx], self.layer_time[lx], self.layer_e_start[lx]]

@@ -11,6 +11,7 @@ from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
 from editgcode import EditGCodeDlg
 from images import Images
+from reprapnb import formatElapsed
 
 from settings import TEMPFILELABEL
 
@@ -534,6 +535,11 @@ class FilePrepare(wx.Panel):
 		if len(self.gcode) == 0:
 			return
 		self.buildModel()
+		self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
+		self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
+		self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
+		self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
+		self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
 		self.setModified(False)
 		self.bOpen.Enable(True)
 		self.bSlice.Enable(True)

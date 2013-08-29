@@ -43,7 +43,6 @@ class SendThread:
 		self.printer = None
 		
 	def endWait(self):
-		print "end wait"
 		self.okWait = False
 		
 	def isKilled(self):
