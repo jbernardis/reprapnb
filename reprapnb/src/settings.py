@@ -5,7 +5,6 @@ Created on Aug 21, 2012
 '''
 import ConfigParser
 import os
-import wx
 
 from slicer import createSlicerObject
 
@@ -25,7 +24,7 @@ def parseBoolean(val, defaultVal):
 	
 	return defaultVal
 
-slicerKeys = ['profiledir', 'profile', 'profilefile', 'filament', 'filamentfile', 'printer', 'printerfile', 'command', 'config']
+slicerKeys = ['profiledir', 'print', 'printfile', 'filament', 'filamentfile', 'printer', 'printerfile', 'command', 'config']
 
 class SlicerSettings:
 	def __init__(self, app, name):
@@ -52,6 +51,7 @@ class Settings:
 		self.inifile = os.path.join(folder, INIFILE)
 		self.slicer = "slic3r"
 		self.slicers = ["slic3r"]
+		self.slicersettings = []
 		self.startpane=0
 		
 		self.cfg = ConfigParser.ConfigParser()
@@ -61,9 +61,10 @@ class Settings:
 			
 			self.modified = True
 			
-			self.fileprep = SettingsFilePrep(self.app, None, folder, "fileprep")
-			self.plater = SettingsPlater(self.app, None, folder, "plater")
-			self.manualctl = SettingsManualCtl(self.app, None, folder, "manualctl")
+			self.fileprep = SettingsFilePrep(self, self.app, None, folder, "fileprep")
+			self.plater = SettingsPlater(self, self.app, None, folder, "plater")
+			self.manualctl = SettingsManualCtl(self, self.app, None, folder, "manualctl")
+			self.printmon = SettingsPrintMon(self, self.app, None, folder, "printmon")
 			return
 
 		self.section = "global"	
@@ -133,6 +134,8 @@ class Settings:
 	def getSlicerSettings(self, slicer):
 		for i in range(len(self.slicers)):
 			if self.slicers[i] == slicer:
+				if i >= len(self.slicersettings):
+					return None
 				return self.slicersettings[i]
 		return None
 	

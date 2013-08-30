@@ -16,13 +16,6 @@ class ManualControl(wx.Panel):
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
-		self.htrWin = []
-		self.htrLabel = []	
-		self.heaters = []	
-		self.extWin = []
-		self.extLabel = []
-		self.extruders = []
-		self.htrMap = {}	
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -32,13 +25,16 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = None
-		self.sizerHeat = None
-		self.sizerGCode = None
+		self.sizerExtrude = self.addExtruder()
+		self.sizerHeat = self.addHeater()
+		self.sizerGCode = self.addGCEntry()
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
 		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(2,1))
+		self.sizerMain.Add(self.sizerExtrude, pos=(1,3), span=(1,1))
+		self.sizerMain.Add(self.sizerHeat, pos=(1,5), span=(1,1))
+		self.sizerMain.Add(self.sizerGCode, pos=(2,3), span=(1,3))
 		self.sizerMain.AddSpacer((10,10), pos=(0,2))
 		self.sizerMain.AddSpacer((10,10), pos=(0,4))
 
@@ -46,63 +42,52 @@ class ManualControl(wx.Panel):
 		self.Layout()
 		self.Fit()
 		
-	def setHeatTarget(self, name, temp):
-		if name not in self.htrMap.keys():
-			self.logger.LogError("Unknown heater name: %s" % name)
-			return
+	def setBedTarget(self, temp):
+		self.bedWin.setHeatTarget(temp)
 		
-		self.htrMap[name].setHeatTarget(temp)
+	def setHETarget(self, temp):
+		self.heWin.setHeatTarget(temp)
 		
-	def setHeatTemp(self, name, temp):
-		if name not in self.htrMap.keys():
-			self.logger.LogError("Unknown heater name: %s" % name)
-			return
+	def setBedTemp(self, temp):
+		self.bedWin.setHeatTemp(temp)
 		
-		self.htrMap[name].setHeatTemp(temp)
+	def setHETemp(self, temp):
+		self.heWin.setHeatTemp(temp)
 		
-	def addExtruders(self):
+	def addExtruder(self):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
-		self.extWin = []
-		self.extLabel = []
 		
-		for e in self.extruders:
-			ex = Extruder(self, self.app, axis=e[2])
-			self.extWin.append(ex)
-			t = wx.StaticText(self, wx.ID_ANY, e[1], style=wx.ALIGN_LEFT, size=(200, -1))
-			f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-			t.SetFont(f)
-			self.extLabel.append(t)
-			sizerExtrude.Add(t, flag=wx.LEFT)
-			sizerExtrude.AddSpacer((10,10))
-			sizerExtrude.Add(ex)
-			sizerExtrude.AddSpacer((10,10))
+		self.extWin = Extruder(self, self.app)
+		t = wx.StaticText(self, wx.ID_ANY, "Extruder", style=wx.ALIGN_LEFT, size=(200, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerExtrude.Add(t, flag=wx.LEFT)
+		sizerExtrude.AddSpacer((10,10))
+		sizerExtrude.Add(self.extWin)
+		sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude
 			
-	def addHeaters(self):
+	def addHeater(self):
 		sizerHeat = wx.BoxSizer(wx.VERTICAL)
 		sizerHeat.AddSpacer((10,10))
 
-		self.htrWin = []
-		self.htrLabel = []	
+		t = wx.StaticText(self, wx.ID_ANY, "Heated Print Bed", style=wx.ALIGN_LEFT, size=(200, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerHeat.Add(t, flag=wx.LEFT)
+		sizerHeat.AddSpacer((10,10))
 		
-		self.htrMap = {}	
-
-		for h in self.heaters:
-			t = wx.StaticText(self, wx.ID_ANY, h[1], style=wx.ALIGN_LEFT, size=(200, -1))
-			f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-			t.SetFont(f)
-			sizerHeat.Add(t, flag=wx.LEFT)
-			self.htrLabel.append(t)
-			sizerHeat.AddSpacer((10,10))
+		self.bedWin = Heater(self, self.app, name="Heated Print Bed", shortname="Bed", 
+					target=60, trange=[20, 150], oncmd="M140", multi=False)
+		sizerHeat.Add(self.bedWin)
+		sizerHeat.AddSpacer((10,10))
 		
-			he = Heater(self, self.app, name=h[1], shortname=h[0], 
-					target=h[2], trange=h[3], oncmd=h[4])
-			sizerHeat.Add(he)
-			self.htrWin.append(he)
-			self.htrMap[h[0]] = he
-			sizerHeat.AddSpacer((10,10))
+		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
+					target=[185], trange=[20, 250], oncmd="M104", multi=True)
+		sizerHeat.Add(self.heWin)
+		sizerHeat.AddSpacer((10,10))
 
 		return sizerHeat
 
@@ -123,58 +108,9 @@ class ManualControl(wx.Panel):
 		
 		return sizerGCode
 		
-	def changePrinter(self, heaters, extruders):
-		self.heaters = heaters
-		self.extruders = extruders
-
-		oldPos = (1,3)
-		oldSpan = (1,1)
-		if self.sizerExtrude is not None:
-			item = self.sizerMain.FindItem(self.sizerExtrude)
-			if item is not None:
-				oldPos = item.GetPos()
-				oldSpan = item.GetSpan()
-				self.sizerMain.Detach(self.sizerExtrude)
-				for ex in self.extWin:
-					ex.Destroy()
-				for exl in self.extLabel:
-					exl.Destroy()
-				
-		self.sizerExtrude = self.addExtruders()
-		self.sizerMain.Add(self.sizerExtrude, pos=oldPos, span=oldSpan)
-
-		oldPos = (1,5)
-		oldSpan = (1,1)
-		if self.sizerHeat is not None:
-			item = self.sizerMain.FindItem(self.sizerHeat)
-			if item is not None:
-				oldPos = item.GetPos()
-				oldSpan = item.GetSpan()
-				self.sizerMain.Detach(self.sizerHeat)
-				for he in self.htrWin:
-					he.Destroy()
-				for hel in self.htrLabel:
-					hel.Destroy()
-			
-		self.sizerHeat = self.addHeaters()
-		self.sizerMain.Add(self.sizerHeat, pos=oldPos, span=oldSpan)
-
-		oldPos = (2,3)
-		oldSpan = (1,3)
-		if self.sizerGCode is not None:
-			item = self.sizerMain.FindItem(self.sizerGCode)
-			if item is not None:
-				oldPos = item.GetPos()
-				oldSpan = item.GetSpan()
-				self.sizerMain.Detach(self.sizerGCode)
-				self.GCEntry.Destroy()
-				self.GCELabel.Destroy()
-			
-		self.sizerGCode = self.addGCEntry()
-		self.sizerMain.Add(self.sizerGCode, pos=oldPos, span=oldSpan)
-
-		self.Layout()
-		self.Fit()
+	def changePrinter(self, hetemps, bedtemp):
+		self.heWin.setTargets(hetemps)
+		self.bedWin.setTargets(bedtemp)
 
 	def onClose(self, evt):
 		return True

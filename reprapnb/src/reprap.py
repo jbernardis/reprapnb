@@ -9,6 +9,7 @@ from select import error as SelectError
 import Queue
 import time
 import wx
+import re
 import wx.lib.newevent
 
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
@@ -167,6 +168,58 @@ class ListenThread:
 				wx.PostEvent(self.win, evt)
 
 		self.endoflife = True
+
+class RepRapParser:
+	'''
+	Parse a REPRAP message
+	'''
+	def __init__(self, app):
+		self.app = app
+		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
+		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *B:([0-9\.]+)")
+		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *W:.*")
+		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
+		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
+		
+		self.sdre = re.compile("SD printing byte *([0-9]+) *\/ *([0-9]+)")
+		self.heaters = {}
+		
+	def parseMsg(self, msg):
+		m = self.trpt1re.search(msg)
+		if m:
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.setHETemp(float(t[0]))
+			if len(t) >= 2:
+				self.app.setHETarget(float(t[1]))
+			if len(t) >= 3:
+				self.app.setBedTemp(float(t[2]))
+			if len(t) >= 4:
+				self.app.setBedTarget(float(t[3]))
+			if self.app.M105pending:
+				self.app.M105pending = False
+				return True
+			else:
+				return False
+		
+		m = self.trpt2re.search(msg)
+		if m:
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.setHETemp(float(t[0]))
+			if len(t) >= 2:
+				self.app.setBedTemp(float(t[1]))
+			return True
+		
+		m = self.trpt3re.search(msg)
+		if m:
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.setHETemp(float(t[0]))
+			return True
+		
+		return False
+
 
 class RepRap:
 	def __init__(self, win, handler):

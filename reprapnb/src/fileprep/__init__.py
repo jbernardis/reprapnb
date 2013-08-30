@@ -11,7 +11,7 @@ from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
 from editgcode import EditGCodeDlg
 from images import Images
-from reprapnb import formatElapsed
+from tools import formatElapsed 
 
 from settings import TEMPFILELABEL
 
@@ -464,6 +464,7 @@ class FilePrepare(wx.Panel):
 			self.bOpen.Enable(True)
 			self.setSliceMode()
 			self.bSlice.Enable(True)
+			self.app.slicer.type.sliceComplete()
 			self.sliceActive = False
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
@@ -478,6 +479,7 @@ class FilePrepare(wx.Panel):
 			self.setSliceMode()
 			self.sliceActive = False
 			self.bSlice.Enable(True)
+			self.app.slicer.type.sliceComplete()
 			self.loadFile(self.gcFile)
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)

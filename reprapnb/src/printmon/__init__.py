@@ -6,7 +6,7 @@ from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
 					PRINT_RESUMED)
-from reprapnb import formatElapsed
+from tools import formatElapsed
 
 BUTTONDIM = (48, 48)
 #FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
@@ -337,11 +337,11 @@ class PrintMonitor(wx.Panel):
 		
 		self.app.setPrinterBusy(False)
 		
-	def changePrinter(self, heaters, extruders):
+	def changePrinter(self, hetemps, bedtemp):
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
-		self.knownHeaters = [h[0] for h in heaters]
+		self.knownHeaters = ['HE', 'Bed']
 		for h in self.knownHeaters:
 			self.temps[h] = None
 			self.targets[h] = 0
@@ -351,18 +351,19 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
 			
-	def setHeatTarget(self, name, temp):
-		if name not in self.knownHeaters:
-			self.logger.LogWarning("Ignoring target temperature for unknown heater: %s" % name)
-			return
-		self.targets[name] = temp
+	def setHETarget(self, temp):
+		self.targets['HE'] = temp
 		self.gTemp.setTargets(self.targets)
 		
-	def setHeatTemp(self, name, temp):
-		if name not in self.knownHeaters:
-			self.logger.LogWarning("Ignoring temperature for unknown heater: %s" % name)
-			return
-		self.temps[name] = temp
+	def setHETemp(self, temp):
+		self.temps['HE'] = temp
+			
+	def setBedTarget(self, temp):
+		self.targets['Bed'] = temp
+		self.gTemp.setTargets(self.targets)
+		
+	def setBedTemp(self, temp):
+		self.temps['Bed'] = temp
 		
 	def onTimer(self, evt):
 		for h in self.knownHeaters:

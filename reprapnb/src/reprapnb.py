@@ -21,11 +21,12 @@ from plater import Plater
 from settings import Settings
 from logger import Logger
 from images import Images
-from parser import RepRapParser
-from reprap import RepRap, RECEIVED_MSG
+from reprap import RepRap, RepRapParser, RECEIVED_MSG
+from tools import formatElapsed
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
+TB_TOOL_SLICECFG = 12
 TB_TOOL_LOG = 19
 
 TEMPINTERVAL = 3
@@ -34,27 +35,6 @@ POSITIONINTERVAL = 1
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
-
-secpday = 60 * 60 * 24
-secphour = 60 * 60
-
-def formatElapsed(secs):
-	ndays = int(secs/secpday)
-	secday = secs % secpday
-	
-	nhour = int(secday/secphour)
-	sechour = secday % secphour
-	
-	nmin = int(sechour/60)
-	nsec = sechour % 60
-
-	if ndays == 0:
-		if nhour == 0:
-			return "%d:%02d" % (nmin, nsec)
-		else:
-			return "%d:%02d:%02d" % (nhour, nmin, nsec)
-	else:
-		return "%d-%d:%02d:%02d" % (ndays, nhour, nmin, nsec)	
 
 class MainFrame(wx.Frame):
 	def __init__(self):
@@ -149,50 +129,10 @@ class MainFrame(wx.Frame):
 		self.tb.AddControl(self.cbSlicer)
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
+		
+		self.tb.AddSimpleTool(TB_TOOL_SLICECFG, self.images.pngSliceCfg, "Choose slicer options", "")
+		self.Bind(wx.EVT_TOOL, self.doSliceConfig, id=TB_TOOL_SLICECFG)
 			
-		self.tb.AddSeparator()
-			
-		text = " Printer:"
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-		
-		self.cbPrinter = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['printer'], (-1, -1), (100, -1), self.slicer.type.getPrinterOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbPrinter.SetFont(f)
-		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
-		self.tb.AddControl(self.cbPrinter)
-		self.cbPrinter.SetStringSelection(self.slicer.settings['printer'])
-		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
-		
-		text = " Profile:"
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-	
-		self.cbProfile = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['profile'],
-									(-1, -1), (120, -1), self.slicer.type.getProfileOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbProfile.SetFont(f)
-		self.cbProfile.SetToolTipString("Choose which print profile to use")
-		self.tb.AddControl(self.cbProfile)
-		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
-		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
-		
-		text = " Filament:"
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-	
-		self.cbFilament = wx.ComboBox(self.tb, wx.ID_ANY, self.slicer.settings['filament'],
-									(-1, -1), (120, -1), self.slicer.type.getFilamentOptions().keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbFilament.SetFont(f)
-		self.cbFilament.SetToolTipString("Choose which filament profile to use")
-		self.tb.AddControl(self.cbFilament)
-		self.cbFilament.SetStringSelection(self.slicer.settings['filament'])
-		self.Bind(wx.EVT_COMBOBOX, self.doChooseFilament, self.cbFilament)
-
 		self.tb.AddSeparator()
 				
 		self.tb.AddSimpleTool(TB_TOOL_LOG, self.images.pngLog, "Hide/Show log window", "")
@@ -226,7 +166,7 @@ class MainFrame(wx.Frame):
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
 		
-		self.doChoosePrinter(None)
+		self.slicer.type.setProfile()
 		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
 		
 		if self.settings.startpane == self.pxPlater:
@@ -257,26 +197,9 @@ class MainFrame(wx.Frame):
 			evt.Veto()
 		else:
 			evt.Skip()
-		
-	def doChoosePrinter(self, evt):
-		newprinter = self.cbPrinter.GetValue()
-		self.slicer.type.setPrinter(newprinter)
-		self.updateWithNewSlicerInfo()
-		
-	def doChooseProfile(self, evt):
-		newprof = self.cbProfile.GetValue()
-		self.slicer.type.setProfile(newprof)
-		self.updateWithNewSlicerInfo()
-		
-	def doChooseFilament(self, evt):
-		newfilament = self.cbFilament.GetValue()
-		self.slicer.type.setFilament(newfilament)
-		self.updateWithNewSlicerInfo()
 
 	def updateWithNewSlicerInfo(self):		
-		extruders = []
-		heaters = []
-		(buildarea, nextr, axes, hetemps, bedtemp) = self.slicer.type.getSlicerSettings()
+		(buildarea, nextr, hetemps, bedtemp) = self.slicer.type.getSlicerSettings()
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
 			return
@@ -289,27 +212,8 @@ class MainFrame(wx.Frame):
 				for i in r:
 					hetemps.append(t)
 
-		if len(axes) != nextr:
-			self.logger.LogWarning("Slicer does not have the correct number of axis letters configured")
-			if len(axes) < nextr:
-				t = axes[0]
-				r = range(nextr - len(axes))
-				for i in r:
-					axes.append(t)
-				
-		if nextr == 1:
-			extruders.append(["Ext", "Extruder", axes[0]])
-			heaters.append(["HE", "Hot End", hetemps[0], (20, 250), "M104"])
-		else:
-			for i in range(nextr):
-				extruders.append(["Ext%d" % i, "Extruder %d" % i, axes[i]])
-				heaters.append(["HE%d" % i, "Hot End %d" % i, hetemps[i], (20, 250), "M104"])
-			
-		heaters.append(["HBP", "Build Platform", bedtemp, (20, 150), "M140"])
-
-		self.pgManCtl.changePrinter(heaters, extruders)
-		self.pgPrtMon.changePrinter(heaters, extruders)
-		self.parser.setPrinter(heaters, extruders)
+		self.pgManCtl.changePrinter(hetemps, bedtemp)
+		self.pgPrtMon.changePrinter(hetemps, bedtemp)
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -317,10 +221,11 @@ class MainFrame(wx.Frame):
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
 			self.logger.LogError("Unable to get slicer settings") 
-			
-		self.cbProfile.Clear()
-		self.cbProfile.AppendItems(self.slicer.type.getProfileOptions().keys())
-		self.cbProfile.SetStringSelection(self.slicer.settings['profile'])
+		self.slicer.type.setProfile()
+		
+	def doSliceConfig(self, evt):
+		if self.slicer.type.configSlicer():
+			self.updateWithNewSlicerInfo()
 		
 	def doPort(self, evt):
 		l = self.scanSerial()
@@ -394,9 +299,22 @@ class MainFrame(wx.Frame):
 		if st is not None and et is not None:
 			d['%elapsed%'] = formatElapsed(et - st)
 			
-		d['%profile%'] = self.slicer.settings['profilefile']
-		d['%printer%'] = self.slicer.settings['printerfile']
-		d['%filament%'] = self.slicer.settings['filamentfile']
+		if 'profilefile' in self.slicer.settings.keys():
+			d['%profile%'] = self.slicer.settings['profilefile']
+		else:
+			d['%profile%'] = ""
+		if 'printerFile' in self.slicer.settings.keys():
+			d['%printer%'] = self.slicer.settings['printerfile']
+		else:
+			d['%printer%'] = ""
+		if 'filamentfile' in self.slicer.settings.keys():
+			d['%filament%'] = self.slicer.settings['filamentfile']
+		else:
+			d['%filament%'] = ""
+		if 'configfile' in self.slicer.settings.keys():
+			d['%config%'] = self.slicer.settings['configfile']
+		else:
+			d['%config%'] = ""
 		d['%slicer%'] = self.settings.slicer
 		
 		if self.pgFilePrep.stlFile is not None:
@@ -440,13 +358,21 @@ class MainFrame(wx.Frame):
 		self.nb.SetSelection(self.pxPrtMon)
 		self.pgPrtMon.forwardModel(model, name=name)
 		
-	def setHeatTarget(self, name, temp):
-		self.pgManCtl.setHeatTarget(name, temp)
-		self.pgPrtMon.setHeatTarget(name, temp)
+	def setHETarget(self, temp):
+		self.pgManCtl.setHeatTarget(temp)
+		self.pgPrtMon.setHeatTarget(temp)
 		
-	def setHeatTemp(self, name, temp):
-		self.pgManCtl.setHeatTemp(name, temp)
-		self.pgPrtMon.setHeatTemp(name, temp)
+	def setHETemp(self, temp):
+		self.pgManCtl.setHeatTemp(temp)
+		self.pgPrtMon.setHeatTemp(temp)
+		
+	def setBedTarget(self, temp):
+		self.pgManCtl.setHeatTarget(temp)
+		self.pgPrtMon.setHeatTarget(temp)
+		
+	def setBedTemp(self, name, temp):
+		self.pgManCtl.setHeatTemp(temp)
+		self.pgPrtMon.setHeatTemp(temp)
 		
 	def onTimer(self, evt):
 		self.cycle += 1

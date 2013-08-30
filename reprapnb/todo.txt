@@ -7,12 +7,15 @@
 13) speed control
 14) SD support
 15) layout of extruder and heater widgets needs to be fixed
-16) previous layer in prtmon is too bright
+16) previous layer in prtmon is too bright - I think I fixed it - need to test
 17) filstart is always 0 - added debugging statements
-18) read G code in a thread
+18) read G code in a thread - add intermittent reports to log
 19) widen log
 
 
 BUG - print start button was enabled while printing - I think I found it - need to test
 
-	
+on manual control only 1 extruder control, only 1 heater control,
+but add a tool change control that is sensitive to the number of extruders.
+In the toolbar, add two more dropdowns to allow specifying two more filament types
+for up to 3 extruders - rework slicer logic to allow multiple filament selections
