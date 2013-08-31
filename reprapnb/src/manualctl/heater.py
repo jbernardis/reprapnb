@@ -14,7 +14,7 @@ BUTTONDIM = (48, 48)
 orange = wx.Colour(237, 139, 33)
 
 class Heater(wx.Window):
-	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100), oncmd = "G104", multi=False):
+	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100), oncmd = "G104"):
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
@@ -23,7 +23,6 @@ class Heater(wx.Window):
 		self.profileTarget = target
 		self.trange = trange
 		self.onCmd = oncmd
-		self.multi = multi
 		self.currentTool = 0
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
@@ -91,10 +90,7 @@ class Heater(wx.Window):
 		self.slTarget.SetRange(trange[0], trange[1])
 		
 	def importProfile(self, evt):
-		if self.multi:
-			self.slTarget.SetValue(self.profileTarget[self.currentTool])
-		else:
-			self.slTarget.SetValue(self.profileTarget)
+		self.slTarget.SetValue(self.profileTarget[self.currentTool])
 			
 	def changeTargets(self, t):
 		self.profileTarget = t

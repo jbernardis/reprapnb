@@ -199,21 +199,17 @@ class MainFrame(wx.Frame):
 			evt.Skip()
 
 	def updateWithNewSlicerInfo(self):		
-		(buildarea, nextr, hetemps, bedtemp) = self.slicer.type.getSlicerSettings()
+		(buildarea, nextr, hetemps, bedtemps) = self.slicer.type.getSlicerSettings()
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
 			return
 	
-		if len(hetemps) != nextr:
-			self.logger.LogWarning("Slicer does not have the correct number of extruders configured")
-			if len(hetemps) < nextr:
-				t = hetemps[0]
-				r = range(nextr - len(hetemps))
-				for i in r:
-					hetemps.append(t)
+		if len(bedtemps) < 1:
+			self.logger.LogError("No bed temperatures configured in slicer")
+			return
 
-		self.pgManCtl.changePrinter(hetemps, bedtemp)
-		self.pgPrtMon.changePrinter(hetemps, bedtemp)
+		self.pgManCtl.changePrinter(hetemps, bedtemps)
+		self.pgPrtMon.changePrinter(hetemps, bedtemps)
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -299,18 +295,6 @@ class MainFrame(wx.Frame):
 		if st is not None and et is not None:
 			d['%elapsed%'] = formatElapsed(et - st)
 			
-		if 'profilefile' in self.slicer.settings.keys():
-			d['%profile%'] = self.slicer.settings['profilefile']
-		else:
-			d['%profile%'] = ""
-		if 'printerFile' in self.slicer.settings.keys():
-			d['%printer%'] = self.slicer.settings['printerfile']
-		else:
-			d['%printer%'] = ""
-		if 'filamentfile' in self.slicer.settings.keys():
-			d['%filament%'] = self.slicer.settings['filamentfile']
-		else:
-			d['%filament%'] = ""
 		if 'configfile' in self.slicer.settings.keys():
 			d['%config%'] = self.slicer.settings['configfile']
 		else:

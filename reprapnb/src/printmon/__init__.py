@@ -337,7 +337,7 @@ class PrintMonitor(wx.Panel):
 		
 		self.app.setPrinterBusy(False)
 		
-	def changePrinter(self, hetemps, bedtemp):
+	def changePrinter(self, hetemps, bedtemps):
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}

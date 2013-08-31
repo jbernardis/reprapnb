@@ -24,7 +24,8 @@ def parseBoolean(val, defaultVal):
 	
 	return defaultVal
 
-slicerKeys = ['profiledir', 'print', 'printfile', 'filament', 'filamentfile', 'printer', 'printerfile', 'command', 'config']
+slicerKeys = ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config']
+slicerArrayKeys = ['filament', 'filamentfile']
 
 class SlicerSettings:
 	def __init__(self, app, name):
@@ -101,7 +102,9 @@ class Settings:
 			self.slicersettings.append(st)
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
-					if opt in slicerKeys:
+					if opt in slicerArrayKeys:
+						st.settings[opt] = value.split(',')
+					elif opt in slicerKeys:
 						st.settings[opt] = value
 					else:
 						self.showWarning("Unknown %s option: %s - ignoring" % (sc, opt))
@@ -177,7 +180,9 @@ class Settings:
 				sl = self.slicersettings[i]	
 				if sl.checkModified():			
 					for k in sl.settings.keys():
-						if k in slicerKeys:
+						if k in slicerArrayKeys:
+							self.cfg.set(sc, k, ",".join(sl.settings[k]))
+						elif k in slicerKeys:
 							self.cfg.set(sc, k, sl.settings[k])
 			
 			self.fileprep.cleanUp()

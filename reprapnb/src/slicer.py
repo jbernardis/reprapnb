@@ -6,6 +6,8 @@ Created on Jun 20, 2013
 import os, time, tempfile
 import wx
 
+BASE_ID = 500
+
 def createSlicerObject(name, app, parent):
 	if name == 'slic3r':
 		return Slic3r(app, parent)
@@ -49,7 +51,6 @@ def checkTagInt(s, tag):
 def checkTagList(s, tag):
 	if not s.startswith(tag):
 		return None
-
 		
 	r = s[len(tag):].strip().split(',')
 	for i in range(len(r)):
@@ -60,10 +61,12 @@ def checkTagList(s, tag):
 	return r
 
 class Slic3rCfgDialog(wx.Dialog):
-	def __init__(self, parent, vprinter, printers, vprint, prints, vfilament, filaments):
+	def __init__(self, parent, vprinter, printers, extCount, vprint, prints, vfilament, filaments):
 		self.parent = parent
 		self.vprinter = vprinter
 		self.printers = printers
+		self.extCount = extCount
+		self.nExtr = extCount[vprinter]
 		self.vprint = vprint
 		self.prints = prints
 		self.vfilament = vfilament
@@ -124,13 +127,24 @@ class Slic3rCfgDialog(wx.Dialog):
 		t.SetFont(f)
 		box.Add(t)
 
-		self.cbFilament = wx.ComboBox(box, wx.ID_ANY, self.vfilament,
- 			(-1, -1), (120, -1), self.filaments.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbFilament.SetFont(f)
-		self.cbFilament.SetToolTipString("Choose which filament profile to use")
-		box.Add(self.cbFilament)
-		self.cbFilament.SetStringSelection(self.vfilament)
-		self.Bind(wx.EVT_COMBOBOX, self.doChooseFilament, self.cbFilament)
+		self.cbFilament = []
+		for i in range(3):
+			if i < self.nExtr:
+				v = self.vfilament[0]
+			else:
+				v = self.filaments.keys()[0]
+			cb = wx.ComboBox(box, BASE_ID+i, v,
+ 				(-1, -1), (120, -1), self.filaments.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+			cb.SetFont(f)
+			cb.SetToolTipString("Choose which filament profile to use")
+			box.Add(cb)
+			self.Bind(wx.EVT_COMBOBOX, self.doChooseFilament, cb)
+			if i < self.nExtr:
+				cb.SetStringSelection(self.vfilament[i])
+				cb.Enable(True)
+			else:
+				cb.Enable(False)
+			self.cbFilament.append(cb)
 
 		sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
@@ -154,12 +168,21 @@ class Slic3rCfgDialog(wx.Dialog):
 		
 	def doChoosePrinter(self, evt):
 		self.vprinter = self.cbPrinter.GetValue()
+		self.nExtr = self.extCount[self.vprinter]
+		
+		for i in range(3):
+			self.cbFilament[i].Enable(i<self.nExtr)
 
 	def doChoosePrint(self, evt):
 		self.vprint = self.cbPrint.GetValue()
 		
 	def doChooseFilament(self, evt):
-		self.vfilament = self.cbFilament.GetValue()
+		myId = evt.GetId() - BASE_ID
+		if myId < 0 or myId > 2:
+			print "ID out of range"
+			return
+		
+		self.vfilament[myId] = self.cbFilament.GetValue()
 
 	
 class Slic3r:
@@ -176,11 +199,14 @@ class Slic3r:
 			self.parent.settings['printfile'] = None
 
 		self.getFilamentOptions()		
-		p = self.parent.settings['filament']
-		if p in self.filmap.keys():
-			self.parent.settings['filamentfile'] = self.filmap[p]
-		else:
-			self.parent.settings['filamentfile'] = None
+		pl = self.parent.settings['filament'].split(',')
+		fl = []
+		for p in pl:
+			if p in self.filmap.keys():
+				fl.append(self.filmap[p])
+			else:
+				fl.append(None)
+		self.parent.settings['filamentfile'] = fl
 
 		self.getPrinterOptions()		
 		p = self.parent.settings['printer']
@@ -194,7 +220,7 @@ class Slic3r:
 		self.getPrinterOptions()
 		self.getFilamentOptions()
 		
-		dlg = Slic3rCfgDialog(self, self.parent.settings['printer'], self.printermap,
+		dlg = Slic3rCfgDialog(self, self.parent.settings['printer'], self.printermap, self.printerext,
 								self.parent.settings['print'], self.printmap,
 								self.parent.settings['filament'], self.filmap)
 		dlg.CenterOnScreen()
@@ -224,63 +250,37 @@ class Slic3r:
 				self.parent.settings['printerfile'] = None
 			chg = True
 
-		if self.parent.settings['filament'] != vfilament:
-			self.parent.settings['filament'] = vfilament
-			if vfilament in self.filamentmap.keys():
-				self.parent.settings['filamentfile'] = self.filamentmap[vfilament]
-			else:
-				self.parent.settings['filamentfile'] = None
-			chg = True
+		for i in range(3):
+			if i < self.nExtr:
+				if self.parent.settings['filament'][i] != vfilament[i]:
+					self.parent.settings['filament'][i] = vfilament[i]
+					if vfilament[i] in self.filamentmap.keys():
+						self.parent.settings['filamentfile'][i] = self.filamentmap[vfilament[i]]
+					else:
+						self.parent.settings['filamentfile'][i] = None
+					chg = True
 			
 		if chg:
 			self.parent.setModified()
 			
 		return chg
-
-	def setPrinter(self, nprinter):
-		self.getPrinterOptions()
-		self.settings['printer'] = nprinter
-		if nprinter in self.printermap.keys():
-			self.settings['printerfile'] = self.printermap[nprinter]
-		else:
-			self.settings['printerfile'] = None
-		self.parent.setModified()
-
-	def setFilament(self, nfil):
-		self.getFilamentOptions()
-		self.settings['filament'] = nfil
-		if nfil in self.filmap.keys():
-			self.settings['filamentfile'] = self.filmap[nfil]
-		else:
-			self.settings['filamentfile'] = None
-		self.parent.setModified()
-
-
 		
-	def getPrint(self):
-		return self.parent.settings['print']
-		
-	def getFilament(self):
-		return self.parent.settings['filament']
-		
-	def getPrinter(self):
-		return self.parent.settings['printer']
-	
 	def getSlicerSettings(self):
-		heTemp = None
-		bedTemp = None
-		f = self.parent.settings['filamentfile']
-		if f is not None:
-			idata = list(open(f))
+		heTemps = []
+		bedTemps = []
+		fl = self.parent.settings['filamentfile']
+		for fn in fl:
+			if fn is not None:
+				idata = list(open(fn))
 			
-			for i in idata:
-				a = checkTagInt(i, "first_layer_temperature = ")
-				if a is not None:
-					heTemp = a
-				else:
-					a = checkTagInt(i, "first_layer_bed_temperature = ")
+				for i in idata:
+					a = checkTagInt(i, "first_layer_temperature = ")
 					if a is not None:
-						bedTemp = a
+						heTemps.append(a)
+					else:
+						a = checkTagInt(i, "first_layer_bed_temperature = ")
+						if a is not None:
+							bedTemps.append(a)
 	
 		bedSize = None
 		nExtruders = None
@@ -303,15 +303,17 @@ class Slic3r:
 		if nExtruders is None or nExtruders < 1:
 			nExtruders = 1
 		
-		if heTemp == None:
-			heTemp = 185
-			
-		heTemps = [heTemp for i in range(nExtruders)]
+		if len(heTemps) < nExtruders:
+			x = nExtruders-len(heTemps)
+			for i in range(x):
+				heTemps.append(185)
 		
-		if bedTemp is None:
-			bedTemp = 60
+		if len(bedTemps) < nExtruders:
+			x = nExtruders-len(bedTemps)
+			for i in range(x):
+				bedTemps.append(60)
 			
-		return [bedSize, nExtruders, heTemps, bedTemp]
+		return [bedSize, nExtruders, heTemps, bedTemps]
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.replace(".stl", ".gcode")
@@ -332,7 +334,7 @@ class Slic3r:
 		if 'printerfile' in self.parent.settings.keys():
 			dProfile.update(loadProfiles([self.parent.settings['printerfile']], []))
 		if 'filamentfile' in self.parent.settings.keys():
-			dProfile.update(loadProfiles([self.parent.settings['filamentfile']], 
+			dProfile.update(loadProfiles(self.parent.settings['filamentfile'], 
 					['filament_diameter', 'first_layer_temperature', 'temperature']))
 	
 		tfn = tempfile.NamedTemporaryFile(delete=False)
@@ -384,15 +386,27 @@ class Slic3r:
 			
 	def getPrinterOptions(self):
 		self.printermap = {}
+		self.printerext = {}
 		try:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "printer"))
 			l = os.listdir(pdir)
 		except:
 			self.logger.LogError("Unable to get printer profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
 			return {}
+		
 		r = {}
 		for f in sorted(l):
 			if not os.path.isdir(f) and f.lower().endswith(".ini"):
-				r[os.path.splitext(os.path.basename(f))[0]] = os.path.join(pdir, f)
+				fn = os.path.join(pdir, f)
+				k = os.path.splitext(os.path.basename(f))[0]
+				r[k] = fn
+				
+				idata = list(open(fn))
+			
+				for i in idata:
+				a = checkTagList(i, "retract_speed = ")
+				if a is not None:
+					self.printerext[k] = len(a)
+				
 		self.printermap = r
 		return r

@@ -80,12 +80,12 @@ class ManualControl(wx.Panel):
 		sizerHeat.AddSpacer((10,10))
 		
 		self.bedWin = Heater(self, self.app, name="Heated Print Bed", shortname="Bed", 
-					target=60, trange=[20, 150], oncmd="M140", multi=False)
+					target=60, trange=[20, 150], oncmd="M140")
 		sizerHeat.Add(self.bedWin)
 		sizerHeat.AddSpacer((10,10))
 		
 		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
-					target=[185], trange=[20, 250], oncmd="M104", multi=True)
+					target=[185], trange=[20, 250], oncmd="M104")
 		sizerHeat.Add(self.heWin)
 		sizerHeat.AddSpacer((10,10))
 
@@ -108,9 +108,9 @@ class ManualControl(wx.Panel):
 		
 		return sizerGCode
 		
-	def changePrinter(self, hetemps, bedtemp):
+	def changePrinter(self, hetemps, bedtemps):
 		self.heWin.setTargets(hetemps)
-		self.bedWin.setTargets(bedtemp)
+		self.bedWin.setTargets(bedtemps)
 
 	def onClose(self, evt):
 		return True

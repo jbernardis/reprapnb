@@ -19,3 +19,5 @@ on manual control only 1 extruder control, only 1 heater control,
 but add a tool change control that is sensitive to the number of extruders.
 In the toolbar, add two more dropdowns to allow specifying two more filament types
 for up to 3 extruders - rework slicer logic to allow multiple filament selections
+
+need a tool change mechanism
