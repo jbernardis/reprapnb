@@ -444,8 +444,8 @@ class FilePrepare(wx.Panel):
 	def sliceFile(self, fn, tempFile = False):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
-		self.gcFile = self.app.slicer.type.buildSliceOutputFile(fn)
-		cmd = self.app.slicer.type.buildSliceCommand()
+		self.gcFile = self.app.slicer.buildSliceOutputFile(fn)
+		cmd = self.app.slicer.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
 		self.setGCodeLoaded(False)
 		self.bOpen.Enable(False)
@@ -464,7 +464,7 @@ class FilePrepare(wx.Panel):
 			self.bOpen.Enable(True)
 			self.setSliceMode()
 			self.bSlice.Enable(True)
-			self.app.slicer.type.sliceComplete()
+			self.app.slicer.sliceComplete()
 			self.sliceActive = False
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
@@ -479,7 +479,7 @@ class FilePrepare(wx.Panel):
 			self.setSliceMode()
 			self.sliceActive = False
 			self.bSlice.Enable(True)
-			self.app.slicer.type.sliceComplete()
+			self.app.slicer.sliceComplete()
 			self.loadFile(self.gcFile)
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)

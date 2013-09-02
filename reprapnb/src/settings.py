@@ -43,6 +43,34 @@ class SlicerSettings:
 		
 	def checkModified(self):
 		return self.modified
+	
+	def buildSliceOutputFile(self, fn):
+		if self.type is None:
+			return None
+		
+		return self.type.buildSliceOutputFile(fn)
+	
+	def buildSliceCommand(self):
+		if self.type is None:
+			return None
+		
+		return self.type.buildSliceCommand()
+	
+	def sliceComplete(self):
+		if self.type is not None:
+			self.type.sliceComplete()
+			
+	def configSlicer(self):
+		if self.type is None:
+			return False
+		else:
+			return self.type.configSlicer()
+		
+	def getSlicerParameters(self):
+		if self.type is None:
+			return []
+		
+		return self.type.getSlicerParameters()
 
 class Settings:
 	def __init__(self, app, folder):

@@ -265,7 +265,10 @@ class Slic3r:
 			
 		return chg
 		
-	def getSlicerSettings(self):
+	def getConfigString(self):
+		return str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament)
+		
+	def getSlicerParameters(self):
 		heTemps = []
 		bedTemps = []
 		fl = self.parent.settings['filamentfile']
@@ -404,9 +407,9 @@ class Slic3r:
 				idata = list(open(fn))
 			
 				for i in idata:
-				a = checkTagList(i, "retract_speed = ")
-				if a is not None:
-					self.printerext[k] = len(a)
+					a = checkTagList(i, "retract_speed = ")
+					if a is not None:
+						self.printerext[k] = len(a)
 				
 		self.printermap = r
 		return r
