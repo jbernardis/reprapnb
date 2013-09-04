@@ -42,9 +42,14 @@ class PrintMonitor(wx.Panel):
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
+		self.knownHeaters = ['HE', 'Bed']
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
+		for h in self.knownHeaters:
+			self.temps[h] = None
+			self.targets[h] = 0
+			self.tempData[h] = []
 		self.startTime = None
 		self.endTime = None
 		self.gcFile = None
@@ -341,7 +346,6 @@ class PrintMonitor(wx.Panel):
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
-		self.knownHeaters = ['HE', 'Bed']
 		for h in self.knownHeaters:
 			self.temps[h] = None
 			self.targets[h] = 0
@@ -350,7 +354,20 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setHeaters(self.knownHeaters)			
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
-			
+		
+	def disconnect(self):
+		self.targets = {}
+		self.temps = {}
+		self.tempData = {}
+		for h in self.knownHeaters:
+			self.temps[h] = None
+			self.targets[h] = 0
+			self.tempData[h] = []
+
+		self.gTemp.setHeaters(self.knownHeaters)			
+		self.gTemp.setTemps(self.tempData)
+		self.gTemp.setTargets({})
+		
 	def setHETarget(self, temp):
 		self.targets['HE'] = temp
 		self.gTemp.setTargets(self.targets)
@@ -367,7 +384,10 @@ class PrintMonitor(wx.Panel):
 		
 	def onTimer(self, evt):
 		for h in self.knownHeaters:
-			self.tempData[h].append(self.temps[h])
+			if h in self.temps.keys():
+				self.tempData[h].append(self.temps[h])
+			else:
+				self.tempData[h].append(None)
 			l = len(self.tempData[h])
 			if l > MAXX: # 4 minutes data
 				self.tempData[h] = self.tempData[h][l-MAXX:]

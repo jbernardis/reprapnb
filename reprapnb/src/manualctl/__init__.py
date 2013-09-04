@@ -83,9 +83,15 @@ class ManualControl(wx.Panel):
 					target=60, trange=[20, 150], oncmd="M140")
 		sizerHeat.Add(self.bedWin)
 		sizerHeat.AddSpacer((10,10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerHeat.Add(t, flag=wx.LEFT)
+		sizerHeat.AddSpacer((10,10))
 		
 		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
-					target=[185], trange=[20, 250], oncmd="M104")
+					target=185, trange=[20, 250], oncmd="M104")
 		sizerHeat.Add(self.heWin)
 		sizerHeat.AddSpacer((10,10))
 

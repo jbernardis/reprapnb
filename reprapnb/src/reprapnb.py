@@ -130,7 +130,7 @@ class MainFrame(wx.Frame):
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 		
-		self.tb.AddSimpleTool(TB_TOOL_SLICECFG, self.images.pngSliceCfg, "Choose slicer options", "")
+		self.tb.AddSimpleTool(TB_TOOL_SLICECFG, self.images.pngSlicecfg, "Choose slicer options", "")
 		self.Bind(wx.EVT_TOOL, self.doSliceConfig, id=TB_TOOL_SLICECFG)
 			
 		self.tb.AddSeparator()
@@ -275,6 +275,7 @@ class MainFrame(wx.Frame):
 			return
 					
 		self.tb.EnableTool(TB_TOOL_CONNECT, True)
+		self.pgPrtMon.disconnect()
 		self.connected = False 
 		self.discPending = False
 		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
@@ -343,20 +344,20 @@ class MainFrame(wx.Frame):
 		self.pgPrtMon.forwardModel(model, name=name)
 		
 	def setHETarget(self, temp):
-		self.pgManCtl.setHeatTarget(temp)
-		self.pgPrtMon.setHeatTarget(temp)
+		self.pgManCtl.setHETarget(temp)
+		self.pgPrtMon.setHETarget(temp)
 		
 	def setHETemp(self, temp):
-		self.pgManCtl.setHeatTemp(temp)
-		self.pgPrtMon.setHeatTemp(temp)
+		self.pgManCtl.setHETemp(temp)
+		self.pgPrtMon.setHETemp(temp)
 		
 	def setBedTarget(self, temp):
-		self.pgManCtl.setHeatTarget(temp)
-		self.pgPrtMon.setHeatTarget(temp)
+		self.pgManCtl.setBedTarget(temp)
+		self.pgPrtMon.setBedTarget(temp)
 		
-	def setBedTemp(self, name, temp):
-		self.pgManCtl.setHeatTemp(temp)
-		self.pgPrtMon.setHeatTemp(temp)
+	def setBedTemp(self, temp):
+		self.pgManCtl.setBedTemp(temp)
+		self.pgPrtMon.setBedTemp(temp)
 		
 	def onTimer(self, evt):
 		self.cycle += 1
@@ -364,12 +365,12 @@ class MainFrame(wx.Frame):
 		if self.discPending:
 			self.finishDisconnection()
 		
-		if self.cycle % TEMPINTERVAL == 0:
+		if self.connected and (self.cycle % TEMPINTERVAL == 0):
 			if not self.M105pending:
 				self.M105pending = True
 				self.reprap.send_now("M105")
 			
-		if self.cycle % POSITIONINTERVAL == 0:
+		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
 			n = self.reprap.getPrintPosition()
 			if n is not None and n != self.printPosition:
 				self.printPosition = n
