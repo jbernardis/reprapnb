@@ -1,4 +1,5 @@
-import wx, os
+import wx
+import os
 import time
 from gcmframe import GcmFrame
 from tempgraph import TempGraph, MAXX
@@ -11,17 +12,10 @@ from tools import formatElapsed
 BUTTONDIM = (48, 48)
 #FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
 	
-myRed = wx.Colour(254, 142, 82, 179)
+myRed = wx.Colour(254, 142, 82, 179) 
 myBlue = wx.Colour(51, 115, 254, 179)
 myGreen = wx.Colour(94, 190, 82, 179)
 myYellow = wx.Colour(219, 242, 37, 179)
-
-bedIntervals = {
-			"PLA": [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70],
-			"ABS": [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]}
-bedColors = {
-			"PLA": [[39, wx.BLUE], [59, wx.Colour(255, 255, 0)], [999, wx.RED]],
-			"ABS": [[59, wx.BLUE], [109, wx.Colour(255, 255, 0)], [999, wx.RED]]}
 
 PAUSE_MODE_PAUSE = 1
 PAUSE_MODE_RESUME = 2

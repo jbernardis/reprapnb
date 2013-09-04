@@ -168,6 +168,7 @@ class MainFrame(wx.Frame):
 		
 #		self.slicer.setProfile()
 		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
+		self.updateWithSlicerInfo()  # initially populate with current slicer info
 		
 		if self.settings.startpane == self.pxPlater:
 			self.nb.SetSelection(self.pxPlater)
@@ -198,8 +199,8 @@ class MainFrame(wx.Frame):
 		else:
 			evt.Skip()
 
-	def updateWithNewSlicerInfo(self):		
-		(buildarea, nextr, hetemps, bedtemps) = self.slicer.getSlicerParameters()
+	def updateWithSlicerInfo(self):		
+		(hetemps, bedtemps) = self.slicer.getSlicerParameters()[2:4]
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
 			return
@@ -217,11 +218,11 @@ class MainFrame(wx.Frame):
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
 			self.logger.LogError("Unable to get slicer settings") 
-#		self.slicer.setProfile()
+		self.updateWithSlicerInfo()
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():
-			self.updateWithNewSlicerInfo()
+			self.updateWithSlicerInfo()
 		
 	def doPort(self, evt):
 		l = self.scanSerial()
