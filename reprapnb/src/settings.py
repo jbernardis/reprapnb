@@ -36,6 +36,7 @@ class SlicerSettings:
 		self.type = None
 		
 	def setSlicerType(self):
+		print "creating slicer object ", self.settings['filament']
 		self.type = createSlicerObject(self.name, self.app, self)
 		
 	def setModified(self, flag=True):
@@ -131,12 +132,14 @@ class Settings:
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
 					if opt in slicerArrayKeys:
+						print "Array option ", opt
+						print "Array value ", value
+						print "asplit value ", value.split(',')
 						st.settings[opt] = value.split(',')
 					elif opt in slicerKeys:
 						st.settings[opt] = value
 					else:
 						self.showWarning("Unknown %s option: %s - ignoring" % (sc, opt))
-					st.settings[opt] = value
 			else:
 				self.showError("No settings for slicer %s" % slicer)
 				err = True

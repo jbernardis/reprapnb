@@ -23,7 +23,6 @@ class Heater(wx.Window):
 		self.profileTarget = target
 		self.trange = trange
 		self.onCmd = oncmd
-		self.currentTool = 0
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
 		self.currentTempColor = None
@@ -90,14 +89,16 @@ class Heater(wx.Window):
 		self.slTarget.SetRange(trange[0], trange[1])
 		
 	def importProfile(self, evt):
-		self.slTarget.SetValue(self.profileTarget[self.currentTool])
+		self.slTarget.SetValue(self.profileTarget)
 			
-	def changeTargets(self, t):
+	def changeTarget(self, t):
 		self.profileTarget = t
 		
 	def setHeatTarget(self, t):
 		if t is None or t == 0:
-			self.tTemp.SetValue("")
+			self.tTarget.SetBackgroundColour("black")
+			self.tTarget.SetValue("")
+			self.currentTarget = 0
 			return
 		
 		try:
@@ -111,6 +112,7 @@ class Heater(wx.Window):
 
 	def setHeatTemp(self, t):
 		if t is None:
+			self.tTemp.SetBackgroundColour("black")
 			self.tTemp.SetValue("???")
 			return
 		
@@ -123,7 +125,7 @@ class Heater(wx.Window):
 		self.currentTemp = ft
 
 		c = self.currentTempColor
-		if self.currentTarget != 0.0:
+		if self.currentTarget != 0:
 			if self.currentTemp < self.currentTarget:
 				c = orange
 			else:

@@ -16,6 +16,7 @@ class ManualControl(wx.Panel):
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
+		self.currentTool = 0
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -115,8 +116,8 @@ class ManualControl(wx.Panel):
 		return sizerGCode
 		
 	def changePrinter(self, hetemps, bedtemps):
-		self.heWin.setTargets(hetemps)
-		self.bedWin.setTargets(bedtemps)
+		self.heWin.setHeatTarget(hetemps[self.currentTool])
+		self.bedWin.setHeatTarget(bedtemps[self.currentTool])
 
 	def onClose(self, evt):
 		return True

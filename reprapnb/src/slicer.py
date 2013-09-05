@@ -72,6 +72,10 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.vfilament = vfilament
 		self.filaments = filaments
 		
+		print "in db - (", vprinter, ") (", printers, ") ", extCount
+		print "in db - (", vprint, ") (", prints, ") "
+		print "in db - (", vfilament, ") (", filaments, ") "
+		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 		pos = wx.DefaultPosition
@@ -95,11 +99,11 @@ class Slic3rCfgDialog(wx.Dialog):
 		
 		text = " Printer:"
 		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(box, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		box.Add(t)
 		
-		self.cbPrinter = wx.ComboBox(box, wx.ID_ANY, self.vprinter, 
+		self.cbPrinter = wx.ComboBox(self, wx.ID_ANY, self.vprinter, 
 			(-1, -1), (100, -1), self.printers.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
@@ -109,21 +113,21 @@ class Slic3rCfgDialog(wx.Dialog):
 		
 		text = " Profile:"
 		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(box, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		box.Add(t)
 	
-		self.cbProfile = wx.ComboBox(box, wx.ID_ANY, self.vprint,
+		self.cbPrint = wx.ComboBox(self, wx.ID_ANY, self.vprint,
  			(-1, -1), (120, -1), self.prints.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbProfile.SetFont(f)
-		self.cbProfile.SetToolTipString("Choose which print profile to use")
-		box.Add(self.cbProfile)
-		self.cbProfile.SetStringSelection(self.vprint)
-		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
+		self.cbPrint.SetFont(f)
+		self.cbPrint.SetToolTipString("Choose which print profile to use")
+		box.Add(self.cbPrint)
+		self.cbPrint.SetStringSelection(self.vprint)
+		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrint, self.cbPrint)
 		
 		text = " Filament:"
 		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(box, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
 		box.Add(t)
 
@@ -133,7 +137,7 @@ class Slic3rCfgDialog(wx.Dialog):
 				v = self.vfilament[0]
 			else:
 				v = self.filaments.keys()[0]
-			cb = wx.ComboBox(box, BASE_ID+i, v,
+			cb = wx.ComboBox(self, BASE_ID+i, v,
  				(-1, -1), (120, -1), self.filaments.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 			cb.SetFont(f)
 			cb.SetToolTipString("Choose which filament profile to use")
@@ -181,8 +185,8 @@ class Slic3rCfgDialog(wx.Dialog):
 		if myId < 0 or myId > 2:
 			print "ID out of range"
 			return
-		
-		self.vfilament[myId] = self.cbFilament.GetValue()
+
+		self.vfilament[myId] = self.cbFilament[myId].GetValue()
 
 	
 class Slic3r:
@@ -199,9 +203,9 @@ class Slic3r:
 			self.parent.settings['printfile'] = None
 
 		self.getFilamentOptions()		
-		pl = self.parent.settings['filament'].split(',')
 		fl = []
-		for p in pl:
+		for p in self.parent.settings['filament']:
+			print "In filament loop for ", p
 			if p in self.filmap.keys():
 				fl.append(self.filmap[p])
 			else:
@@ -219,8 +223,9 @@ class Slic3r:
 		self.getPrintOptions()
 		self.getPrinterOptions()
 		self.getFilamentOptions()
+		print "calling db with ", self.parent.settings['filament']
 		
-		dlg = Slic3rCfgDialog(self, self.parent.settings['printer'], self.printermap, self.printerext,
+		dlg = Slic3rCfgDialog(self.app, self.parent.settings['printer'], self.printermap, self.printerext,
 								self.parent.settings['print'], self.printmap,
 								self.parent.settings['filament'], self.filmap)
 		dlg.CenterOnScreen()
@@ -250,16 +255,19 @@ class Slic3r:
 				self.parent.settings['printerfile'] = None
 			chg = True
 
-		for i in range(3):
-			if i < self.nExtr:
-				if self.parent.settings['filament'][i] != vfilament[i]:
-					self.parent.settings['filament'][i] = vfilament[i]
-					if vfilament[i] in self.filamentmap.keys():
-						self.parent.settings['filamentfile'][i] = self.filamentmap[vfilament[i]]
-					else:
-						self.parent.settings['filamentfile'][i] = None
-					chg = True
-			
+		if vprinter in self.printerext.keys():
+			nExtr = self.printerext[vprinter]
+			for i in range(3):
+				if i < nExtr:
+					if self.parent.settings['filament'][i] != vfilament[i]:
+						self.parent.settings['filament'][i] = vfilament[i]
+						if vfilament[i] in self.filamentmap.keys():
+							self.parent.settings['filamentfile'][i] = self.filamentmap[vfilament[i]]
+						else:
+							self.parent.settings['filamentfile'][i] = None
+						chg = True
+			self.parent.settings['filament'] = self.parent.settings['filament'][:nExtr]	
+			self.parent.settings['filamentfile'] = self.parent.settings['filamentfile'][:nExtr]	
 		if chg:
 			self.parent.setModified()
 			
