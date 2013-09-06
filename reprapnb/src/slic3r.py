@@ -6,13 +6,8 @@ Created on Jun 20, 2013
 import os, time, tempfile
 import wx
 
-BASE_ID = 500
 
-def createSlicerObject(name, app, parent):
-	if name == 'slic3r':
-		return Slic3r(app, parent)
-	
-	return None
+BASE_ID = 500
 
 def loadProfiles(fnames, mergeKeys):
 	kdict = {}
@@ -85,29 +80,23 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.PostCreate(pre)
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
-
-		label = wx.StaticText(self, -1, "Choose settings for Slic3r")
-		sizer.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
-
-		box = wx.BoxSizer(wx.HORIZONTAL)
-
-
-
-		f = wx.Font(12, wx.SWISS, wx.BOLD, wx.NORMAL)
+				
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		dc = wx.WindowDC(self)
 		dc.SetFont(f)
+		grid = wx.GridBagSizer(vgap=5, hgap=5)
 		
 		text = " Printer:"
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		box.Add(t)
+		grid.Add(t, pos=(0,0), flag=wx.ALIGN_CENTER)
 		
 		self.cbPrinter = wx.ComboBox(self, wx.ID_ANY, self.vprinter, 
 			(-1, -1), (100, -1), self.printers.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
-		box.Add(self.cbPrinter)
+		grid.Add(self.cbPrinter, pos=(0,1))
 		self.cbPrinter.SetStringSelection(self.vprinter)
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
 		
@@ -115,13 +104,13 @@ class Slic3rCfgDialog(wx.Dialog):
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		box.Add(t)
+		grid.Add(t, pos=(0,2), flag=wx.ALIGN_CENTER)
 	
 		self.cbPrint = wx.ComboBox(self, wx.ID_ANY, self.vprint,
  			(-1, -1), (120, -1), self.prints.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrint.SetFont(f)
 		self.cbPrint.SetToolTipString("Choose which print profile to use")
-		box.Add(self.cbPrint)
+		grid.Add(self.cbPrint, pos=(0,3))
 		self.cbPrint.SetStringSelection(self.vprint)
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrint, self.cbPrint)
 		
@@ -129,19 +118,19 @@ class Slic3rCfgDialog(wx.Dialog):
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		box.Add(t)
+		grid.Add(t, pos=(0,4), flag=wx.ALIGN_CENTER)
 
 		self.cbFilament = []
 		for i in range(3):
 			if i < self.nExtr:
-				v = self.vfilament[0]
+				v = self.vfilament[i]
 			else:
 				v = self.filaments.keys()[0]
 			cb = wx.ComboBox(self, BASE_ID+i, v,
  				(-1, -1), (120, -1), self.filaments.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 			cb.SetFont(f)
 			cb.SetToolTipString("Choose which filament profile to use")
-			box.Add(cb)
+			grid.Add(cb, pos=(i, 5))
 			self.Bind(wx.EVT_COMBOBOX, self.doChooseFilament, cb)
 			if i < self.nExtr:
 				cb.SetStringSelection(self.vfilament[i])
@@ -150,7 +139,7 @@ class Slic3rCfgDialog(wx.Dialog):
 				cb.Enable(False)
 			self.cbFilament.append(cb)
 
-		sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		sizer.Add(grid, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
 		btnsizer = wx.StdDialogButtonSizer()
 		
@@ -171,11 +160,16 @@ class Slic3rCfgDialog(wx.Dialog):
 		return [self.vprinter, self.vprint, self.vfilament]
 		
 	def doChoosePrinter(self, evt):
+		oldNExtr = self.extCount[self.vprinter]
 		self.vprinter = self.cbPrinter.GetValue()
 		self.nExtr = self.extCount[self.vprinter]
 		
 		for i in range(3):
 			self.cbFilament[i].Enable(i<self.nExtr)
+			if i >= oldNExtr:
+				self.vfilament.append(self.filaments.keys()[0])
+
+		self.vfilament = self.vfilament[:self.nExtr]
 
 	def doChoosePrint(self, evt):
 		self.vprint = self.cbPrint.GetValue()
@@ -194,6 +188,11 @@ class Slic3r:
 		self.app = app
 		self.logger = self.app.logger
 		self.parent = parent
+		
+	def getSettingsKeys(self):
+		return ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config'], ['filament', 'filamentfile']
+		
+	def initialize(self):
 		self.getPrintOptions()
 		self.tempFile = None
 		p = self.parent.settings['print']
@@ -224,6 +223,8 @@ class Slic3r:
 		self.getPrinterOptions()
 		self.getFilamentOptions()
 		print "calling db with ", self.parent.settings['filament']
+			
+		oldNExtr = self.printerext[self.parent.settings['printer']]
 		
 		dlg = Slic3rCfgDialog(self.app, self.parent.settings['printer'], self.printermap, self.printerext,
 								self.parent.settings['print'], self.printmap,
@@ -257,6 +258,10 @@ class Slic3r:
 
 		if vprinter in self.printerext.keys():
 			nExtr = self.printerext[vprinter]
+			if nExtr > oldNExtr:
+				a = ["" for i in range(nExtr - oldNExtr)]
+				self.parent.settings['filament'].extend(a)
+				self.parent.settings['filamentfile'].extend(a)
 			for i in range(3):
 				if i < nExtr:
 					if self.parent.settings['filament'][i] != vfilament[i]:
@@ -268,6 +273,7 @@ class Slic3r:
 						chg = True
 			self.parent.settings['filament'] = self.parent.settings['filament'][:nExtr]	
 			self.parent.settings['filamentfile'] = self.parent.settings['filamentfile'][:nExtr]	
+			
 		if chg:
 			self.parent.setModified()
 			

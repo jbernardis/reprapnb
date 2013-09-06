@@ -345,7 +345,6 @@ class PrintMonitor(wx.Panel):
 			self.targets[h] = 0
 			self.tempData[h] = []
 
-		self.gTemp.setHeaters(self.knownHeaters)			
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
 		
@@ -358,7 +357,6 @@ class PrintMonitor(wx.Panel):
 			self.targets[h] = 0
 			self.tempData[h] = []
 
-		self.gTemp.setHeaters(self.knownHeaters)			
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
 		

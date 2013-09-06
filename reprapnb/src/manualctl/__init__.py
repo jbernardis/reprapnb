@@ -116,8 +116,8 @@ class ManualControl(wx.Panel):
 		return sizerGCode
 		
 	def changePrinter(self, hetemps, bedtemps):
-		self.heWin.setHeatTarget(hetemps[self.currentTool])
-		self.bedWin.setHeatTarget(bedtemps[self.currentTool])
+		self.heWin.setProfileTarget(hetemps[self.currentTool])
+		self.bedWin.setProfileTarget(bedtemps[self.currentTool])
 
 	def onClose(self, evt):
 		return True

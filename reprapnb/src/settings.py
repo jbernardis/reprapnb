@@ -6,7 +6,7 @@ Created on Aug 21, 2012
 import ConfigParser
 import os
 
-from slicer import createSlicerObject
+from slic3r import Slic3r
 
 INIFILE = "rrh.ini"
 
@@ -24,9 +24,6 @@ def parseBoolean(val, defaultVal):
 	
 	return defaultVal
 
-slicerKeys = ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config']
-slicerArrayKeys = ['filament', 'filamentfile']
-
 class SlicerSettings:
 	def __init__(self, app, name):
 		self.app = app
@@ -34,16 +31,27 @@ class SlicerSettings:
 		self.settings = {}
 		self.modified = False
 		self.type = None
-		
-	def setSlicerType(self):
-		print "creating slicer object ", self.settings['filament']
-		self.type = createSlicerObject(self.name, self.app, self)
-		
+		if self.name == 'slic3r':
+			self.type = Slic3r(self.app, self)
+		else:
+			self.type = None
+			self.app.logger.logError("Unknown slicer type: %s" % self.name)
+	
 	def setModified(self, flag=True):
 		self.modified = flag
 		
 	def checkModified(self):
 		return self.modified
+	
+	def initialize(self):
+		if self.type is not None:
+			self.type.initialize()
+			
+	def getSettingsKeys(self):
+		if self.type in None:
+			return [], []
+		
+		return self.type.getSettingsKeys()
 	
 	def buildSliceOutputFile(self, fn):
 		if self.type is None:
@@ -72,6 +80,13 @@ class SlicerSettings:
 			return []
 		
 		return self.type.getSlicerParameters()
+
+	
+	def getConfigString(self):
+		if self.type is None:
+			return None
+		
+		return self.type.getConfigString()
 
 class Settings:
 	def __init__(self, app, folder):
@@ -127,6 +142,7 @@ class Settings:
 		for slicer in self.slicers:
 			err = False	
 			st = SlicerSettings(self.app, slicer)
+			slicerKeys, slicerArrayKeys = st.getSettingsKeys()
 			sc = "slicer." + slicer
 			self.slicersettings.append(st)
 			if self.cfg.has_section(sc):
@@ -150,7 +166,7 @@ class Settings:
 					self.showError("Settings for slicer %s missing %s" % (slicer, k))
 				
 			if not err:
-				st.setSlicerType()
+				st.initialize()
 			
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
@@ -210,6 +226,7 @@ class Settings:
 
 				sl = self.slicersettings[i]	
 				if sl.checkModified():			
+					slicerKeys, slicerArrayKeys = sl.getSettingsKeys()
 					for k in sl.settings.keys():
 						if k in slicerArrayKeys:
 							self.cfg.set(sc, k, ",".join(sl.settings[k]))

@@ -91,7 +91,7 @@ class Heater(wx.Window):
 	def importProfile(self, evt):
 		self.slTarget.SetValue(self.profileTarget)
 			
-	def changeTarget(self, t):
+	def setProfileTarget(self, t):
 		self.profileTarget = t
 		
 	def setHeatTarget(self, t):
