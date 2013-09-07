@@ -116,7 +116,6 @@ class Layer:
 		self.moves = []
 		self.layernumber = ln
 		self.startlx = lx
-		#print "new layer at height ", x, y, z, e, speed
 		
 	def addMove(self, x=None, y=None, z=None, e=None, speed=None, relative=False, line=0):
 		if x is None:
@@ -145,8 +144,6 @@ class Layer:
 		cspeed = speed
 		if speed is None or speed == 0.0:
 			cspeed = self.currentspeed
-			
-		#print "  Move ", self.currentx, self.currenty, self.currentz, self.currente, " -> ", cx, cy, cz, ce, " (", cspeed, ")"
 			
 		self.moves.append([cx, cy, cz, ce, cspeed, line, False])
 		
@@ -454,34 +451,32 @@ class GCode(object):
 			lx += 1
 			if line.command() == "G92":
 				if line.e != None:
-					self.total_e += (segment_e - segment_start_e)
+					layer_e += (cur_e - segment_start_e)
 					cur_e = line.e
-					layer_e += (segment_e - segment_start_e)
-					segment_e = 0
-					segment_start_e = 0
+					segment_e = cur_e
+					segment_start_e = cur_e
 			elif line.is_move():
 				if line.z and line.z != cur_z:
-					self.layer_e.append(layer_e+(segment_e - segment_start_e))
-					print "appending %d to layer_e_start" % cur_e
-					self.layer_e_start.append(cur_e)
-					self.layer_e_end.append(cur_e)
+					layer_e += (cur_e - segment_start_e)
+					self.layer_e.append(layer_e)
+					self.total_e += layer_e
+					
+					self.layer_e_start.append(self.total_e)
+					self.layer_e_end.append(self.total_e)
 					cur_z = line.z
 					layer_e = 0
-					segment_e = cur_e
 					segment_start_e = cur_e
 					
 				if line.e:
 					if line.relative:
 						cur_e += line.e
-						segment_e += line.e
 					else:
 						cur_e = line.e
-						segment_e = line.e
-				
 
-		self.total_e += cur_e
-		self.layer_e_end.append(cur_e)
-		self.layer_e.append(layer_e+(segment_e - segment_start_e))
+		layer_e += (cur_e - segment_start_e)
+		self.total_e += layer_e
+		self.layer_e_end.append(self.total_e)
+		self.layer_e.append(layer_e)
 
 	def _get_float(self,raw,which):
 		l = raw.split(which)
@@ -606,7 +601,5 @@ class GCode(object):
 	def getLayerInfo(self, lx):
 		if lx < 0 or lx >= len(self.layer_e):
 			return None
-		
-		print "returning layer_e_start of %d for layer %d" % (self.layer_e_start[lx], lx)
 		
 		return [self.layer_z[lx], self.layer_min[lx], self.layer_max[lx], self.layer_e[lx], self.layerlines[lx], self.layer_time[lx], self.layer_e_start[lx]]

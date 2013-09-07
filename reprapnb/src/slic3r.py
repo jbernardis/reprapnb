@@ -64,7 +64,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.nExtr = extCount[vprinter]
 		self.vprint = vprint
 		self.prints = prints
-		self.vfilament = vfilament
+		self.vfilament = [i for i in vfilament]
 		self.filaments = filaments
 		
 		print "in db - (", vprinter, ") (", printers, ") ", extCount
@@ -237,6 +237,7 @@ class Slic3r:
 			return False
 		
 		vprinter, vprint, vfilament = dlg.getValues()
+		print "dlg results = ", vprinter, vprint, vfilament
 		dlg.Destroy()
 
 		chg = False
@@ -255,19 +256,23 @@ class Slic3r:
 			else:
 				self.parent.settings['printerfile'] = None
 			chg = True
-
+		
+		print "after dlg"
 		if vprinter in self.printerext.keys():
 			nExtr = self.printerext[vprinter]
+			print "nextr = ", nExtr, oldNExtr
 			if nExtr > oldNExtr:
 				a = ["" for i in range(nExtr - oldNExtr)]
 				self.parent.settings['filament'].extend(a)
 				self.parent.settings['filamentfile'].extend(a)
 			for i in range(3):
+				print "i = ", i
 				if i < nExtr:
+					print self.parent.settings['filament'][i], vfilament[i]
 					if self.parent.settings['filament'][i] != vfilament[i]:
 						self.parent.settings['filament'][i] = vfilament[i]
-						if vfilament[i] in self.filamentmap.keys():
-							self.parent.settings['filamentfile'][i] = self.filamentmap[vfilament[i]]
+						if vfilament[i] in self.filmap.keys():
+							self.parent.settings['filamentfile'][i] = self.filmap[vfilament[i]]
 						else:
 							self.parent.settings['filamentfile'][i] = None
 						chg = True
@@ -367,7 +372,8 @@ class Slic3r:
 	
 	def sliceComplete(self):
 		if self.tempFile is not None:
-			os.unlink(self.tempFile)
+			print "delete of %s is commented out" % self.tempFile
+			#os.unlink(self.tempFile)
 		self.tempFile = None
 		del self.parent.settings['configfile']
 		
