@@ -215,7 +215,7 @@ class PrintMonitor(wx.Panel):
 			self.reprap.startPrint(self.model)
 		self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
 		self.origEta = self.startTime + self.model.duration
-		self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration))), formatElapsed(self.model.duration))
+		self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration)), formatElapsed(self.model.duration)))
 		self.countGLines = len(self.model)
 		self.bPrint.Enable(False)
 		self.bPause.Enable(False)
