@@ -179,7 +179,7 @@ class GcmFrame (wx.Window):
 
 		self.redrawCurrentLayer()
 	
-	def setPrintPosition(self, p):
+	def setPrintPosition(self, p, sync=True):
 		if self.model is None:
 			return
 		l = self.model.findLayerByLine(p)
@@ -189,7 +189,7 @@ class GcmFrame (wx.Window):
 		self.printPosition = p
 		if l == self.currentlx:
 			self.redrawCurrentLayer()
-		else:
+		elif sync:
 			self.setLayer(l)
 		
 	def redrawCurrentLayer(self):

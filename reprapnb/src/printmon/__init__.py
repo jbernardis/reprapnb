@@ -50,6 +50,7 @@ class PrintMonitor(wx.Panel):
 		self.printMode = None
 		self.origEta = None
 		self.countGLines = None
+		self.syncPrint = True
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,0))
@@ -121,6 +122,13 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_CHECKBOX, self.checkBuffDC, self.cbBuffDC)
 		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
 		self.sizerOpts.Add(self.cbBuffDC)
+		
+		self.sizerOpts.AddSpacer((10, 10))
+
+		self.cbSync = wx.CheckBox(self, wx.ID_ANY, "Sync with print")
+		self.Bind(wx.EVT_CHECKBOX, self.checkSync, self.cbSync)
+		self.cbSync.SetValue(True)
+		self.sizerOpts.Add(self.cbSync)
 
 		self.sizerMain.AddSpacer((10,10), pos=(6,1))		
 		self.sizerMain.Add(self.sizerOpts, pos=(7, 1), flag=wx.EXPAND | wx.ALL)
@@ -232,7 +240,7 @@ class PrintMonitor(wx.Panel):
 		
 	def updatePrintPosition(self, pos):
 		self.printPos = pos
-		self.gcf.setPrintPosition(self.printPos)
+		self.gcf.setPrintPosition(self.printPos, self.syncPrint)
 		print "Line position = %d/%d (%f)" % (pos, self.countGLines, float(pos)/float(self.countGLines))
 		elapsed = time.time() - self.startTime
 		print "Time %% = %f" % (float(elapsed)/float(self.model.duration))
@@ -277,6 +285,9 @@ class PrintMonitor(wx.Panel):
 		
 	def viewZoomOut(self, evt):
 		self.gcf.zoomOut()
+		
+	def checkSync(self, evt):
+		self.syncPrint = evt.IsChecked()
 		
 	def checkBuffDC(self, evt):
 		self.settings.usebuffereddc = evt.IsChecked()

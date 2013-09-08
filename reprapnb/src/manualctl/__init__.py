@@ -5,6 +5,7 @@ from extruder import Extruder
 from heater import Heater
 from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
+from toolchange import ToolChange
 	
 #FIXIT  G code ref
 
@@ -58,7 +59,28 @@ class ManualControl(wx.Panel):
 	def addExtruder(self):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Current Tool", style=wx.ALIGN_LEFT, size=(200, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerExtrude.Add(t, flag=wx.LEFT)
+		sizerExtrude.AddSpacer((10,10))
 		
+		self.toolChange = ToolChange(self, self.app, 1)
+		sizerExtrude.Add(self.toolChange)
+		sizerExtrude.AddSpacer((10, 10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerExtrude.Add(t, flag=wx.LEFT)
+		sizerExtrude.AddSpacer((10,10))
+		
+		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
+					target=185, trange=[20, 250], oncmd="M104")
+		sizerExtrude.Add(self.heWin)
+		sizerExtrude.AddSpacer((10,10))
+
 		self.extWin = Extruder(self, self.app)
 		t = wx.StaticText(self, wx.ID_ANY, "Extruder", style=wx.ALIGN_LEFT, size=(200, -1))
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
@@ -85,17 +107,6 @@ class ManualControl(wx.Panel):
 		sizerHeat.Add(self.bedWin)
 		sizerHeat.AddSpacer((10,10))
 
-		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
-		sizerHeat.Add(t, flag=wx.LEFT)
-		sizerHeat.AddSpacer((10,10))
-		
-		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
-					target=185, trange=[20, 250], oncmd="M104")
-		sizerHeat.Add(self.heWin)
-		sizerHeat.AddSpacer((10,10))
-
 		return sizerHeat
 
 	def addGCEntry(self):
@@ -120,6 +131,7 @@ class ManualControl(wx.Panel):
 		print "chg prt: bed: ", bedtemps[self.currentTool]
 		self.heWin.setProfileTarget(hetemps[self.currentTool])
 		self.bedWin.setProfileTarget(bedtemps[self.currentTool])
+		self.toolChange.changePrinter(len(hetemps))
 
 	def onClose(self, evt):
 		return True
