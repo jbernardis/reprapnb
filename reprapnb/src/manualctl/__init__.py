@@ -67,7 +67,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.AddSpacer((10,10))
 		
 		self.toolChange = ToolChange(self, self.app, 1)
-		sizerExtrude.Add(self.toolChange)
+		sizerExtrude.Add(self.toolChange, flag=wx.ALIGN_LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10, 10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
@@ -78,7 +78,7 @@ class ManualControl(wx.Panel):
 		
 		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
 					target=185, trange=[20, 250], oncmd="M104")
-		sizerExtrude.Add(self.heWin)
+		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 
 		self.extWin = Extruder(self, self.app)
@@ -87,7 +87,7 @@ class ManualControl(wx.Panel):
 		t.SetFont(f)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
-		sizerExtrude.Add(self.extWin)
+		sizerExtrude.Add(self.extWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude

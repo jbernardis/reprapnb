@@ -3,6 +3,7 @@ import os
 import time
 from gcmframe import GcmFrame
 from tempgraph import TempGraph, MAXX
+from infopane import InfoPane
 from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
@@ -52,8 +53,10 @@ class PrintMonitor(wx.Panel):
 		self.countGLines = None
 		self.syncPrint = True
 
-		self.sizerMain = wx.GridBagSizer()
-		self.sizerMain.AddSpacer((10,10), pos=(0,0))
+		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
+		self.sizerRight = wx.BoxSizer(wx.VERTICAL)
+		self.sizerLeft.AddSpacer((10,10))
 		
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerBtns.AddSpacer((10,10))
@@ -84,22 +87,31 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 
-		self.sizerMain.Add(self.sizerBtns, pos=(1,1))
-		self.sizerMain.AddSpacer((10,10), pos=(2,0))
+		self.sizerLeft.Add(self.sizerBtns)
+		self.sizerLeft.AddSpacer((10,10))
+		
+		self.sizerGCM = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gcf = GcmFrame(self, self.model, self.settings, self.buildarea)
-		self.sizerMain.Add(self.gcf, pos=(3,1))
+		self.sizerGCM.Add(self.gcf)
 		
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
-		sz = self.buildarea[0] * self.settings.gcodescale
-		self.tName = wx.StaticText(self, wx.ID_ANY, "", size=(sz, -1), style=wx.ST_NO_AUTORESIZE | wx.ALIGN_CENTER_HORIZONTAL)
-		self.tName.SetFont(f)
-		self.sizerMain.Add(self.tName, pos=(4,1), flag=wx.EXPAND | wx.ALL)
+		sz = self.buildarea[1] * self.settings.gcodescale
+		
+		self.slideLayer = wx.Slider(
+			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
+			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
+		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
+		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
+		self.slideLayer.SetRange(1, 10)
+		self.slideLayer.SetValue(1)
+		self.slideLayer.SetPageSize(1);
+		self.slideLayer.Disable()
+		self.sizerGCM.Add(self.slideLayer)
+		
+		self.sizerLeft.Add(self.sizerGCM)
 
-		self.tHeight = wx.StaticText(self, wx.ID_ANY, "", size=(sz, -1), style=wx.ST_NO_AUTORESIZE | wx.ALIGN_CENTER_HORIZONTAL)
-		self.tHeight.SetFont(f)
-		self.sizerMain.Add(self.tHeight, pos=(5,1), flag=wx.EXPAND | wx.ALL)
-		
+		self.sizerLeft.AddSpacer((10,10))
+
 		self.sizerOpts = wx.BoxSizer(wx.HORIZONTAL)
 				
 		self.cbPrevious = wx.CheckBox(self, wx.ID_ANY, "Show Previous Layer")
@@ -130,30 +142,24 @@ class PrintMonitor(wx.Panel):
 		self.cbSync.SetValue(True)
 		self.sizerOpts.Add(self.cbSync)
 
-		self.sizerMain.AddSpacer((10,10), pos=(6,1))		
-		self.sizerMain.Add(self.sizerOpts, pos=(7, 1), flag=wx.EXPAND | wx.ALL)
+		self.sizerLeft.AddSpacer((10,10))		
+		self.sizerLeft.Add(self.sizerOpts)
 		
-		self.sizerMain.AddSpacer((10,10), pos=(3,2))
-
-		sz = self.buildarea[1] * self.settings.gcodescale
+		self.sizerLeft.AddSpacer((10,10))
 		
-		self.slideLayer = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
-			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
-		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
-		self.slideLayer.SetRange(1, 10)
-		self.slideLayer.SetValue(1)
-		self.slideLayer.SetPageSize(1);
-		self.slideLayer.Disable()
-		self.sizerMain.Add(self.slideLayer, pos=(3,3), flag=wx.ALIGN_RIGHT)
-		
-		self.sizerMain.AddSpacer((10,10), pos=(3,4))
+		self.sizerRight.AddSpacer((80,80))
 
 		self.gTemp = TempGraph(self, self.settings)
-		self.sizerMain.Add(self.gTemp, pos=(3,5))
+		self.sizerRight.Add(self.gTemp)
 
-		self.sizerMain.AddSpacer((10,10), pos=(3,6))
+		self.sizerRight.AddSpacer((40, 40))
+		
+		self.infoPane = InfoPane(self, self.app)
+		self.sizerRight.Add(self.infoPane, flag=wx.EXPAND)
+		
+		self.sizerMain.AddSpacer((50,50))
+		self.sizerMain.Add(self.sizerLeft)
+		self.sizerMain.Add(self.sizerRight)
 
 		self.SetSizer(self.sizerMain)
 
@@ -272,10 +278,6 @@ class PrintMonitor(wx.Panel):
 			print "time=", time
 			print "filstart=", filstart
 			print "Layer %d/%d" % (l+1, self.layerCount)
-			if zh is None:
-				self.tHeight.SetLabel("")
-			else:
-				self.tHeight.SetLabel("Z: %.3f" % zh)
 
 	def onClose(self, evt):
 		return True
@@ -315,7 +317,7 @@ class PrintMonitor(wx.Panel):
 		else:
 			self.gcFile = self.name
 			
-		self.tName.SetLabel(self.name)
+		#self.tName.SetLabel(self.name)
 		layer = 0
 
 		self.layerCount = self.model.countLayers()

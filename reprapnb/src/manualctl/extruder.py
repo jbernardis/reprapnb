@@ -14,44 +14,51 @@ class Extruder(wx.Window):
 		self.name = name
 		self.axis = axis
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
-		sizerExtrude = wx.GridBagSizer()
+		sizerExtrude = wx.GridBagSizer(vgap=10, hgap=10)
+		
+		sizerExtrude.AddSpacer((5, 5), pos=(0,0))
+		sizerExtrude.AddSpacer((5, 5), pos=(5,5))
 
-		t = wx.StaticText(self, wx.ID_ANY, "%s Speed (mm/min):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
+		dc = wx.WindowDC(self)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		dc.SetFont(f)
+
+		text = "%s Speed (mm/min):" % self.axis
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerExtrude.Add(t, pos=(1,0), span=(1,3))
+		sizerExtrude.Add(t, pos=(1,1), span=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+		
 		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.espeed), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tESpeed.SetFont(f)
-		sizerExtrude.Add(self.tESpeed, pos=(1,3))
+		sizerExtrude.Add(self.tESpeed, pos=(1,4))
 		self.tESpeed.Bind(wx.EVT_KILL_FOCUS, self.evtESpeedKillFocus)
 
-		sizerExtrude.AddSpacer((10,10), pos=(2,1))
+		sizerExtrude.AddSpacer((4,4), pos=(2,1))
 		
-		t = wx.StaticText(self, wx.ID_ANY, "%s Distance (mm):" % self.axis, style=wx.ALIGN_RIGHT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		text = "%s Distance (mm):" % self.axis
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerExtrude.Add(t, pos=(3,0), span=(1,3))
+		sizerExtrude.Add(t, pos=(3,1), span=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
 		
 		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.edistance), size=(80, -1), style=wx.TE_RIGHT)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tEDistance.SetFont(f)
-		sizerExtrude.Add(self.tEDistance, pos=(3,3))
+		sizerExtrude.Add(self.tEDistance, pos=(3,4))
 		self.tEDistance.Bind(wx.EVT_KILL_FOCUS, self.evtEDistanceKillFocus)
-		
-		sizerExtrude.AddSpacer((10,10), pos=(4,0))
-		sizerExtrude.AddSpacer((64, 64), pos=(5,0))
 		
 		self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
 				
 		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")
-		sizerExtrude.Add(self.bExtrude, pos=(5,1))
+		sizerExtrude.Add(self.bExtrude, pos=(4,4))
 		self.Bind(wx.EVT_BUTTON, self.doExtrude, self.bExtrude)
 				
 		self.bRetract = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRetract, size=BUTTONDIM)
 		self.bRetract.SetToolTipString("Retract filament")
-		sizerExtrude.Add(self.bRetract, pos=(5,2))
+		sizerExtrude.Add(self.bRetract, pos=(4,5))
 		self.Bind(wx.EVT_BUTTON, self.doRetract, self.bRetract)
 
 		self.SetSizer(sizerExtrude)

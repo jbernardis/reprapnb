@@ -27,57 +27,66 @@ class Heater(wx.Window):
 		self.currentTarget = 0.0
 		self.currentTempColor = None
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
-		sizerHtr = wx.GridBagSizer(vgap=5)
+		sizerHtr = wx.GridBagSizer(vgap=10, hgap=10)
+		
+		sizerHtr.AddSpacer((5, 5), pos=(0,0))
+		sizerHtr.AddSpacer((5, 5), pos=(4,6))
 
-		t = wx.StaticText(self, wx.ID_ANY, "Current: ", style=wx.ALIGN_RIGHT, size=(90, -1))
+		dc = wx.WindowDC(self)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		dc.SetFont(f)
+
+		text = "Current: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerHtr.Add(t, pos=(0,2)) 
+		sizerHtr.Add(t, pos=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL) 
 		
 		self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTemp.SetFont(f)
 		self.tTemp.SetBackgroundColour("blue")
 		self.tTemp.SetForegroundColour(wx.Colour(255, 255, 255))
-		sizerHtr.Add(self.tTemp, pos=(0,3))
+		sizerHtr.Add(self.tTemp, pos=(1,4))
 
-		t = wx.StaticText(self, wx.ID_ANY, "Target: ", style=wx.ALIGN_RIGHT, size=(90, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		text = "Target: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerHtr.Add(t, pos=(1,2))
+		sizerHtr.Add(t, pos=(2,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER)
 		
 		self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTarget.SetFont(f)
 		self.tTarget.SetBackgroundColour(wx.Colour(0, 0, 0))
 		self.tTarget.SetForegroundColour(wx.Colour(255, 255, 255))
-		sizerHtr.Add(self.tTarget, pos=(1,3))
+		sizerHtr.Add(self.tTarget, pos=(2,4))
 		
 		self.slTarget = wx.Slider(
-			self, wx.ID_ANY, target, self.trange[0], self.trange[1], size=(340, -1), 
+			self, wx.ID_ANY, target, self.trange[0], self.trange[1], size=(320, -1), 
 			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
 			)
 		self.slTarget.SetTickFreq(5, 1)
 		self.slTarget.SetPageSize(1)
 		self.slTarget.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 		self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
-		sizerHtr.Add(self.slTarget, pos=(2,0), span=(1,5))
+		sizerHtr.Add(self.slTarget, pos=(3,1), span=(1,5))
 		
 		self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
 
 		self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeaton, size=BUTTONDIM)
 		self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
-		sizerHtr.Add(self.bHeatOn, pos=(0,0),span=(2,1))
+		sizerHtr.Add(self.bHeatOn, pos=(1,1),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOn, self.bHeatOn)
 				
 		self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatoff, size=BUTTONDIM)
 		self.bHeatOff.SetToolTipString("Turn %s heater off" % self.name)
-		sizerHtr.Add(self.bHeatOff, pos=(0,1),span=(2,1))
+		sizerHtr.Add(self.bHeatOff, pos=(1,2),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
 				
 		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.images.pngProfile, size=BUTTONDIM)
 		self.bProfile.SetToolTipString("Import from profile")
-		sizerHtr.Add(self.bProfile, pos=(0,4),span=(2,1))
+		sizerHtr.Add(self.bProfile, pos=(1,5),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)
 
 		self.SetSizer(sizerHtr)

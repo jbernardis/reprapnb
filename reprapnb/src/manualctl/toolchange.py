@@ -7,21 +7,27 @@ class ToolChange(wx.Window):
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
+		self.currentSelection = 0
 
 		self.nextr = nextr
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerToolChange = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.rbTools = []
-		self.rbTools.append(wx.RadioButton(self, wx.ID_ANY, " Tool 1 ", style = wx.RB_GROUP ))
-		self.rbTools.apoend(wx.RadioButton(self, wx.ID_ANY, " Tool 2 ", ))
-		self.rbTools.append(wx.RadioButton(self, wx.ID_ANY, " Tool 3 ", ))
-		for i in self.rbTools:
-			sizerToolChange.Add(i)
-			self.Bind(wx.EVT_RADIOBUTTON, self.OnToolChange, i )
-			i.Enable(i<self.nextr)
+		sizerToolChange.AddSpacer((20, 10))
+		for i in range(3):
+			if i == 0:
+				style = wx.RB_GROUP
+			else:
+				style = 0
+			rb = wx.RadioButton(self, wx.ID_ANY, " Tool %d " % (i+1), style = style)
+			self.rbTools.append(rb)
+			sizerToolChange.Add(rb, flag=wx.TOP | wx.BOTTOM, border=5)
+			sizerToolChange.AddSpacer((20, 10))
+			self.Bind(wx.EVT_RADIOBUTTON, self.onToolChange, rb )
+			rb.Enable(i<self.nextr)
 
-		self.Bind(wx.EVT_BUTTON, self.doRetract, self.bRetract)
+		self.rbTools[0].SetValue(True)
 
 		self.SetSizer(sizerToolChange)
 		self.Layout()
@@ -32,10 +38,15 @@ class ToolChange(wx.Window):
 
 		for i in range(3):
 			if tc_sel is self.rbTools[i]:
+				self.currentSelection = i
 				print "Selected tool ", i
 				break
 		
 	def changePrinter(self, nextr):
 		self.nextr = nextr
-		for i in self.rbTools:
-			i.Enable(i<self.nextr)
+		for i in range(3):
+			self.rbTools[i].Enable(i<self.nextr)
+			
+		if self.currentSelection >= self.nextr:
+			self.currentSelection = 0
+			self.rbTools[0].SetValue(True)
