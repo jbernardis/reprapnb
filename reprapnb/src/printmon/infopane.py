@@ -1,11 +1,14 @@
 
 import wx
+import time
+
+from tools import formatElapsed
 
 filetags = { "filename" : "Name:" }
 filetagorder = ["filename"]
 
-layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament" : "Filament Usage:", "layertime": "Layer Print Time:"}
-layertagorder = ["layer", "minmaxxy", "filament", "layertime"]
+layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
+layertagorder = ["layer", "minmaxxy", "filament", "gclines", "layertime"]
 
 printtags = { "gcode": "Print Position:", "eta": "Print Times:"}
 printtagorder = ["gcode", "eta"]
@@ -17,6 +20,11 @@ class InfoPane (wx.Window):
 		self.app = app
 		self.logger = self.app.logger
 		self.wValues = {}
+		
+		self.duration = 0
+		self.gcount = 0
+		self.layers = 0
+		self.filament = 0
 
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
 		self.sizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -46,6 +54,7 @@ class InfoPane (wx.Window):
 		self.setValue("layer", "Layer number/total layers (z height)")
 		self.setValue("minmaxxy", "(minx, miny) - (maxx, maxy)")
 		self.setValue("filament", "used in layer/totao used (used in previous)")
+		self.setValue("gclines", "first gc line/last gc line in layer")
 		self.setValue("layertime", "time in layer/total print duration")
 		self.setValue("gcode", "Print pos/total lines (%done)")
 		self.setValue("eta", "Start time, elapsed time, ETA, % ahead/behind")
@@ -81,5 +90,90 @@ class InfoPane (wx.Window):
 			return
 
 		self.wValues[tag].SetValue(value)
+		
+	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
+		self.setValue("filename", filename)
+		self.duration = duration
+		self.gcount = gcount
+		self.layers = layers
+		self.filament = filament
+		self.layertimes = [i for i in layertimes]
+		t = 0
+		self.prevTimes = []
+		for i in self.layertimes:
+			self.prevTimes.append(t)
+			t += i
+			
+	
+		
+	def setLayerInfo(self, layernbr, z, minxy, maxxy, filament, prevfilament, ltime, gclines):
+		self.gclines = gclines
+		self.layernbr = layernbr
+		if self.layers == 0:
+			self.setValue("layer", "%d (%.2f)" % (layernbr, z))
+		else:
+			self.setValue("layer", "%d/%d (%.2f)" % (layernbr, self.layers, z))
+			
+		self.setValue("minmaxxy", "(%.2f, %.2f) <-> (%.2f, %.2f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
+		if self.filament == 0:
+			self.setValue("filament", "%.2f (%.2f)" % (filament, prevfilament))
+		else:
+			self.setValue("filament", "%.2f/%.2f (%.2f)" % (filament, self.filament, prevfilament))
+		self.setValue("gclines", "%d -> %d" % (gclines[0], gclines[1]))
+		if self.duration == 0:
+			self.setValue("layertime", "%s" % formatElapsed(ltime))
+		else:
+			self.setValue("layertime", "%s/%s" % (formatElapsed(ltime), formatElapsed(self.duration)))
+	
+	def setPrintInfo(self, position, layer, gcodelines, layertime):
+		self.position = position
+		pct = "??"
+		if self.gcount != 0:
+			pct = "%.2f" % (float(self.position) / float(self.gcount) * 100.0)
+		
+		self.setValue("gcode", "Line %d/%d total lines (%s%%)" % (position, self.gcount, pct))
+		start = time.strftime('%H:%M:%S', time.localtime(self.startTime))
+		elapsed = formatElapsed(time.time() - self.startTime)
+		eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
+		
+		self.setValue("eta", "Start: %s  Elapsed: %s  ETA: %s" % (start, elapsed, eta))
+		
+		if layer is not None:
+			expectedTime = self.prevTimes[layer]
+			delta = 0
+			print "Expected time to start of layer: ", expectedTime
+			if position >= gcodelines[0] and position <= gcodelines[1]:
+				lct = gcodelines[1] - gcodelines[0]
+				lpos = position - gcodelines[0]
+				lpct = float(lpos)/float(lct)
+				print "Percent through current layer = ", lpct * 100.0
+				
+				delta = layertime * lpct
+			print "delta = ", delta
+			expectedTime += delta
+			print "Expected total elapsed time: ", expectedTime
+			
+			diff = elapsed - expectedTime
+			pctDiff = float(diff) / float(expectedTime) * 100.0
+			print "PCT diff = ", pctDiff
+		
+	
+	def setStartTime(self, start):
+		self.startTime = start
+		self.eta = start + self.duration
+		self.setPrintInfo(0)
+		
+	def setPrintComplete(self):
+		end = time.time();
+		strEnd = time.strftime('%H:%M:%S', time.localtime(end))
+		
+		elapsed = end - self.startTime
+		strElapsed = formatElapsed(elapsed)
+		
+		diff = elapsed - self.duration
+		pctDiff = float(diff) / float(self.duration) * 100.0
+		
+		self.setValue("gcode", "")
+		self.setValue("eta", "Print completed at %s, elapsed %s (%.2f%%)" % (strEnd, strElapsed, pctDiff))
 
 

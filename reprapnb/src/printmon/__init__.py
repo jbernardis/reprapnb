@@ -197,6 +197,7 @@ class PrintMonitor(wx.Panel):
 			self.endTime = time.time()
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
+			self.infoPane.setFileComplete()
 			self.updatePrintPosition(0)
 			
 	def getPrintTimes(self):
@@ -231,6 +232,7 @@ class PrintMonitor(wx.Panel):
 		self.origEta = self.startTime + self.model.duration
 		self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration)), formatElapsed(self.model.duration)))
 		self.countGLines = len(self.model)
+		self.infoPane.setStartTime(self.startTime)
 		self.bPrint.Enable(False)
 		self.bPause.Enable(False)
 		
@@ -247,9 +249,13 @@ class PrintMonitor(wx.Panel):
 	def updatePrintPosition(self, pos):
 		self.printPos = pos
 		self.gcf.setPrintPosition(self.printPos, self.syncPrint)
-		print "Line position = %d/%d (%f)" % (pos, self.countGLines, float(pos)/float(self.countGLines))
-		elapsed = time.time() - self.startTime
-		print "Time %% = %f" % (float(elapsed)/float(self.model.duration))
+		l = self.model.findLayerByLine(pos)
+		gcl = None
+		lt = None
+		if l is not None:
+			gcl = self.model.layerlines[l]
+			lt = self.model.layer_time[l]
+		self.infoPane.setPrintInfo(pos, l, gcl, lt)
 		
 	def onMouseLayer(self, evt):
 		l = self.slideLayer.GetValue()-1
@@ -270,14 +276,7 @@ class PrintMonitor(wx.Panel):
 		if l >=0 and l < self.layerCount:
 			self.slideLayer.SetValue(l+1)
 			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
-			print "z=", zh
-			print "min=", xymin
-			print "max=", xymax
-			print "filament=", filament
-			print "G code lines=", glines
-			print "time=", time
-			print "filstart=", filstart
-			print "Layer %d/%d" % (l+1, self.layerCount)
+			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
 
 	def onClose(self, evt):
 		return True
@@ -317,7 +316,6 @@ class PrintMonitor(wx.Panel):
 		else:
 			self.gcFile = self.name
 			
-		#self.tName.SetLabel(self.name)
 		layer = 0
 
 		self.layerCount = self.model.countLayers()
@@ -348,6 +346,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		
 		self.app.setPrinterBusy(False)
+		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		
 	def changePrinter(self, hetemps, bedtemps):
 		self.targets = {}
