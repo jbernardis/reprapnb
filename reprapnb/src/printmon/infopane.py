@@ -10,8 +10,8 @@ filetagorder = ["filename"]
 layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
 layertagorder = ["layer", "minmaxxy", "filament", "gclines", "layertime"]
 
-printtags = { "gcode": "Print Position:", "eta": "Print Times:"}
-printtagorder = ["gcode", "eta"]
+printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": ""}
+printtagorder = ["gcode", "eta", "eta2"]
 
 
 class InfoPane (wx.Window):
@@ -32,11 +32,15 @@ class InfoPane (wx.Window):
 		self.sizerValue = wx.BoxSizer(wx.VERTICAL)
 		
 		self.dc = wx.WindowDC(self)
+		f = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		self.dc.SetFont(f)
+		self.h8point = self.dc.GetTextExtent("ABCDEFGHIJ")[1]
 		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.dc.SetFont(f)
+		self.h12point = self.dc.GetTextExtent("ABCDEFGHIJ")[1]
 
-		self.sizerTag.AddSpacer((3,3))
-		self.sizerValue.AddSpacer((3,3))
+		self.sizerTag.AddSpacer((2,2))
+		self.sizerValue.AddSpacer((2,2))
 
 		self.addTags("File Information", filetags, filetagorder)
 		self.addTags("Layer Information", layertags, layertagorder)
@@ -51,45 +55,37 @@ class InfoPane (wx.Window):
 		self.Layout()
 		self.Fit()
 
-		self.setValue("layer", "Layer number/total layers (z height)")
-		self.setValue("minmaxxy", "(minx, miny) - (maxx, maxy)")
-		self.setValue("filament", "used in layer/totao used (used in previous)")
-		self.setValue("gclines", "first gc line/last gc line in layer")
-		self.setValue("layertime", "time in layer/total print duration")
-		self.setValue("gcode", "Print pos/total lines (%done)")
-		self.setValue("eta", "Start time, elapsed time, ETA, % ahead/behind")
-
 	def addTags(self, title, tags, tagorder):
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
 		self.dc.SetFont(f)
-		w, h = self.dc.GetTextExtent(title)
-		t = wx.StaticText(self, wx.ID_ANY, title, style=wx.ALIGN_RIGHT, size=(w, h+5))
+		w = self.dc.GetTextExtent(title)[0]
+		t = wx.StaticText(self, wx.ID_ANY, title, style=wx.ALIGN_RIGHT, size=(w, self.h12point+5))
 		t.SetFont(f)
-		self.sizerTag.Add(t, flag=wx.ALIGN_LEFT | wx.TOP, border=5)
-		self.sizerValue.AddSpacer((w, h+10))
+		self.sizerTag.Add(t, flag=wx.ALIGN_LEFT | wx.TOP, border=0)
+		self.sizerValue.AddSpacer((w, self.h12point+5))
 
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.dc.SetFont(f)
 		for t in tagorder:
 			text = tags[t]
-			w, h = self.dc.GetTextExtent(text)
+			w = self.dc.GetTextExtent(text)[0]
 
-			st = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h+5))
+			st = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, self.h8point+5))
 			st.SetFont(f)
-			self.sizerTag.Add(st, flag=wx.ALIGN_RIGHT | wx.TOP, border=5)
-			self.sizerTag.AddSpacer((3,3))
+			self.sizerTag.Add(st, flag=wx.ALIGN_RIGHT | wx.TOP, border=0)
+			self.sizerTag.AddSpacer((2,2))
 	
-			self.wValues[t] = wx.TextCtrl(self, wx.ID_ANY, "", size=(400, h+10), style=wx.TE_LEFT)
+			self.wValues[t] = wx.StaticText(self, wx.ID_ANY, "", size=(310, self.h8point+5), style=wx.ALIGN_LEFT)
 			self.wValues[t].SetFont(f)
 			self.sizerValue.Add(self.wValues[t])
-			self.sizerValue.AddSpacer((3,3))
+			self.sizerValue.AddSpacer((2,2))
 
 	def setValue(self, tag, value):
 		if tag not in self.wValues.keys():
 			print "bad key ", tag
 			return
 
-		self.wValues[tag].SetValue(value)
+		self.wValues[tag].SetLabel(value)
 		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
 		self.setValue("filename", filename)
@@ -103,23 +99,27 @@ class InfoPane (wx.Window):
 		for i in self.layertimes:
 			self.prevTimes.append(t)
 			t += i
-			
-	
 		
 	def setLayerInfo(self, layernbr, z, minxy, maxxy, filament, prevfilament, ltime, gclines):
 		self.gclines = gclines
 		self.layernbr = layernbr
 		if self.layers == 0:
-			self.setValue("layer", "%d (%.2f)" % (layernbr, z))
+			self.setValue("layer", "%d (z=%.2f)" % (layernbr+1, z))
 		else:
-			self.setValue("layer", "%d/%d (%.2f)" % (layernbr, self.layers, z))
+			self.setValue("layer", "%d/%d (z=%.2f)" % (layernbr+1, self.layers, z))
 			
-		self.setValue("minmaxxy", "(%.2f, %.2f) <-> (%.2f, %.2f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
-		if self.filament == 0:
-			self.setValue("filament", "%.2f (%.2f)" % (filament, prevfilament))
+		if minxy[0] > maxxy[0] or minxy[1] >maxxy[1]:
+			self.setValue("minmaxxy", "")
 		else:
-			self.setValue("filament", "%.2f/%.2f (%.2f)" % (filament, self.filament, prevfilament))
+			self.setValue("minmaxxy", "(%.2f, %.2f) <-> (%.2f, %.2f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
+		
+		if self.filament == 0:
+			self.setValue("filament", "%.2f (%.2f mm on previous layers)" % (filament, prevfilament))
+		else:
+			self.setValue("filament", "%.2f/%.2f (%.2f mm on previous layers)" % (filament, self.filament, prevfilament))
+		
 		self.setValue("gclines", "%d -> %d" % (gclines[0], gclines[1]))
+		
 		if self.duration == 0:
 			self.setValue("layertime", "%s" % formatElapsed(ltime))
 		else:
@@ -133,37 +133,41 @@ class InfoPane (wx.Window):
 		
 		self.setValue("gcode", "Line %d/%d total lines (%s%%)" % (position, self.gcount, pct))
 		start = time.strftime('%H:%M:%S', time.localtime(self.startTime))
-		elapsed = formatElapsed(time.time() - self.startTime)
+		now = time.time()
+		elapsed = now - self.startTime
+		strElapsed = formatElapsed(elapsed)
 		eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
 		
-		self.setValue("eta", "Start: %s  Elapsed: %s  ETA: %s" % (start, elapsed, eta))
+		self.setValue("eta", "Start: %s  Elapsed: %s  Orig ETA: %s" % (start, strElapsed, eta))
 		
-		if layer is not None:
+		if layer is not None and layer != 0:
 			expectedTime = self.prevTimes[layer]
 			delta = 0
-			print "Expected time to start of layer: ", expectedTime
 			if position >= gcodelines[0] and position <= gcodelines[1]:
 				lct = gcodelines[1] - gcodelines[0]
 				lpos = position - gcodelines[0]
 				lpct = float(lpos)/float(lct)
-				print "Percent through current layer = ", lpct * 100.0
 				
 				delta = layertime * lpct
-			print "delta = ", delta
 			expectedTime += delta
-			print "Expected total elapsed time: ", expectedTime
 			
 			diff = elapsed - expectedTime
+			remains = formatElapsed(self.eta + diff - now)
 			pctDiff = float(diff) / float(expectedTime) * 100.0
-			print "PCT diff = ", pctDiff
+			direction = "behind"
+			if pctDiff < 0:
+				direction = "ahead of"
+			self.setValue("eta2", "Remaining: %s  (%.2f%% %s schedule)" % (remains, pctDiff, direction))
+		else:
+			self.setValue("eta2", "")
 		
 	
 	def setStartTime(self, start):
 		self.startTime = start
 		self.eta = start + self.duration
-		self.setPrintInfo(0)
 		
 	def setPrintComplete(self):
+		print "called print complete"
 		end = time.time();
 		strEnd = time.strftime('%H:%M:%S', time.localtime(end))
 		
@@ -175,5 +179,6 @@ class InfoPane (wx.Window):
 		
 		self.setValue("gcode", "")
 		self.setValue("eta", "Print completed at %s, elapsed %s (%.2f%%)" % (strEnd, strElapsed, pctDiff))
+		self.setValue("eta2", "")
 
 

@@ -152,7 +152,7 @@ class PrintMonitor(wx.Panel):
 		self.gTemp = TempGraph(self, self.settings)
 		self.sizerRight.Add(self.gTemp)
 
-		self.sizerRight.AddSpacer((40, 40))
+		self.sizerRight.AddSpacer((20, 20))
 		
 		self.infoPane = InfoPane(self, self.app)
 		self.sizerRight.Add(self.infoPane, flag=wx.EXPAND)
@@ -197,8 +197,8 @@ class PrintMonitor(wx.Panel):
 			self.endTime = time.time()
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
-			self.infoPane.setFileComplete()
 			self.updatePrintPosition(0)
+			self.infoPane.setPrintComplete()
 			
 	def getPrintTimes(self):
 		return self.startTime, self.endTime
