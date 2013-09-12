@@ -8,7 +8,7 @@ class GCodeEntry(wx.Window):
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerGCode = wx.BoxSizer(wx.HORIZONTAL)
 		self.tGCode = wx.TextCtrl(self, wx.ID_ANY, "", size=(550, -1), style=wx.TE_LEFT | wx.TE_PROCESS_ENTER)
-		self.tGCode.Bind(wx.EVT_KILL_FOCUS, self.evtGCodeSend)
+		#self.tGCode.Bind(wx.EVT_KILL_FOCUS, self.evtGCodeSend)
 		self.tGCode.Bind(wx.EVT_TEXT_ENTER, self.evtGCodeSend)
 		f = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tGCode.SetFont(f)
