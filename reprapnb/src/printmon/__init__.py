@@ -147,7 +147,7 @@ class PrintMonitor(wx.Panel):
 		
 		self.sizerLeft.AddSpacer((10,10))
 		
-		self.sizerRight.AddSpacer((80,80))
+		self.sizerRight.AddSpacer((40,40))
 
 		self.gTemp = TempGraph(self, self.settings)
 		self.sizerRight.Add(self.gTemp)

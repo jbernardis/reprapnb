@@ -6,7 +6,7 @@ from heater import Heater
 from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
 from toolchange import ToolChange
-	
+
 #FIXIT  G code ref
 
 class ManualControl(wx.Panel): 
@@ -21,6 +21,11 @@ class ManualControl(wx.Panel):
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
+
+		self.slFeedTimer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onFeedSpeedChanged, self.slFeedTimer)
+		self.slFanTimer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onFanSpeedChanged, self.slFanTimer)
 
 		self.moveAxis = MoveAxis(self, self.app)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
@@ -149,9 +154,10 @@ class ManualControl(wx.Panel):
 		return sizerSpeed
 	
 	def onFeedSpeedChanged(self, evt):
-		pass
+		self.setFeedSpeed(self.slFeedSpeed.GetValue())
 	
 	def onFeedSpeedWheel(self, evt):
+		self.slFeedTimer.Start(500, True)
 		l = self.slFeedSpeed.GetValue()
 		if evt.GetWheelRotation() < 0:
 			l -= 1
@@ -159,11 +165,15 @@ class ManualControl(wx.Panel):
 			l += 1
 		if l >= 50 and l <= 200:
 			self.slFeedSpeed.SetValue(l)
+			
+	def setFeedSpeed(self, spd):
+		self.app.reprap.send_now("M220 S%d" % spd)
 		
 	def onFanSpeedChanged(self, evt):
-		pass
+		self.setFanSpeed(self.slFanSpeed.GetValue())
 	
 	def onFanSpeedWheel(self, evt):
+		self.slFanTimer.Start(500, True)
 		l = self.slFanSpeed.GetValue()
 		if evt.GetWheelRotation() < 0:
 			l -= 1
@@ -171,6 +181,9 @@ class ManualControl(wx.Panel):
 			l += 1
 		if l >= 0 and l <= 255:
 			self.slFanSpeed.SetValue(l)
+		
+	def setFanSpeed(self, spd):
+		self.app.reprap.send_now("M106 S%d" % spd)
 
 	def addGCEntry(self):
 		sizerGCode = wx.BoxSizer(wx.VERTICAL)

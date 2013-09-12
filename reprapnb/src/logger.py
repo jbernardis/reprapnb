@@ -38,7 +38,10 @@ class Logger(wx.Frame):
        
     def LogMessage(self, text):
         s = time.strftime('%H:%M:%S', time.localtime(time.time()))
-        self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
+        try:
+            self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
+        except:
+            pass
 
     def LogError(self, text):
         self.LogMessage("Error - " +string.rstrip(text)+"\n")

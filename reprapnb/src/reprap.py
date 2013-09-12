@@ -209,14 +209,14 @@ class RepRapParser:
 				self.app.setHETemp(float(t[0]))
 			if len(t) >= 2:
 				self.app.setBedTemp(float(t[1]))
-			return True
+			return False
 		
 		m = self.trpt3re.search(msg)
 		if m:
 			t = m.groups()
 			if len(t) >= 1:
 				self.app.setHETemp(float(t[0]))
-			return True
+			return False
 		
 		return False
 
