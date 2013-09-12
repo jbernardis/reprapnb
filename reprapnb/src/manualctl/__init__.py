@@ -29,14 +29,16 @@ class ManualControl(wx.Panel):
 		
 		self.sizerExtrude = self.addExtruder()
 		self.sizerHeat = self.addHeater()
+		self.sizerSpeed = self.addSpeedControls()
 		self.sizerGCode = self.addGCEntry()
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
-		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(2,1))
-		self.sizerMain.Add(self.sizerExtrude, pos=(1,3), span=(1,1))
+		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(3,1))
+		self.sizerMain.Add(self.sizerExtrude, pos=(1,3), span=(2,1))
 		self.sizerMain.Add(self.sizerHeat, pos=(1,5), span=(1,1))
-		self.sizerMain.Add(self.sizerGCode, pos=(2,3), span=(1,3))
+		self.sizerMain.Add(self.sizerSpeed, pos=(2,5), span=(1,1))
+		self.sizerMain.Add(self.sizerGCode, pos=(3,3), span=(1,3))
 		self.sizerMain.AddSpacer((10,10), pos=(0,2))
 		self.sizerMain.AddSpacer((10,10), pos=(0,4))
 
@@ -108,6 +110,67 @@ class ManualControl(wx.Panel):
 		sizerHeat.AddSpacer((10,10))
 
 		return sizerHeat
+	
+	def addSpeedControls(self):
+		sizerSpeed = wx.BoxSizer(wx.VERTICAL)
+		sizerSpeed.AddSpacer((10, 10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Feed Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerSpeed.Add(t, flag=wx.ALL)
+
+		self.slFeedSpeed = wx.Slider(
+			self, wx.ID_ANY, 100, 50, 200, size=(320, -1), 
+			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
+			)
+		self.slFeedSpeed.SetTickFreq(5, 1)
+		self.slFeedSpeed.SetPageSize(1)
+		self.slFeedSpeed.Bind(wx.EVT_SCROLL_CHANGED, self.onFeedSpeedChanged)
+		self.slFeedSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFeedSpeedWheel)
+		sizerSpeed.Add(self.slFeedSpeed)
+		sizerSpeed.AddSpacer((10, 10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Fan Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
+		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
+		t.SetFont(f)
+		sizerSpeed.Add(t, flag=wx.ALL)
+		
+		self.slFanSpeed = wx.Slider(
+			self, wx.ID_ANY, 0, 0, 255, size=(320, -1), 
+			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
+			)
+		self.slFanSpeed.SetTickFreq(5, 1)
+		self.slFanSpeed.SetPageSize(1)
+		self.slFanSpeed.Bind(wx.EVT_SCROLL_CHANGED, self.onFanSpeedChanged)
+		self.slFanSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFanSpeedWheel)
+		sizerSpeed.Add(self.slFanSpeed)
+		
+		return sizerSpeed
+	
+	def onFeedSpeedChanged(self, evt):
+		pass
+	
+	def onFeedSpeedWheel(self, evt):
+		l = self.slFeedSpeed.GetValue()
+		if evt.GetWheelRotation() < 0:
+			l -= 1
+		else:
+			l += 1
+		if l >= 50 and l <= 200:
+			self.slFeedSpeed.SetValue(l)
+		
+	def onFanSpeedChanged(self, evt):
+		pass
+	
+	def onFanSpeedWheel(self, evt):
+		l = self.slFanSpeed.GetValue()
+		if evt.GetWheelRotation() < 0:
+			l -= 1
+		else:
+			l += 1
+		if l >= 0 and l <= 255:
+			self.slFanSpeed.SetValue(l)
 
 	def addGCEntry(self):
 		sizerGCode = wx.BoxSizer(wx.VERTICAL)

@@ -1,14 +1,9 @@
-2) Proper information from slicer: still need to figure out what to do about multiple axes
-3) turn print following on/off
 4) implement send gcode
-9) Display additional info on monitor screen:  Z Height, Layer#/Total Layers, ETA, lines printed/total, % printed, % ahead/behind estimate, filename
 11) figure out how to include skeinforge
 12) fan control
 13) speed control
 14) SD support
-15) layout of extruder and heater widgets needs to be fixed
 16) previous layer in prtmon is too bright - I think I fixed it - need to test
-17) filstart is always 0 - added debugging statements
 18) read G code in a thread - add intermittent reports to log
 19) widen log
 
