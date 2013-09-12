@@ -26,6 +26,13 @@ CMD_DRAINQUEUE = 4
 CMD_ENDOFPRINT = 5
 CMD_RESUMEPRINT = 6
 
+# printer commands that are permissible while actively printing
+allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
+					"M104", "M105", "M106", "M107", "M114", "M115", "M117", "M119", "M140",
+					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M220", "M221", "M240",
+					"M301", "M302", "M303",
+					"M500", "M501", "M502", "M503"]
+
 class SendThread:
 	def __init__(self, win, printer, priQ, mainQ):
 		self.priQ = priQ
@@ -317,8 +324,12 @@ class RepRap:
 		self.paused = False
 				
 	def send_now(self, cmd):
+		verb = cmd.split()[0]
 		if not self.printer:
 			self.logger.LogWarning("Printer is off-line")
+			return False
+		elif self.printing and verb not in allow_while_printing:
+			self.logger.LogWarning("Command not allowed while printing")
 			return False
 		else:
 			return self._send(cmd, priority=True)

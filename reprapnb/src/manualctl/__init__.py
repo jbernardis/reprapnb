@@ -197,7 +197,7 @@ class ManualControl(wx.Panel):
 		
 		sizerGCode.AddSpacer((10,10))
 
-		self.GCEntry = GCodeEntry(self)	
+		self.GCEntry = GCodeEntry(self, self.app)	
 		sizerGCode.Add(self.GCEntry)
 		
 		return sizerGCode

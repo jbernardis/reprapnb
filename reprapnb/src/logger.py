@@ -18,7 +18,7 @@ class Logger(wx.Frame):
         wx.Frame.__init__(self, parent, ID, title, pos, size, style)
         panel = wx.Panel(self, -1)
         
-        self.t = wx.TextCtrl(panel, wx.ID_ANY, size=(-1, -1), style=wx.TE_MULTILINE|wx.TE_RICH2)
+        self.t = wx.TextCtrl(panel, wx.ID_ANY, size=(600, -1), style=wx.TE_MULTILINE|wx.TE_RICH2)
         sz = wx.GridBagSizer()
         sz.Add(self.t, pos=(0,0), flag=wx.EXPAND | wx.ALL)
         sz.AddGrowableRow(0)
