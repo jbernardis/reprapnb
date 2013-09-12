@@ -104,19 +104,19 @@ class InfoPane (wx.Window):
 		self.gclines = gclines
 		self.layernbr = layernbr
 		if self.layers == 0:
-			self.setValue("layer", "%d (z=%.2f)" % (layernbr+1, z))
+			self.setValue("layer", "%d (z=%.3f)" % (layernbr+1, z))
 		else:
-			self.setValue("layer", "%d/%d (z=%.2f)" % (layernbr+1, self.layers, z))
+			self.setValue("layer", "%d/%d (z=%.3f)" % (layernbr+1, self.layers, z))
 			
 		if minxy[0] > maxxy[0] or minxy[1] >maxxy[1]:
 			self.setValue("minmaxxy", "")
 		else:
-			self.setValue("minmaxxy", "(%.2f, %.2f) <-> (%.2f, %.2f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
+			self.setValue("minmaxxy", "(%.3f, %.3f) <-> (%.3f, %.3f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
 		
 		if self.filament == 0:
-			self.setValue("filament", "%.2f (%.2f mm on previous layers)" % (filament, prevfilament))
+			self.setValue("filament", "%.3f (%.3f mm on previous layers)" % (filament, prevfilament))
 		else:
-			self.setValue("filament", "%.2f/%.2f (%.2f mm on previous layers)" % (filament, self.filament, prevfilament))
+			self.setValue("filament", "%.3f/%.3f (%.3f mm on previous layers)" % (filament, self.filament, prevfilament))
 		
 		self.setValue("gclines", "%d -> %d" % (gclines[0], gclines[1]))
 		
@@ -152,12 +152,16 @@ class InfoPane (wx.Window):
 			expectedTime += delta
 			
 			diff = elapsed - expectedTime
-			remains = formatElapsed(self.eta + diff - now)
-			pctDiff = float(diff) / float(expectedTime) * 100.0
-			direction = "behind"
-			if pctDiff < 0:
-				direction = "ahead of"
-			self.setValue("eta2", "Remaining: %s  (%.2f%% %s schedule)" % (remains, pctDiff, direction))
+			remains = self.eta + diff - now
+			strRemains = formatElapsed(remains)
+			pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
+			if pctDiff < 100:
+				schedule = "%.3f ahead of schedule" % (100.0-pctDiff)
+			elif pctDiff >100:
+				schedule = "%.3f behind schedule" % (pctDiff - 100)
+			else:
+				schedule = "on schedule"
+			self.setValue("eta2", "Remaining: %s  (%s)" % (strRemains, schedule))
 		else:
 			self.setValue("eta2", "")
 		

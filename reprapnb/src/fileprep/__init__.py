@@ -877,13 +877,19 @@ class FilePrepare(wx.Panel):
 			self.firstGLine = self.layerInfo[4][0]
 			self.lastGLine = self.layerInfo[4][-1]
 		
-			self.slideGCode.SetRange(self.firstGLine+1, self.lastGLine+1)
-			self.slideGCode.SetValue(self.firstGLine+1)
-			n = int((self.lastGLine-self.firstGLine)/20)
-			if n<1: n=1
-			self.slideGCode.SetTickFreq(n, 1)
-			self.slideGCode.SetPageSize(1);
-			self.slideGCode.Refresh()
+			if self.firstGLine >= self.lastGLine:
+				self.slideGCode.SetRange(self.firstGLine+1, self.firstGLine+2)
+				self.slideGCode.SetValue(self.firstGLine+1)
+				self.slideGCode.Enable(False)
+			else:
+				self.slideGCode.SetRange(self.firstGLine+1, self.lastGLine+1)
+				self.slideGCode.SetValue(self.firstGLine+1)
+				n = int((self.lastGLine-self.firstGLine)/20)
+				if n<1: n=1
+				self.slideGCode.SetTickFreq(n, 1)
+				self.slideGCode.SetPageSize(1);
+				self.slideGCode.Refresh()
+				self.slideGCode.Enable(True)
 			
 			self.showLayerInfo(l)
 			
