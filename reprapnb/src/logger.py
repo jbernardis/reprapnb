@@ -15,11 +15,10 @@ class Logger(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
-		self.sizerLog = wx.BoxSizer(wx.VERTICAL)
+		sz = wx.BoxSizer(wx.VERTICAL)
 		
-		self.t = wx.TextCtrl(self, wx.ID_ANY, size=(600, 600), style=wx.TE_MULTILINE|wx.TE_RICH2)
-		sz = wx.GridBagSizer()
-		sz.Add(self.t, 0, wx.EXPAND | wx.ALL)
+		self.t = wx.TextCtrl(self, wx.ID_ANY, size=(600, -1), style=wx.TE_MULTILINE|wx.TE_RICH2)
+		sz.Add(self.t, 0, flag=wx.TOP, border=10)
 
 		self.SetSizer(sz)
 		self.Layout()
