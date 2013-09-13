@@ -147,15 +147,23 @@ class Slic3rCfgDialog(wx.Dialog):
 		
 		btn = wx.Button(self, wx.ID_CANCEL)
 		btnsizer.AddButton(btn)
+
+		btnsizer.Realize()
+	
+		btnsizer2 = wx.BoxSizer()
 		
 		btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSlicecfg, size=BUTTONDIM)
 		btn.SetToolTipString("Configure Slicer")
 		self.Bind(wx.EVT_BUTTON, self.cfgSlicer, btn)
 		
-		btnsizer.AddButton(btn)
-		btnsizer.Realize()
+		btnsizer2.Add(btn)
 
-		sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		row = wx.BoxSizer(wx.HORIZONTAL)
+		row.Add(btnsizer)
+		row.AddSpacer((10, 100))
+		row.Add(btnsizer2)
+		
+		sizer.Add(row, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
