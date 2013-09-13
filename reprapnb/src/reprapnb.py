@@ -44,13 +44,9 @@ class MainFrame(wx.Frame):
 		self.discPending = False
 		self.M105pending = False
 		self.printPosition = None
+		self.logger = None
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-
-		self.logger = Logger(self, wx.ID_ANY, "logger")
-		self.logger.Show()
-		
-		self.logger.LogMessage("Hello there")
 		
 		self.settings = Settings(self, cmd_folder)
 		
@@ -60,7 +56,7 @@ class MainFrame(wx.Frame):
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
-			self.logger.LogError("Unable to get slicer settings")
+			print "Unable to get slicer settings"
 			
 		self.buildarea = self.slicer.getSlicerParameters()[0]
 			
@@ -134,26 +130,26 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_TOOL, self.doSliceConfig, id=TB_TOOL_SLICECFG)
 			
 		self.tb.AddSeparator()
-				
-		self.tb.AddSimpleTool(TB_TOOL_LOG, self.images.pngLog, "Hide/Show log window", "")
-		self.Bind(wx.EVT_TOOL, self.doShowHideLog, id=TB_TOOL_LOG)
-		self.logShowing = True
 
 		self.tb.Realize()
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		self.nb = wx.Notebook(p, style=wx.NB_TOP)
 
-		self.pxPlater = 0
-		self.pxFilePrep = 1
-		self.pxManCtl = 2
-		self.pxPrtMon = 3
+		self.logger = Logger(self.nb, self)
+		
+		self.pxLogger = 0
+		self.pxPlater = 1
+		self.pxFilePrep = 2
+		self.pxManCtl = 3
+		self.pxPrtMon = 4
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
 		self.pgManCtl = ManualControl(self.nb, self)
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
+		self.nb.AddPage(self.logger, "Log")
 		self.nb.AddPage(self.pgPlater, "Plating")
 		self.nb.AddPage(self.pgFilePrep, "File Preparation")
 		self.nb.AddPage(self.pgManCtl, "Manual Control")
@@ -166,7 +162,6 @@ class MainFrame(wx.Frame):
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
 		
-#		self.slicer.setProfile()
 		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
 		self.updateWithSlicerInfo()  # initially populate with current slicer info
 		
@@ -174,6 +169,8 @@ class MainFrame(wx.Frame):
 			self.nb.SetSelection(self.pxPlater)
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)
+			
+		self.logger.LogMessage("Reprap host ready!")
 
 	def evtRepRap(self, evt):
 		if evt.event == RECEIVED_MSG:
@@ -181,13 +178,6 @@ class MainFrame(wx.Frame):
 				self.logger.LogMessage(evt.msg)
 		else:
 			self.pgPrtMon.reprapEvent(evt)
-	
-	def doShowHideLog(self, evt):
-		self.logShowing = not self.logShowing
-		if self.logShowing:
-			self.logger.Show()
-		else:
-			self.logger.Hide()
 		
 	def checkPageChanged(self, evt):
 		newPage = evt.GetSelection()

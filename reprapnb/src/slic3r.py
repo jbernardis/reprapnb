@@ -5,7 +5,9 @@ Created on Jun 20, 2013
 '''
 import os, time, tempfile
 import wx
+import shlex, subprocess
 
+BUTTONDIM = (48, 48)
 
 BASE_ID = 500
 
@@ -145,13 +147,30 @@ class Slic3rCfgDialog(wx.Dialog):
 		
 		btn = wx.Button(self, wx.ID_CANCEL)
 		btnsizer.AddButton(btn)
+		
+		btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSlicecfg, size=BUTTONDIM)
+		btn.SetToolTipString("Configure Slicer")
+		self.Bind(wx.EVT_BUTTON, self.cfgSlicer, btn)
+		
+		btnsizer.AddButton(btn)
 		btnsizer.Realize()
 
 		sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
-		
+
+	def cfgSlicer(self, evt):
+		s = self.parent.settings['config']
+		cmd = os.path.expandvars(os.path.expanduser(self.app.replace(s)))
+
+		args = shlex.split(str(cmd))
+		try:
+			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+		except:
+			print "Exception occurred trying to spawn slicer"
+			return
+
 	def getValues(self):
 		return [self.vprinter, self.vprint, self.vfilament]
 		
@@ -181,7 +200,6 @@ class Slic3rCfgDialog(wx.Dialog):
 class Slic3r:
 	def __init__(self, app, parent):
 		self.app = app
-		self.logger = self.app.logger
 		self.parent = parent
 		
 	def getSettingsKeys(self):
@@ -370,7 +388,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "print"))
 			l = os.listdir(pdir)
 		except:
-			self.logger.LogError("Unable to get print profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
+			print "Unable to get print profiles from slic3r profile directory: " + self.parent.settings['profiledir']
 			return {}
 		r = {}
 		for f in sorted(l):
@@ -385,7 +403,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "filament"))
 			l = os.listdir(pdir)
 		except:
-			self.logger.LogError("Unable to get filament profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
+			print "Unable to get filament profiles from slic3r profile directory: " + self.parent.settings['profiledir']
 			return {}
 		r = {}
 		for f in sorted(l):
@@ -401,7 +419,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "printer"))
 			l = os.listdir(pdir)
 		except:
-			self.logger.LogError("Unable to get printer profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
+			print "Unable to get printer profiles from slic3r profile directory: " + self.parent.settings['profiledir']
 			return {}
 		
 		r = {}

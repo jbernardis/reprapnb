@@ -49,14 +49,12 @@ class Extruder(wx.Window):
 		sizerExtrude.Add(self.tEDistance, pos=(3,4))
 		self.tEDistance.Bind(wx.EVT_KILL_FOCUS, self.evtEDistanceKillFocus)
 		
-		self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
-				
-		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExtrude, size=BUTTONDIM)
+		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")
 		sizerExtrude.Add(self.bExtrude, pos=(4,4))
 		self.Bind(wx.EVT_BUTTON, self.doExtrude, self.bExtrude)
 				
-		self.bRetract = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRetract, size=BUTTONDIM)
+		self.bRetract = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngRetract, size=BUTTONDIM)
 		self.bRetract.SetToolTipString("Retract filament")
 		sizerExtrude.Add(self.bRetract, pos=(4,5))
 		self.Bind(wx.EVT_BUTTON, self.doRetract, self.bRetract)

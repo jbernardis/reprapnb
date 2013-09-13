@@ -71,20 +71,18 @@ class Heater(wx.Window):
 		self.slTarget.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 		self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
 		sizerHtr.Add(self.slTarget, pos=(3,1), span=(1,5))
-		
-		self.images = Images(os.path.join(self.parent.settings.cmdfolder, "images"))
 
-		self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeaton, size=BUTTONDIM)
+		self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeaton, size=BUTTONDIM)
 		self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
 		sizerHtr.Add(self.bHeatOn, pos=(1,1),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOn, self.bHeatOn)
 				
-		self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.images.pngHeatoff, size=BUTTONDIM)
+		self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeatoff, size=BUTTONDIM)
 		self.bHeatOff.SetToolTipString("Turn %s heater off" % self.name)
 		sizerHtr.Add(self.bHeatOff, pos=(1,2),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
 				
-		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.images.pngProfile, size=BUTTONDIM)
+		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
 		self.bProfile.SetToolTipString("Import from profile")
 		sizerHtr.Add(self.bProfile, pos=(1,5),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)

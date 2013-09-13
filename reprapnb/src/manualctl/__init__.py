@@ -6,6 +6,7 @@ from heater import Heater
 from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
 from toolchange import ToolChange
+from images import Images
 
 #FIXIT  G code ref
 
@@ -21,6 +22,8 @@ class ManualControl(wx.Panel):
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
+
+		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 
 		self.slFeedTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onFeedSpeedChanged, self.slFeedTimer)

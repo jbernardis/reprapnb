@@ -231,7 +231,6 @@ class RepRapParser:
 class RepRap:
 	def __init__(self, win, handler):
 		self.win = win
-		self.logger = self.win.logger
 		self.printer = None
 		self.online = False
 		self.printing = False
@@ -326,10 +325,10 @@ class RepRap:
 	def send_now(self, cmd):
 		verb = cmd.split()[0]
 		if not self.printer:
-			self.logger.LogWarning("Printer is off-line")
+			self.win.logger.LogWarning("Printer is off-line")
 			return False
 		elif self.printing and verb not in allow_while_printing:
-			self.logger.LogWarning("Command not allowed while printing")
+			self.win.logger.LogWarning("Command not allowed while printing")
 			return False
 		else:
 			return self._send(cmd, priority=True)

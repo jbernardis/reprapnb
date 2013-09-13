@@ -35,7 +35,7 @@ class SlicerSettings:
 			self.type = Slic3r(self.app, self)
 		else:
 			self.type = None
-			self.app.logger.logError("Unknown slicer type: %s" % self.name)
+			print "Unknown slicer type: %s" % self.name
 	
 	def setModified(self, flag=True):
 		self.modified = flag
@@ -91,7 +91,6 @@ class SlicerSettings:
 class Settings:
 	def __init__(self, app, folder):
 		self.app = app
-		self.logger = self.app.logger
 		self.cmdfolder = folder
 		self.inifile = os.path.join(folder, INIFILE)
 		self.slicer = "slic3r"
@@ -171,10 +170,10 @@ class Settings:
 		self.printmon = SettingsPrintMon(self, self.app, self.cfg, folder, "printmon")
 
 	def showWarning(self, msg):
-		self.logger.LogWarning(msg)
+		print "Settings WARNING: " + msg
 		
 	def showError(self, msg):
-		self.logger.LogWarning(msg)
+		print "Settings ERROR: " + msg
 				
 	def getSlicerSettings(self, slicer):
 		for i in range(len(self.slicers)):
@@ -242,7 +241,6 @@ class SettingsFilePrep:
 	def __init__(self, parent, app, cfg, folder, section):
 		self.parent = parent
 		self.app = app
-		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.gcodescale = 3
@@ -308,7 +306,6 @@ class SettingsPlater:
 	def __init__(self, parent, app, cfg, folder, section):
 		self.parent = parent
 		self.app = app
-		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.stlscale = 2
@@ -366,7 +363,6 @@ class SettingsManualCtl:
 	def __init__(self, parent, app, cfg, folder, section):
 		self.parent = parent
 		self.app = app
-		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 		
 		self.xyspeed = 2000
@@ -438,7 +434,6 @@ class SettingsPrintMon:
 	def __init__(self, parent, app, cfg, folder, section):
 		self.parent = parent
 		self.app = app
-		self.logger = self.app.logger
 		self.cmdfolder = os.path.join(folder, section)
 		
 		self.gcodescale = 3
