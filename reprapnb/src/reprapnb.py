@@ -165,7 +165,9 @@ class MainFrame(wx.Frame):
 		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
 		self.updateWithSlicerInfo()  # initially populate with current slicer info
 		
-		if self.settings.startpane == self.pxPlater:
+		if self.settings.startpane == self.pxLogger:
+			self.nb.SetSelection(self.pxLogger)
+		elif self.settings.startpane == self.pxPlater:
 			self.nb.SetSelection(self.pxPlater)
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)

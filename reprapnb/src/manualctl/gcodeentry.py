@@ -23,18 +23,18 @@ class GCodeEntry(wx.Window):
 		self.Bind(wx.EVT_BUTTON, self.onClear, self.bClear)
 
 		sizerGCode.AddSpacer((10, 10))
-		sizerGCode.Add(self.tGCode, flag=wx.TOP, border=10)
+		sizerGCode.Add(self.tGCode, flag=wx.TOP, border=20)
 		sizerGCode.AddSpacer((10, 10))
-		sizerGCode.Add(self.bSend)
+		sizerGCode.Add(self.bSend, flag=wx.TOP | wx.BOTTOM, border=10)
 		sizerGCode.AddSpacer((10, 10))
-		sizerGCode.Add(self.bClear)
+		sizerGCode.Add(self.bClear, flag=wx.TOP | wx.BOTTOM, border=10)
 		sizerGCode.AddSpacer((10, 10))
 		self.SetSizer(sizerGCode)
 		self.Layout()
 		self.Fit()
 		
 	def evtGCodeSend(self, evt):
-		cmd = self.tGCode.GetValue().upper()
+		cmd = self.tGCode.GetValue()
 		self.app.reprap.send_now(cmd)
 		
 	def onClear(self, evt):

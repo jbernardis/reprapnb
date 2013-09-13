@@ -1,9 +1,7 @@
-4) implement send gcode - add send and clear buttons    <==
 11) figure out how to include skeinforge
 14) SD support
-16) previous layer in prtmon is too bright - I think I fixed it - need to test
 18) read G code in a thread - add intermittent reports to log
-19) remove floating log and put into its own tab     <==
 20) add slicer configuration string to main toolbar near slicer selection
-21) add a button on slicer config dlg box to launch slicer setup      <==
 22) need a tool change mechanism
+23) logging screen features - write to disk, purge if too big, etc
+24) refresh button in slicer cfg - forces reread of config info

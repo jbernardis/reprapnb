@@ -17,8 +17,8 @@ class Logger(wx.Panel):
 
 		sz = wx.BoxSizer(wx.VERTICAL)
 		
-		self.t = wx.TextCtrl(self, wx.ID_ANY, size=(600, -1), style=wx.TE_MULTILINE|wx.TE_RICH2)
-		sz.Add(self.t, flag=wx.EXPAND | wx.ALL)
+		self.t = wx.TextCtrl(self, wx.ID_ANY, size=(300, 600), style=wx.TE_MULTILINE|wx.TE_RICH2)
+		sz.Add(self.t, flag=wx.EXPAND | wx.ALL, border=10)
 
 		self.SetSizer(sz)
 		self.Layout()

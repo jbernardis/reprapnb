@@ -122,8 +122,8 @@ class Settings:
 						self.showWatrning("Invalid value for startpane")
 						self.startpane = 0
 						self.modified = True
-					if self.startpane not in [0, 1]:
-						self.showWarning("Startpane may only be 0, or 1")
+					if self.startpane not in [0, 1, 2]:
+						self.showWarning("Startpane may only be 0, 1, or 2")
 						self.startpane = 0
 						self.modified = True
 						

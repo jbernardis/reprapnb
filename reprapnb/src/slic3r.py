@@ -58,15 +58,16 @@ def checkTagList(s, tag):
 	return r
 
 class Slic3rCfgDialog(wx.Dialog):
-	def __init__(self, parent, vprinter, printers, extCount, vprint, prints, vfilament, filaments):
-		self.parent = parent
-		self.vprinter = vprinter
+	def __init__(self, app, settings, printers, extCount, prints, filaments):
+		self.app = app
+		self.settings = settings
+		self.vprinter = self.settings['printer']
 		self.printers = printers
 		self.extCount = extCount
-		self.nExtr = extCount[vprinter]
-		self.vprint = vprint
+		self.nExtr = extCount[self.vprinter]
+		self.vprint = self.settings['print']
 		self.prints = prints
-		self.vfilament = [i for i in vfilament]
+		self.vfilament = [i for i in self.settings['filament']]
 		self.filaments = filaments
 		
 		pre = wx.PreDialog()
@@ -74,7 +75,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		pos = wx.DefaultPosition
 		sz = wx.DefaultSize
 		style = wx.DEFAULT_DIALOG_STYLE
-		pre.Create(parent, wx.ID_ANY, "Slic3r Profiles", pos, sz, style)
+		pre.Create(app, wx.ID_ANY, "Slic3r Profiles", pos, sz, style)
 		self.PostCreate(pre)
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
@@ -152,15 +153,15 @@ class Slic3rCfgDialog(wx.Dialog):
 	
 		btnsizer2 = wx.BoxSizer()
 		
-		btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSlicecfg, size=BUTTONDIM)
+		btn = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSlicecfg, size=BUTTONDIM)
 		btn.SetToolTipString("Configure Slicer")
 		self.Bind(wx.EVT_BUTTON, self.cfgSlicer, btn)
 		
 		btnsizer2.Add(btn)
 
 		row = wx.BoxSizer(wx.HORIZONTAL)
-		row.Add(btnsizer)
-		row.AddSpacer((10, 100))
+		row.Add(btnsizer, flag=wx.TOP, border=10)
+		row.AddSpacer((100, 10))
 		row.Add(btnsizer2)
 		
 		sizer.Add(row, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
@@ -169,7 +170,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		sizer.Fit(self)
 
 	def cfgSlicer(self, evt):
-		s = self.parent.settings['config']
+		s = self.settings['config']
 		cmd = os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 
 		args = shlex.split(str(cmd))
@@ -245,9 +246,8 @@ class Slic3r:
 			
 		oldNExtr = self.printerext[self.parent.settings['printer']]
 		
-		dlg = Slic3rCfgDialog(self.app, self.parent.settings['printer'], self.printermap, self.printerext,
-								self.parent.settings['print'], self.printmap,
-								self.parent.settings['filament'], self.filmap)
+		dlg = Slic3rCfgDialog(self.app, self.parent.settings, self.printermap, self.printerext,
+					self.printmap, self.filmap)
 		dlg.CenterOnScreen()
 		val = dlg.ShowModal()
 	
