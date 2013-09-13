@@ -45,7 +45,7 @@ class MainFrame(wx.Frame):
 		self.M105pending = False
 		self.printPosition = None
 		self.logger = None
-		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1475, 950])
+		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)

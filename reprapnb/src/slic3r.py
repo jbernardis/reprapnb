@@ -58,24 +58,25 @@ def checkTagList(s, tag):
 	return r
 
 class Slic3rCfgDialog(wx.Dialog):
-	def __init__(self, app, settings, printers, extCount, prints, filaments):
-		self.app = app
-		self.settings = settings
+	def __init__(self, slicer):
+		self.slicer = slicer
+		self.app = slicer.app
+		self.settings = slicer.parent.settings
 		self.vprinter = self.settings['printer']
-		self.printers = printers
-		self.extCount = extCount
-		self.nExtr = extCount[self.vprinter]
+		self.printermap = slicer.printermap
+		self.printerext = slicer.printerext
+		self.nExtr = slicer.printerext[self.vprinter]
 		self.vprint = self.settings['print']
-		self.prints = prints
+		self.printmap = slicer.printmap
 		self.vfilament = [i for i in self.settings['filament']]
-		self.filaments = filaments
+		self.filmap = slicer.filmap
 		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 		pos = wx.DefaultPosition
 		sz = wx.DefaultSize
 		style = wx.DEFAULT_DIALOG_STYLE
-		pre.Create(app, wx.ID_ANY, "Slic3r Profiles", pos, sz, style)
+		pre.Create(self.app, wx.ID_ANY, "Slic3r Profiles", pos, sz, style)
 		self.PostCreate(pre)
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
@@ -92,7 +93,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		grid.Add(t, pos=(0,0), flag=wx.ALIGN_CENTER)
 		
 		self.cbPrinter = wx.ComboBox(self, wx.ID_ANY, self.vprinter, 
-			(-1, -1), (100, -1), self.printers.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+			(-1, -1), (100, -1), self.printermap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
 		grid.Add(self.cbPrinter, pos=(0,1))
@@ -106,7 +107,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		grid.Add(t, pos=(0,2), flag=wx.ALIGN_CENTER)
 	
 		self.cbPrint = wx.ComboBox(self, wx.ID_ANY, self.vprint,
- 			(-1, -1), (120, -1), self.prints.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+ 			(-1, -1), (120, -1), self.printmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrint.SetFont(f)
 		self.cbPrint.SetToolTipString("Choose which print profile to use")
 		grid.Add(self.cbPrint, pos=(0,3))
@@ -124,9 +125,9 @@ class Slic3rCfgDialog(wx.Dialog):
 			if i < self.nExtr:
 				v = self.vfilament[i]
 			else:
-				v = self.filaments.keys()[0]
+				v = self.filmap.keys()[0]
 			cb = wx.ComboBox(self, BASE_ID+i, v,
- 				(-1, -1), (120, -1), self.filaments.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+ 				(-1, -1), (120, -1), self.filmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 			cb.SetFont(f)
 			cb.SetToolTipString("Choose which filament profile to use")
 			grid.Add(cb, pos=(i, 5))
@@ -157,7 +158,13 @@ class Slic3rCfgDialog(wx.Dialog):
 		btn.SetToolTipString("Configure Slicer")
 		self.Bind(wx.EVT_BUTTON, self.cfgSlicer, btn)
 		
-		btnsizer2.Add(btn)
+		btnsizer2.Add(btn, flag=wx.ALL, border=5)
+		
+		btn = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngRefresh, size=BUTTONDIM)
+		btn.SetToolTipString("Refresh Slicer Profiles")
+		self.Bind(wx.EVT_BUTTON, self.refreshSlicer, btn)
+		
+		btnsizer2.Add(btn, flag=wx.ALL, border=5)
 
 		row = wx.BoxSizer(wx.HORIZONTAL)
 		row.Add(btnsizer, flag=wx.TOP, border=10)
@@ -180,18 +187,48 @@ class Slic3rCfgDialog(wx.Dialog):
 			print "Exception occurred trying to spawn slicer"
 			return
 
+	def refreshSlicer(self, evt):
+		self.slicer.initialize()
+		if self.vprinter not in self.printermap.keys():
+			self.vprinter = self.printermap.keys()[0]
+			
+		self.nExtr = self.printerext[self.vprinter]
+		
+		if self.vprint not in self.printmap.keys():
+			self.vprint = self.printmap.keys()[0]
+			
+		dftFil = self.filmap.keys()[0]
+		for i in range(len(self.vfilament)):
+			if self.vfilament[i] not in self.filmap.keys():
+				self.vfilament[i] = dftFil
+				
+		self.cbPrinter.SetItems(self.printermap.keys())
+		self.cbPrinter.SetStringSelection(self.vprinter)
+		
+		self.cbPrint.SetItems(self.printmap.keys())
+		self.cbPrint.SetStringSelection(self.vprint)
+		
+		for i in range(len(self.cbFilament)):
+			self.cbFilament[i].SetItems(self.filmap.keys())
+			if i < self.nExtr:
+				self.cbFilament[i].SetStringSelection(self.vfilament[i])
+				self.cbFilament[i].Enable(True)
+			else:
+				self.cbFilament[i].SetStringSelection(dftFil)
+				self.cbFilament[i].Enable(False)
+	
 	def getValues(self):
 		return [self.vprinter, self.vprint, self.vfilament]
 		
 	def doChoosePrinter(self, evt):
-		oldNExtr = self.extCount[self.vprinter]
+		oldNExtr = self.printerext[self.vprinter]
 		self.vprinter = self.cbPrinter.GetValue()
-		self.nExtr = self.extCount[self.vprinter]
+		self.nExtr = self.printerext[self.vprinter]
 		
 		for i in range(3):
 			self.cbFilament[i].Enable(i<self.nExtr)
 			if i >= oldNExtr:
-				self.vfilament.append(self.filaments.keys()[0])
+				self.vfilament.append(self.filmap.keys()[0])
 
 		self.vfilament = self.vfilament[:self.nExtr]
 
@@ -246,8 +283,8 @@ class Slic3r:
 			
 		oldNExtr = self.printerext[self.parent.settings['printer']]
 		
-		dlg = Slic3rCfgDialog(self.app, self.parent.settings, self.printermap, self.printerext,
-					self.printmap, self.filmap)
+		dlg = Slic3rCfgDialog(self) #self.app, self.parent.settings, self.printermap, self.printerext,
+					#self.printmap, self.filmap)
 		dlg.CenterOnScreen()
 		val = dlg.ShowModal()
 	
