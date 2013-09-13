@@ -180,6 +180,7 @@ class PrintMonitor(wx.Panel):
 		elif evt.event == PRINT_STOPPED:
 			self.paused = True
 			self.printing = False
+			self.reprap.printStopped()
 			self.setPrintMode(PRINT_MODE_RESTART)
 			self.setPauseMode(PAUSE_MODE_RESUME)
 			self.bPrint.Enable(True)
@@ -189,6 +190,7 @@ class PrintMonitor(wx.Panel):
 		elif evt.event == PRINT_COMPLETE:
 			self.printing = False
 			self.paused = False
+			self.reprap.printComplete()
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)

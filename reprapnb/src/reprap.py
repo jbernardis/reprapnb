@@ -321,6 +321,14 @@ class RepRap:
 		self._sendCmd(CMD_DRAINQUEUE)
 		self.printing = False
 		self.paused = False
+		
+	def printStopped(self):
+		self.printing = False
+		self.paused = True
+		
+	def printComplete(self):
+		self.printing = False
+		self.paused = False
 				
 	def send_now(self, cmd):
 		verb = cmd.split()[0]

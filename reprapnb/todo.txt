@@ -1,7 +1,9 @@
-11) figure out how to include skeinforge
+11) figure out how to include skeinforge (or at least SFACT)
 14) SD support
 18) read G code in a thread - add intermittent reports to log
-20) add slicer configuration string to main toolbar near slicer selection
 22) need a tool change mechanism
 23) logging screen features - write to disk, purge if too big, etc
-24) refresh button in slicer cfg - forces reread of config info
+24) G Code Reference
+25) Macros
+26) Firmware Update
+27) figure out what's wrong with time estimation
