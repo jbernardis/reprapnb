@@ -82,7 +82,6 @@ class InfoPane (wx.Window):
 
 	def setValue(self, tag, value):
 		if tag not in self.wValues.keys():
-			print "bad key ", tag
 			return
 
 		self.wValues[tag].SetLabel(value)
@@ -156,9 +155,9 @@ class InfoPane (wx.Window):
 			strRemains = formatElapsed(remains)
 			pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
 			if pctDiff < 100:
-				schedule = "%.3f ahead of schedule" % (100.0-pctDiff)
+				schedule = "%.3f%% ahead of schedule" % (100.0-pctDiff)
 			elif pctDiff >100:
-				schedule = "%.3f behind schedule" % (pctDiff - 100)
+				schedule = "%.3f%% behind schedule" % (pctDiff - 100)
 			else:
 				schedule = "on schedule"
 			self.setValue("eta2", "Remaining: %s  (%s)" % (strRemains, schedule))
@@ -171,7 +170,6 @@ class InfoPane (wx.Window):
 		self.eta = start + self.duration
 		
 	def setPrintComplete(self):
-		print "called print complete"
 		end = time.time();
 		strEnd = time.strftime('%H:%M:%S', time.localtime(end))
 		

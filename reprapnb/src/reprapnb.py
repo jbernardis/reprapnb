@@ -209,9 +209,7 @@ class MainFrame(wx.Frame):
 			self.logger.LogError("No bed temperatures configured in slicer")
 			return
 
-		print "change printer in man ctl", hetemps, bedtemps
 		self.pgManCtl.changePrinter(hetemps, bedtemps)
-		print "change printer in prt mon"
 		self.pgPrtMon.changePrinter(hetemps, bedtemps)
 		
 	def doChooseSlicer(self, evt):
@@ -224,9 +222,7 @@ class MainFrame(wx.Frame):
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():
-			print "back from slice config true"
 			self.updateWithSlicerInfo()
-		print "back from slice config"
 		
 	def doPort(self, evt):
 		l = self.scanSerial()

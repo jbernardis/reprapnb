@@ -53,9 +53,7 @@ class SlicerThread:
 		return self.running
 
 	def Run(self):
-		print "(%s)" % self.cmd
 		args = shlex.split(str(self.cmd))
-		print args
 		try:
 			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:

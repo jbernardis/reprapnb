@@ -39,7 +39,6 @@ class ToolChange(wx.Window):
 		for i in range(3):
 			if tc_sel is self.rbTools[i]:
 				self.currentSelection = i
-				print "Selected tool ", i
 				break
 		
 	def changePrinter(self, nextr):

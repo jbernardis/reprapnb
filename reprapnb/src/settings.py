@@ -148,9 +148,6 @@ class Settings:
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
 					if opt in slicerArrayKeys:
-						print "Array option ", opt
-						print "Array value ", value
-						print "asplit value ", value.split(',')
 						st.settings[opt] = value.split(',')
 					elif opt in slicerKeys:
 						st.settings[opt] = value
@@ -174,11 +171,9 @@ class Settings:
 		self.printmon = SettingsPrintMon(self, self.app, self.cfg, folder, "printmon")
 
 	def showWarning(self, msg):
-		print msg
 		self.logger.LogWarning(msg)
 		
 	def showError(self, msg):
-		print msg
 		self.logger.LogWarning(msg)
 				
 	def getSlicerSettings(self, slicer):

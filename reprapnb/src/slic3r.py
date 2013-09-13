@@ -67,10 +67,6 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.vfilament = [i for i in vfilament]
 		self.filaments = filaments
 		
-		print "in db - (", vprinter, ") (", printers, ") ", extCount
-		print "in db - (", vprint, ") (", prints, ") "
-		print "in db - (", vfilament, ") (", filaments, ") "
-		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 		pos = wx.DefaultPosition
@@ -177,7 +173,6 @@ class Slic3rCfgDialog(wx.Dialog):
 	def doChooseFilament(self, evt):
 		myId = evt.GetId() - BASE_ID
 		if myId < 0 or myId > 2:
-			print "ID out of range"
 			return
 
 		self.vfilament[myId] = self.cbFilament[myId].GetValue()
@@ -204,7 +199,6 @@ class Slic3r:
 		self.getFilamentOptions()		
 		fl = []
 		for p in self.parent.settings['filament']:
-			print "In filament loop for ", p
 			if p in self.filmap.keys():
 				fl.append(self.filmap[p])
 			else:
@@ -222,7 +216,6 @@ class Slic3r:
 		self.getPrintOptions()
 		self.getPrinterOptions()
 		self.getFilamentOptions()
-		print "calling db with ", self.parent.settings['filament']
 			
 		oldNExtr = self.printerext[self.parent.settings['printer']]
 		
@@ -237,7 +230,6 @@ class Slic3r:
 			return False
 		
 		vprinter, vprint, vfilament = dlg.getValues()
-		print "dlg results = ", vprinter, vprint, vfilament
 		dlg.Destroy()
 
 		chg = False
@@ -257,18 +249,14 @@ class Slic3r:
 				self.parent.settings['printerfile'] = None
 			chg = True
 		
-		print "after dlg"
 		if vprinter in self.printerext.keys():
 			nExtr = self.printerext[vprinter]
-			print "nextr = ", nExtr, oldNExtr
 			if nExtr > oldNExtr:
 				a = ["" for i in range(nExtr - oldNExtr)]
 				self.parent.settings['filament'].extend(a)
 				self.parent.settings['filamentfile'].extend(a)
 			for i in range(3):
-				print "i = ", i
 				if i < nExtr:
-					print self.parent.settings['filament'][i], vfilament[i]
 					if self.parent.settings['filament'][i] != vfilament[i]:
 						self.parent.settings['filament'][i] = vfilament[i]
 						if vfilament[i] in self.filmap.keys():
@@ -372,8 +360,7 @@ class Slic3r:
 	
 	def sliceComplete(self):
 		if self.tempFile is not None:
-			print "delete of %s is commented out" % self.tempFile
-			#os.unlink(self.tempFile)
+			os.unlink(self.tempFile)
 		self.tempFile = None
 		del self.parent.settings['configfile']
 		

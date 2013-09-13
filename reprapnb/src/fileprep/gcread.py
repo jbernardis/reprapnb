@@ -16,12 +16,15 @@ class Line(object):
 		
 		self.orig = l
 		
-		self.raw = l.upper().lstrip()
+		self.raw = l.lstrip()
 		self.imperial = False
 		self.relative = False
 		
 		if ";" in self.raw:
 			self.raw = self.raw.split(";")[0]
+			
+		if self.raw.startswith("M117"):
+			self.raw += " "
 		
 		if self.movement(self.raw):
 			self._parse_coordinates()
