@@ -57,6 +57,8 @@ def checkTagList(s, tag):
 			return None
 	return r
 
+CBSIZE = 200
+
 class Slic3rCfgDialog(wx.Dialog):
 	def __init__(self, slicer):
 		self.slicer = slicer
@@ -93,7 +95,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		grid.Add(t, pos=(0,0), flag=wx.ALIGN_CENTER)
 		
 		self.cbPrinter = wx.ComboBox(self, wx.ID_ANY, self.vprinter, 
-			(-1, -1), (100, -1), self.printermap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+			(-1, -1), (CBSIZE, -1), self.printermap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which printer profile to use")
 		grid.Add(self.cbPrinter, pos=(0,1))
@@ -107,7 +109,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		grid.Add(t, pos=(0,2), flag=wx.ALIGN_CENTER)
 	
 		self.cbPrint = wx.ComboBox(self, wx.ID_ANY, self.vprint,
- 			(-1, -1), (120, -1), self.printmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+ 			(-1, -1), (CBSIZE, -1), self.printmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrint.SetFont(f)
 		self.cbPrint.SetToolTipString("Choose which print profile to use")
 		grid.Add(self.cbPrint, pos=(0,3))
@@ -127,7 +129,7 @@ class Slic3rCfgDialog(wx.Dialog):
 			else:
 				v = self.filmap.keys()[0]
 			cb = wx.ComboBox(self, BASE_ID+i, v,
- 				(-1, -1), (120, -1), self.filmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
+ 				(-1, -1), (CBSIZE, -1), self.filmap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 			cb.SetFont(f)
 			cb.SetToolTipString("Choose which filament profile to use")
 			grid.Add(cb, pos=(i, 5))
@@ -189,6 +191,12 @@ class Slic3rCfgDialog(wx.Dialog):
 
 	def refreshSlicer(self, evt):
 		self.slicer.initialize()
+		
+		self.printermap = self.slicer.printermap
+		self.printerext = self.slicer.printerext
+		self.printmap = self.slicer.printmap
+		self.filmap = self.slicer.filmap
+
 		if self.vprinter not in self.printermap.keys():
 			self.vprinter = self.printermap.keys()[0]
 			
@@ -251,10 +259,15 @@ class Slic3r:
 	def getSettingsKeys(self):
 		return ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config'], ['filament', 'filamentfile']
 		
-	def initialize(self):
+	def initialize(self, flag=False):
+		if flag:
+			self.vprinter = self.parent.settings['printer']
+			self.vprint = self.parent.settings['print']
+			self.vfilament = [f for f in self.parent.settings['filament']]
+			
 		self.getPrintOptions()
 		self.tempFile = None
-		p = self.parent.settings['print']
+		p = self.vprint
 		if p in self.printmap.keys():
 			self.parent.settings['printfile'] = self.printmap[p]
 		else:
@@ -262,7 +275,7 @@ class Slic3r:
 
 		self.getFilamentOptions()		
 		fl = []
-		for p in self.parent.settings['filament']:
+		for p in self.vfilament:
 			if p in self.filmap.keys():
 				fl.append(self.filmap[p])
 			else:
@@ -270,7 +283,7 @@ class Slic3r:
 		self.parent.settings['filamentfile'] = fl
 
 		self.getPrinterOptions()		
-		p = self.parent.settings['printer']
+		p = self.vprinter
 		if p in self.printermap.keys():
 			self.parent.settings['printerfile'] = self.printermap[p]
 		else:
@@ -292,38 +305,38 @@ class Slic3r:
 			dlg.Destroy()
 			return False
 		
-		vprinter, vprint, vfilament = dlg.getValues()
+		self.vprinter, self.vprint, self.vfilament = dlg.getValues()
 		dlg.Destroy()
 
 		chg = False
-		if self.parent.settings['print'] != vprint:
-			self.parent.settings['print'] = vprint
-			if vprint in self.printmap.keys():
-				self.parent.settings['printfile'] = self.printmap[vprint]
+		if self.parent.settings['print'] != self.vprint:
+			self.parent.settings['print'] = self.vprint
+			if self.vprint in self.printmap.keys():
+				self.parent.settings['printfile'] = self.printmap[self.vprint]
 			else:
 				self.parent.settings['printfile'] = None
 			chg = True
 
-		if self.parent.settings['printer'] != vprinter:
-			self.parent.settings['printer'] = vprinter
-			if vprinter in self.printermap.keys():
-				self.parent.settings['printerfile'] = self.printermap[vprinter]
+		if self.parent.settings['printer'] != self.vprinter:
+			self.parent.settings['printer'] = self.vprinter
+			if self.vprinter in self.printermap.keys():
+				self.parent.settings['printerfile'] = self.printermap[self.vprinter]
 			else:
 				self.parent.settings['printerfile'] = None
 			chg = True
 		
-		if vprinter in self.printerext.keys():
-			nExtr = self.printerext[vprinter]
+		if self.vprinter in self.printerext.keys():
+			nExtr = self.printerext[self.vprinter]
 			if nExtr > oldNExtr:
 				a = ["" for i in range(nExtr - oldNExtr)]
 				self.parent.settings['filament'].extend(a)
 				self.parent.settings['filamentfile'].extend(a)
 			for i in range(3):
 				if i < nExtr:
-					if self.parent.settings['filament'][i] != vfilament[i]:
-						self.parent.settings['filament'][i] = vfilament[i]
-						if vfilament[i] in self.filmap.keys():
-							self.parent.settings['filamentfile'][i] = self.filmap[vfilament[i]]
+					if self.parent.settings['filament'][i] != self.vfilament[i]:
+						self.parent.settings['filament'][i] = self.vfilament[i]
+						if self.vfilament[i] in self.filmap.keys():
+							self.parent.settings['filamentfile'][i] = self.filmap[self.vfilament[i]]
 						else:
 							self.parent.settings['filamentfile'][i] = None
 						chg = True
@@ -336,7 +349,7 @@ class Slic3r:
 		return chg
 		
 	def getConfigString(self):
-		return str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament)
+		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament) + ")"
 		
 	def getSlicerParameters(self):
 		heTemps = []

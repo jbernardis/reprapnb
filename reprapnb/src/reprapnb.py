@@ -32,6 +32,8 @@ TB_TOOL_LOG = 19
 TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
 
+MAXCFGCHARS = 80
+
 BUTTONDIM = (64, 64)
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
@@ -128,6 +130,13 @@ class MainFrame(wx.Frame):
 		
 		self.tb.AddSimpleTool(TB_TOOL_SLICECFG, self.images.pngSlicecfg, "Choose slicer options", "")
 		self.Bind(wx.EVT_TOOL, self.doSliceConfig, id=TB_TOOL_SLICECFG)
+		
+		text = self.slicer.type.getConfigString()
+		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
+		self.tSlicerCfg = wx.StaticText(self.tb, wx.ID_ANY, "", style=wx.ALIGN_RIGHT, size=(w, h))
+		self.tSlicerCfg.SetFont(f)
+		self.updateSlicerConfigString(text)
+		self.tb.AddControl(self.tSlicerCfg)
 			
 		self.tb.AddSeparator()
 
@@ -190,8 +199,14 @@ class MainFrame(wx.Frame):
 			evt.Veto()
 		else:
 			evt.Skip()
+						
+	def updateSlicerConfigString(self, text):
+		if len(text) > MAXCFGCHARS:
+			text = text[:MAXCFGCHARS]
+		self.tSlicerCfg.SetLabel(text)
 
-	def updateWithSlicerInfo(self):		
+	def updateWithSlicerInfo(self):	
+		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		(hetemps, bedtemps) = self.slicer.getSlicerParameters()[2:4]
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")

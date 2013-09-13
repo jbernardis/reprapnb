@@ -45,7 +45,7 @@ class SlicerSettings:
 	
 	def initialize(self):
 		if self.type is not None:
-			self.type.initialize()
+			self.type.initialize(True)
 			
 	def getSettingsKeys(self):
 		if self.type is None:
