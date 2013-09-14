@@ -19,6 +19,7 @@ class Line(object):
 		self.raw = l.lstrip()
 		self.imperial = False
 		self.relative = False
+		self.relative_e = False
 		
 		if ";" in self.raw:
 			self.raw = self.raw.split(";")[0]
@@ -71,6 +72,10 @@ class Line(object):
 		
 	def setRelative(self, r):
 		self.relative = r
+		self.relative_e = r
+
+	def setRelativeE(self, r):
+		self.relative_e = r
 
 	x = property(_getx,_setx)
 	y = property(_gety,_sety)
@@ -120,7 +125,7 @@ class Layer:
 		self.layernumber = ln
 		self.startlx = lx
 		
-	def addMove(self, x=None, y=None, z=None, e=None, speed=None, relative=False, line=0):
+	def addMove(self, x=None, y=None, z=None, e=None, speed=None, relative=False, relative_e=False, line=0):
 		if x is None:
 			cx = self.currentx
 		elif relative:
@@ -238,17 +243,25 @@ class GCode(object):
 		layerstartx = 0
 		
 		relative = False
+		relative_e = False
 		for ln in self.lines:
 			lx += 1
 				
 			if ln.command() == "G91":
 				relative = True
+				relative_e = True
 			elif ln.command() == "G90":
 				relative = False
+				relative_e = False
+			elif ln.command() == "M82":
+				relative_e = True
+			elif ln.command() == "M83":
+				relative_e = False
 			elif ln.command() == "G92":
 				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e, lx)
 			elif ln.is_move():
 				ln.setRelative(relative)
+				ln.setRelativeE(relative_e)
 				if ln.z is not None and ((not relative and ln.z != self.currentheight) or (relative and ln.z != 0)):
 					if ln.x is None:
 						cx = lyr.currentx
@@ -282,7 +295,7 @@ class GCode(object):
 					self.layerlines.append([layerstartx, lx-1])
 					layerstartx = lx
 				else:
-					lyr.addMove(ln.x, ln.y, ln.z, ln.e, ln.f, relative, lx)
+					lyr.addMove(ln.x, ln.y, ln.z, ln.e, ln.f, relative, relative_e, lx)
 
 		self.layerlines.append([layerstartx, lx])	
 						
@@ -471,7 +484,7 @@ class GCode(object):
 					segment_start_e = cur_e
 					
 				if line.e:
-					if line.relative:
+					if line.relative_e:
 						cur_e += line.e
 					else:
 						cur_e = line.e
@@ -489,7 +502,7 @@ class GCode(object):
 	
 	def time(self):
 		
-		lastx = lasty = lastz = laste = lastf = 0.0
+		lastx = lasty = lastz = laste = lastf = lastdx = lastdy = 0.0
 		x = y = z = e = f = 0.0
 		currenttravel = 0.0
 		moveduration = 0.0
@@ -497,6 +510,7 @@ class GCode(object):
 		layerbeginduration = 0.0
 		layercount=0
 		relative=False
+		relative_e=False
 		
 		self.duration = 0.0
 		self.layer_time = []
@@ -504,9 +518,17 @@ class GCode(object):
 		for line in self.lines:
 			if "G90" in line.raw:
 				relative = False
+				relative_e = False
 				
 			elif "G91" in line.raw:
 				relative = True
+				relative_e = True
+				
+			elif "M82" in line.raw:
+				relative_e = False
+				
+			elif "M83" in line.raw:
+				relative_e = True
 				
 			elif "G92" in line.raw:
 				if line.x: lastx = x
@@ -556,7 +578,7 @@ class GCode(object):
 					e = line.e
 					if e is None:
 						e=laste
-					elif relative:
+					elif relative_e:
 						e+=laste
 						
 					f = line.f
@@ -569,22 +591,43 @@ class GCode(object):
 					# if travel is longer than req'd distance, then subtract distance to achieve full speed, and add the time it took to get there.
 					# then calculate the time taken to complete the remaining distance
 					
-					if x != lastx or y != lasty or z != lastz:
-						currenttravel = hypot3d(x, y, z, lastx, lasty, lastz)
-						distance = 2* ((lastf+f) * (f-lastf) * 0.5 ) / acceleration  #2x because we have to accelerate and decelerate
-						if distance <= currenttravel and ( lastf + f )!=0 and f!=0:
-							moveduration = 2 * distance / ( lastf + f )
-							currenttravel -= distance
-							moveduration = currenttravel/f
+					dx = x - lastx
+					dy = y - lasty
+					if dx * lastdx + dy * lastdy <= 0:
+						lastf = 0
+
+					moveduration = 0.0
+					currenttravel = math.hypot(dx, dy)
+					if currenttravel == 0:
+						if line.z is not None:
+							currenttravel = abs(line.z) if line.relative else abs(line.z - lastz)
+						elif line.e is not None:
+							currenttravel = abs(line.e) if line.relative_e else abs(line.e - laste)
+					# Feedrate hasn't changed, no acceleration/decceleration planned
+					if f == lastf:
+						moveduration = currenttravel / f if f != 0 else 0.
+					else:
+						# FIXME: review this better
+						# this looks wrong : there's little chance that the feedrate we'll decelerate to is the previous feedrate
+						# shouldn't we instead look at three consecutive moves ?
+						distance = 2 * abs(((lastf + f) * (f - lastf) * 0.5) / acceleration)  # multiply by 2 because we have to accelerate and decelerate
+						if distance <= currenttravel and lastf + f != 0 and f != 0:
+							moveduration = 2 * distance / (lastf + f)  # This is distance / mean(lastf, f)
+							moveduration += (currenttravel - distance) / f
 						else:
-							moveduration = math.sqrt( 2 * distance / acceleration )
+							moveduration = 2 * currenttravel / (lastf + f)  # This is currenttravel / mean(lastf, f)
+							# FIXME: probably a little bit optimistic, but probably a much better estimate than the previous one:
+							# moveduration = math.sqrt(2 * distance / acceleration) # probably buggy : not taking actual travel into account
+
+					lastdx = dx
+					lastdy = dy
 							
-						self.duration += moveduration
+					self.duration += moveduration
 		
-						if z != lastz:
-							layercount +=1
-							self.layer_time.append(self.duration-layerbeginduration)
-							layerbeginduration = self.duration
+					if z != lastz:
+						layercount +=1
+						self.layer_time.append(self.duration-layerbeginduration)
+						layerbeginduration = self.duration
 		
 					if x is not None: lastx = x
 					if y is not None: lasty = y
