@@ -254,9 +254,9 @@ class GCode(object):
 				relative = False
 				relative_e = False
 			elif ln.command() == "M82":
-				relative_e = True
-			elif ln.command() == "M83":
 				relative_e = False
+			elif ln.command() == "M83":
+				relative_e = True
 			elif ln.command() == "G92":
 				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e, lx)
 			elif ln.is_move():
