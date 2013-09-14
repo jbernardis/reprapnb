@@ -308,6 +308,7 @@ class PrintMonitor(wx.Panel):
 		self.gcf.redrawCurrentLayer()
 	
 	def forwardModel(self, model, name=""):
+		self.reprap.resetPrint()
 		self.model = model
 		self.name = name
 		if self.name == TEMPFILELABEL:

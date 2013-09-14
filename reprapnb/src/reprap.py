@@ -291,13 +291,14 @@ class RepRap:
 	def startPrint(self, data):
 		ln = 0
 		self._send("M110", lineno=-1, checksum=True)
+		self._sendCmd(CMD_STARTPRINT)
 		for l in data:
 			if l.raw.rstrip() != "":
 				self._send(l.raw, lineno=ln, checksum=True)
 				ln += 1
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
-		self._sendCmd(CMD_STARTPRINT)
+#		self._sendCmd(CMD_STARTPRINT)
 		self.printing = True
 		self.paused = False
 		

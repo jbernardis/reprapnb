@@ -6,4 +6,3 @@
 24) G Code Reference
 25) Macros
 26) Firmware Update
-27) figure out what's wrong with time estimation
