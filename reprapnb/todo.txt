@@ -2,7 +2,7 @@
 14) SD support
 18) read G code in a thread - add intermittent reports to log
 22) need a tool change mechanism
-23) logging screen features - write to disk, purge if too big, etc
+23) logging screen features - write to disk, purge if too big, clear, etc
 24) G Code Reference
 25) Macros
 26) Firmware Update

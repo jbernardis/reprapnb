@@ -304,7 +304,7 @@ class GcmFrame (wx.Window):
 			dc.SetPen(wx.Pen(c, w))
 			dc.DrawLine(x1, y1, x2, y2)
 				
-		if p[3] is not None and p[3] < prev[3]:
+		if p[3] is not None and p[3] < prev[3] and self.settings.showmoves:
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
 			dc.SetPen(wx.Pen("white", w))
 			dc.DrawLine(x1, y1, x1, y1)

@@ -1,6 +1,7 @@
 
 import wx
 import time
+import math
 
 from tools import formatElapsed
 
@@ -154,10 +155,12 @@ class InfoPane (wx.Window):
 			remains = self.eta + diff - now
 			strRemains = formatElapsed(remains)
 			pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
+			secDiff = math.fabs(elapsed + remains - self.duration)
+			strDiff = formatElapsed(secDiff)
 			if pctDiff < 100:
-				schedule = "%.3f%% ahead of schedule" % (100.0-pctDiff)
+				schedule = "%.2f%% ahead of sched (%s)" % ((100.0-pctDiff), strDiff)
 			elif pctDiff >100:
-				schedule = "%.3f%% behind schedule" % (pctDiff - 100)
+				schedule = "%.2f%% behind sched (%s)" % ((pctDiff - 100), strDiff)
 			else:
 				schedule = "on schedule"
 			self.setValue("eta2", "Remaining: %s  (%s)" % (strRemains, schedule))
