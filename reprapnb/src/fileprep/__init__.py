@@ -131,7 +131,7 @@ class ReaderThread:
 		self.running = False
 
 
-(ReaderEvent, EVT_MODELER_UPDATE) = wx.lib.newevent.NewEvent()
+(ModelerEvent, EVT_MODELER_UPDATE) = wx.lib.newevent.NewEvent()
 MODELER_RUNNING = 1
 MODELER_FINISHED = 2
 MODELER_CANCELLED = 3
@@ -163,10 +163,10 @@ class ModelerThread:
 		return self.layer
 
 	def Run(self):
-		evt = ReaderEvent(msg = "Processing...", state = MODELER_RUNNING)
+		evt = ModelerEvent(msg = "Processing...", state = MODELER_RUNNING)
 		wx.PostEvent(self.win, evt)
 		self.model = GCode(self.gcode)
-		evt = ReaderEvent(msg = None, state = MODELER_FINISHED)
+		evt = ModelerEvent(msg = None, state = MODELER_FINISHED)
 		wx.PostEvent(self.win, evt)	
 		self.running = False
 
@@ -193,6 +193,7 @@ class FilePrepare(wx.Panel):
 		self.SetBackgroundColour("white")
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
+		self.Bind(EVT_MODELER_UPDATE, self.modelerUpdate)
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((20, 20), pos=(0,0))
@@ -602,7 +603,7 @@ class FilePrepare(wx.Panel):
 		self.bOpen.Enable(False)
 		self.bSlice.Enable(False)
 		self.filename = fn
-		self.gcfile = fn
+		self.gcFile = fn
 		self.readerThread = ReaderThread(self, fn)
 		self.readerThread.Start()
 			
@@ -615,18 +616,18 @@ class FilePrepare(wx.Panel):
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			
-			self.settings.lastdirectory = os.path.dirname(self.gcfile)
+			self.settings.lastdirectory = os.path.dirname(self.gcFile)
 			self.settings.setModified()
 			if self.temporaryFile:
 				lfn = TEMPFILELABEL
-			elif len(self.gcfile) > 60:
-				lfn = os.path.basename(self.gcfile)
+			elif len(self.gcFile) > 60:
+				lfn = os.path.basename(self.gcFile)
 			else:
-				lfn = self.gcfile
+				lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
 			self.setGCodeLoaded(True)
 
-			self.gcode = self.reader.getGCode()			
+			self.gcode = self.readerThread.getGCode()			
 			self.buildModel()
 		
 			if self.temporaryFile:
@@ -664,18 +665,18 @@ class FilePrepare(wx.Panel):
 	def getModelData(self, layer=0):
 		self.layerCount = self.model.countLayers()
 		
-		self.layerInfo = self.model.getLayerInfo(self.buildModelLayer)
+		self.layerInfo = self.model.getLayerInfo(layer)
 		if self.layerInfo is None:
 			return
 		
-		self.showLayerInfo(self.buildModelLayer)
+		self.showLayerInfo(layer)
 
 		self.hilite = self.layerInfo[4][0]
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
 		
 		self.slideLayer.SetRange(1, self.layerCount)
-		self.slideLayer.SetValue(self.buildModelLayer+1)
+		self.slideLayer.SetValue(layer+1)
 		n = int(self.layerCount/20)
 		if n<1: n=1
 		self.slideLayer.SetTickFreq(n, 1)
@@ -697,7 +698,7 @@ class FilePrepare(wx.Panel):
 		
 		self.Fit()
 		
-		self.gcf.loadModel(self.model, layer=self.buildModelLayer)
+		self.gcf.loadModel(self.model, layer=layer)
 			
 	def modelerUpdate(self, evt):
 		if evt.state == MODELER_RUNNING:
