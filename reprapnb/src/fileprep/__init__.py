@@ -85,6 +85,56 @@ class SlicerThread:
 
 		self.running = False
 
+
+(ReaderEvent, EVT_READER_UPDATE) = wx.lib.newevent.NewEvent()
+READER_RUNNING = 1
+READER_FINISHED = 2
+READER_CANCELLED = 3
+
+class ReaderThread:
+	def __init__(self, win, fn):
+		self.win = win
+		self.fn = fn
+		self.running = False
+		self.cancelled = False
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+
+	def Run(self):
+		self.gcode = []
+		l = list(open(self.fn))
+		for s in l:
+			self.gcode.append(s.rstrip())
+
+		self.win.gcode = self.gcode
+		self.win.model = None
+		
+		ct = len(self.gcode)
+		if self.cancelled:
+			evt = ReaderEvent(msg = None, state = READER_CANCELLED)
+			wx.PostEvent(self.win, evt)
+			
+		elif ct == 0:
+			evt = ReaderEvent(msg = None, state = READER_FINISHED)
+			wx.PostEvent(self.win, evt)
+			
+		else:
+			evt = ReaderEvent(msg = "%d lines read" % ct, state = READER_RUNNING)
+			wx.PostEvent(self.win, evt)
+			self.win.model = GCode(self.gcode)
+			
+		self.running = False
+
+
 class FilePrepare(wx.Panel):
 	def __init__(self, parent, app):
 		self.model = None
