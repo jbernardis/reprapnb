@@ -97,6 +97,7 @@ class ReaderThread:
 		self.fn = fn
 		self.running = False
 		self.cancelled = False
+		self.gcode = []
 
 	def Start(self):
 		self.running = True
@@ -108,32 +109,66 @@ class ReaderThread:
 
 	def IsRunning(self):
 		return self.running
+	
+	def getGCode(self):
+		return self.gcode
 
 	def Run(self):
+		evt = ReaderEvent(msg = "reading G Code...", state = READER_RUNNING)
+		wx.PostEvent(self.win, evt)
 		self.gcode = []
 		l = list(open(self.fn))
 		for s in l:
 			self.gcode.append(s.rstrip())
-
-		self.win.gcode = self.gcode
-		self.win.model = None
 		
 		ct = len(self.gcode)
-		if self.cancelled:
+		if self.cancelled or ct == 0:
 			evt = ReaderEvent(msg = None, state = READER_CANCELLED)
-			wx.PostEvent(self.win, evt)
-			
-		elif ct == 0:
-			evt = ReaderEvent(msg = None, state = READER_FINISHED)
-			wx.PostEvent(self.win, evt)
-			
 		else:
-			evt = ReaderEvent(msg = "%d lines read" % ct, state = READER_RUNNING)
-			wx.PostEvent(self.win, evt)
-			self.win.model = GCode(self.gcode)
-			
+			evt = ReaderEvent(msg = "%d lines read." % ct, state = READER_FINISHED)
+
+		wx.PostEvent(self.win, evt)	
 		self.running = False
 
+
+(ReaderEvent, EVT_MODELER_UPDATE) = wx.lib.newevent.NewEvent()
+MODELER_RUNNING = 1
+MODELER_FINISHED = 2
+MODELER_CANCELLED = 3
+
+class ModelerThread:
+	def __init__(self, win, gcode, layer):
+		self.win = win
+		self.gcode = gcode
+		self.layer = layer
+		self.running = False
+		self.cancelled = False
+		self.model = None
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+	
+	def getModel(self):
+		return self.model
+	
+	def getLayer(self):
+		return self.layer
+
+	def Run(self):
+		evt = ReaderEvent(msg = "Processing...", state = MODELER_RUNNING)
+		wx.PostEvent(self.win, evt)
+		self.model = GCode(self.gcode)
+		evt = ReaderEvent(msg = None, state = MODELER_FINISHED)
+		wx.PostEvent(self.win, evt)	
+		self.running = False
 
 class FilePrepare(wx.Panel):
 	def __init__(self, parent, app):
@@ -157,6 +192,7 @@ class FilePrepare(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
+		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((20, 20), pos=(0,0))
@@ -511,6 +547,7 @@ class FilePrepare(wx.Panel):
 		if evt.state == SLICER_RUNNING:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
+				
 		elif evt.state == SLICER_CANCELLED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
@@ -520,6 +557,7 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(True)
 			self.app.slicer.sliceComplete()
 			self.sliceActive = False
+			
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
@@ -535,6 +573,7 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(True)
 			self.app.slicer.sliceComplete()
 			self.loadFile(self.gcFile)
+			
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
 
@@ -560,70 +599,83 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy()
 
 	def loadFile(self, fn):
+		self.bOpen.Enable(False)
+		self.bSlice.Enable(False)
 		self.filename = fn
-		try:
-			self.gcode = []
-			l = list(open(fn))
-			for s in l:
-				self.gcode.append(s.rstrip())
+		self.gcfile = fn
+		self.readerThread = ReaderThread(self, fn)
+		self.readerThread.Start()
+			
+	def readerUpdate(self, evt):
+		if evt.state == READER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
 				
-			self.gcFile = fn
-			self.settings.lastdirectory = os.path.dirname(fn)
+		elif evt.state == READER_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+			
+			self.settings.lastdirectory = os.path.dirname(self.gcfile)
 			self.settings.setModified()
 			if self.temporaryFile:
 				lfn = TEMPFILELABEL
-			elif len(fn) > 60:
-				lfn = os.path.basename(fn)
+			elif len(self.gcfile) > 60:
+				lfn = os.path.basename(self.gcfile)
 			else:
-				lfn = fn
+				lfn = self.gcfile
 			self.ipFileName.SetLabel(lfn)
 			self.setGCodeLoaded(True)
+
+			self.gcode = self.reader.getGCode()			
+			self.buildModel()
+		
+			if self.temporaryFile:
+				try:
+					self.logger.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
+					os.unlink(self.gcFile)
+				except:
+					pass
 			
-		except:
+		elif evt.state == READER_CANCELLED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
 			self.gcode = []
 			self.filename = None
 			self.ipFileName.SetLabel("")
 			self.gcFile = None
 			self.setGCodeLoaded(False)
-			
-		self.Fit()
-			
-		if len(self.gcode) == 0:
-			return
-		self.buildModel()
-		self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
-		self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
-		self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
-		self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
-		self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
-		self.setModified(False)
-		self.bOpen.Enable(True)
-		self.bSlice.Enable(True)
+			self.model = None
 		
-		if self.temporaryFile:
-			try:
-				self.logger.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
-				os.unlink(self.gcFile)
-			except:
-				pass
+			if self.temporaryFile:
+				try:
+					self.logger.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
+					os.unlink(self.gcFile)
+				except:
+					pass
+				
+		else:
+			self.logger.LogError("unknown reader thread state: %s" % evt.state)
+
 
 	def buildModel(self, layer=0):
-		self.model = GCode(self.gcode)
-
+		self.modelerThread = ModelerThread(self, self.gcode, layer)
+		self.modelerThread.Start()
+		
+	def getModelData(self, layer=0):
 		self.layerCount = self.model.countLayers()
 		
-		self.layerInfo = self.model.getLayerInfo(layer)
+		self.layerInfo = self.model.getLayerInfo(self.buildModelLayer)
 		if self.layerInfo is None:
 			return
 		
-		self.showLayerInfo(layer)
+		self.showLayerInfo(self.buildModelLayer)
 
 		self.hilite = self.layerInfo[4][0]
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
 		
 		self.slideLayer.SetRange(1, self.layerCount)
-		self.slideLayer.SetValue(layer+1)
+		self.slideLayer.SetValue(self.buildModelLayer+1)
 		n = int(self.layerCount/20)
 		if n<1: n=1
 		self.slideLayer.SetTickFreq(n, 1)
@@ -645,7 +697,35 @@ class FilePrepare(wx.Panel):
 		
 		self.Fit()
 		
-		self.gcf.loadModel(self.model, layer=layer)
+		self.gcf.loadModel(self.model, layer=self.buildModelLayer)
+			
+	def modelerUpdate(self, evt):
+		if evt.state == MODELER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == MODELER_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+
+			self.model = self.modelerThread.getModel()
+			self.getModelData(self.modelerThread.getLayer())			
+			self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
+			self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
+			self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
+			self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
+			self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
+			self.setModified(False)
+			self.bOpen.Enable(True)
+			self.bSlice.Enable(True)
+			
+		elif evt.state == MODELER_CANCELLED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+			self.model = None
+				
+		else:
+			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
 		
 	def setGCodeLoaded(self, flag=True):
 		self.gcodeLoaded = flag
