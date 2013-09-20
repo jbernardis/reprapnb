@@ -25,12 +25,12 @@ class Logger(wx.Panel):
 		
 		bsz = wx.BoxSizer(wx.HORIZONTAL)
 				
-		self.bClear = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngClearlog, size=BUTTONDIM)
+		self.bClear = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngClearlog, size=BUTTONDIM)
 		self.bClear.SetToolTipString("Clear the log")
 		bsz.Add(self.bClear, flag=wx.ALL, border=10)
 		self.Bind(wx.EVT_BUTTON, self.doClear, self.bClear)
 				
-		self.bSave = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSavelog, size=BUTTONDIM)
+		self.bSave = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSavelog, size=BUTTONDIM)
 		self.bSave.SetToolTipString("Save the log to a file")
 		bsz.Add(self.bSave, flag=wx.ALL, border=10)
 		self.Bind(wx.EVT_BUTTON, self.doSave, self.bSave)
