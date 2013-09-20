@@ -98,6 +98,7 @@ class Settings:
 		self.slicersettings = []
 		self.startpane=0
 		self.lastlogdirectory = "."
+		self.port = 8989
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -120,7 +121,7 @@ class Settings:
 					try:
 						self.startpane = int(value)
 					except:
-						self.showWatrning("Invalid value for startpane")
+						self.showWarning("Invalid value for startpane")
 						self.startpane = 0
 						self.modified = True
 					if self.startpane not in [0, 1, 2]:
@@ -135,6 +136,12 @@ class Settings:
 					self.slicers = [x.strip() for x in s]
 				elif opt == 'lastlogdirectory':
 					self.lastlogdirectory = value
+				elif opt == 'port':
+					try:
+						self.port = int(value)
+					except:
+						self.port = 8989
+						self.showWarning("Invalid value (%s) for port - using %d" % (value, self.port))
 				else:
 					self.showWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
@@ -213,6 +220,7 @@ class Settings:
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
+			self.cfg.set(self.section, "port", str(self.port))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
@@ -235,8 +243,12 @@ class Settings:
 			self.plater.cleanUp()
 			self.manualctl.cleanUp()
 			self.printmon.cleanUp()
-		
-			cfp = open(self.inifile, 'wb')
+
+			try:		
+				cfp = open(self.inifile, 'wb')
+			except:
+				print "Unable to open settings file %s for writing" % self.inifile
+				return
 			self.cfg.write(cfp)
 			cfp.close()
 

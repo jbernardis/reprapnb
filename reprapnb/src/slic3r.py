@@ -15,7 +15,12 @@ def loadProfiles(fnames, mergeKeys):
 	kdict = {}
 	
 	for fn in fnames:
-		l = list(open(fn))
+		try:
+			l = list(open(fn))
+		except:
+			print "Unable to open Slic3r settings file: %s" % fn
+			return kdict
+		
 		for ln in l:
 			if ln.startswith('#'):
 				continue
@@ -357,7 +362,11 @@ class Slic3r:
 		fl = self.parent.settings['filamentfile']
 		for fn in fl:
 			if fn is not None:
-				idata = list(open(fn))
+				try:
+					idata = list(open(fn))
+				except:
+					print "Unable to open Slic3r filament file %s" % fn
+					idata = []
 			
 				for i in idata:
 					a = checkTagInt(i, "first_layer_temperature = ")
@@ -372,7 +381,11 @@ class Slic3r:
 		nExtruders = None
 		f = self.parent.settings['printerfile']
 		if f is not None:
-			idata = list(open(f))
+			try:
+				idata = list(open(f))
+			except:
+				print "Unable to open Slic3r printer file %s" % f
+				idata = []
 			
 		for i in idata:
 			a = checkTagList(i, "bed_size = ")
@@ -487,7 +500,11 @@ class Slic3r:
 				k = os.path.splitext(os.path.basename(f))[0]
 				r[k] = fn
 				
-				idata = list(open(fn))
+				try:
+					idata = list(open(fn))
+				except:
+					print "Unable to open printer settings file" % fn
+					idata = []
 			
 				for i in idata:
 					a = checkTagList(i, "retract_speed = ")

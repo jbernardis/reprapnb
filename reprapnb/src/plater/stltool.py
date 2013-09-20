@@ -57,9 +57,13 @@ m=[
 
 def emitstl(filename,facets=[],objname="stltool_export",binary=False):
 	if filename is None:
-		return
+		return False
 	if binary:
-		f=open(filename,"wb")
+		try:
+			f=open(filename,"wb")
+		except:
+			return False
+		
 		buf="".join(["\0"]*80)
 		buf+=struct.pack("<I",len(facets))
 		facetformat=struct.Struct("<ffffffffffffH")
@@ -71,10 +75,14 @@ def emitstl(filename,facets=[],objname="stltool_export",binary=False):
 			buf+=facetformat.pack(*l)
 		f.write(buf)
 		f.close()
-		return
+		return True
 		
 
-	f=open(filename,"w")
+	try:
+		f=open(filename,"w")
+	except:
+		return False
+	
 	f.write("solid "+objname+"\n")
 	for i in facets:
 		f.write("  facet normal "+" ".join(map(str,i[0]))+"\n   outer loop\n")
@@ -84,6 +92,7 @@ def emitstl(filename,facets=[],objname="stltool_export",binary=False):
 		f.write("  endfacet"+"\n")
 	f.write("endsolid "+objname+"\n")
 	f.close()
+	return True
 		
 class stl:
 	def __init__(self, filename=None, name=None):
@@ -104,10 +113,19 @@ class stl:
 		self.id = None
 		self.filename = filename
 		if filename is not None:
-			self.f=list(open(filename))
+			try:
+				self.f=list(open(filename))
+			except:
+				print "Error opening file %s" % filename
+				return
+			
 			if not self.f[0].startswith("solid"):
 				print "Not an ascii stl solid - attempting to parse as binary"
-				f=open(filename,"rb")
+				try:
+					f=open(filename,"rb")
+				except:
+					print "Error opening file %s" % filename
+					return
 				buf=f.read(84)
 				while(len(buf)<84):
 					newdata=f.read(84-len(buf))

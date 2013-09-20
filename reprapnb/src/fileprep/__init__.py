@@ -117,7 +117,14 @@ class ReaderThread:
 		evt = ReaderEvent(msg = "reading G Code...", state = READER_RUNNING)
 		wx.PostEvent(self.win, evt)
 		self.gcode = []
-		l = list(open(self.fn))
+		try:
+			l = list(open(self.fn))
+		except:
+			evt = ReaderEvent(msg = "Error opening file %s" % self.fn, state = READER_CANCELLED)
+			wx.PostEvent(self.win, evt)	
+			self.running = False
+			return
+			
 		for s in l:
 			self.gcode.append(s.rstrip())
 		

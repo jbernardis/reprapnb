@@ -22,6 +22,7 @@ from settings import Settings
 from logger import Logger
 from images import Images
 from reprap import RepRap, RepRapParser, RECEIVED_MSG
+from reprapserver import RepRapServer
 from tools import formatElapsed
 
 TB_TOOL_PORTS = 10
@@ -146,6 +147,7 @@ class MainFrame(wx.Frame):
 		self.nb = wx.Notebook(p, style=wx.NB_TOP)
 
 		self.logger = Logger(self.nb, self)
+		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		
 		self.pxLogger = 0
 		self.pxPlater = 1
