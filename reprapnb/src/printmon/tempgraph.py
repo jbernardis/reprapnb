@@ -33,6 +33,7 @@ class TempGraph (wx.Window):
 	def __init__(self, parent, settings):
 		self.settings = settings
 		self.parent = parent
+		self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		
 		self.targets = []
 		
@@ -53,25 +54,22 @@ class TempGraph (wx.Window):
 		self.xLegend()
 		
 	def yLegend(self):
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		for y in range(50, MAXY+1, 50):
 			ty = (MAXY - y) * scale
 			t = wx.StaticText(self, wx.ID_ANY, "%3d" % y, pos=(5, ty), size=(30, -1), style=wx.ALIGN_RIGHT)
-			t.SetFont(f)
+			t.SetFont(self.font)
 			
 	def xLegend(self):
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		xf = int(MAXX/60)
 		for x in range(MAXX/60):
 			tx = x * scale
 			t = wx.StaticText(self, wx.ID_ANY, "%dm" % (x-xf), pos=(tx*60+30, MAXY*scale+10), size=(30, -1), style=wx.ALIGN_CENTER)
-			t.SetFont(f)
+			t.SetFont(self.font)
 			
 	def setHeaters(self, heaters):
 		self.heaters = heaters
 			
 	def setTargets(self, ntargets):
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		for i in self.targets:
 			i.Destroy()
 
@@ -83,7 +81,7 @@ class TempGraph (wx.Window):
 				ty = (MAXY - y) * scale
 				t = wx.StaticText(self, wx.ID_ANY, "%3d %s" % (y, tgt), pos=(tx, ty), size=(-1, -1), style=wx.ALIGN_RIGHT)
 				t.SetForegroundColour(htrToColor(tgt))
-				t.SetFont(f)
+				t.SetFont(self.font)
 				self.targets.append(t)
 			
 		self.graph.updateTargets(ntargets)
@@ -98,6 +96,7 @@ class Graph (wx.Window):
 		self.settings = settings
 		self.targets = {}
 		self.tempData = {}
+		self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		
 		sz = [x * scale for x in [MAXX, MAXY]]
 		wx.Window.__init__(self,parent,wx.ID_ANY,size=sz)
@@ -183,7 +182,7 @@ class Graph (wx.Window):
 		
 		hcol = htrToColumn(htr)
 		if hcol is not None and data[lx-1] is not None:
-			dc.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
+			dc.SetFont(self.font)
 			dc.SetTextBackground(wx.Colour(255, 255, 255))
 			dc.SetTextForeground(c)
 			hrow = data[lx-1] + rowOffset[htr]

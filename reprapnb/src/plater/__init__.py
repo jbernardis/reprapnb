@@ -93,7 +93,7 @@ class Plater(wx.Panel):
 		self.sizerMain.Add(self.sizerBtn, pos=(1,4))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "STL File List:")
-		f = wx.Font(14, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		t.SetFont(f)
 		self.sizerMain.Add(t, pos=(3,4))
 		
@@ -288,9 +288,8 @@ class Plater(wx.Panel):
 			)
 		
 		if dlg.ShowModal() == wx.ID_OK:
-			paths = dlg.GetPaths()
-			if len(paths) == 1:
-				self.loadFile(paths[0])
+			path = dlg.GetPath()
+			self.loadFile(path)
 
 		dlg.Destroy()
 		
@@ -392,8 +391,8 @@ class Plater(wx.Panel):
 		self.lbModified = []
 		
 	def doExport2Prep(self, evt):
-		suffix = "%05d" % int(random.random() * 99999)
-		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix+suffix)
+		suffix = "%05d.stl" % int(random.random() * 99999)
+		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix()+suffix)
 		self.logger.LogMessage("Saving plate to temporary STL file: %s" % fn)
 		self.exportToFile(fn, "OBJECT", clearModified = False)
 		self.app.switchToFilePrep(fn)
@@ -413,11 +412,8 @@ class Plater(wx.Panel):
 			return
 		
 		else:
-			paths = dlg.GetPaths()
+			fn = dlg.GetPath()
 			dlg.Destroy()
-			if len(paths) < 1:
-				return
-			fn = paths[0]
 			
 		objname = os.path.splitext(os.path.basename(fn))[0]
 		

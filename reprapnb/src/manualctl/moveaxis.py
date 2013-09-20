@@ -43,32 +43,30 @@ class MoveAxis(wx.Window):
 		sizerMoveFrame.Add(self.axes, pos=(1,1), span=(1,4))
 		sizerMoveFrame.AddSpacer((10, 10), pos=(2,0))
 
+		self.font12bold = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		self.font12 = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		
 		t = wx.StaticText(self, wx.ID_ANY, "mm/min", style=wx.ALIGN_LEFT, size=(160, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerMoveFrame.Add(t, pos=(3,3))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "XY Speed:", style=wx.ALIGN_RIGHT, size=(160, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		t.SetFont(f)
+		t.SetFont(self.font12)
 		sizerMoveFrame.Add(t, pos=(4,2))
 		
 		self.tXYSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.xyspeed), size=(80, -1), style=wx.TE_RIGHT)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		self.tXYSpeed.SetFont(f)
+		self.tXYSpeed.SetFont(self.font12)
 		sizerMoveFrame.Add(self.tXYSpeed, pos=(4,3))
 		self.tXYSpeed.Bind(wx.EVT_KILL_FOCUS, self.evtXYSpeedKillFocus)
 		
 		sizerMoveFrame.AddSpacer((10, 10), pos=(5,0))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "Z Speed:", style=wx.ALIGN_RIGHT, size=(160, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		t.SetFont(f)
+		t.SetFont(self.font12)
 		sizerMoveFrame.Add(t, pos=(6,2))
 		
 		self.tZSpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.settings.zspeed), size=(80, -1), style=wx.TE_RIGHT)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		self.tZSpeed.SetFont(f)
+		self.tZSpeed.SetFont(self.font12)
 		sizerMoveFrame.Add(self.tZSpeed, pos=(6,3))
 		self.tZSpeed.Bind(wx.EVT_KILL_FOCUS, self.evtZSpeedKillFocus)
 		

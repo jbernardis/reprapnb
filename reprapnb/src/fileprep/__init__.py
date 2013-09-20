@@ -327,14 +327,14 @@ class FilePrepare(wx.Panel):
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
-		f = wx.Font(18, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(18,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		t.SetFont(f)
 		self.infoPane.AddSpacer((100, 80), pos=(0,0))
 		self.infoPane.Add(t, pos=(1,0), span=(1,2), flag=wx.ALIGN_CENTER)
 		
 		self.infoPane.AddSpacer((20, 20), pos=(2,0))
 		
-		ipfont = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		ipfont = wx.Font(12,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		
 		dc = wx.WindowDC(self)
 		dc.SetFont(ipfont)
@@ -516,16 +516,17 @@ class FilePrepare(wx.Panel):
 		
 		dlg = wx.FileDialog(
 			self, message="Choose an STL file",
-			defaultDir=self.settings.lastdirectory, 
+			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
 			wildcard=STLwildcard,
 			style=wx.OPEN | wx.CHANGE_DIR
 			)
 		
 		if dlg.ShowModal() == wx.ID_OK:
-			paths = dlg.GetPaths()
-			if len(paths) == 1:
-				self.sliceFile(paths[0])
+			path = dlg.GetPath()
+			self.settings.laststldirectory = os.path.dirname(path)
+			self.settings.setModified()
+			self.sliceFile(path)
 
 		dlg.Destroy()
 		
@@ -585,17 +586,16 @@ class FilePrepare(wx.Panel):
 		self.temporaryFile = False		
 		dlg = wx.FileDialog(
 			self, message="Choose a G Code file",
-			defaultDir=self.settings.lastdirectory, 
+			defaultDir=self.settings.lastgcdirectory, 
 			defaultFile="",
 			wildcard=wildcard,
 			style=wx.OPEN | wx.CHANGE_DIR
 			)
 		
 		if dlg.ShowModal() == wx.ID_OK:
-			paths = dlg.GetPaths()
-			if len(paths) == 1:
-				self.stlFile = None
-				self.loadFile(paths[0])
+			path = dlg.GetPath()
+			self.stlFile = None
+			self.loadFile(path)
 
 		dlg.Destroy()
 
@@ -616,14 +616,15 @@ class FilePrepare(wx.Panel):
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			
-			self.settings.lastdirectory = os.path.dirname(self.gcFile)
-			self.settings.setModified()
 			if self.temporaryFile:
 				lfn = TEMPFILELABEL
-			elif len(self.gcFile) > 60:
-				lfn = os.path.basename(self.gcFile)
 			else:
-				lfn = self.gcFile
+				self.settings.lastgcdirectory = os.path.dirname(self.gcFile)
+				self.settings.setModified()
+				if len(self.gcFile) > 60:
+					lfn = os.path.basename(self.gcFile)
+				else:
+					lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
 			self.setGCodeLoaded(True)
 
@@ -835,7 +836,7 @@ class FilePrepare(wx.Panel):
 
 	def fileSave(self, event):
 		dlg = wx.FileDialog(
-			self, message="Save as ...", defaultDir=self.settings.lastdirectory, 
+			self, message="Save as ...", defaultDir=self.settings.lastgcdirectory, 
 			defaultFile="", wildcard=wildcard, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 		
 		val = dlg.ShowModal()
@@ -869,7 +870,7 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy()
 		
 		dlg = wx.FileDialog(
-			self, message="Save layer(s) as ...", defaultDir=self.settings.lastdirectory, 
+			self, message="Save layer(s) as ...", defaultDir=self.settings.lastgcdirectory, 
 			defaultFile="", wildcard=wildcard, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
 			)
 		

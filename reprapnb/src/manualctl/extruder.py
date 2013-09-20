@@ -23,7 +23,7 @@ class Extruder(wx.Window):
 		szRight = wx.BoxSizer(wx.VERTICAL)
 
 		dc = wx.WindowDC(self)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc.SetFont(f)
 
 		text1 = "%s Speed (mm/min):" % self.axis
@@ -38,7 +38,6 @@ class Extruder(wx.Window):
 		szLeft.Add(t, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
 		
 		self.tESpeed = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.espeed), size=(80, -1), style=wx.TE_RIGHT)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tESpeed.SetFont(f)
 		szCenter.Add(self.tESpeed, flag=wx.ALL, border=5)
 		self.tESpeed.Bind(wx.EVT_KILL_FOCUS, self.evtESpeedKillFocus)
@@ -48,7 +47,6 @@ class Extruder(wx.Window):
 		szLeft.Add(t, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
 		
 		self.tEDistance = wx.TextCtrl(self, wx.ID_ANY, str(self.parent.settings.edistance), size=(80, -1), style=wx.TE_RIGHT)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tEDistance.SetFont(f)
 		szCenter.Add(self.tEDistance, flag=wx.ALL, border=5)
 		self.tEDistance.Bind(wx.EVT_KILL_FOCUS, self.evtEDistanceKillFocus)

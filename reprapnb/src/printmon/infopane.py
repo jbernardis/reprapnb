@@ -32,12 +32,14 @@ class InfoPane (wx.Window):
 		self.sizerTag = wx.BoxSizer(wx.VERTICAL)
 		self.sizerValue = wx.BoxSizer(wx.VERTICAL)
 		
+		self.font8 = wx.Font (8, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		self.font12 = wx.Font (12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		self.font12bold = wx.Font (12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		
 		self.dc = wx.WindowDC(self)
-		f = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		self.dc.SetFont(f)
+		self.dc.SetFont(self.font8)
 		self.h8point = self.dc.GetTextExtent("ABCDEFGHIJ")[1]
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		self.dc.SetFont(f)
+		self.dc.SetFont(self.font12)
 		self.h12point = self.dc.GetTextExtent("ABCDEFGHIJ")[1]
 
 		self.sizerTag.AddSpacer((2,2))
@@ -57,27 +59,25 @@ class InfoPane (wx.Window):
 		self.Fit()
 
 	def addTags(self, title, tags, tagorder):
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		self.dc.SetFont(f)
+		self.dc.SetFont(self.font12bold)
 		w = self.dc.GetTextExtent(title)[0]
 		t = wx.StaticText(self, wx.ID_ANY, title, style=wx.ALIGN_RIGHT, size=(w, self.h12point+5))
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		self.sizerTag.Add(t, flag=wx.ALIGN_LEFT | wx.TOP, border=0)
 		self.sizerValue.AddSpacer((w, self.h12point+5))
 
-		f = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		self.dc.SetFont(f)
+		self.dc.SetFont(self.font8)
 		for t in tagorder:
 			text = tags[t]
 			w = self.dc.GetTextExtent(text)[0]
 
 			st = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, self.h8point+5))
-			st.SetFont(f)
+			st.SetFont(self.font8)
 			self.sizerTag.Add(st, flag=wx.ALIGN_RIGHT | wx.TOP, border=0)
 			self.sizerTag.AddSpacer((2,2))
 	
 			self.wValues[t] = wx.StaticText(self, wx.ID_ANY, "", size=(310, self.h8point+5), style=wx.ALIGN_LEFT)
-			self.wValues[t].SetFont(f)
+			self.wValues[t].SetFont(self.font8)
 			self.sizerValue.Add(self.wValues[t])
 			self.sizerValue.AddSpacer((2,2))
 
@@ -158,12 +158,12 @@ class InfoPane (wx.Window):
 			secDiff = math.fabs(elapsed + remains - self.duration)
 			strDiff = formatElapsed(secDiff)
 			if pctDiff < 100:
-				schedule = "%.2f%% ahead of sched (%s)" % ((100.0-pctDiff), strDiff)
+				schedule = "%s ahead of sched (%.2f%%)" % (strDiff, (100.0-pctDiff))
 			elif pctDiff >100:
-				schedule = "%.2f%% behind sched (%s)" % ((pctDiff - 100), strDiff)
+				schedule = "%s behind sched (%.2f%%)" % (strDiff, (pctDiff - 100))
 			else:
 				schedule = "on schedule"
-			self.setValue("eta2", "Remaining: %s  (%s)" % (strRemains, schedule))
+			self.setValue("eta2", "Remaining: %s - %s" % (strRemains, schedule))
 		else:
 			self.setValue("eta2", "")
 		

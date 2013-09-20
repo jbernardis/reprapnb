@@ -1,8 +1,12 @@
 11) figure out how to include skeinforge (or at least SFACT)
 14) SD support
-18) read G code in a thread - add intermittent reports to log
+18) other places for separate thread - send to printer, file saving, stl file saving from plater
 22) need a tool change mechanism
 23) logging screen features - write to disk, purge if too big, clear, etc
 24) G Code Reference
 25) Macros
 26) Firmware Update
+27) web server
+28) integration with webcam
+29) drive two printers simultaneously
+30) check all file opens - make sure unable to open is handled

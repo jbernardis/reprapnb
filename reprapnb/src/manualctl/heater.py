@@ -33,7 +33,7 @@ class Heater(wx.Window):
 		sizerHtr.AddSpacer((5, 5), pos=(4,6))
 
 		dc = wx.WindowDC(self)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc.SetFont(f)
 
 		text = "Current: "
@@ -43,7 +43,6 @@ class Heater(wx.Window):
 		sizerHtr.Add(t, pos=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL) 
 		
 		self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTemp.SetFont(f)
 		self.tTemp.SetBackgroundColour("blue")
 		self.tTemp.SetForegroundColour(wx.Colour(255, 255, 255))
@@ -56,7 +55,6 @@ class Heater(wx.Window):
 		sizerHtr.Add(t, pos=(2,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER)
 		
 		self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 		self.tTarget.SetFont(f)
 		self.tTarget.SetBackgroundColour(wx.Colour(0, 0, 0))
 		self.tTarget.SetForegroundColour(wx.Colour(255, 255, 255))

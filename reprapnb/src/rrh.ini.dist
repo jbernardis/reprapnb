@@ -16,7 +16,8 @@ profiledir = /home/jeff/.Slic3r
 
 [fileprep]
 gcodescale = 3
-lastdirectory = 
+laststldirectory = 
+lastgcdirectory = 
 showprevious = False
 showmoves = False
 usebuffereddc = False

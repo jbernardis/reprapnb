@@ -97,6 +97,7 @@ class Settings:
 		self.slicers = ["slic3r"]
 		self.slicersettings = []
 		self.startpane=0
+		self.lastlogdirectory = "."
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -132,6 +133,8 @@ class Settings:
 				elif opt == 'slicers':
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
+				elif opt == 'lastlogdirectory':
+					self.lastlogdirectory = value
 				else:
 					self.showWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
@@ -209,6 +212,7 @@ class Settings:
 			self.cfg.set(self.section, "startpane", str(self.startpane))
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
+			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
@@ -244,7 +248,8 @@ class SettingsFilePrep:
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.gcodescale = 3
-		self.lastdirectory="."
+		self.laststldirectory="."
+		self.lastgcdirectory="."
 		self.showprevious = True
 		self.showmoves = True
 		self.usebuffereddc = True
@@ -265,8 +270,11 @@ class SettingsFilePrep:
 						self.parent.showWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
 			
-				elif opt == 'lastdirectory':
-					self.lastdirectory = value
+				elif opt == 'laststldirectory':
+					self.laststldirectory = value
+						
+				elif opt == 'lastgcdirectory':
+					self.lastgcdirectory = value
 						
 				elif opt == 'showprevious':
 					self.showprevious = parseBoolean(value, True)
@@ -296,7 +304,8 @@ class SettingsFilePrep:
 				pass
 			
 			self.cfg.set(self.section, "gcodescale", str(self.gcodescale))
-			self.cfg.set(self.section, "lastdirectory", str(self.lastdirectory))
+			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
+			self.cfg.set(self.section, "lastgcdirectory", str(self.lastgcdirectory))
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))

@@ -11,7 +11,7 @@ class GCodeEntry(wx.Window):
 		sizerGCode = wx.BoxSizer(wx.HORIZONTAL)
 		self.tGCode = wx.TextCtrl(self, wx.ID_ANY, "", size=(300, -1), style=wx.TE_LEFT | wx.TE_PROCESS_ENTER)
 		self.tGCode.Bind(wx.EVT_TEXT_ENTER, self.evtGCodeSend)
-		f = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
+		f = wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		self.tGCode.SetFont(f)
 		
 		self.bSend = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSend, size=BUTTONDIM)

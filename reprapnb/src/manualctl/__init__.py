@@ -70,9 +70,11 @@ class ManualControl(wx.Panel):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
 
+		self.font12bold = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		self.font16 = wx.Font(16, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+
 		t = wx.StaticText(self, wx.ID_ANY, "Current Tool", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
@@ -81,8 +83,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.AddSpacer((10, 10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
@@ -93,8 +94,7 @@ class ManualControl(wx.Panel):
 
 		self.extWin = Extruder(self, self.app)
 		t = wx.StaticText(self, wx.ID_ANY, "Extruder", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		sizerExtrude.Add(self.extWin, flag=wx.LEFT | wx.EXPAND)
@@ -107,8 +107,7 @@ class ManualControl(wx.Panel):
 		sizerHeat.AddSpacer((10,10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Heated Print Bed", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerHeat.Add(t, flag=wx.LEFT)
 		sizerHeat.AddSpacer((10,10))
 		
@@ -124,8 +123,7 @@ class ManualControl(wx.Panel):
 		sizerSpeed.AddSpacer((10, 10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Feed Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerSpeed.Add(t, flag=wx.ALL)
 
 		self.slFeedSpeed = wx.Slider(
@@ -140,8 +138,7 @@ class ManualControl(wx.Panel):
 		sizerSpeed.AddSpacer((10, 10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Fan Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
-		f = wx.Font(12, wx.SWISS, wx.NORMAL, wx.FONTWEIGHT_BOLD)
-		t.SetFont(f)
+		t.SetFont(self.font12bold)
 		sizerSpeed.Add(t, flag=wx.ALL)
 		
 		self.slFanSpeed = wx.Slider(
@@ -193,8 +190,7 @@ class ManualControl(wx.Panel):
 		sizerGCode.AddSpacer((20,20))
 		
 		t = wx.StaticText(self, wx.ID_ANY, "G Code", style=wx.ALIGN_LEFT, size=(200, -1))
-		f = wx.Font(16, wx.SWISS, wx.NORMAL, wx.NORMAL)
-		t.SetFont(f)
+		t.SetFont(self.font16)
 		self.GCELabel = t
 		sizerGCode.Add(t, flag=wx.LEFT)
 		

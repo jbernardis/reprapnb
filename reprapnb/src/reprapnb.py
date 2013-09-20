@@ -67,7 +67,7 @@ class MainFrame(wx.Frame):
 		p = wx.Panel(self)
 
 		self.tb = wx.ToolBar(p, style=wx.TB_HORIZONTAL) # | wx.TB_FLAT)
-		f = wx.Font(12, wx.SWISS, wx.BOLD, wx.NORMAL)
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		sizerBtns.AddSpacer((10,10))
 		sizerBtns.Add(self.tb)
