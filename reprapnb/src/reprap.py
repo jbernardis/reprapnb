@@ -164,8 +164,10 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
-				if line.strip().lower() == "ok":
+				if line.strip().lower().startswith("ok"):
 					self.sender.endWait()
+
+				if line.strip().lower() == "ok":
 					continue
 						
 				if line.startswith("echo:"):

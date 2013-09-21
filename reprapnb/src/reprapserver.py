@@ -84,7 +84,7 @@ class RepRapServer:
 		self.server = ThreadingHTTPServer((self.ipaddr, self.port), Handler)
 		self.server.setApp(self)
 		Thread(target=self.server.serve_reprap).start()
-		self.log.logMessage("HTTP Server started on %s:%d" % (self.ipaddr, self.port))
+		self.log.LogMessage("HTTP Server started on %s:%d" % (self.ipaddr, self.port))
 		
 	def dispatch(self, cgi, path, query):
 		if path == '/status':
