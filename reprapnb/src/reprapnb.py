@@ -56,6 +56,7 @@ class MainFrame(wx.Frame):
 		self.reprap = RepRap(self, self.evtRepRap)
 		self.parser = RepRapParser(self)
 		self.connected = False
+		self.httpServer = None
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
@@ -405,7 +406,10 @@ class MainFrame(wx.Frame):
 		if not self.pgManCtl.onClose(evt):
 			self.nb.SetSelection(self.pxManCtl)
 			return
-	
+
+		if self.httpServer is not None:
+			self.httpServer.close()
+				
 		self.settings.cleanUp()	
 		self.Destroy()
 

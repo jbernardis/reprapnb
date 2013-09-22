@@ -145,10 +145,10 @@ class InfoPane (wx.Window):
 			delta = 0
 			if position >= gcodelines[0] and position <= gcodelines[1]:
 				lct = gcodelines[1] - gcodelines[0]
-				lpos = position - gcodelines[0]
-				lpct = float(lpos)/float(lct)
-				
-				delta = layertime * lpct
+				if lct != 0:
+					lpos = position - gcodelines[0]
+					lpct = float(lpos)/float(lct)
+					delta = layertime * lpct
 			expectedTime += delta
 			
 			diff = elapsed - expectedTime
