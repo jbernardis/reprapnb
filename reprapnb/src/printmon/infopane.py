@@ -87,8 +87,22 @@ class InfoPane (wx.Window):
 
 		self.wValues[tag].SetLabel(value)
 		
+	def getStatus(self):
+		stat = {}
+		
+		stat['filename'] = self.filename
+		stat['currentlayer'] = self.layernbr
+		stat['currentheight'] = self.z
+		stat['position'] = self.position
+		stat['gcount'] = self.gcount
+		stat['origeta'] = self.eta
+		stat['revisedeta'] = self.revisedeta
+		return stat
+		
+		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
 		self.setValue("filename", filename)
+		self.filename = filename
 		self.duration = duration
 		self.gcount = gcount
 		self.layers = layers
@@ -103,6 +117,7 @@ class InfoPane (wx.Window):
 	def setLayerInfo(self, layernbr, z, minxy, maxxy, filament, prevfilament, ltime, gclines):
 		self.gclines = gclines
 		self.layernbr = layernbr
+		self.z = z
 		if self.layers == 0:
 			self.setValue("layer", "%d (z=%.3f)" % (layernbr+1, z))
 		else:
@@ -150,6 +165,7 @@ class InfoPane (wx.Window):
 					lpct = float(lpos)/float(lct)
 					delta = layertime * lpct
 			expectedTime += delta
+			self.revisedeta = expectedTime
 			
 			diff = elapsed - expectedTime
 			remains = self.eta + diff - now

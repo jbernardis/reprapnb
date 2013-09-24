@@ -56,7 +56,11 @@ class MainFrame(wx.Frame):
 		self.reprap = RepRap(self, self.evtRepRap)
 		self.parser = RepRapParser(self)
 		self.connected = False
+<<<<<<< HEAD
+		self.printing = False
+=======
 		self.httpServer = None
+>>>>>>> branch 'master' of https://github.com/jbernardis/reprapnb.git
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
@@ -344,7 +348,22 @@ class MainFrame(wx.Frame):
 	def setPrinterBusy(self, flag=True):
 		if flag:
 			self.printPosition = None
+		self.printing = flag
 		self.pgFilePrep.setPrinterBusy(flag)
+		
+	def getStatus(self):
+		stat = {}
+		if self.connected:
+			stat['connection'] = "on line"
+		else:
+			stat['connection'] = "off line"
+			if self.printing:
+				stat['status'] = "printing"
+				stat['printstat'] = self.pgPrtMon.getStatus()
+			else:
+				stat['status'] = "idle"
+				
+		return stat
 	
 	def switchToFilePrep(self, fn):
 		self.nb.SetSelection(self.pxFilePrep)
