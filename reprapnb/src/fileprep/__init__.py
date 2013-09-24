@@ -611,15 +611,20 @@ class FilePrepare(wx.Panel):
 		self.bSlice.Enable(False)
 		self.filename = fn
 		self.gcFile = fn
+		print "Creating rfeader theread"
 		self.readerThread = ReaderThread(self, fn)
+		print "Handing off to reader thread"
 		self.readerThread.Start()
+		print "back from start of reader thread"
 			
 	def readerUpdate(self, evt):
 		if evt.state == READER_RUNNING:
+			print "reader thread running report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 				
 		elif evt.state == READER_FINISHED:
+			print "reader thread finished report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			
@@ -634,8 +639,10 @@ class FilePrepare(wx.Panel):
 					lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
 			self.setGCodeLoaded(True)
+			print "retrieving gcode from thread"
 
-			self.gcode = self.readerThread.getGCode()			
+			self.gcode = self.readerThread.getGCode()
+			print "back from getting gcode"			
 			self.buildModel()
 		
 			if self.temporaryFile:
@@ -646,6 +653,7 @@ class FilePrepare(wx.Panel):
 					pass
 			
 		elif evt.state == READER_CANCELLED:
+			print "reader thread cancelled report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			self.gcode = []
@@ -663,19 +671,26 @@ class FilePrepare(wx.Panel):
 					pass
 				
 		else:
+			print "Unknown reader thread report"
 			self.logger.LogError("unknown reader thread state: %s" % evt.state)
 
 
 	def buildModel(self, layer=0):
+		print "starting model thread"
 		self.modelerThread = ModelerThread(self, self.gcode, layer)
+		print "about to hand off to model therad"
 		self.modelerThread.Start()
+		print "back from model thread start"
 		
 	def getModelData(self, layer=0):
+		print "entering getmodeldata"
 		self.layerCount = self.model.countLayers()
 		
 		self.layerInfo = self.model.getLayerInfo(layer)
 		if self.layerInfo is None:
 			return
+		
+		print "modeldata has a layer"
 		
 		self.showLayerInfo(layer)
 
@@ -705,15 +720,19 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeLine.SetLabel(GCODELINETEXT % (self.hilite+1))
 		
 		self.Fit()
+		print "about to pass model off to gcf"
 		
 		self.gcf.loadModel(self.model, layer=layer)
+		print "back from sending model to gcf"
 			
 	def modelerUpdate(self, evt):
 		if evt.state == MODELER_RUNNING:
+			print "model running report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 				
 		elif evt.state == MODELER_FINISHED:
+			print "model finished report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 
@@ -729,11 +748,13 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(True)
 			
 		elif evt.state == MODELER_CANCELLED:
+			print "model cancelled report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			self.model = None
 				
 		else:
+			print "unknown model report"
 			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
 		
 	def setGCodeLoaded(self, flag=True):
