@@ -183,16 +183,29 @@ class GcFrame (wx.Window):
 		return self.currentlx
 
 	def setZoom(self, zoom):
-		self.zoom = zoom
-		if self.offsetx < 0:
-			self.offsetx = 0
-		if self.offsetx > (self.buildarea[0]-self.buildarea[0]/self.zoom):
-			self.offsetx = self.buildarea[0]-self.buildarea[0]/self.zoom
-			
-		if self.offsety < 0:
-			self.offsety = 0
-		if self.offsety > (self.buildarea[1]-self.buildarea[1]/self.zoom):
-			self.offsety = self.buildarea[1]-self.buildarea[1]/self.zoom
+		if zoom > self.zoom:
+			oldzoom = self.zoom
+			self.zoom = zoom
+			cx = self.offsetx + self.buildarea[0]/oldzoom/2.0
+			cy = self.offsety + self.buildarea[1]/oldzoom/2.0
+			self.offsetx = cx - self.buildarea[0]/self.zoom/2.0
+			self.offsety = cy - self.buildarea[1]/self.zoom/2.0
+		else:
+			oldzoom = self.zoom
+			self.zoom = zoom
+			cx = self.offsetx + self.buildarea[0]/oldzoom/2.0
+			cy = self.offsety + self.buildarea[1]/oldzoom/2.0
+			self.offsetx = cx - self.buildarea[0]/self.zoom/2.0
+			self.offsety = cy - self.buildarea[1]/self.zoom/2.0
+			if self.offsetx < 0:
+				self.offsetx = 0
+			if self.offsetx > (self.buildarea[0]-self.buildarea[0]/self.zoom):
+				self.offsetx = self.buildarea[0]-self.buildarea[0]/self.zoom
+				
+			if self.offsety < 0:
+				self.offsety = 0
+			if self.offsety > (self.buildarea[1]-self.buildarea[1]/self.zoom):
+				self.offsety = self.buildarea[1]-self.buildarea[1]/self.zoom
 
 		self.redrawCurrentLayer()
 
