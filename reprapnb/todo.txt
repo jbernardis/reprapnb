@@ -9,10 +9,10 @@
 28) integration with webcam
 29) drive two printers simultaneously
 
-a) after bringing a file into fileprep from plater, after it is loaded into gcf, we see the temporary
+==>a) after bringing a file into fileprep from plater, after it is loaded into gcf, we see the temporary
 file name instead of the temporary tag
 
 b) @ the start, the hot bed and hot end should be preloaded with the temps of the currently selected 
 filament instead of PLA temperatures
 
-c) change those print statements into LogMessages.  Add LogMessage for start slice, start gcode read, start model processing, etc
+==>c) change those print statements into LogMessages.  Add LogMessage for start slice, start gcode read, start model processing, etc

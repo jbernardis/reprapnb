@@ -54,6 +54,9 @@ class MainFrame(wx.Frame):
 		self.settings = Settings(self, cmd_folder)
 		
 		self.reprap = RepRap(self, self.evtRepRap)
+		if self.settings.speedcommand is not None:
+			self.reprap.addToAllowedCommands(self.settings.speedcommand)
+			
 		self.parser = RepRapParser(self)
 		self.connected = False
 		self.printing = False

@@ -50,6 +50,9 @@ class SendThread:
 		self.isRunning = False
 		self.printer = None
 		
+	def addToAllowedCommands(self, cmd):
+		allow_while_printing.append(cmd)
+		
 	def endWait(self):
 		self.okWait = False
 		

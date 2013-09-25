@@ -98,6 +98,7 @@ class Settings:
 		self.slicersettings = []
 		self.startpane=0
 		self.lastlogdirectory = "."
+		self.speedcommand = None
 		self.port = 8989
 		
 		self.cfg = ConfigParser.ConfigParser()
@@ -136,6 +137,11 @@ class Settings:
 					self.slicers = [x.strip() for x in s]
 				elif opt == 'lastlogdirectory':
 					self.lastlogdirectory = value
+				elif opt == 'speedcommand':
+					if value.lower() == "none":
+						self.speedcommand = None
+					else:
+						self.speedcommand = value
 				elif opt == 'port':
 					try:
 						self.port = int(value)
@@ -217,6 +223,7 @@ class Settings:
 				pass
 			
 			self.cfg.set(self.section, "startpane", str(self.startpane))
+			self.cfg.set(self.section, "speedcommand", str(self.speedcommand))
 			self.cfg.set(self.section, "slicer", str(self.slicer))
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
