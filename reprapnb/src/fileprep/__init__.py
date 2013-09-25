@@ -189,6 +189,7 @@ class FilePrepare(wx.Panel):
 		self.printerBusy = True	
 		self.gcodeLoaded = False
 		self.sliceActive = False
+		self.exporting = False
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -505,17 +506,20 @@ class FilePrepare(wx.Panel):
 		return True
 	
 	def toPrinter(self, evt):
-		if self.temporaryFile:
-			name = TEMPFILELABEL
-		else:
-			name = self.gcFile
 		#name = self.ipFileName.GetLabel()
-		self.app.forwardToPrintMon(GCode(self.gcode), name=name)
+		self.bOpen.Enable(False)
+		self.bSlice.Enable(False)
+		self.bToPrinter.Enable(False)
+		self.exporting = True
+		self.modelerThread = ModelerThread(self, self.gcode, 0)
+		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
 		if self.sliceActive:
 			self.sliceThread.Stop()
 			self.bSlice.Enable(False)
+			self.bToPrinter.Enable(False)
+			self.bOpen.Enable(False)
 			return
 		
 		if self.checkModified(message='Close file without saving changes?'):
@@ -548,6 +552,8 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.setGCodeLoaded(False)
 		self.bOpen.Enable(False)
+		self.bSlice.Enable(False)
+		self.bToPrinter.Enable(False)
 		self.setSliceMode(False)
 		self.sliceActive = True
 		self.sliceThread.Start()
@@ -564,6 +570,7 @@ class FilePrepare(wx.Panel):
 			self.bOpen.Enable(True)
 			self.setSliceMode()
 			self.bSlice.Enable(True)
+			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			self.app.slicer.sliceComplete()
 			self.sliceActive = False
 			
@@ -580,6 +587,7 @@ class FilePrepare(wx.Panel):
 			self.setSliceMode()
 			self.sliceActive = False
 			self.bSlice.Enable(True)
+			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			self.app.slicer.sliceComplete()
 			self.loadFile(self.gcFile)
 			
@@ -609,6 +617,7 @@ class FilePrepare(wx.Panel):
 	def loadFile(self, fn):
 		self.bOpen.Enable(False)
 		self.bSlice.Enable(False)
+		self.bToPrinter.Enable(False)
 		self.filename = fn
 		self.gcFile = fn
 		print "Creating rfeader theread"
@@ -638,7 +647,6 @@ class FilePrepare(wx.Panel):
 				else:
 					lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
-			self.setGCodeLoaded(True)
 			print "retrieving gcode from thread"
 
 			self.gcode = self.readerThread.getGCode()
@@ -677,6 +685,7 @@ class FilePrepare(wx.Panel):
 
 	def buildModel(self, layer=0):
 		print "starting model thread"
+		self.exporting = False
 		self.modelerThread = ModelerThread(self, self.gcode, layer)
 		print "about to hand off to model therad"
 		self.modelerThread.Start()
@@ -736,21 +745,38 @@ class FilePrepare(wx.Panel):
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 
-			self.model = self.modelerThread.getModel()
-			self.getModelData(self.modelerThread.getLayer())			
-			self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
-			self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
-			self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
-			self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
-			self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
-			self.setModified(False)
-			self.bOpen.Enable(True)
-			self.bSlice.Enable(True)
+			model = self.modelerThread.getModel()				
+			if self.exporting:
+				if self.temporaryFile:
+					name = TEMPFILELABEL
+				else:
+					name = self.gcFile
+				self.app.forwardToPrintMon(model, name=name)
+				self.bOpen.Enable(True)
+				self.bSlice.Enable(True)
+				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+
+			else:
+				self.setGCodeLoaded(True)
+				self.model = model
+				self.getModelData(self.modelerThread.getLayer())			
+				self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
+				self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
+				self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
+				self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
+				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
+				self.setModified(False)
+				self.bOpen.Enable(True)
+				self.bSlice.Enable(True)
+				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			
 		elif evt.state == MODELER_CANCELLED:
 			print "model cancelled report"
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
+				
+			self.bOpen.Enable(True)
+			self.bSlice.Enable(True)
 			self.model = None
 				
 		else:

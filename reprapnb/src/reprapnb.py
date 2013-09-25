@@ -56,11 +56,8 @@ class MainFrame(wx.Frame):
 		self.reprap = RepRap(self, self.evtRepRap)
 		self.parser = RepRapParser(self)
 		self.connected = False
-<<<<<<< HEAD
 		self.printing = False
-=======
 		self.httpServer = None
->>>>>>> branch 'master' of https://github.com/jbernardis/reprapnb.git
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
@@ -370,8 +367,17 @@ class MainFrame(wx.Frame):
 		self.pgFilePrep.loadTempSTL(fn)
 
 	def forwardToPrintMon(self, model, name=""):
-		self.nb.SetSelection(self.pxPrtMon)
 		self.pgPrtMon.forwardModel(model, name=name)
+		pg = self.nb.GetSelection()
+		if pg != self.pxPrtMon:
+			askok = wx.MessageDialog(self, "Do you want to switch to the Print Monitor Tab",
+					'Model Transfer Complete', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+			
+			rc = askok.ShowModal()
+			askok.Destroy()
+
+			if rc == wx.ID_YES:
+				self.nb.SetSelection(self.pxPrtMon)
 		
 	def setHETarget(self, temp):
 		self.pgManCtl.setHETarget(temp)
