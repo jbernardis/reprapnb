@@ -77,6 +77,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.printmap = slicer.printmap
 		self.vfilament = [i for i in self.settings['filament']]
 		self.filmap = slicer.filmap
+		self.refreshed = False
 		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
@@ -195,6 +196,7 @@ class Slic3rCfgDialog(wx.Dialog):
 			return
 
 	def refreshSlicer(self, evt):
+		self.refreshed = True
 		self.slicer.initialize()
 		
 		self.printermap = self.slicer.printermap
@@ -231,7 +233,7 @@ class Slic3rCfgDialog(wx.Dialog):
 				self.cbFilament[i].Enable(False)
 	
 	def getValues(self):
-		return [self.vprinter, self.vprint, self.vfilament]
+		return [self.vprinter, self.vprint, self.vfilament, self.refreshed]
 		
 	def doChoosePrinter(self, evt):
 		oldNExtr = self.printerext[self.vprinter]
@@ -310,10 +312,10 @@ class Slic3r:
 			dlg.Destroy()
 			return False
 		
-		self.vprinter, self.vprint, self.vfilament = dlg.getValues()
+		self.vprinter, self.vprint, self.vfilament, refreshFlag = dlg.getValues()
 		dlg.Destroy()
 
-		chg = False
+		chg = refreshFlag
 		if self.parent.settings['print'] != self.vprint:
 			self.parent.settings['print'] = self.vprint
 			if self.vprint in self.printmap.keys():
@@ -359,8 +361,11 @@ class Slic3r:
 	def getSlicerParameters(self):
 		heTemps = []
 		bedTemps = []
+		print "get slicer parameters"
 		fl = self.parent.settings['filamentfile']
+		print "filament loop"
 		for fn in fl:
+			print "filament ", fn
 			if fn is not None:
 				try:
 					idata = list(open(fn))
@@ -371,10 +376,12 @@ class Slic3r:
 				for i in idata:
 					a = checkTagInt(i, "first_layer_temperature = ")
 					if a is not None:
+						print "found first layer temp of ", a
 						heTemps.append(a)
 					else:
 						a = checkTagInt(i, "first_layer_bed_temperature = ")
 						if a is not None:
+							print "found first layer bed temp of ", a
 							bedTemps.append(a)
 	
 		bedSize = None
@@ -403,11 +410,13 @@ class Slic3r:
 			nExtruders = 1
 		
 		if len(heTemps) < nExtruders:
+			print "length of hetemps < next", len(heTemps), nExtruders
 			x = nExtruders-len(heTemps)
 			for i in range(x):
 				heTemps.append(185)
 		
 		if len(bedTemps) < nExtruders:
+			print "length of bedtemps < next", len(bedTemps), nExtruders
 			x = nExtruders-len(bedTemps)
 			for i in range(x):
 				bedTemps.append(60)

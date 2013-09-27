@@ -66,7 +66,7 @@ class MainFrame(wx.Frame):
 		if self.slicer is None:
 			print "Unable to get slicer settings"
 			
-		self.buildarea = self.slicer.getSlicerParameters()[0]
+		(self.buildarea, nExtr, heTemps, bedTemps) = self.slicer.getSlicerParameters()
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 
@@ -159,10 +159,12 @@ class MainFrame(wx.Frame):
 		self.pxFilePrep = 2
 		self.pxManCtl = 3
 		self.pxPrtMon = 4
+		
+		print "creating nb pages"
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
-		self.pgManCtl = ManualControl(self.nb, self)
+		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemps[0])
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
 		self.nb.AddPage(self.logger, "Log")

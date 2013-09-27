@@ -11,7 +11,7 @@ from images import Images
 #FIXIT  G code ref
 
 class ManualControl(wx.Panel): 
-	def __init__(self, parent, app):
+	def __init__(self, parent, app, nExtr, heTemp, bedTemp):
 		self.model = None
 		self.parent = parent
 		self.app = app
@@ -35,8 +35,8 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruder()
-		self.sizerHeat = self.addHeater()
+		self.sizerExtrude = self.addExtruder(heTemp)
+		self.sizerHeat = self.addHeater(bedTemp)
 		self.sizerSpeed = self.addSpeedControls()
 		self.sizerGCode = self.addGCEntry()
 		
@@ -66,7 +66,7 @@ class ManualControl(wx.Panel):
 	def setHETemp(self, temp):
 		self.heWin.setHeatTemp(temp)
 		
-	def addExtruder(self):
+	def addExtruder(self, startTemp):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -88,7 +88,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.AddSpacer((10,10))
 		
 		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
-					target=185, trange=[20, 250], oncmd="M104")
+					target=startTemp, trange=[20, 250], oncmd="M104")
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -102,7 +102,7 @@ class ManualControl(wx.Panel):
 			
 		return sizerExtrude
 			
-	def addHeater(self):
+	def addHeater(self, startTemp):
 		sizerHeat = wx.BoxSizer(wx.VERTICAL)
 		sizerHeat.AddSpacer((10,10))
 
@@ -112,7 +112,7 @@ class ManualControl(wx.Panel):
 		sizerHeat.AddSpacer((10,10))
 		
 		self.bedWin = Heater(self, self.app, name="Heated Print Bed", shortname="Bed", 
-					target=60, trange=[20, 150], oncmd="M140")
+					target=startTemp, trange=[20, 150], oncmd="M140")
 		sizerHeat.Add(self.bedWin)
 		sizerHeat.AddSpacer((10,10))
 
