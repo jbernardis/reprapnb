@@ -214,7 +214,11 @@ class MainFrame(wx.Frame):
 
 	def updateWithSlicerInfo(self):	
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+		print "USI: %s" % self.slicer.type.getConfigString()
 		(hetemps, bedtemps) = self.slicer.getSlicerParameters()[2:4]
+		print "HE: ", hetemps
+		print "BED: ", bedtemps
+		
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
 			return

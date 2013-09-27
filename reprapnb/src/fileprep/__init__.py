@@ -114,7 +114,7 @@ class ReaderThread:
 		return self.gcode
 
 	def Run(self):
-		evt = ReaderEvent(msg = "reading G Code...", state = READER_RUNNING)
+		evt = ReaderEvent(msg = "Reading G Code...", state = READER_RUNNING)
 		wx.PostEvent(self.win, evt)
 		self.gcode = []
 		try:
@@ -622,9 +622,9 @@ class FilePrepare(wx.Panel):
 		self.gcFile = fn
 		self.readerThread = ReaderThread(self, fn)
 		if self.temporaryFile:
-			self.logger.LogMessage("Reading temporary G Code file")
+			self.logger.LogMessage("Temporary G Code file")
 		else:
-			self.logger.LogMessage("Reading G Code file %s" % fn)
+			self.logger.LogMessage("G Code file %s" % fn)
 		self.readerThread.Start()
 			
 	def readerUpdate(self, evt):
