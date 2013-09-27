@@ -38,15 +38,15 @@ class SkeinforgeCfgDialog(wx.Dialog):
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		prf.Add(t)
+		prf.Add(t, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP, 10)
 	
-		self.cbProfile = wx.ComboBox(self, wx.ID_ANY, self.vprint,
+		self.cbProfile = wx.ComboBox(self, wx.ID_ANY, self.vprofile,
  			(-1, -1), (CBSIZE, -1), self.profilemap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbProfile.SetFont(f)
 		self.cbProfile.SetToolTipString("Choose which skeinforge profile to use")
-		prf.Add(self.cbProfile)
-		self.cbProfile.SetStringSelection(self.vprint)
-		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrint, self.cbProfile)
+		prf.Add(self.cbProfile, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		self.cbProfile.SetStringSelection(self.vprofile)
+		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
 
 		sizer.Add(prf, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
@@ -122,6 +122,7 @@ class Skeinforge:
 		return ['profilefile', 'profiledir', 'profile', 'command', 'config'], []
 		
 	def initialize(self, flag=False):
+		print "in skf initialize", flag
 		if flag:
 			np = self.loadProfile()
 			if np is not None:
@@ -171,7 +172,7 @@ class Skeinforge:
 		heTemps = [185]
 		bedTemps = [60]
 		nExtruders = 1
-		bedsize = [200, 200]
+		bedSize = [200, 200]
 		print "get slicer parameters"
 		if self.parent.settings['profile'] in self.profilemap.keys():
 			path = self.profilemap[self.parent.settings['profile']]
@@ -198,7 +199,7 @@ class Skeinforge:
 					if s.startswith("Object First Layer Perimeter Temperature (Celcius):"):
 						try:
 							sval = s.split('\t')[1]
-							bheTemps[0] = float(sval)
+							heTemps[0] = float(sval)
 						except:
 							heTemps[0] = 185
 					
