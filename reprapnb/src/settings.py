@@ -7,6 +7,7 @@ import ConfigParser
 import os
 
 from slic3r import Slic3r
+from skeinforge import Skeinforge
 
 INIFILE = "rrh.ini"
 
@@ -33,6 +34,8 @@ class SlicerSettings:
 		self.type = None
 		if self.name == 'slic3r':
 			self.type = Slic3r(self.app, self)
+		elif self.name == 'skeinforge':
+			self.type = Skeinforge(self.app, self)
 		else:
 			self.type = None
 			print "Unknown slicer type: %s" % self.name

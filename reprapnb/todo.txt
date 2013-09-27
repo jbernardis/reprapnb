@@ -10,12 +10,3 @@
 29) drive two printers simultaneously
 30) add acceleration to ini file somewhere - should be in slicer config
 
-==>a) after bringing a file into fileprep from plater, after it is loaded into gcf, we see the temporary
-file name instead of the temporary tag
-
-b) @ the start, the hot bed and hot end should be preloaded with the temps of the currently selected 
-filament instead of PLA temperatures
-similarly, if I change the temps inside a slicer, when I come back to the NB, and hit the refresh button
-it should read that temperature so that pull from profile gets the new value
-
-==>c) change those print statements into LogMessages.  Add LogMessage for start slice, start gcode read, start model processing, etc
