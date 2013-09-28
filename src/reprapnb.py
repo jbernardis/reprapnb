@@ -78,6 +78,7 @@ class MainFrame(wx.Frame):
 		self.nbil = wx.ImageList(16, 16)
 		self.nbilEmptyIdx = self.nbil.Add(self.images.pngEmpty)
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
+		self.nbilPrintBusyIdx = self.nbil.Add(self.images.pngPrintbusy)
 
 		p = wx.Panel(self)
 
