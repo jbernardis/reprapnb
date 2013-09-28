@@ -76,7 +76,8 @@ class MainFrame(wx.Frame):
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		self.nbil = wx.ImageList(16, 16)
-		self.nbilAttentionIdx = self.nbil.Add(self.images.Attention)
+		self.nbilEmptyIdx = self.nbil.Add(self.images.pngEmpty)
+		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
 
 		p = wx.Panel(self)
 
@@ -161,7 +162,6 @@ class MainFrame(wx.Frame):
 		self.nb.AssignImageList(self.nbil)
 
 		self.logger = Logger(self.nb, self)
-		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		
 		self.pxLogger = 0
 		self.pxPlater = 1
@@ -197,6 +197,7 @@ class MainFrame(wx.Frame):
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)
 			
+		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
 
 	def evtRepRap(self, evt):
@@ -220,7 +221,7 @@ class MainFrame(wx.Frame):
 		if flag:
 			self.nb.SetPageImage(self.pxLogger, self.nbilAttentionIdx)
 		else:
-			self.nb.SetPageImage(self.pxLogger, None)
+			self.nb.SetPageImage(self.pxLogger, self.nbilEmptyIdx)
 						
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:
