@@ -18,6 +18,9 @@ class Logger(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
+		self.hiLiteTabTimer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onHiLiteTabTimer, self.hiLiteTabTimer)
+		
 		sz = wx.BoxSizer(wx.VERTICAL)
 		
 		self.t = wx.TextCtrl(self, wx.ID_ANY, size=(300, 600), style=wx.TE_MULTILINE|wx.TE_RICH2|wx.TE_READONLY)
@@ -40,6 +43,9 @@ class Logger(wx.Panel):
 		self.SetSizer(sz)
 		self.Layout()
 		self.Fit()
+		
+	def onHiLiteTabTimer(self, evt):
+		self.app.hiLiteLogTab(False)
 		
 	def doClear(self, evt):
 		self.t.Clear()
@@ -78,9 +84,16 @@ class Logger(wx.Panel):
 			self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
 		except:
 			print "Unable to add (%s) to log" % text
+			
+		if not self.app.onLoggerPage():
+			self.hiLiteTabTimer.Start(3000, True)
+			self.app.hiLiteLogTab(True)
+
+	def LogMessageCR(self, text):
+		self.LogMessage(text)
 
 	def LogError(self, text):
-		self.LogMessage("Error - " +string.rstrip(text)+"\n")
+		self.LogMessage("Error - " +string.rstrip(text))
 
 	def LogWarning(self, text):
-		self.LogMessage("Warning - " +string.rstrip(text)+"\n")
+		self.LogMessage("Warning - " +string.rstrip(text))

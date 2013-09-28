@@ -8,7 +8,7 @@
 28) integration with webcam
 29) drive two printers simultaneously
 30) add acceleration to ini file somewhere - should be in slicer config
-31) retrieve speed settings from printer   feed rate, flow rate, fan speed (M122)
+31) retrieve speed settings from printer   feed rate, flow rate, fan speed (M122)   <====
 32) limit size of log
 33) ? support over-writing of lines in log to better show skeinforge output
 

@@ -33,6 +33,12 @@ TB_TOOL_LOG = 19
 TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
 
+LOGGER_TAB_TEXT = "Log"
+PLATER_TAB_TEXT = "Plater"
+FILEPREP_TAB_TEXT = "File Preparation"
+MANCTL_TAB_TEXT = "Manual Control"
+PRTMON_TAB_TEXT = "Print Monitor"
+
 MAXCFGCHARS = 80
 
 BUTTONDIM = (64, 64)
@@ -69,6 +75,8 @@ class MainFrame(wx.Frame):
 		(self.buildarea, nExtr, heTemps, bedTemps) = self.slicer.getSlicerParameters()
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
+		self.nbil = wx.ImageList(16, 16)
+		self.nbilAttentionIdx = self.nbil.Add(self.images.Attention)
 
 		p = wx.Panel(self)
 
@@ -150,6 +158,7 @@ class MainFrame(wx.Frame):
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		self.nb = wx.Notebook(p, style=wx.NB_TOP)
+		self.nb.AssignImageList(self.nbil)
 
 		self.logger = Logger(self.nb, self)
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
@@ -165,11 +174,11 @@ class MainFrame(wx.Frame):
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemps[0])
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
-		self.nb.AddPage(self.logger, "Log")
-		self.nb.AddPage(self.pgPlater, "Plating")
-		self.nb.AddPage(self.pgFilePrep, "File Preparation")
-		self.nb.AddPage(self.pgManCtl, "Manual Control")
-		self.nb.AddPage(self.pgPrtMon, "Print/Monitor")
+		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT)
+		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT)
+		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT)
+		self.nb.AddPage(self.pgManCtl, MANCTL_TAB_TEXT)
+		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
 
 		sizer.AddSpacer((20,20))
@@ -206,6 +215,12 @@ class MainFrame(wx.Frame):
 			evt.Veto()
 		else:
 			evt.Skip()
+			
+	def hiLiteLogTab(self, flag):
+		if flag:
+			self.nb.SetPageImage(self.pxLogger, self.nbilAttentionIdx)
+		else:
+			self.nb.SetPageImage(self.pxLogger, None)
 						
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:
@@ -300,6 +315,9 @@ class MainFrame(wx.Frame):
 		self.timer = None
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
+			
+	def onLoggerPage(self):
+		return self.nb.GetSelection() == self.pxLogger
 
 	def replace(self, s):
 		d = {}
@@ -420,6 +438,9 @@ class MainFrame(wx.Frame):
 				self.pgPrtMon.updatePrintPosition(n)
 		
 	def onClose(self, evt):
+		if self.checkPrinting():
+			return
+		
 		if self.connected:
 			self.reprap.disconnect()
 			
@@ -444,6 +465,20 @@ class MainFrame(wx.Frame):
 				
 		self.settings.cleanUp()	
 		self.Destroy()
+		
+	def checkPrinting(self):
+		if self.printing:
+			dlg = wx.MessageDialog(self, "Are you sure you want to exit while printing is active",
+					'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+			
+			rc = dlg.ShowModal()
+			dlg.Destroy()
+
+			if rc != wx.ID_YES:
+				return True
+
+		return False
+
 
 class App(wx.App):
 	def OnInit(self):

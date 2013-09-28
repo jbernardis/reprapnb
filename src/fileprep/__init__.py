@@ -29,8 +29,9 @@ reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
 
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
-SLICER_FINISHED = 2
-SLICER_CANCELLED = 3
+SLICER_RUNNINGCR = 2
+SLICER_FINISHED = 3
+SLICER_CANCELLED = 4
 
 TEXT_PAD = 10
 
@@ -66,7 +67,10 @@ class SlicerThread:
 			o = p.stdout.read(1)
 			if o == '': break
 			if o == '\r' or o == '\n':
-				evt = SlicerEvent(msg = obuf, state = SLICER_RUNNING)
+				state = SLICER_RUNNING
+				if o == '\r':
+					state = SLICER_RUNNINGCR
+				evt = SlicerEvent(msg = obuf, state = state)
 				wx.PostEvent(self.win, evt)
 				obuf = ''
 			elif ord(o) < 32:
@@ -562,6 +566,10 @@ class FilePrepare(wx.Panel):
 		if evt.state == SLICER_RUNNING:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == SLICER_RUNNINGCR:
+			if evt.msg is not None:
+				self.logger.LogMessageCR(evt.msg)
 				
 		elif evt.state == SLICER_CANCELLED:
 			if evt.msg is not None:
