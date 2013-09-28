@@ -76,7 +76,6 @@ class MainFrame(wx.Frame):
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		self.nbil = wx.ImageList(16, 16)
-		self.nbilEmptyIdx = self.nbil.Add(self.images.pngEmpty)
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
 		self.nbilPrinterBusyIdx = self.nbil.Add(self.images.pngPrinterbusy)
 		self.nbilPrinterReadyIdx = self.nbil.Add(self.images.pngPrinterready)
@@ -176,11 +175,11 @@ class MainFrame(wx.Frame):
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemps[0])
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
-		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=self.nbilEmptyIdx)
-		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=self.nbilEmptyIdx)
-		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=self.nbilEmptyIdx)
+		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
+		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
+		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgManCtl, MANCTL_TAB_TEXT)
-		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=self.nbilEmptyIdx)
+		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=-1)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
 
 		sizer.AddSpacer((20,20))
@@ -223,7 +222,7 @@ class MainFrame(wx.Frame):
 		if flag:
 			self.nb.SetPageImage(self.pxLogger, self.nbilAttentionIdx)
 		else:
-			self.nb.SetPageImage(self.pxLogger, self.nbilEmptyIdx)
+			self.nb.SetPageImage(self.pxLogger, -1)
 						
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:
@@ -271,15 +270,6 @@ class MainFrame(wx.Frame):
 	def scanSerial(self):
 		"""scan for available ports. return a list of device names."""
 		baselist=[]
-		if os.name=="nt":
-			try:
-				key=_winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,"HARDWARE\\DEVICEMAP\\SERIALCOMM")
-				i=0
-				while(1):
-					baselist+=[_winreg.EnumValue(key,i)[1]]
-					i+=1
-			except:
-				pass
 		return baselist+glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') +glob.glob("/dev/tty.*")+glob.glob("/dev/cu.*")+glob.glob("/dev/rfcomm*")
 
 	def doConnect(self, evt):
@@ -377,7 +367,7 @@ class MainFrame(wx.Frame):
 		elif self.pgPrtMon.hasFileLoaded():
 			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrinterReadyIdx)
 		else:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilEmptyIdx)
+			self.nb.SetPageImage(self.pxPrtMon, -1)
 			
 		self.pgFilePrep.setPrinterBusy(flag)
 		
@@ -478,7 +468,7 @@ class MainFrame(wx.Frame):
 		self.Destroy()
 		
 	def checkPrinting(self):
-		if self.printing:
+		if self.printing and self.connected:
 			dlg = wx.MessageDialog(self, "Are you sure you want to exit while printing is active",
 					'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
 			
