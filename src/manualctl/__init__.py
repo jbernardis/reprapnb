@@ -9,7 +9,7 @@ from toolchange import ToolChange
 from images import Images
 
 #FIXIT  G code ref
-BUTTONDIMWIDE = (144, 80)
+BUTTONDIMWIDE = (96, 48)
 
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, nExtr, heTemp, bedTemp):
@@ -153,9 +153,9 @@ class ManualControl(wx.Panel):
 		sizerSpeed.Add(self.slFanSpeed)
 	
 		if speedcommand is not None:			
-			self.bSpeedQuery = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSpeedquery, size=BUTTONDIMWIDE)
+			self.bSpeedQuery = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSpeedquery, size=BUTTONDIMWIDE)
 			self.bSpeedQuery.SetToolTipString("Retrieve current feed and fan speeds from printer")
-			szRight.Add(self.bSpeedQuery, flag=wx.ALL, border=10)
+			sizerSpeed.Add(self.bSpeedQuery, flag=wx.ALIGN_CENTER | wx.ALL, border=10)
 			self.Bind(wx.EVT_BUTTON, self.doSpeedQuery, self.bSpeedQuery)
 		
 		return sizerSpeed
