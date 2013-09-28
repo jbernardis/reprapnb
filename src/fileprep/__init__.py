@@ -33,6 +33,12 @@ SLICER_RUNNINGCR = 2
 SLICER_FINISHED = 3
 SLICER_CANCELLED = 4
 
+FPSTATUS_IDLE = 0
+FPSTATUS_NEW = 1
+FPSTATUS_NEW_MOD = 2
+FPSTATUS_OLD = 3
+FPSTATUS_OLD_MOD = 4
+
 TEXT_PAD = 10
 
 class SlicerThread:
@@ -194,6 +200,7 @@ class FilePrepare(wx.Panel):
 		self.gcodeLoaded = False
 		self.sliceActive = False
 		self.exporting = False
+		self.status = FPSTATUS_IDLE
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -749,6 +756,16 @@ class FilePrepare(wx.Panel):
 				self.bOpen.Enable(True)
 				self.bSlice.Enable(True)
 				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+				
+				newstat = False
+				if self.status == FPSTATUS_NEW:
+					self.status = FPSTATUS_OLD
+					newstat = True
+				elif self.status == FPSTATUS_NEW_MOD:
+					self.status = FPSTATUS_OLD_MOD
+					newstat = True
+				if newstat:
+					self.app.updateFilePrepStatus(self.status)
 
 			else:
 				self.setGCodeLoaded(True)
@@ -777,6 +794,11 @@ class FilePrepare(wx.Panel):
 		
 	def setGCodeLoaded(self, flag=True):
 		self.gcodeLoaded = flag
+		if flag:
+			self.status = FPSTATUS_NEW
+		else:
+			self.status = FPSTATUS_IDLE
+		self.app.updateFilePrepStatus(self.status)
 		self.enableButtons()
 		
 	def setPrinterBusy(self, flag=True):
@@ -1103,8 +1125,28 @@ class FilePrepare(wx.Panel):
 		tt = time.strftime('%H:%M:%S', time.gmtime(self.model.duration))
 		self.ipPrintTime.SetLabel("%s/%s" % (lt, tt))
 		
-	def setModified(self, flag):
+	def setModified(self, flag=True):
 		self.modified = flag
+		newstat = False
+		
+		if self.modified:
+			if self.status == FPSTATUS_NEW:
+				self.status = FPSTATUS_NEW_MOD
+				newstat = True
+			elif self.status == FPSTATUS_OLD:
+				self.status = FPSTATUS_OLD_MOD
+				newstat = True
+		else:
+			if self.status == FPSTATUS_NEW_MOD:
+				self.status = FPSTATUS_NEW
+				newstat = True
+			elif self.status == FPSTATUS_OLD_MOD:
+				self.status = FPSTATUS_OLD
+				newstat = True
+				
+		if newstat:
+			self.app.updateFilePrepStatus(self.status)
+			
 		if self.temporaryFile:
 			fn = TEMPFILELABEL
 		else:

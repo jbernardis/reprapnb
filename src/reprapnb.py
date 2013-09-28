@@ -14,7 +14,8 @@ cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( ins
 if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
-from fileprep import FilePrepare
+from fileprep import FilePrepare, FPSTATUS_IDLE, FPSTATUS_NEW, FPSTATUS_NEW_MOD, FPSTATUS_OLD, FPSTATUS_OLD_MOD
+
 from printmon import PrintMonitor
 from manualctl import ManualControl
 from plater import Plater
@@ -79,6 +80,10 @@ class MainFrame(wx.Frame):
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
 		self.nbilPrinterBusyIdx = self.nbil.Add(self.images.pngPrinterbusy)
 		self.nbilPrinterReadyIdx = self.nbil.Add(self.images.pngPrinterready)
+		self.nbilFilePrepNewIdx = self.nbil.Add(self.images.pngFileprepnew)
+		self.nbilFilePrepNewModIdx = self.nbil.Add(self.images.pngFileprepnewmod)
+		self.nbilFilePrepOldIdx = self.nbil.Add(self.images.pngFileprepold)
+		self.nbilFilePrepOldModIdx = self.nbil.Add(self.images.pngFileprepoldmod)
 
 		p = wx.Panel(self)
 
@@ -370,6 +375,18 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxPrtMon, -1)
 			
 		self.pgFilePrep.setPrinterBusy(flag)
+		
+	def updateFilePrepStatus(self, status):
+		if status == FPSTATUS_NEW:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepNewIdx)
+		elif status == FPSTATUS_NEW_MOD:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepNewModIdx)
+		elif status == FPSTATUS_OLD:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepOldIdx)
+		elif status == FPSTATUS_OLD_MOD:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepOldModIdx)
+		else:
+			self.nb.SetPageImage(self.pxFilePrep, -1)
 		
 	def getStatus(self):
 		stat = {}
