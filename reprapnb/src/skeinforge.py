@@ -122,7 +122,6 @@ class Skeinforge:
 		return ['profilefile', 'profiledir', 'profile', 'command', 'config'], []
 		
 	def initialize(self, flag=False):
-		print "in skf initialize", flag
 		if flag:
 			np = self.loadProfile()
 			if np is not None:
@@ -130,11 +129,6 @@ class Skeinforge:
 			self.vprofile = self.parent.settings['profile']
 			
 		self.getProfileOptions()
-		p = self.vprofile
-		if p in self.profilemap.keys():
-			self.parent.settings['profilefile'] = self.profilemap[p]
-		else:
-			self.parent.settings['profilefile'] = None
 
 	def configSlicer(self):
 		self.getProfileOptions()
@@ -154,10 +148,6 @@ class Skeinforge:
 		if self.parent.settings['profile'] != self.vprofile:
 			self.writeProfile(self.parent.settings['profile'], self.vprofile)
 			self.parent.settings['profile'] = self.vprofile
-			if self.vprofile in self.profilemap.keys():
-				self.parent.settings['profilefile'] = self.profilemap[self.vprofile]
-			else:
-				self.parent.settings['profilefile'] = None
 			chg = True
 			
 		if chg:
@@ -173,7 +163,6 @@ class Skeinforge:
 		bedTemps = [60]
 		nExtruders = 1
 		bedSize = [200, 200]
-		print "get slicer parameters"
 		if self.parent.settings['profile'] in self.profilemap.keys():
 			path = self.profilemap[self.parent.settings['profile']]
 			
@@ -214,7 +203,6 @@ class Skeinforge:
 		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']
-		print "cmd = (%s)" % os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
 	def sliceComplete(self):

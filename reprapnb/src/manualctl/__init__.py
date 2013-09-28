@@ -9,6 +9,7 @@ from toolchange import ToolChange
 from images import Images
 
 #FIXIT  G code ref
+BUTTONDIMWIDE = (144, 80)
 
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, nExtr, heTemp, bedTemp):
@@ -37,7 +38,7 @@ class ManualControl(wx.Panel):
 		
 		self.sizerExtrude = self.addExtruder(heTemp)
 		self.sizerHeat = self.addHeater(bedTemp)
-		self.sizerSpeed = self.addSpeedControls()
+		self.sizerSpeed = self.addSpeedControls(self.appsettings.speedcommand)
 		self.sizerGCode = self.addGCEntry()
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
@@ -118,7 +119,7 @@ class ManualControl(wx.Panel):
 
 		return sizerHeat
 	
-	def addSpeedControls(self):
+	def addSpeedControls(self, speedcommand):
 		sizerSpeed = wx.BoxSizer(wx.VERTICAL)
 		sizerSpeed.AddSpacer((10, 10))
 
@@ -150,8 +151,23 @@ class ManualControl(wx.Panel):
 		self.slFanSpeed.Bind(wx.EVT_SCROLL_CHANGED, self.onFanSpeedChanged)
 		self.slFanSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFanSpeedWheel)
 		sizerSpeed.Add(self.slFanSpeed)
+	
+		if speedcommand is not None:			
+			self.bSpeedQuery = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngSpeedquery, size=BUTTONDIMWIDE)
+			self.bSpeedQuery.SetToolTipString("Retrieve current feed and fan speeds from printer")
+			szRight.Add(self.bSpeedQuery, flag=wx.ALL, border=10)
+			self.Bind(wx.EVT_BUTTON, self.doSpeedQuery, self.bSpeedQuery)
 		
 		return sizerSpeed
+	
+	def doSpeedQuery(self, evt):
+		self.app.reprap.send_now(self.appsettings.speedcommand)
+		
+	def updateSpeeds(self, fan, feed, flow):
+		if feed is not None:
+			self.slFeedSpeed.SetValue(feed)
+		if fan is not None:
+			self.slFanSpeed.SetValue(fan)
 	
 	def onFeedSpeedChanged(self, evt):
 		self.setFeedSpeed(self.slFeedSpeed.GetValue())

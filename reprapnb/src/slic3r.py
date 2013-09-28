@@ -361,11 +361,8 @@ class Slic3r:
 	def getSlicerParameters(self):
 		heTemps = []
 		bedTemps = []
-		print "get slicer parameters"
 		fl = self.parent.settings['filamentfile']
-		print "filament loop"
 		for fn in fl:
-			print "filament ", fn
 			if fn is not None:
 				try:
 					idata = list(open(fn))
@@ -376,12 +373,10 @@ class Slic3r:
 				for i in idata:
 					a = checkTagInt(i, "first_layer_temperature = ")
 					if a is not None:
-						print "found first layer temp of ", a
 						heTemps.append(a)
 					else:
 						a = checkTagInt(i, "first_layer_bed_temperature = ")
 						if a is not None:
-							print "found first layer bed temp of ", a
 							bedTemps.append(a)
 	
 		bedSize = None
@@ -410,13 +405,11 @@ class Slic3r:
 			nExtruders = 1
 		
 		if len(heTemps) < nExtruders:
-			print "length of hetemps < next", len(heTemps), nExtruders
 			x = nExtruders-len(heTemps)
 			for i in range(x):
 				heTemps.append(185)
 		
 		if len(bedTemps) < nExtruders:
-			print "length of bedtemps < next", len(bedTemps), nExtruders
 			x = nExtruders-len(bedTemps)
 			for i in range(x):
 				bedTemps.append(60)

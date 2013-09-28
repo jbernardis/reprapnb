@@ -50,9 +50,6 @@ class SendThread:
 		self.isRunning = False
 		self.printer = None
 		
-	def addToAllowedCommands(self, cmd):
-		allow_while_printing.append(cmd)
-		
 	def endWait(self):
 		self.okWait = False
 		
@@ -230,6 +227,22 @@ class RepRapParser:
 				self.app.setHETemp(float(t[0]))
 			return False
 		
+		m = self.speedrptre.search(msg)
+		if m:
+			fan = None
+			feed = None
+			flow = None
+			t = m.groups()
+			if len(t) >= 1:
+				fan = float(t[0])
+			if len(t) >= 2:
+				feed = float(t[1])
+			if len(t) >= 3:
+				flow = float(t[2])
+				
+			self.app.updateSpeeds(fan, feed, flow)
+			return False
+		
 		return False
 
 
@@ -259,7 +272,10 @@ class RepRap:
 			self.listener = ListenThread(self.win, self.printer, self.sender)
 			self.send_now("M105")
 			self.online = True
-			
+				
+	def addToAllowedCommands(self, cmd):
+		allow_while_printing.append(cmd)
+
 	def getPrintPosition(self):
 		if self.sender and self.sender.isPrinting:
 			return self.sender.getPrintIndex()

@@ -159,8 +159,6 @@ class MainFrame(wx.Frame):
 		self.pxFilePrep = 2
 		self.pxManCtl = 3
 		self.pxPrtMon = 4
-		
-		print "creating nb pages"
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
@@ -216,10 +214,7 @@ class MainFrame(wx.Frame):
 
 	def updateWithSlicerInfo(self):	
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
-		print "USI: %s" % self.slicer.type.getConfigString()
 		(hetemps, bedtemps) = self.slicer.getSlicerParameters()[2:4]
-		print "HE: ", hetemps
-		print "BED: ", bedtemps
 		
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
@@ -403,6 +398,9 @@ class MainFrame(wx.Frame):
 	def setBedTemp(self, temp):
 		self.pgManCtl.setBedTemp(temp)
 		self.pgPrtMon.setBedTemp(temp)
+		
+	def updateSpeeds(self, fan, feed, flow):
+		self.pgManCtl.updateSpeeds(fan, feed, flow)
 		
 	def onTimer(self, evt):
 		self.cycle += 1

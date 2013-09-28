@@ -1,4 +1,3 @@
-11) figure out how to include skeinforge (or at least SFACT)
 14) SD support - print from only - no print to
 18) other places for separate thread - file saving, stl file saving from plater
 22) need a tool change mechanism
@@ -9,4 +8,7 @@
 28) integration with webcam
 29) drive two printers simultaneously
 30) add acceleration to ini file somewhere - should be in slicer config
+31) retrieve speed settings from printer   feed rate, flow rate, fan speed (M122)
+32) limit size of log
+33) ? support over-writing of lines in log to better show skeinforge output
 
