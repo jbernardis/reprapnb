@@ -167,6 +167,9 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
 		
+	def hasFileLoaded(self):
+		return self.model is not None
+		
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
 			self.printing = True

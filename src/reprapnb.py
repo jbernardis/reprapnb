@@ -78,7 +78,8 @@ class MainFrame(wx.Frame):
 		self.nbil = wx.ImageList(16, 16)
 		self.nbilEmptyIdx = self.nbil.Add(self.images.pngEmpty)
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
-		self.nbilPrintBusyIdx = self.nbil.Add(self.images.pngPrintbusy)
+		self.nbilPrinterBusyIdx = self.nbil.Add(self.images.pngPrinterbusy)
+		self.nbilPrinterReadyIdx = self.nbil.Add(self.images.pngPrinterready)
 
 		p = wx.Panel(self)
 
@@ -175,11 +176,11 @@ class MainFrame(wx.Frame):
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemps[0])
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
-		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT)
-		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT)
-		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT)
+		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=self.nbilEmptyIdx)
+		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=self.nbilEmptyIdx)
+		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=self.nbilEmptyIdx)
 		self.nb.AddPage(self.pgManCtl, MANCTL_TAB_TEXT)
-		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT)
+		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=self.nbilEmptyIdx)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
 
 		sizer.AddSpacer((20,20))
@@ -370,6 +371,14 @@ class MainFrame(wx.Frame):
 		if flag:
 			self.printPosition = None
 		self.printing = flag
+		
+		if flag:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrinterBusyIdx)
+		elif self.pgPrtMon.hasFileLoaded():
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrinterReadyIdx)
+		else:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilEmptyIdx)
+			
 		self.pgFilePrep.setPrinterBusy(flag)
 		
 	def getStatus(self):
