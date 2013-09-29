@@ -604,7 +604,12 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(True)
 			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			self.app.slicer.sliceComplete()
-			self.loadFile(self.gcFile)
+			if os.path.exists(self.gcFile):
+				self.loadFile(self.gcFile)
+			else:
+				self.logger.LogMessage("Slicer failed to produce expected G Code file: %s" % self.gcFile)
+				self.gcFile = None
+				self.bOpen.Enable(True)
 			
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)

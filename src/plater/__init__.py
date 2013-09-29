@@ -19,6 +19,10 @@ TITLETEXT = "Plater"
 BUTTONDIM = (48, 48)
 BUTTONDIMWIDE = (72,48)
 
+PLSTATUS_EMPTY = 0
+PLSTATUS_LOADED_CLEAN = 1
+PLSTATUS_LOADED_DIRTY = 2
+
 class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
@@ -27,6 +31,8 @@ class Plater(wx.Panel):
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.plater
+		self.setStatus(PLSTATUS_EMPTY)
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
@@ -146,6 +152,10 @@ class Plater(wx.Panel):
 		self.sizerMain.Add(self.sizerBtn2, pos=(6,4))
 		
 		self.SetSizer(self.sizerMain)
+		
+	def setStatus(self, s):
+		self.status = s
+		self.app.updatePlaterStatus(s)
 		
 	def enableButtons(self, flag):
 		self.bDel.Enable(flag)
@@ -296,6 +306,9 @@ class Plater(wx.Panel):
 	def loadFile(self, fn):
 		if len(self.lbMap) != 0:
 			self.setModified()
+		else:
+			self.setStatus(PLSTATUS_LOADED_CLEAN)
+			
 		self.filename = fn
 		self.settings.lastdirectory = os.path.dirname(fn)
 		self.settings.setModified()
@@ -381,7 +394,6 @@ class Plater(wx.Panel):
 		if rc != wx.ID_YES:
 			return
 		
-		self.setModified(False)
 		self.stlFrame.delAll()
 		self.enableButtons(False)
 		
@@ -389,8 +401,12 @@ class Plater(wx.Panel):
 		self.lbSelection = None
 		self.lbMap = []
 		self.lbModified = []
+		self.setModified(False)
 		
 	def doExport2Prep(self, evt):
+		if self.app.isFilePrepModified("Overwrite unsaved changes with forwarded file?"):
+			return
+		
 		suffix = "%05d.stl" % int(random.random() * 99999)
 		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix()+suffix)
 		self.logger.LogMessage("Saving plate to temporary STL file: %s" % fn)
@@ -441,6 +457,13 @@ class Plater(wx.Panel):
 			self.setModified(False)
 		
 	def setModified(self, flag=True, itmId=None):
+		if flag or itmId is not None:
+			self.setStatus(PLSTATUS_LOADED_DIRTY)
+		elif len(self.lbMap) == 0:
+			self.setStatus(PLSTATUS_EMPTY)
+		else:
+			self.setStatus(PLSTATUS_LOADED_CLEAN)
+			
 		self.modified = flag
 		if not flag:
 			for i in range(len(self.lbModified)):

@@ -9,10 +9,9 @@ if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
 from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_UNEQUAL_DIRTY
-
 from printmon import PrintMonitor
 from manualctl import ManualControl
-from plater import Plater
+from plater import Plater, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
 from settings import Settings
 from logger import Logger
 from images import Images
@@ -78,6 +77,8 @@ class MainFrame(wx.Frame):
 		self.nbilEqualDirtyIdx = self.nbil.Add(self.images.pngEqualdirty)
 		self.nbilUnequalIdx = self.nbil.Add(self.images.pngUnequal)
 		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequaldirty)
+		self.nbilLoadedCleanIdx = self.nbil.Add(self.images.pngLoadedclean)
+		self.nbilLoadedDirtyIdx = self.nbil.Add(self.images.pngLoadeddirty)
 
 		p = wx.Panel(self)
 
@@ -370,6 +371,14 @@ class MainFrame(wx.Frame):
 			
 		self.pgFilePrep.setPrinterBusy(flag)
 		
+	def updatePlaterStatus(self, status):
+		if status == PLSTATUS_LOADED_CLEAN:
+			self.nb.SetPageImage(self.pxPlater, self.nbilLoadedCleanIdx)
+		elif status == PLSTATUS_LOADED_DIRTY:
+			self.nb.SetPageImage(self.pxPlater, self.nbilLoadedDirtyIdx)
+		else:
+			self.nb.SetPageImage(self.pxPlater, -1)
+
 	def updateFilePrepStatus(self, status):
 		if status == FPSTATUS_EQUAL:
 			self.nb.SetPageImage(self.pxFilePrep, self.nbilEqualIdx)
@@ -381,6 +390,9 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalDirtyIdx)
 		else:
 			self.nb.SetPageImage(self.pxFilePrep, -1)
+			
+	def isFilePrepModified(self, message):
+		return self.pgFilePrep.checkModified(message=message)
 		
 	def getStatus(self):
 		stat = {}
