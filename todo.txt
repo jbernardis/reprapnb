@@ -10,4 +10,7 @@
 30) add acceleration to ini file somewhere - should be in slicer config
 32) limit size of log
 34) continue adding status icons to notebook tabs
+			plater - clean - stls loaded but saved
+					dirty - stls loaded but not saved
+					nothing - nothing loaded
 

@@ -34,10 +34,10 @@ SLICER_FINISHED = 3
 SLICER_CANCELLED = 4
 
 FPSTATUS_IDLE = 0
-FPSTATUS_NEW = 1
-FPSTATUS_NEW_MOD = 2
-FPSTATUS_OLD = 3
-FPSTATUS_OLD_MOD = 4
+FPSTATUS_EQUAL = 1
+FPSTATUS_EQUAL_DIRTY = 2
+FPSTATUS_UNEQUAL = 3
+FPSTATUS_UNEQUAL_DIRTY = 4
 
 TEXT_PAD = 10
 
@@ -665,8 +665,8 @@ class FilePrepare(wx.Panel):
 			self.gcode = self.readerThread.getGCode()
 			self.gcodeLoaded = True
 			self.logger.LogMessage("G Code reading complete - building model")
-			self.app.updateFilePrepStatus(FPSTATUS_NEW)
-			self.status = FPSTATUS_NEW
+			self.app.updateFilePrepStatus(FPSTATUS_UNEQUAL)
+			self.status = FPSTATUS_UNEQUAL
 			self.setModified(False)		
 			self.buildModel()
 		
@@ -762,11 +762,11 @@ class FilePrepare(wx.Panel):
 				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 				
 				newstat = False
-				if self.status == FPSTATUS_NEW:
-					self.status = FPSTATUS_OLD
+				if self.status == FPSTATUS_UNEQUAL:
+					self.status = FPSTATUS_EQUAL
 					newstat = True
-				elif self.status == FPSTATUS_NEW_MOD:
-					self.status = FPSTATUS_OLD_MOD
+				elif self.status == FPSTATUS_UNEQUAL_DIRTY:
+					self.status = FPSTATUS_EQUAL_DIRTY
 					newstat = True
 				if newstat:
 					self.app.updateFilePrepStatus(self.status)
@@ -1124,15 +1124,15 @@ class FilePrepare(wx.Panel):
 		newstat = False
 		
 		if self.modified:
-			if self.status in [ FPSTATUS_NEW, FPSTATUS_OLD_MOD, FPSTATUS_OLD ]:
-				self.status = FPSTATUS_NEW_MOD
+			if self.status in [ FPSTATUS_UNEQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_EQUAL ]:
+				self.status = FPSTATUS_UNEQUAL_DIRTY
 				newstat = True
 		else:
-			if self.status == FPSTATUS_NEW_MOD:
-				self.status = FPSTATUS_NEW
+			if self.status == FPSTATUS_UNEQUAL_DIRTY:
+				self.status = FPSTATUS_UNEQUAL
 				newstat = True
-			elif self.status == FPSTATUS_OLD_MOD:
-				self.status = FPSTATUS_OLD
+			elif self.status == FPSTATUS_EQUAL_DIRTY:
+				self.status = FPSTATUS_EQUAL
 				newstat = True
 				
 		if newstat:

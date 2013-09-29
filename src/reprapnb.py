@@ -4,17 +4,11 @@ import wx
 import glob
 import time
 
-if os.name=="nt":
-	try:
-		import _winreg
-	except:
-		pass
-
 cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
 if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
-from fileprep import FilePrepare, FPSTATUS_IDLE, FPSTATUS_NEW, FPSTATUS_NEW_MOD, FPSTATUS_OLD, FPSTATUS_OLD_MOD
+from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_UNEQUAL_DIRTY
 
 from printmon import PrintMonitor
 from manualctl import ManualControl
@@ -80,10 +74,10 @@ class MainFrame(wx.Frame):
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
 		self.nbilPrinterBusyIdx = self.nbil.Add(self.images.pngPrinterbusy)
 		self.nbilPrinterReadyIdx = self.nbil.Add(self.images.pngPrinterready)
-		self.nbilFilePrepNewIdx = self.nbil.Add(self.images.pngFileprepnew)
-		self.nbilFilePrepNewModIdx = self.nbil.Add(self.images.pngFileprepnewmod)
-		self.nbilFilePrepOldIdx = self.nbil.Add(self.images.pngFileprepold)
-		self.nbilFilePrepOldModIdx = self.nbil.Add(self.images.pngFileprepoldmod)
+		self.nbilEqualIdx = self.nbil.Add(self.images.pngEqual)
+		self.nbilEqualDirtyIdx = self.nbil.Add(self.images.pngEqualdirty)
+		self.nbilUnequalIdx = self.nbil.Add(self.images.pngUnequal)
+		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequalDirty)
 
 		p = wx.Panel(self)
 
@@ -377,14 +371,14 @@ class MainFrame(wx.Frame):
 		self.pgFilePrep.setPrinterBusy(flag)
 		
 	def updateFilePrepStatus(self, status):
-		if status == FPSTATUS_NEW:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepNewIdx)
-		elif status == FPSTATUS_NEW_MOD:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepNewModIdx)
-		elif status == FPSTATUS_OLD:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepOldIdx)
-		elif status == FPSTATUS_OLD_MOD:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilFilePrepOldModIdx)
+		if status == FPSTATUS_EQUAL:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilEqualIdx)
+		elif status == FPSTATUS_EQUAL_DIRTY:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilEqualDirtyIdx)
+		elif status == FPSTATUS_UNEQUAL:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalIdx)
+		elif status == FPSTATUS_UNEQUAL_DIRTY:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalDirtyIdx)
 		else:
 			self.nb.SetPageImage(self.pxFilePrep, -1)
 		
