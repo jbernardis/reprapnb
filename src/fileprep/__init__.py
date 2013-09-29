@@ -561,7 +561,7 @@ class FilePrepare(wx.Panel):
 		self.gcFile = self.app.slicer.buildSliceOutputFile(fn)
 		cmd = self.app.slicer.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
-		self.setGCodeLoaded(False)
+		self.gcodeLoaded = False
 		self.bOpen.Enable(False)
 		self.bSlice.Enable(False)
 		self.bToPrinter.Enable(False)
@@ -663,7 +663,11 @@ class FilePrepare(wx.Panel):
 			self.ipFileName.SetLabel(lfn)
 
 			self.gcode = self.readerThread.getGCode()
-			self.logger.LogMessage("G Code reading complete - building model")		
+			self.gcodeLoaded = True
+			self.logger.LogMessage("G Code reading complete - building model")
+			self.app.updateFilePrepStatus(FPSTATUS_NEW)
+			self.status = FPSTATUS_NEW
+			self.setModified(False)		
 			self.buildModel()
 		
 			if self.temporaryFile:
@@ -680,7 +684,7 @@ class FilePrepare(wx.Panel):
 			self.filename = None
 			self.ipFileName.SetLabel("")
 			self.gcFile = None
-			self.setGCodeLoaded(False)
+			self.gcodeLoaded = False
 			self.model = None
 		
 			if self.temporaryFile:
@@ -768,7 +772,6 @@ class FilePrepare(wx.Panel):
 					self.app.updateFilePrepStatus(self.status)
 
 			else:
-				self.setGCodeLoaded(True)
 				self.model = model
 				self.getModelData(self.modelerThread.getLayer())			
 				self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
@@ -776,7 +779,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
 				self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
 				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
-				self.setModified(False)
+				self.enableButtons();
 				self.bOpen.Enable(True)
 				self.bSlice.Enable(True)
 				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
@@ -791,15 +794,6 @@ class FilePrepare(wx.Panel):
 				
 		else:
 			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
-		
-	def setGCodeLoaded(self, flag=True):
-		self.gcodeLoaded = flag
-		if flag:
-			self.status = FPSTATUS_NEW
-		else:
-			self.status = FPSTATUS_IDLE
-		self.app.updateFilePrepStatus(self.status)
-		self.enableButtons()
 		
 	def setPrinterBusy(self, flag=True):
 		self.printerBusy = flag
@@ -1130,11 +1124,8 @@ class FilePrepare(wx.Panel):
 		newstat = False
 		
 		if self.modified:
-			if self.status == FPSTATUS_NEW:
+			if self.status in [ FPSTATUS_NEW, FPSTATUS_OLD_MOD, FPSTATUS_OLD ]:
 				self.status = FPSTATUS_NEW_MOD
-				newstat = True
-			elif self.status == FPSTATUS_OLD:
-				self.status = FPSTATUS_OLD_MOD
 				newstat = True
 		else:
 			if self.status == FPSTATUS_NEW_MOD:
