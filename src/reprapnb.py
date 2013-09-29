@@ -183,7 +183,7 @@ class MainFrame(wx.Frame):
 		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgManCtl, MANCTL_TAB_TEXT)
-		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=-1)
+		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=self.nbilNotReadyIdx)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
 
 		sizer.AddSpacer((20,20))
@@ -368,9 +368,10 @@ class MainFrame(wx.Frame):
 			
 		self.pgFilePrep.setPrinterBusy(flag)
 
-	def updatePrintMonStatus(self, status):		
+	def updatePrintMonStatus(self, status):	
+		print "UPM: ", status	
 		if status == PMSTATUS_NOT_READY:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotreadyIdx)
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotReadyIdx)
 		elif status == PMSTATUS_READY:
 			self.nb.SetPageImage(self.pxPrtMon, self.nbilReadyIdx)
 		elif status == PMSTATUS_PRINTING:

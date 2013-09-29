@@ -57,7 +57,7 @@ class PrintMonitor(wx.Panel):
 		self.origEta = None
 		self.countGLines = None
 		self.syncPrint = True
-		self.setStatus(PMSTATUS_NOT_READY)
+		self.status = PMSTATUS_NOT_READY
 
 		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
@@ -183,7 +183,7 @@ class PrintMonitor(wx.Panel):
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
 			self.printing = True
-			self.setState(PMSTATUS_PRINTING)
+			self.setStatus(PMSTATUS_PRINTING)
 			self.paused = False
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)

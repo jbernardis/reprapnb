@@ -273,7 +273,10 @@ class Plater(wx.Panel):
 	
 	def onLbClick(self, evt):
 		self.lbSelection = self.lb.GetSelection()
-		self.stlFrame.setSelection(self.lbMap[self.lbSelection][1])
+		if self.lbSelection < 0 or self.lbSelection is None:
+			self.lbSelection = None
+		else:
+			self.stlFrame.setSelection(self.lbMap[self.lbSelection][1])
 		
 	def checkAutoArrange(self, evt):
 		self.settings.autoarrange = evt.IsChecked()
