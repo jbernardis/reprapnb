@@ -77,7 +77,7 @@ class MainFrame(wx.Frame):
 		self.nbilEqualIdx = self.nbil.Add(self.images.pngEqual)
 		self.nbilEqualDirtyIdx = self.nbil.Add(self.images.pngEqualdirty)
 		self.nbilUnequalIdx = self.nbil.Add(self.images.pngUnequal)
-		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequalDirty)
+		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequaldirty)
 
 		p = wx.Panel(self)
 
