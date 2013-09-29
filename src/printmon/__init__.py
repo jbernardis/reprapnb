@@ -24,6 +24,11 @@ PAUSE_MODE_RESUME = 2
 PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
 
+PMSTATUS_NOT_READY = 0
+PMSTATUS_READY = 1
+PMSTATUS_PRINTING = 2
+PMSTATUS_PAUSED = 3
+
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app, reprap):
 		self.model = None
@@ -52,6 +57,7 @@ class PrintMonitor(wx.Panel):
 		self.origEta = None
 		self.countGLines = None
 		self.syncPrint = True
+		self.setStatus(PMSTATUS_NOT_READY)
 
 		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
@@ -167,12 +173,17 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
 		
+	def setStatus(self, s):
+		self.status = s
+		self.app.updatePrintMonStatus(s)
+		
 	def hasFileLoaded(self):
 		return self.model is not None
 		
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
 			self.printing = True
+			self.setState(PMSTATUS_PRINTING)
 			self.paused = False
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -182,6 +193,7 @@ class PrintMonitor(wx.Panel):
 			
 		elif evt.event == PRINT_STOPPED:
 			self.paused = True
+			self.setStatus(PMSTATUS_PAUSED)
 			self.printing = False
 			self.reprap.printStopped()
 			self.setPrintMode(PRINT_MODE_RESTART)
@@ -193,6 +205,7 @@ class PrintMonitor(wx.Panel):
 		elif evt.event == PRINT_COMPLETE:
 			self.printing = False
 			self.paused = False
+			self.setStatus(PMSTATUS_READY)
 			self.reprap.printComplete()
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -352,6 +365,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		
 		self.app.setPrinterBusy(False)
+		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		
 	def changePrinter(self, hetemps, bedtemps):
@@ -367,6 +381,7 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setTargets({})
 		
 	def disconnect(self):
+		self.setStatus(PMSTATUS_NOT_READY)
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}

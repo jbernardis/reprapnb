@@ -9,7 +9,7 @@ if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
 from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_UNEQUAL_DIRTY
-from printmon import PrintMonitor
+from printmon import PrintMonitor, PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED
 from manualctl import ManualControl
 from plater import Plater, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
 from settings import Settings
@@ -79,6 +79,10 @@ class MainFrame(wx.Frame):
 		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequaldirty)
 		self.nbilLoadedCleanIdx = self.nbil.Add(self.images.pngLoadedclean)
 		self.nbilLoadedDirtyIdx = self.nbil.Add(self.images.pngLoadeddirty)
+		self.nbilNotReadyIdx = self.nbil.Add(self.images.pngNotready)
+		self.nbilReadyIdx = self.nbil.Add(self.images.pngReady)
+		self.nbilPrintingIdx = self.nbil.Add(self.images.pngPrinting)
+		self.nbilPausedIdx = self.nbil.Add(self.images.pngPaused)
 
 		p = wx.Panel(self)
 
@@ -361,15 +365,20 @@ class MainFrame(wx.Frame):
 		if flag:
 			self.printPosition = None
 		self.printing = flag
-		
-		if flag:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrinterBusyIdx)
-		elif self.pgPrtMon.hasFileLoaded():
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrinterReadyIdx)
-		else:
-			self.nb.SetPageImage(self.pxPrtMon, -1)
 			
 		self.pgFilePrep.setPrinterBusy(flag)
+
+	def updatePrintMonStatus(self, status):		
+		if status == PMSTATUS_NOT_READY:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotreadyIdx)
+		elif status == PMSTATUS_READY:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilReadyIdx)
+		elif status == PMSTATUS_PRINTING:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrintingIdx)
+		elif status == PMSTATUS_PAUSED:
+			self.nb.SetPageImage(self.pxPrtMon, self.nbilPausedIdx)
+		else:
+			self.nb.SetPageImage(self.pxPrtMon, -1)
 		
 	def updatePlaterStatus(self, status):
 		if status == PLSTATUS_LOADED_CLEAN:
