@@ -9,10 +9,10 @@ BUTTONDIM = (48, 48)
 BASE_ID = 2000
 
 class MacroDialog(wx.Dialog):
-	def __init__(self, app, macroList):
+	def __init__(self, app):
 		self.app = app
 		self.settings = self.app.settings
-		self.macroList = macroList
+		self.macroList = MacroList()
 		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
@@ -22,6 +22,7 @@ class MacroDialog(wx.Dialog):
 		pre.Create(self.app, wx.ID_ANY, "Macros", pos, sz, style)
 		self.PostCreate(pre)
 		
+		self.Bind(wx.EVT_CLOSE, self.onClose)
 		sizer = wx.BoxSizer(wx.VERTICAL)
 
 		i = 0
@@ -36,6 +37,9 @@ class MacroDialog(wx.Dialog):
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
+		
+	def onClose(self):
+		self.app.onMacroExit()
 		
 	def runMacro(self, evt):
 		kid = evt.GetId() - BASE_ID

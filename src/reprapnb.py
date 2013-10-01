@@ -18,7 +18,7 @@ from images import Images
 from reprap import RepRap, RepRapParser, RECEIVED_MSG
 from reprapserver import RepRapServer
 from tools import formatElapsed
-from macros import MacroList, MacroDialog
+from macros import MacroDialog
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
@@ -161,7 +161,7 @@ class MainFrame(wx.Frame):
 			
 		self.tb.AddSeparator()
 		
-		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngSlicecfg, "Run a macro", "")
+		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
 		self.Bind(wx.EVT_TOOL, self.doMacro, id=TB_TOOL_RUNMACRO)
 
 		self.tb.Realize()
@@ -206,7 +206,6 @@ class MainFrame(wx.Frame):
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)
 
-		self.macroList = MacroList()			
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
 
@@ -319,9 +318,13 @@ class MainFrame(wx.Frame):
 			self.nb.SetSelection(self.pxFilePrep)
 			
 	def onMacro(self, evt):
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
 		dlg = MacroDialog(self, self.macroList) 
 		dlg.CenterOnScreen()
 		dlg.Show(True)
+		
+	def onMacroExit(self):
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger
