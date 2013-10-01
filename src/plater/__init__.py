@@ -434,7 +434,9 @@ class Plater(wx.Panel):
 			fn = dlg.GetPath()
 			dlg.Destroy()
 			
-		objname = os.path.splitext(os.path.basename(fn))[0]
+		objname, ext = os.path.splitext(os.path.basename(fn))
+		if ext == "":
+			fn += ".stl"
 		
 		dlg = wx.TextEntryDialog(
 				self, 'Enter object name',

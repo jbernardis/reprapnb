@@ -18,11 +18,12 @@ from images import Images
 from reprap import RepRap, RepRapParser, RECEIVED_MSG
 from reprapserver import RepRapServer
 from tools import formatElapsed
+from macros import MacroList, MacroDialog
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
 TB_TOOL_SLICECFG = 12
-TB_TOOL_LOG = 19
+TB_TOOL_RUNMACRO = 13
 
 TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
@@ -159,6 +160,9 @@ class MainFrame(wx.Frame):
 		self.tb.AddControl(self.tSlicerCfg)
 			
 		self.tb.AddSeparator()
+		
+		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngSlicecfg, "Run a macro", "")
+		self.Bind(wx.EVT_TOOL, self.doMacro, id=TB_TOOL_RUNMACRO)
 
 		self.tb.Realize()
 		
@@ -201,7 +205,8 @@ class MainFrame(wx.Frame):
 			self.nb.SetSelection(self.pxPlater)
 		elif self.settings.startpane == self.pxFilePrep:
 			self.nb.SetSelection(self.pxFilePrep)
-			
+
+		self.macroList = MacroList()			
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
 
@@ -312,6 +317,11 @@ class MainFrame(wx.Frame):
 		self.timer = None
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
+			
+	def onMacro(self, evt):
+		dlg = MacroDialog(self, self.macroList) 
+		dlg.CenterOnScreen()
+		dlg.Show(True)
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger

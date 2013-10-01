@@ -915,6 +915,10 @@ class FilePrepare(wx.Panel):
 		path = dlg.GetPath()
 		dlg.Destroy()
 
+		ext = os.path.splitext(os.path.basename(path))[1]
+		if ext == "":
+			path += ".gcode"
+			
 		fp = file(path, 'w')
 		
 		for ln in self.gcode:
@@ -949,6 +953,10 @@ class FilePrepare(wx.Panel):
 		
 		path = dlg.GetPath()
 		dlg.Destroy()
+
+		ext = os.path.splitext(os.path.basename(path))[1]
+		if ext == "":
+			path += ".gcode"
 
 		fp = file(path, 'w')
 		
