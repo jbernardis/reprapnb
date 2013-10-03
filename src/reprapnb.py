@@ -34,7 +34,7 @@ FILEPREP_TAB_TEXT = "File Preparation"
 MANCTL_TAB_TEXT = "Manual Control"
 PRTMON_TAB_TEXT = "Print Monitor"
 
-MAXCFGCHARS = 80
+MAXCFGCHARS = 40
 
 BUTTONDIM = (64, 64)
 
@@ -49,6 +49,7 @@ class MainFrame(wx.Frame):
 		self.M105pending = False
 		self.printPosition = None
 		self.logger = None
+		self.macroActive = False
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
@@ -135,7 +136,7 @@ class MainFrame(wx.Frame):
 
 		if len(ports) < 1:
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-			
+
 		text = " Slicer:"
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
@@ -154,7 +155,7 @@ class MainFrame(wx.Frame):
 		
 		text = self.slicer.type.getConfigString()
 		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
-		self.tSlicerCfg = wx.StaticText(self.tb, wx.ID_ANY, "", style=wx.ALIGN_RIGHT, size=(w, h))
+		self.tSlicerCfg = wx.StaticText(self.tb, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
 		self.tSlicerCfg.SetFont(f)
 		self.updateSlicerConfigString(text)
 		self.tb.AddControl(self.tSlicerCfg)
@@ -162,7 +163,8 @@ class MainFrame(wx.Frame):
 		self.tb.AddSeparator()
 		
 		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
-		self.Bind(wx.EVT_TOOL, self.doMacro, id=TB_TOOL_RUNMACRO)
+		self.Bind(wx.EVT_TOOL, self.onMacro, id=TB_TOOL_RUNMACRO)
+
 
 		self.tb.Realize()
 		
@@ -301,6 +303,7 @@ class MainFrame(wx.Frame):
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
 			self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Disconnect from the Printer")
 			self.setPrinterBusy(False)
+			self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
@@ -314,17 +317,26 @@ class MainFrame(wx.Frame):
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
 		self.timer.Stop()
 		self.timer = None
+		self.closeMacro()
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 			
 	def onMacro(self, evt):
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		dlg = MacroDialog(self, self.macroList) 
-		dlg.CenterOnScreen()
-		dlg.Show(True)
+		self.dlgMacro = MacroDialog(self) 
+		self.dlgMacro.CenterOnScreen()
+		self.dlgMacro.Show(True)
+		self.macroActive = True
 		
 	def onMacroExit(self):
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
+		
+	def closeMacro(self):
+		if self.macroActive:
+			self.dlgMacro.Destroy()
+			self.macroActive = False
+			
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger

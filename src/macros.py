@@ -38,8 +38,9 @@ class MacroDialog(wx.Dialog):
 		self.SetSizer(sizer)
 		sizer.Fit(self)
 		
-	def onClose(self):
+	def onClose(self, evt):
 		self.app.onMacroExit()
+		self.Destroy()
 		
 	def runMacro(self, evt):
 		kid = evt.GetId() - BASE_ID
