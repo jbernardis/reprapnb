@@ -1,7 +1,6 @@
 In Progress/Need Testing
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - web server  need to test and add additional functionality
-- Macros
 
 Low Hanging
 - an icon for the main screen and for when minimized
@@ -20,6 +19,7 @@ Need more info
 Larger effort
 - Firmware Update
 - integration with webcam
+- Macros - ability to add/delete/edit macros from within rrnb
 
 Pie in the sky
 - drive two printers simultaneously

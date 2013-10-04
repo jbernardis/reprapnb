@@ -164,6 +164,7 @@ class MainFrame(wx.Frame):
 		
 		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
 		self.Bind(wx.EVT_TOOL, self.onMacro, id=TB_TOOL_RUNMACRO)
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
 
 
 		self.tb.Realize()
@@ -330,6 +331,7 @@ class MainFrame(wx.Frame):
 		
 	def onMacroExit(self):
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
+		self.macroActive = False
 		
 	def closeMacro(self):
 		if self.macroActive:
@@ -394,7 +396,6 @@ class MainFrame(wx.Frame):
 		self.pgFilePrep.setPrinterBusy(flag)
 
 	def updatePrintMonStatus(self, status):	
-		print "UPM: ", status	
 		if status == PMSTATUS_NOT_READY:
 			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotReadyIdx)
 		elif status == PMSTATUS_READY:

@@ -54,7 +54,7 @@ class MacroDialog(wx.Dialog):
 		mn = self.macroMap[kid]	
 		self.logger.LogMessage("Running macro \"%s\"" % mn)
 
-		fn = os.path.join(self.path. self.macroList.getFileName(mn))		
+		fn = os.path.join(self.path, self.macroList.getFileName(mn))		
 		try:
 			l = list(open(fn))
 		except:

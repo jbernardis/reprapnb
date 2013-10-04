@@ -190,6 +190,7 @@ class Settings:
 			i = 1
 			while True:
 				key = "macro" + str(i)
+				i += 1
 				if not self.cfg.has_option(section, key): break
 				
 				mkey, mfile = self.cfg.get(section, key).split(',', 1)
