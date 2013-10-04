@@ -323,7 +323,7 @@ class MainFrame(wx.Frame):
 			
 	def onMacro(self, evt):
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		self.dlgMacro = MacroDialog(self) 
+		self.dlgMacro = MacroDialog(self, self.reprap) 
 		self.dlgMacro.CenterOnScreen()
 		self.dlgMacro.Show(True)
 		self.macroActive = True

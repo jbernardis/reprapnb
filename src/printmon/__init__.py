@@ -177,6 +177,16 @@ class PrintMonitor(wx.Panel):
 		self.status = s
 		self.app.updatePrintMonStatus(s)
 		
+	def getStatus(self):
+		if self.printing:
+			status = self.infoPane.getStatus()
+			status['printing'] = "True"
+		else:
+			status = {}
+			status['printing'] = "False"
+			
+		return status
+		
 	def hasFileLoaded(self):
 		return self.model is not None
 		

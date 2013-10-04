@@ -93,13 +93,7 @@ class RepRapServer:
 			return False, None
 		
 	def queryStatus(self, q):
-		status = {}
-		if self.app.connected:
-			status['connection'] = "on-line"
-		else:
-			status['connection'] = "off-line"
-
-		return {'status' : status}
+		return {'status' : self.app.getStatus()}
 	
 	def close(self):
 		if self.port != 0:

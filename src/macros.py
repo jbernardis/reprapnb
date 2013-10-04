@@ -3,16 +3,20 @@ Created on Jun 20, 2013
 
 @author: ejefber
 '''
+import os
 import wx
 
 BUTTONDIM = (48, 48)
 BASE_ID = 2000
 
 class MacroDialog(wx.Dialog):
-	def __init__(self, app):
+	def __init__(self, app, reprap):
 		self.app = app
+		self.reprap = reprap
+		self.logger = self.app.logger
 		self.settings = self.app.settings
-		self.macroList = MacroList()
+		self.path = os.path.join(self.settings.cmdfolder, "macros")
+		self.macroList = MacroList(self.settings)
 		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
@@ -34,7 +38,6 @@ class MacroDialog(wx.Dialog):
 			self.Bind(wx.EVT_BUTTON, self.runMacro, b)
 			sizer.Add(b)
 
-
 		self.SetSizer(sizer)
 		sizer.Fit(self)
 		
@@ -49,14 +52,23 @@ class MacroDialog(wx.Dialog):
 			return
 	
 		mn = self.macroMap[kid]	
-		print "Running macro %s: %s" % (mn, self.macroList.getFileName(mn))
+		self.logger.LogMessage("Running macro \"%s\"" % mn)
+
+		fn = os.path.join(self.path. self.macroList.getFileName(mn))		
+		try:
+			l = list(open(fn))
+		except:
+			self.logger.LogMessage("Unable to open macro file: ", fn)
+			return
+		
+		for ln in l:
+			self.reprap.send_now(ln)
+
 		
 class MacroList:
-	def __init__(self):
-		self.ml = {}
-		self.ml['Fan On'] = "FanOn.gcode"
-		self.ml['Park'] = "Park.gcode"
-		self.keyList = sorted(self.ml.keys())
+	def __init__(self, settings):
+		self.ml = settings.macroList
+		self.keyList = settings.macroOrder
 				
 	def __iter__(self):
 		self.__mindex__ = 0

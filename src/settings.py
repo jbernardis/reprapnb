@@ -103,6 +103,8 @@ class Settings:
 		self.lastlogdirectory = "."
 		self.speedcommand = None
 		self.port = 8989
+		self.macroList = {}
+		self.macroOrder = []
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -183,6 +185,17 @@ class Settings:
 			if not err:
 				st.initialize()
 			
+		section = "macros"	
+		if self.cfg.has_section(section):
+			i = 1
+			while True:
+				key = "macro" + str(i)
+				if not self.cfg.has_option(section, key): break
+				
+				mkey, mfile = self.cfg.get(section, key).split(',', 1)
+				self.macroOrder.append(mkey)
+				self.macroList[mkey] = mfile
+
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
 		self.manualctl = SettingsManualCtl(self, self.app, self.cfg, folder, "manualctl")
