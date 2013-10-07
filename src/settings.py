@@ -187,15 +187,21 @@ class Settings:
 			
 		section = "macros"	
 		if self.cfg.has_section(section):
-			i = 1
+			i = 0
 			while True:
-				key = "macro" + str(i)
 				i += 1
+				key = "macro." + str(i)
 				if not self.cfg.has_option(section, key): break
 				
-				mkey, mfile = self.cfg.get(section, key).split(',', 1)
+				try:
+					mkey, mfile = self.cfg.get(section, key).split(',', 1)
+				except:
+					self.showError("Unable to parse config for %s" % key)
+					break
+				
+				mkey = mkey.strip()
 				self.macroOrder.append(mkey)
-				self.macroList[mkey] = mfile
+				self.macroList[mkey] = mfile.strip()
 
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
