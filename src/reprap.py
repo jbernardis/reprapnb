@@ -44,6 +44,7 @@ class SendThread:
 		self.endoflife = False
 		self.printIndex = 0
 		self.okWait = False
+		self.holdFan = False
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -58,6 +59,9 @@ class SendThread:
 	
 	def getPrintIndex(self):
 		return self.printIndex
+	
+	def setHoldFan(self, flag):
+		self.holdFan = flag
 	
 	def Run(self):
 		self.isRunning = True
@@ -74,7 +78,16 @@ class SendThread:
 					if not self.mainQ.empty():
 						try:
 							(cmd, string) = self.mainQ.get(True, 0.01)
-							self.processCmd(cmd, string, False)
+							try:
+								if string.startswith("N"):
+									verb = string.split()[1]
+								else:
+									verb = string.split()[0]
+							except:
+								verb = ""
+								
+							if verb != "S106" or not self.holdFlag:
+								self.processCmd(cmd, string, False)
 						except Queue.Empty:
 							pass
 					else:
@@ -252,7 +265,13 @@ class RepRap:
 		self.printer = None
 		self.online = False
 		self.printing = False
+		self.holdFan = False
 		win.Bind(EVT_REPRAP_UPDATE, handler)
+		
+	def setHoldFan(self, flag):
+		self.holdFan = flag
+		if self.sender is not None:
+			self.sender.setHoldFan(flag)
 
 	def connect(self, port, baud):
 		if(self.printer is not None):
@@ -269,6 +288,7 @@ class RepRap:
 			self.mainQ = Queue.Queue(0)
 			self.printer = Serial(self.port, self.baud, timeout=5)
 			self.sender = SendThread(self.win, self.printer, self.priQ, self.mainQ)
+			self.sender.setHoldFan(self.holdFan)
 			self.listener = ListenThread(self.win, self.printer, self.sender)
 			self.send_now("M105")
 			self.online = True

@@ -434,13 +434,13 @@ class MainFrame(wx.Frame):
 		stat = {}
 		if self.connected:
 			stat['connection'] = "on line"
-		else:
-			stat['connection'] = "off line"
 			if self.printing:
 				stat['status'] = "printing"
 				stat['printstat'] = self.pgPrtMon.getStatus()
 			else:
 				stat['status'] = "idle"
+		else:
+			stat['connection'] = "off line"
 				
 		return stat
 	

@@ -57,6 +57,7 @@ class PrintMonitor(wx.Panel):
 		self.origEta = None
 		self.countGLines = None
 		self.syncPrint = True
+		self.holdFan = False
 		self.status = PMSTATUS_NOT_READY
 
 		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
@@ -148,9 +149,20 @@ class PrintMonitor(wx.Panel):
 		self.cbSync.SetValue(True)
 		self.sizerOpts.Add(self.cbSync)
 
-		self.sizerLeft.AddSpacer((10,10))		
+		self.sizerLeft.AddSpacer((5, 5))		
 		self.sizerLeft.Add(self.sizerOpts)
-		
+
+		self.sizerOpts2 = wx.BoxSizer(wx.HORIZONTAL)
+				
+		self.cbHoldFan = wx.CheckBox(self, wx.ID_ANY, "Hold Fan Speed")
+		self.cbHoldFan.SetToolTipString("Maintain fan speed at its manual setting")
+		self.Bind(wx.EVT_CHECKBOX, self.checkHoldFan, self.cbHoldFan)
+		self.cbHoldFan.SetValue(self.holdFan)
+		self.sizerOpts2.Add(self.cbHoldFan)
+
+		self.sizerLeft.AddSpacer((5, 5))		
+		self.sizerLeft.Add(self.sizerOpts2)
+
 		self.sizerLeft.AddSpacer((10,10))
 		
 		self.sizerRight.AddSpacer((40,40))
@@ -172,7 +184,8 @@ class PrintMonitor(wx.Panel):
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
-		
+		self.reprap.setHoldFan(self.holdFan)
+	
 	def setStatus(self, s):
 		self.status = s
 		self.app.updatePrintMonStatus(s)
@@ -322,6 +335,10 @@ class PrintMonitor(wx.Panel):
 		self.settings.usebuffereddc = evt.IsChecked()
 		self.settings.setModified()
 		self.gcf.redrawCurrentLayer()
+		
+	def checkHoldFan(self, evt):
+		self.holdFan = evt.IsChecked()
+		self.reprap.setHoldFan(self.holdFan)
 		
 	def checkPrevious(self, evt):
 		self.settings.showprevious = evt.IsChecked()
