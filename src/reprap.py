@@ -45,6 +45,7 @@ class SendThread:
 		self.printIndex = 0
 		self.okWait = False
 		self.holdFan = False
+		self.checksum = True
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -62,7 +63,13 @@ class SendThread:
 	
 	def setHoldFan(self, flag):
 		self.holdFan = flag
-	
+		
+	def setCheckSum(self, flag):
+		self.checksum = flag
+			
+	def _checksum(self,command):
+		return reduce(lambda x,y:x^y, map(ord,command))
+
 	def Run(self):
 		self.isRunning = True
 		while self.isRunning:
@@ -78,16 +85,8 @@ class SendThread:
 					if not self.mainQ.empty():
 						try:
 							(cmd, string) = self.mainQ.get(True, 0.01)
-							try:
-								if string.startswith("N"):
-									verb = string.split()[1]
-								else:
-									verb = string.split()[0]
-							except:
-								verb = ""
-								
-							if verb != "S106" or not self.holdFlag:
-								self.processCmd(cmd, string, False)
+							self.processCmd(cmd, string, False)
+
 						except Queue.Empty:
 							pass
 					else:
@@ -103,16 +102,38 @@ class SendThread:
 					time.sleep(0.01)
 		self.endoflife = True
 				
-	def processCmd(self, cmd, string, pflag):
-		if cmd == CMD_GCODE:
-			if not pflag:
+	def processCmd(self, cmd, string, priQ):
+		if cmd == CMD_GCODE and priQ:  # Gcode off the priority queue
+			self.printer.write(str(string+"\n"))
+
+		elif cmd == CMD_GCODE:  # Gcode off of the main Q
+			try:
+				verb = string.split()[0]
+			except:
+				verb = ""
+				
+			if verb == "S106" and self.holdFan:
+				pass
+			else:
+				if self.checksum:
+					prefix = "N" + str(self.printIndex) + " " + string
+					string = prefix + "*" + str(self._checksum(prefix))
+					
 				self.printIndex += 1
 				self.okWait = True
-			self.printer.write(str(string+"\n"))
+				self.printer.write(str(string+"\n"))
 			
 		elif cmd == CMD_STARTPRINT:
-			self.isPrinting = True
+			string = "M110"
+			if self.checksum:
+				prefix = "N-1 " + string
+				string = prefix + "*" + str(self._checksum(prefix))
+				
+			self.okWait = True
+			self.printer.write(str(string+"\n"))
+
 			self.printIndex = 0
+			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_STARTED)
 			wx.PostEvent(self.win, evt)
 			
@@ -289,6 +310,7 @@ class RepRap:
 			self.printer = Serial(self.port, self.baud, timeout=5)
 			self.sender = SendThread(self.win, self.printer, self.priQ, self.mainQ)
 			self.sender.setHoldFan(self.holdFan)
+			self.sender.setCheckSum(True)
 			self.listener = ListenThread(self.win, self.printer, self.sender)
 			self.send_now("M105")
 			self.online = True
@@ -325,18 +347,12 @@ class RepRap:
 		self.paused = False
 		
 		return True
-		
-	def _checksum(self,command):
-		return reduce(lambda x,y:x^y, map(ord,command))
 	
 	def startPrint(self, data):
-		ln = 0
-		self._send("M110", lineno=-1, checksum=True)
 		self._sendCmd(CMD_STARTPRINT)
 		for l in data:
 			if l.raw.rstrip() != "":
-				self._send(l.raw, lineno=ln, checksum=True)
-				ln += 1
+				self._send(l.raw)
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
 #		self._sendCmd(CMD_STARTPRINT)
@@ -386,16 +402,13 @@ class RepRap:
 	def send(self, cmd):
 		return self._send(cmd)
 
-	def _send(self, command, lineno=0, checksum=False, priority=False):
+	def _send(self, command, priority=False):
 		if not self.printer:
 			return False
 		
 		if priority:		
 			self.priQ.put((CMD_GCODE, command))
 		else:
-			if checksum:
-				prefix = "N" + str(lineno) + " " + command
-				command = prefix + "*" + str(self._checksum(prefix))
 			self.mainQ.put((CMD_GCODE, command))
 			
 		return True
