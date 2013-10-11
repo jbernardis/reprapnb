@@ -98,6 +98,7 @@ class InfoPane (wx.Window):
 		stat['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
 		stat['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
 		stat['remaining'] = formatElapsed(self.remains)
+		stat['duration'] = formatElapsed(self.duration)
 		return stat
 		
 		
