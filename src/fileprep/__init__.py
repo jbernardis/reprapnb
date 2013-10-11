@@ -563,7 +563,7 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
 		self.bOpen.Enable(False)
-		self.bSlice.Enable(False)
+		#self.bSlice.Enable(False)
 		self.bToPrinter.Enable(False)
 		self.setSliceMode(False)
 		self.sliceActive = True
