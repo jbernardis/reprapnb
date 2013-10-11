@@ -43,6 +43,7 @@ class SendThread:
 		self.isRunning = False
 		self.endoflife = False
 		self.printIndex = 0
+		self.sequence = 0
 		self.okWait = False
 		self.holdFan = False
 		self.checksum = True
@@ -106,20 +107,21 @@ class SendThread:
 		if cmd == CMD_GCODE and priQ:  # Gcode off the priority queue
 			self.printer.write(str(string+"\n"))
 
-		elif cmd == CMD_GCODE:  # Gcode off of the main Q
+		elif cmd == CMD_GCODE:  # Gcode off of the main queue
+			self.printIndex += 1
 			try:
 				verb = string.split()[0]
 			except:
 				verb = ""
 				
-			if verb == "S106" and self.holdFan:
+			if (verb == "M106" or verb == "M107") and self.holdFan:
 				pass
 			else:
 				if self.checksum:
-					prefix = "N" + str(self.printIndex) + " " + string
+					prefix = "N" + str(self.sequence) + " " + string
 					string = prefix + "*" + str(self._checksum(prefix))
+					self.sequence += 1
 					
-				self.printIndex += 1
 				self.okWait = True
 				self.printer.write(str(string+"\n"))
 			
@@ -130,9 +132,10 @@ class SendThread:
 				string = prefix + "*" + str(self._checksum(prefix))
 				
 			self.okWait = True
-			self.printer.write(str(string+"\n"))
 
+			self.printer.write(str(string+"\n"))
 			self.printIndex = 0
+			self.sequence = 0
 			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_STARTED)
 			wx.PostEvent(self.win, evt)
@@ -284,6 +287,8 @@ class RepRap:
 	def __init__(self, win, handler):
 		self.win = win
 		self.printer = None
+		self.sender = None
+		self.listener = None
 		self.online = False
 		self.printing = False
 		self.holdFan = False

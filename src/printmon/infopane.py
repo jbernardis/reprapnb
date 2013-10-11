@@ -95,8 +95,9 @@ class InfoPane (wx.Window):
 		stat['currentheight'] = self.z
 		stat['position'] = self.position
 		stat['gcount'] = self.gcount
-		stat['origeta'] = self.eta
-		stat['revisedeta'] = self.revisedeta
+		stat['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
+		stat['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
+		stat['remaining'] = formatElapsed(self.remains)
 		return stat
 		
 		
@@ -150,6 +151,7 @@ class InfoPane (wx.Window):
 		start = time.strftime('%H:%M:%S', time.localtime(self.startTime))
 		now = time.time()
 		elapsed = now - self.startTime
+		self.remains = self.eta - now
 		strElapsed = formatElapsed(elapsed)
 		eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
 		
@@ -169,6 +171,7 @@ class InfoPane (wx.Window):
 			
 			diff = elapsed - expectedTime
 			remains = self.eta + diff - now
+			self.remains = remains
 			strRemains = formatElapsed(remains)
 			pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
 			secDiff = math.fabs(elapsed + remains - self.duration)

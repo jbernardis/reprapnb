@@ -73,8 +73,6 @@ class MainFrame(wx.Frame):
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		self.nbil = wx.ImageList(16, 16)
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
-		self.nbilPrinterBusyIdx = self.nbil.Add(self.images.pngPrinterbusy)
-		self.nbilPrinterReadyIdx = self.nbil.Add(self.images.pngPrinterready)
 		self.nbilEqualIdx = self.nbil.Add(self.images.pngEqual)
 		self.nbilEqualDirtyIdx = self.nbil.Add(self.images.pngEqualdirty)
 		self.nbilUnequalIdx = self.nbil.Add(self.images.pngUnequal)
