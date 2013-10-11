@@ -1,9 +1,10 @@
 In Progress/Need Testing
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - web server  need to test and add additional functionality
+- printer reset
+- an icon for the main screen and for when minimized
 
 Low Hanging
-- an icon for the main screen and for when minimized
 - G Code Reference
 - add acceleration to ini file somewhere - should be in slicer config
 
@@ -11,7 +12,7 @@ Medium
 - SD support - print from only - no print to
 - other places for separate thread - file saving, stl file saving from plater
 - limit size of log
-- printer reset
+- meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
 - need a tool change mechanism

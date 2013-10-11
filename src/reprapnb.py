@@ -22,8 +22,9 @@ from macros import MacroDialog
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
-TB_TOOL_SLICECFG = 12
-TB_TOOL_RUNMACRO = 13
+TB_TOOL_RESET = 12
+TB_TOOL_SLICECFG = 13
+TB_TOOL_RUNMACRO = 19
 
 TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
@@ -51,6 +52,10 @@ class MainFrame(wx.Frame):
 		self.logger = None
 		self.macroActive = False
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
+		
+		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
+		self.SetIcon(ico)
+
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)
@@ -129,6 +134,10 @@ class MainFrame(wx.Frame):
 		
 		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Connect to the Printer", "")
 		self.Bind(wx.EVT_TOOL, self.doConnect, id=TB_TOOL_CONNECT)
+		
+		self.tb.AddSimpleTool(TB_TOOL_RESET, self.images.pngReset, "Reset the Printer", "")
+		self.Bind(wx.EVT_TOOL, self.doReset, id=TB_TOOL_RESET)
+		self.tb.EnableTool(TB_TOOL_RESET, False)
 		
 		self.tb.AddSeparator()
 
@@ -303,6 +312,17 @@ class MainFrame(wx.Frame):
 			self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Disconnect from the Printer")
 			self.setPrinterBusy(False)
 			self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
+			self.tb.EnableTool(TB_TOOL_RESET, True)
+			
+	def doReset(self):
+		dlg = wx.MessageDialog(self, "Are you sure you want to reset the printer",
+				'Printer Reset', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+		
+		rc = dlg.ShowModal()
+		dlg.Destroy()
+
+		if rc == wx.ID_YES:
+			self.reprap.reset()
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
@@ -317,6 +337,7 @@ class MainFrame(wx.Frame):
 		self.timer.Stop()
 		self.timer = None
 		self.closeMacro()
+		self.tb.EnableTool(TB_TOOL_RESET, False)
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 			

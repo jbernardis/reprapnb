@@ -353,6 +353,13 @@ class RepRap:
 		
 		return True
 	
+	def reset(self):
+		self.clearPrint()
+		if(self.printer):
+			self.printer.setDTR(1)
+			time.sleep(2)
+			self.printer.setDTR(0)
+	
 	def startPrint(self, data):
 		self._sendCmd(CMD_STARTPRINT)
 		for l in data:
@@ -360,7 +367,6 @@ class RepRap:
 				self._send(l.raw)
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
-#		self._sendCmd(CMD_STARTPRINT)
 		self.printing = True
 		self.paused = False
 		
@@ -380,7 +386,7 @@ class RepRap:
 		self.printing = True
 		self.paused = False
 		
-	def resetPrint(self):
+	def clearPrint(self):
 		self._sendCmd(CMD_DRAINQUEUE)
 		self.printing = False
 		self.paused = False
