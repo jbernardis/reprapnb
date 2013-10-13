@@ -104,19 +104,22 @@ class SendThread:
 		self.endoflife = True
 				
 	def processCmd(self, cmd, string, priQ):
-		if cmd == CMD_GCODE and priQ:  # Gcode off the priority queue
-			self.printer.write(str(string+"\n"))
+		if cmd == CMD_GCODE:
+			if string.startswith('@'):
+				self.metaCommand(string)
+			elif priQ:  # GCode off of the priority queue
+				self.printer.write(str(string+"\n"))
 
-		elif cmd == CMD_GCODE:  # Gcode off of the main queue
-			self.printIndex += 1
-			try:
-				verb = string.split()[0]
-			except:
-				verb = ""
+			else:  # Gcode off of the main queue
+				self.printIndex += 1
+				try:
+					verb = string.split()[0]
+				except:
+					verb = ""
 				
-			if (verb == "M106" or verb == "M107") and self.holdFan:
-				pass
-			else:
+				if (verb == "M106" or verb == "M107") and self.holdFan:
+					return
+				
 				if self.checksum:
 					prefix = "N" + str(self.sequence) + " " + string
 					string = prefix + "*" + str(self._checksum(prefix))
@@ -162,6 +165,30 @@ class SendThread:
 						break
 				except Queue.Empty:
 					break
+	
+	def metaCommand(self, cmd):
+		print "Meta command: ", cmd
+		l = cmd.split(" +")
+		nl = len(l)
+		
+		if nl < 1:
+			return
+		
+		nl -= 1
+		verb = l[0]
+		
+		if verb.lower() == "@pause":
+			if nl < 1:
+				duration = 1
+			else:
+				try:
+					duration = float(l[1])
+				except:
+					duration = 1
+			print "pausing for ", duration, " seconds"
+			time.sleep(duration)
+			
+			
 
 class ListenThread:
 	def __init__(self, win, printer, sender):

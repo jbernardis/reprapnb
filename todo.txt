@@ -3,6 +3,7 @@ In Progress/Need Testing
 - web server  need to test and add additional functionality
 - printer reset
 - an icon for the main screen and for when minimized
+- verify slice cancel works
 
 Low Hanging
 - G Code Reference
