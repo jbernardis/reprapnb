@@ -19,12 +19,14 @@ from reprap import RepRap, RepRapParser, RECEIVED_MSG
 from reprapserver import RepRapServer
 from tools import formatElapsed
 from macros import MacroDialog
+from gcref import GCRef
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
 TB_TOOL_RESET = 12
 TB_TOOL_SLICECFG = 13
-TB_TOOL_RUNMACRO = 19
+TB_TOOL_RUNMACRO = 18
+TB_TOOL_GCREF = 19
 
 TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
@@ -172,7 +174,10 @@ class MainFrame(wx.Frame):
 		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
 		self.Bind(wx.EVT_TOOL, self.onMacro, id=TB_TOOL_RUNMACRO)
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-
+		
+		self.tb.AddSimpleTool(TB_TOOL_GCREF, self.images.pngGcref, "G Code Reference", "")
+		self.Bind(wx.EVT_TOOL, self.onGCRef, id=TB_TOOL_GCREF)
+		self.tb.EnableTool(TB_TOOL_GCREF, False)
 
 		self.tb.Realize()
 		
@@ -358,6 +363,15 @@ class MainFrame(wx.Frame):
 			self.macroActive = False
 			
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
+			
+	def onGCRef(self, evt):
+		self.tb.EnableTool(TB_TOOL_GCREF, False)
+		self.dlgGCRef = GCRef(self) 
+		self.dlgGCRef.CenterOnScreen()
+		self.dlgGCRef.Show(True)
+		
+	def onGCRefExit(self):
+		self.tb.EnableTool(TB_TOOL_GCREF, True)
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger

@@ -1,0 +1,536 @@
+<!DOCTYPE html> 
+ <html lang="en" dir="ltr" class="client-nojs"> 
+ <head> 
+ <title>G-code - RepRapWiki</title> 
+ <meta charset="UTF-8" /> 
+ </head> 
+ <body> 
+<h1>G Code Reference</h1>
+<h2>RepRap G Code Fields</h2> 
+
+This section explains the letter-preceded fields. The numbers in the fields are represented by nnn. Numbers can be integers, or can contain a decimal point, depending on context. For example an X coordinate can be integer (X175) or fractional (X17.62), whereas trying to select extruder number 2.76 would make no sense. 
+<table border="1" cellpadding="5">
+<thead align="center"><td><b><big>Letter</big></b></td><td><b><big>Meaning</big></b></td></thead>
+<tr><td>Gnnn</td><td> Standard GCode command, such as move to a point</td></tr>  
+<tr><td>Mnnn</td><td>  RepRap-defined command, such as turn on a cooling fan</td></tr>  
+<tr><td>Tnnn</td><td>  Select tool nnn. In RepRap, tools are extruders</td></tr> 
+<tr><td>Snnn</td><td>  Command parameter, such as the voltage to send to a motor</td></tr>  
+<tr><td>Pnnn</td><td>  Command parameter, such as a time in milliseconds</td></tr>
+<tr><td>Xnnn</td><td>  An X coordinate, usually to move to</td></tr>
+<tr><td>Ynnn</td><td>  A Y coordinate, usually to move to</td></tr>
+<tr><td>Znnn</td><td>  A Z coordinate, usually to move to</td></tr>
+<tr><td>Innn</td><td>  Parameter - not currently used</td></tr>
+<tr><td>Jnnn</td><td>  Parameter - not currently used</td></tr>
+<tr><td>Fnnn</td><td>  Feedrate in mm per minute. (Speed of print head movement)</td></tr>  
+<tr><td>Rnnn</td><td>  Parameter - used for temperatures</td></tr>  
+<tr><td>Qnnn</td><td>  Parameter - not currently used</td></tr>
+<tr><td>Ennn</td><td>  Length of extrudate in mm. This is exactly like X, Y and Z, but for the length of filament to extrude. It is common for newer stepper based systems to interpret ... Better: Skeinforge 40 and up interprets this as the absolute length of input filament to consume, rather than the length of the extruded output.</td></tr>  
+<tr><td>Nnnn</td><td>  Line number. Used to request repeat transmission in the case of communications errors.</td></tr>
+<tr><td>*nnn</td><td>  Checksum. Used to check for communications errors.</td></tr>  
+</table>
+<h2>Comments</h2> 
+<listing>
+<big>
+N3 T0*57 ;This is a comment
+N4 G92 E0*67
+; So is this
+N5 G28*22
+</big>
+</listing>
+Comments will be ignored by RepRap, as will blank lines. But it's better to strip these out in the host computer before the lines are sent. This saves bandwidth. 
+
+<h2>Individual commands</h2> 
+
+<h3>Checking: N and *</h3>
+Example: <b>N123 [...G Code in here...] *71</b> 
+<br/><br/>
+These are the line number and the checksum. The RepRap firmware checks the checksum against a locally-computed value and, if they differ, requests a repeat transmission of the line of the given number. 
+<p/>
+You can leave both of these out - RepRap will still work, but it won't do checking. You have to have both or neither though. 
+<p/>
+The checksum "cs" for a GCode string "cmd" (including its line number) is computed by exor-ing the bytes in the string up to and not including the * character as follows: 
+<listing><big>
+int cs = 0;
+for(i = 0; cmd[i] != '*' && cmd[i] != NULL; i++)
+   cs = cs ^ cmd[i];
+cs &= 0xff;  // Defensive programming...
+</big></listing>
+<p/>
+and the value is appended as a decimal integer to the command after the * character. 
+<p/>
+The RepRap firmware expects line numbers to increase by 1 each line, and if that doesn't happen it is flagged as an error. But you can reset the count using M110 (see below). 
+<h2>Buffered G Commands</h2> 
+The RepRap firmware stores these commands in a ring buffer internally for execution. This means that there is no (appreciable) delay while a command is acknowledged and the next transmitted. In turn, this means that sequences of line segments can be plotted without a dwell between one and the next. As soon as one of these buffered commands is received it is acknowledged and stored locally. If the local buffer is full, then the acknowledgment is delayed until space for storage in the buffer is available. This is how flow control is achieved. 
+<h3>G0: Rapid move</h3> 
+Example: <b>G0 X12</b>
+<br/>
+<br/> 
+In this case move rapidly to X = 12 mm. In fact, the RepRap firmware uses exactly the same code for rapid as it uses for controlled moves (see G1 below), as - for the RepRap machine - this is just as efficient as not doing so. (The distinction comes from some old machine tools that used to move faster if the axes were not driven in a straight line. For them G0 allowed any movement in space to get to the destination as fast as possible.) 
+<h3>G1: Controlled move</h3> 
+Example: <b>G1 X90.6 Y13.8 E22.4</b>
+<br/>
+<br/> 
+Go in a straight line from the current (X, Y) point to the point (90.6, 13.8), extruding material as the move happens from the current extruded length to a length of 22.4 mm. 
+<p/>
+RepRap does subtle things with feedrates. Thus: 
+<listing><big>
+G1 F1500
+G1 X90.6 Y13.8 E22.4
+</big></listing>
+<p/>
+Will set a feedrate of 1500 mm/minute, then do the move described above at that feedrate. But 
+<listing><big>
+G1 F1500
+G1 X90.6 Y13.8 E22.4 F3000
+</big></listing>
+<p/>
+Will set a feedrate of 1500 mm/minute, then do the move described above accelerating to a feedrate of 3000 mm/minute as it does so. The extrusion will accelerate along with the X, Y movement so everything stays synchronized. 
+<p/>
+RepRap thus treats feedrate as simply another variable (like X, Y, Z, and E) to be linearly interpolated. This gives complete control over accelerations and decelerations in a way that ensures that everything moves together and the right volume of material is extruded at all points. 
+<p/>
+Note: not every firmware implements this, e.g. the current Marlin will use the new feedrate from the beginning of the move and not change it. 
+<p/>
+The first example shows how to get a constant-speed movement. The second how to accelerate or decelerate. Thus 
+<listing><big>
+G1 F1500
+G1 X90.6 Y13.8 E22.4 F3000
+G1 X80 Y20 E36 F1500
+</big></listing>
+<p/>
+Will do the first movement accelerating as before, and the second decelerating from 3000 mm/minute back to 1500 mm/minute. 
+<p/>
+To reverse the extruder by a given amount (for example to reduce its internal pressure while it does an in-air movement so that it doesn't dribble) simply use G1 to send an E value that is less than the currently extruded length. 
+
+<h3>G28: Move to Origin</h3> 
+Example: <b>G28</b> 
+<p/>
+This causes the RepRap machine to move back to its X, Y and Z zero endstops, a process known as "homing". It does so accelerating, so as to get there fast. But when it arrives it backs off by 1 mm in each direction slowly, then moves back slowly to the stop. This ensures more accurate positioning. 
+<p/>
+If you add coordinates, then just the axes with coordinates specified will be zeroed. Thus 
+<listing><big>G28 X0 Y72.3</big></listing>
+<p/>
+will zero the X and Y axes, but not Z. The actual coordinate values are ignored. 
+
+<h2>G29-G32: Bed probing</h2> 
+
+<h3>G29 Detailed Z-Probe</h3> 
+probes the bed at 3 points. 
+
+<h3>G30 Single Z Probe</h3> 
+probes bed at current XY location. 
+
+<h3>G31 Report Current Probe status</h3> 
+reports whether Z probe is triggered. 
+
+<h3>G32 Probe Z and calibrate with FPU</h3> 
+probes the bed at 3 points and updates transformation matrix for bed leveling compensation. 
+
+<h2>Unbuffered G commands</h2> 
+
+The following commands are not buffered. When one is received it is stored, but it is not acknowledged to the host until the buffer is exhausted and then the command has been executed. Thus the host will pause at one of these commands until it has been done. Short pauses between these commands and any that might follow them do not affect the performance of the machine. 
+
+<h3>G4: Dwell</h3> 
+Example:<b>G4 P200</b> 
+<p/>
+In this case sit still doing nothing for 200 milliseconds. During delays the state of the machine (for example the temperatures of its extruders) will still be preserved and controlled. 
+
+<h3>G10: Head Offset</h3> 
+Example: <b>G10 P3 X17.8 Y-19.3 Z0.0 R140 S205</b> 
+<p/>
+This sets the offset for extrude head 3 (from the P3) to the X and Y values specified. You can put a non-zero Z value in as well, but this is usually a bad idea unless the heads are loaded and unloaded by some sort of head changer. When all the heads are in the machine at once they should all be set to the same Z height. 
+<p/>
+Remember that any parameter that you don't specify will automatically be set to the last value for that parameter. That usually means that you want explicitly to set Z0.0. 
+<p/>
+The R value is the standby temperature in oC that will be used for the tool, and the S value is its operating temperature. If you don't want the head to be at a different temperature when not in use, set both values the same. See the T code (select tool) below. 
+<p/>
+The NIST G-code standard mentions an additional L parameter, which is ignored. 
+
+ <h3>G20: Set Units to Inches</h3> 
+Example: <b>G20</b> 
+<p/>
+Units from now on are in inches. 
+
+<h3>G21: Set Units to Millimeters</h3> 
+Example: <b>G21</b> 
+<p/>
+Units from now on are in millimeters. (This is the RepRap default.) 
+
+<h3>G90: Set to Absolute Positioning</h3> 
+Example: <b>G90</b> 
+<p/>
+All coordinates from now on are absolute relative to the origin of the machine. (This is the RepRap default.) 
+
+<h3>G91: Set to Relative Positioning</h3> 
+Example: <b>G91</b> 
+<p/>
+All coordinates from now on are relative to the last position. 
+
+<h3>G92: Set Position</h3> 
+Example: <b>G92 X10 E90</b> 
+<p/>
+Allows programming of absolute zero point, by reseting the current position to the values specified. This would set the machine's X coordinate to 10, and the extrude coordinate to 90. No physical motion will occur. 
+<p/>
+A G92 without coordinates will reset all axes to zero. 
+
+<h2>Unbuffered M and T commands</h2> 
+
+<h3>M0: Stop</h3> 
+Example: <b>M0</b> 
+<p/>
+The RepRap machine finishes any moves left in its buffer, then shuts down. All motors and heaters are turned off. It can be started again by pressing the reset button on the master microcontroller. See also M1, M112. 
+
+<h3>M1: Sleep</h3> 
+Example: <b>M1</b> 
+<p/>
+The RepRap machine finishes any moves left in its buffer, then shuts down. All motors and heaters are turned off. It can still be sent G and M codes, the first of which will wake it up again. See also M0, M112. 
+
+<h3>M17: Enable/Power all stepper motors</h3>
+Example: <b>M17</b> 
+
+<h3>M18: Disable all stepper motors</h3>
+Example: <b>M18</b>
+<p/>
+Disables stepper motors and allows axis to move 'freely.' 
+
+<h3>M20: List SD card</h3> 
+Example: <b>M20</b> 
+<p/>
+All files in the root folder of the SD card are listed to the serial port. This results in a line like: 
+<listing><big>
+ok Files: {SQUARE.G,SQCOM.G,} 
+</big></listing>
+<br>
+The trailing comma is optional. Note that file names are returned in upper case, but - when sent to the M23 command (below) they must be in lower case.
+
+<h3>M21: Initialize SD card</h3> 
+Example: <b>M21</b> 
+<p/>
+The SD card is initialized. If an SD card is loaded when the machine is switched on, this will happen by default. SD card must be initialized for the other SD functions to work. 
+
+<h3>M22: Release SD card</h3> 
+Example: <b>M22</b> 
+<p/>
+SD card is released and can be physically removed. 
+
+<h3>M23: Select SD file</h3> 
+Example: <b>M23 filename.gco</b> 
+<p/>
+The file specified as filename.gco (8.3 naming convention is supported) is selected ready for printing. 
+
+<h3>M24: Start/resume SD print</h3> 
+Example: <b>M24></b> 
+<p/>
+The machine prints from the file selected with the M23 command. 
+
+<h3>M25: Pause SD print</h3> 
+Example: <b>M25</b> 
+<p/>
+The machine pause printing at the current position within the file selected with the M23 command. 
+
+<h3>M26: Set SD position</h3> 
+Example: <b>M26</b> 
+<p/>
+Set SD position in bytes (M26 S12345). 
+
+<h3>M27: Report SD print status</h3> 
+Example: <b>M27</b> 
+<p/>
+Report SD print status. 
+
+<h3>M28: Begin write to SD card</h3> 
+Example: <b>M28 filename.gco</b> 
+<p/>
+File specified by filename.gco is created (or overwritten if it exists) on the SD card and all subsequent commands sent to the machine are written to that file. 
+
+<h3>M29: Stop writing to SD card</h3> 
+Example: <b>M29 filename.gco</b> 
+<p/>
+File opened by M28 command is closed, and all subsequent commands sent to the machine are executed as normal. 
+
+<h3>M30: Delete a file on the SD card</h3> 
+Example: <b>M30 filename.gco</b> 
+<p/>
+filename.gco is deleted. 
+
+<h3>M80: ATX Power On</h3> 
+Example: <b>M80</b> 
+<p/>
+Turns on the ATX power supply from standby mode to fully operational mode. No-op on electronics without standby mode. 
+<p/>
+Note: some firmwares, like  Teacup, handle power on/off automatically, so this is redundant there. Also, see RAMPS wiring for ATX on/off 
+
+<h3>M81: ATX Power Off</h3> 
+Example: <b>M81</b> 
+<p/>
+Turns off the ATX power supply. Counterpart to M80. 
+
+<h3>M82: set extruder to absolute mode</h3> 
+Example: <b>M82</b> 
+<p/>
+makes the extruder interpret extrusion as absolute positions. 
+
+<h3>M83: set extruder to relative mode</h3> 
+Example: <b>M83</b> 
+<p/>
+makes the extruder interpret extrusion values as relative positions. 
+
+<h3>M84: Stop idle hold</h3> 
+Example: <b>M84</b> 
+<p/>
+Stop the idle hold on all axis and extruder. In some cases the idle hold causes annoying noises, which can be stopped by disabling the hold. Be aware that by disabling idle hold during printing, you will get quality issues. This is recommended only in between or after printjobs. 
+
+<h3>M92: Set axis_steps_per_unit</h3> 
+Example: <b>M92 Xnewsteps</b> 
+<p/>
+Allows programming of steps per unit of axis till the electronics are reset for the specified axis. Very useful for calibration. 
+
+<h3>M98: Get axis_hysteresis_mm</h3> 
+Example: <b>M98</b> 
+<p/>
+Report the current hysteresis values in mm for all of the axis. 
+
+<h3>M104: Set Extruder Temperature</h3> 
+Example: <b>M104 S190</b> 
+<p/>
+Set the temperature of the current extruder to 190oC and return control to the host immediately (i.e. before that temperature has been reached by the extruder). See also M109. 
+<p/>
+This is deprecated because temperatures should be set using the G10 and T commands (q.v.). 
+<p/>
+Deprecation is  subject to discussion.
+
+<h3>M105: Get Extruder Temperature</h3>
+Example: <b>M105</b> 
+<p/>
+Request the temperature of the current extruder and the build base in degrees Celsius. The temperatures are returned to the host computer. For example, the line sent to the host in response to this command looks like 
+<listing><big>
+ok T:201 B:117 
+</big></listing><br>
+
+<h3>M106: Fan On</h3> 
+Example: <b>M106 S127</b> 
+<p/>
+Turn on the cooling fan at half speed. 
+<p/>
+Mandatory parameter 'S' declares the PWM value (0-255). M106 S0 turns the fan off. 
+
+<h3>M107: Fan Off</h3> 
+<p/>
+Deprecated. Use M106 S0 instead. 
+
+<h3>M108: Set Extruder Speed</h3> 
+Sets speed of extruder motor. (Deprecated in current firmware, see M113) 
+
+<h3>M109: Set Extruder Temperature and Wait</h3> 
+Example: <b>M109 S185</b>
+<p/> 
+Set extruder heater temperature in degrees celsius and wait for this temperature to be achieved. 
+
+<h3>M110: Set Current Line Number</h3> 
+Example: <b>M110 N123</b> 
+<p/>
+Set the current line number to 123. Thus the expected next line after this command will be 124. 
+
+<h3>M112: Emergency Stop</h3> 
+Example: <b>M112</b> 
+<p/>
+Any moves in progress are immediately terminated, then RepRap shuts down. All motors and heaters are turned off. It can be started again by pressing the reset button on the master microcontroller. See also M0 and M1. 
+
+<h3>M113: Set Extruder PWM</h3> 
+Example: <b>M113</b> 
+<p/>
+Set the PWM for the currently-selected extruder. On its own this command sets RepRap to use the on-board potentiometer on the extruder controller
+board to set the PWM for the currently-selected extruder's stepper power. With an S field: 
+<listing><big>
+M113 S0.7 
+</big></listing><br>
+
+it causes the PWM to be set to the S value (70% in this instance). M113 S0 turns the extruder off, until an M113 command other than M113 S0 is sent. 
+
+<h3>M114: Get Current Position</h3> 
+Example: <b>M114</b> 
+<p/>
+This causes the RepRap machine to report its current X, Y, Z and E coordinates to the host. 
+<p/>
+For example, the machine returns a string such as: 
+<listing><big>
+ok C: X:0.00 Y:0.00 Z:0.00 E:0.00 
+</big></listing><br>
+
+In Marlin first 3 numbers is the position for the planner. The other positions are the positions from the stepper function. This helps for debugging a previous stepper function bug. 
+<listing><big>
+X:0.00 Y:0.00 RZ:0.00 LZ:0.00 Count X:0.00 Y:0.00 RZ:41.02 LZ:41.02 
+</big></listing><br>
+
+<h3>M115: Get Firmware Version and Capabilities</h3> 
+Example: <b>M115</b> 
+<p/>
+Request the Firmware Version and Capabilities of the current microcontroller The details are returned to the host computer as key:value pairs separated by spaces and terminated with a linefeed. 
+
+<h3>M116: Wait</h3> 
+Example: <b>M116</b> 
+<p/>
+Wait for all temperatures and other slowly-changing variables to arrive at their set values. See also M109. 
+
+<h3>M117 Display Message</h3> 
+Example: <b>M117 Hello World</b> 
+<p/>
+This causes the given message to be shown in the status line on an attached LCD. The above command will display Hello World. 
+
+<h3>M119: Get Endstop Status</h3> 
+Example: <b>M119</b> 
+<p/>
+Returns the current state of the configured X, Y, Z endstops. Takes into account any 'inverted endstop' settings, so one can confirm that the machine is interpreting the endstops correctly. 
+
+<h3>M130: Set PID P value</h3> 
+Example: <b>M130 P 0 S 8.0 # Sets heater 0 P factor to 8.0</b> 
+
+<h3>M131: Set PID I value</h3> 
+Example: <b>M130 P 1 S 0.5 # Sets heater 1 I factor to 0.5</b> 
+
+<h3>M132: Set PID D value</h3> 
+Example: <b>M130 P 0 S 24 # Sets heater 0 D factor to 24.0</b> 
+
+<h3>M133: Set PID I limit value</h3>
+Example: <b>M130 P 1 S 264 # Sets heater 0 I limit value to 264</b> 
+
+<h3>M134: Write PID values to EEPROM</h3>
+Example: <b>M134</b> 
+
+<h3>M136: Print PID settings to host</h3> 
+Example: <b>M136 P1 # print heater 0 PID parameters to host</b> 
+
+<h3>M140: Bed Temperature (Fast)</h3>
+Example: <b>M140 S55</b> 
+<p/>
+Set the temperature of the build bed to 55oC and return control to the host immediately (i.e. before that temperature has been reached by the bed). 
+
+<h3>M190: Wait for bed temperature to reach target temp</h3> 
+Example: <b>M190 S60</b> 
+<p/>
+This will wait until the bed temperature reaches 60 degrees, printing out the temperature of the hot end and the bed every second. 
+<p/>
+deprecated, see M116   
+
+<h3>M200 - Set filament diameter</h3>
+M200 sets the filament diameter. 
+
+<h3>M201 - Set max printing acceleration</h3> 
+in units/s^2 for print moves (M201 X1000 Y1000) 
+
+<h3>M202 - Set max travel acceleration</h3> 
+in units/s^2 for travel moves (M202 X1000 Y1000) Unused in Marlin!! 
+
+<h3>M203 - Set maximum feedrate</h3> 
+that your machine can sustain (M203 X200 Y200 Z300 E10000) in mm/sec 
+<p/>
+Note: this should be in units/minute, just like the F code. 
+
+<h3>M204 - Set default acceleration</h3> 
+S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2 also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate 
+
+<h3>M205 - advanced settings</h3> 
+minimum travel speed S=while printing T=travel only, B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk, E=maximum E jerk 
+
+<h3>M206: set home offset</h3> 
+Example: <b>M206 X10.0 Y10.0 Z-0.4</b> 
+<p/>
+The values specified are added to the endstop position when the axes are referenced. The same can be achieved with a G92 right after homing (G28, G161). 
+<p/>
+With Marlin firmware, this value can be saved to EEPROM using the M500 command. 
+<p/>
+A similar command is G10, aligning these two is  subject to discussion. 
+
+<h3>M207: calibrate z axis by detecting z max length</h3> 
+Example: <b>M207</b> 
+<p/>
+After placing the tip of the nozzle in the position you expect to be considered Z=0, issue this command to calibrate the Z axis. It will perform a z axis homing routine and calculate the distance traveled in this process. The result is stored in EEPROM as z_max_length. For using this calibration method the machine must be using a Z MAX endstop. 
+<p/>
+This procedure is usually more reliable than mechanical adjustments of a Z MIN endstop. 
+
+<h3>M208: set axis max travel</h3> 
+Example: <b>M208 X250 Y210 Z180</b> 
+<p/>
+The values specified set the software limits for axis travel in the positive direction. 
+
+<h3>M209: enable automatic retract</h3> 
+Example: <b>M209 S1</b> 
+<p/>
+This boolean value S 1=true or 0=false enables automatic retract detect if the slicer did not support G10/11: every normal extrude-only move will be classified as retract depending on the direction. 
+
+<h3>M220:set speed factor override percentage</h3> 
+Example: <b>M220 S80</b> 
+<p/>
+S<factor in percent>- set speed factor override percentage 
+
+<h3>M221: set extrude factor override percentage</h3> 
+Example: <b>M221 S70</b>
+<p/> 
+S<factor in percent>- set extrude factor override percentage
+
+<h3>M226: Gcode Initiated Pause</h3> 
+Example: <b>M226</b> 
+<p/>
+Initiates a pause in the same way as if the pause button is pressed. That is, program execution is stopped and the printer waits for user interaction. This matches the behaviour of M1 in the NIST RS274NGC G-code standard and M0 in Marlin firmware. 
+
+<h3>M300: Play beep sound</h3> 
+Usage: <b>M300 Sfrequency-Hz Pduration-ms</b> 
+<br>
+Example: <b>M300 S300 P1000</b> 
+<p/>
+Play beep sound, use to notify important events like the end of printing. See working example on R2C2 electronics. 
+
+<h3>M301: Set PID parameters - Hot End</h3> 
+Example: <b>M301 P1 I2 D3 C5</b> 
+<p/>
+Sets Proportional, Integral and Derivative values for hot end, the value C refers to an extrusion rate. 
+
+<h3>M303: Run PID tuning</h3> 
+Hotend Usage: M303 S<temperature> C<cycles> Bed Usage: M303 E-1 C<cycles> S<temperature> Example: M303 C8 S175 
+<p/>
+Generate Proportional, Integral and Derivative values for the hotend or bed (E-1). Send the appropriate code and wait for the output to update the firmware. 
+
+<h3>M304: Set PID parameters - Bed</h3>
+Example: <b>M304 P1 I2 D3</b> 
+<p/>
+Sets Proportional, Integral and Derivative values for bed 
+
+<h3>T: Select Tool</h3> 
+Example: <b>T1</b> 
+<p/>
+Select extruder number 1 to build with. 
+<p/>
+The sequence followed is: 
+<ol>
+<li>Set the current extruder to its standby temperature specified by G10 (see above),</li> 
+<li>Set the new extruder to its operating temperature specified by G10 and wait for all temperatures to stabilise,</li> 
+<li>Apply any X, Y, Z offset for the new extruder specified by G10,</li> 
+<li>Use the new extruder.</li>
+</ol> 
+<p/>
+Selecting a non-existent tool (100, say) just does Step 1. above. That is to say it leaves all tools in their standby state. You can, of course, use the G10 command beforehand to set that standby temperature to anything you like. 
+<p/>
+Note that you may wish to move to a parking position before executing a T command in order to allow the new extruder to reach temperature while not in contact with the print. It is acceptable for the firmware to apply a small offset [by convention (-1mm x tool-number) in Y] to the current position when the above sequence is entered to allow temperature changes to take effect just away from the parking position. Any such offset must, of course, be undone when the procedure finishes. 
+<p/>
+If the Z value changes in the offsets and the head moves up, then the Z move is made before the X and Y moves. If Z moves down, X and Y are done first. 
+<p/>
+After a reset extruders will not start heating until they are selected. You can either put them all at their standby temperature by selecting them in turn, or leave them off so they only come on if/when you first use them. The M0, M1 and M112 commands turn them all off. You can, of course, turn them all off with the M1 command, then turn some back on again. Don't forget also to turn on the heated bed (if any) if you use that trick. 
+<p/>
+Extruder numbering starts at 0. 
+
+
+<h2>Store the calibration to EEPROM</h2> 
+Each RepRap has a number of physical parameters that should be persistent, but easily configurable, such as extrusion steps/mm, various max values, etc. Those parameters are currently hardcoded in the firmware, so that a user has to modify, recompile and re-flash the firmware for any adjustments. These configs can be stored in MCU's EEPROM and modified via some M-codes. Please see the detailed proposal at M-codes for EEPROM config.
+
+<h3>M500: stores paramters in EEPROM</h3> 
+
+<h3>M501: reads parameters from EEPROM<h3> 
+If you need to reset them after you changed them temporarily 
+
+<h3>M502: reverts to the default "factory settings".</h3>
+You still need to store them in EEPROM afterwards if you want to. 
+
+<h3>M503: Print settings</h3> 
+ 
+ </body> 
+ </html> 
+ 
