@@ -55,13 +55,13 @@ class MainFrame(wx.Frame):
 		self.macroActive = False
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
 		
-		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
-		self.SetIcon(ico)
-
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)
 		
+		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
+		self.SetIcon(ico)
+
 		self.reprap = RepRap(self, self.evtRepRap)
 		if self.settings.speedcommand is not None:
 			self.reprap.addToAllowedCommands(self.settings.speedcommand)
@@ -177,7 +177,7 @@ class MainFrame(wx.Frame):
 		
 		self.tb.AddSimpleTool(TB_TOOL_GCREF, self.images.pngGcref, "G Code Reference", "")
 		self.Bind(wx.EVT_TOOL, self.onGCRef, id=TB_TOOL_GCREF)
-		self.tb.EnableTool(TB_TOOL_GCREF, False)
+		self.tb.EnableTool(TB_TOOL_GCREF, True)
 
 		self.tb.Realize()
 		
@@ -319,7 +319,7 @@ class MainFrame(wx.Frame):
 			self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
 			self.tb.EnableTool(TB_TOOL_RESET, True)
 			
-	def doReset(self):
+	def doReset(self, evt):
 		dlg = wx.MessageDialog(self, "Are you sure you want to reset the printer",
 				'Printer Reset', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
 		
