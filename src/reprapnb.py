@@ -366,7 +366,7 @@ class MainFrame(wx.Frame):
 			
 	def onGCRef(self, evt):
 		self.tb.EnableTool(TB_TOOL_GCREF, False)
-		self.dlgGCRef = GCRef(self) 
+		self.dlgGCRef = GCRef(self, cmd_folder) 
 		self.dlgGCRef.CenterOnScreen()
 		self.dlgGCRef.Show(True)
 		
