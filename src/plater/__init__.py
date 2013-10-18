@@ -1,16 +1,61 @@
 import os
 import sys, inspect
 import tempfile, random
+import thread
 
 cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
 if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 
 import wx
+import wx.lib.newevent
 	
 from stlframe import StlFrame
 from images import Images
 import stltool
+
+
+(WriterEvent, EVT_WRITER_UPDATE) = wx.lib.newevent.NewEvent()
+WRITER_RUNNING = 1
+WRITER_FINISHED = 2
+WRITER_CANCELLED = 3
+
+class WriterThread:
+	def __init__(self, win, stlFrame, objName, fn):
+		self.win = win
+		self.stlFrame = stlFrame
+		self.objName = objName
+		self.fn = fn
+		self.running = False
+		self.cancelled = False
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+
+	def Run(self):
+		evt = WriterEvent(msg = "Writing STL File...", state = WRITER_RUNNING)
+		wx.PostEvent(self.win, evt)
+		
+		self.stlFrame.applyDeltas()
+		objs = self.stlFrame.getStls()
+		facets = []
+		for o in objs:
+			facets.extend(o.facets)
+
+		stltool.emitstl(self.fn, facets=facets, objname=self.objname, binary=False)
+
+		evt = WriterEvent(msg = "completed", state = WRITER_FINISHED)
+		wx.PostEvent(self.win, evt)	
+		self.running = False
+
 
 wildcard = "STL (*.stl)|*.stl"
 
@@ -152,6 +197,7 @@ class Plater(wx.Panel):
 		self.sizerMain.Add(self.sizerBtn2, pos=(6,4))
 		
 		self.SetSizer(self.sizerMain)
+		self.Bind(EVT_WRITER_UPDATE, self.writerUpdate)
 		
 	def setStatus(self, s):
 		self.status = s
@@ -413,7 +459,8 @@ class Plater(wx.Panel):
 		suffix = "%05d.stl" % int(random.random() * 99999)
 		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix()+suffix)
 		self.logger.LogMessage("Saving plate to temporary STL file: %s" % fn)
-		self.exportToFile(fn, "OBJECT", clearModified = False)
+		self.clearModifiedAFterExport = False
+		self.exportToFile(fn, "OBJECT")
 		self.app.switchToFilePrep(fn)
 		
 	def doExport(self, evt):
@@ -448,19 +495,31 @@ class Plater(wx.Panel):
 		objname = dlg.GetValue().strip()
 		dlg.Destroy()
 
+		self.clearModifiedAfterExport = True
 		self.exportToFile(fn, objname)
 
-	def exportToFile(self, fn, objname, clearModified = True):
-		self.stlFrame.applyDeltas()
-		objs = self.stlFrame.getStls()
-		facets = []
-		for o in objs:
-			facets.extend(o.facets)
+	def exportToFile(self, fn, objname):
+		self.enableButtons(False)
+		self.writeThread = WriterThread(self, self.stlFrame, objname, fn)
+		self.writeThread.Start()
+			
+	def writerUpdate(self, evt):
+		if evt.state == WRITER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == WRITER_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+			if self.clearModifiedAfterExport:
+				self.setModified(False)
+			self.enableButtons(True)
 
-		stltool.emitstl(fn, facets=facets, objname=objname, binary=False)
-		if clearModified:
-			self.setModified(False)
-		
+		elif evt.state == WRITER_CANCELLED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+			self.enableButtons(True)
+			
 	def setModified(self, flag=True, itmId=None):
 		if flag or itmId is not None:
 			self.setStatus(PLSTATUS_LOADED_DIRTY)
