@@ -50,8 +50,7 @@ class WriterThread:
 		for o in objs:
 			facets.extend(o.facets)
 
-		stltool.emitstl(self.fn, facets=facets, objname=self.objname, binary=False)
-
+		stltool.emitstl(self.fn, facets=facets, objname=self.objName, binary=False)
 		evt = WriterEvent(msg = "completed", state = WRITER_FINISHED)
 		wx.PostEvent(self.win, evt)	
 		self.running = False
@@ -459,9 +458,8 @@ class Plater(wx.Panel):
 		suffix = "%05d.stl" % int(random.random() * 99999)
 		fn = os.path.join(tempfile.gettempdir(), tempfile.gettempprefix()+suffix)
 		self.logger.LogMessage("Saving plate to temporary STL file: %s" % fn)
-		self.clearModifiedAFterExport = False
+		self.tempFn = fn
 		self.exportToFile(fn, "OBJECT")
-		self.app.switchToFilePrep(fn)
 		
 	def doExport(self, evt):
 			
@@ -495,11 +493,13 @@ class Plater(wx.Panel):
 		objname = dlg.GetValue().strip()
 		dlg.Destroy()
 
-		self.clearModifiedAfterExport = True
+		self.tempFn = None
 		self.exportToFile(fn, objname)
 
 	def exportToFile(self, fn, objname):
 		self.enableButtons(False)
+		self.saveSelection = self.stlFrame.getSelection()
+		
 		self.writeThread = WriterThread(self, self.stlFrame, objname, fn)
 		self.writeThread.Start()
 			
@@ -511,9 +511,14 @@ class Plater(wx.Panel):
 		elif evt.state == WRITER_FINISHED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
-			if self.clearModifiedAfterExport:
+			if not self.tempFn:
 				self.setModified(False)
+
+			self.stlFrame.setSelection(self.saveSelection)
+			self.stlFrame.redrawStl()
 			self.enableButtons(True)
+			if self.tempFn:
+				self.app.switchToFilePrep(self.tempFn)
 
 		elif evt.state == WRITER_CANCELLED:
 			if evt.msg is not None:

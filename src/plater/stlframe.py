@@ -244,8 +244,6 @@ class StlFrame(wx.Window):
 		for itm in self.stlItems:
 			if itm is None: continue
 			objlist.append(itm.getStl())
-			
-		saveSelection = self.selection
 							
 		for o in objlist:
 			itemId = o.getId()
@@ -254,9 +252,6 @@ class StlFrame(wx.Window):
 			stlObj = itm.getStl()
 			stlObj.applyDeltas()
 			self.setHull(itm)
-			
-		self.setSelection(saveSelection)
-		self.redrawStl()
 		
 	def setSelection(self, itemId):
 		if not self.stlItems[itemId].isSelectable():
