@@ -292,6 +292,7 @@ class stl:
 			self.facetsmaxz = [f for f in s.facetsmaxz]
 			
 		if self.translatex != 0 or self.translatey != 0:
+			print "Apply xlate delta ", self.translatex, self.translatey
 			s = self.translate(v=[self.translatex, self.translatey, 0])
 			self.facets = [f for f in s.facets]
 			self.insolid = s.insolid

@@ -380,7 +380,6 @@ class PrintMonitor(wx.Panel):
 		
 		self.gcf.loadModel(self.model, layer=layer)
 		self.enableButtons()
-		self.setLayer(layer)
 		
 		self.printPos = 0
 		self.printing = False
@@ -394,6 +393,7 @@ class PrintMonitor(wx.Panel):
 		self.app.setPrinterBusy(False)
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
+		self.setLayer(layer)
 		
 	def changePrinter(self, hetemps, bedtemps):
 		self.targets = {}

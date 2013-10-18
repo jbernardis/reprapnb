@@ -3,10 +3,12 @@ In Progress/Need Testing
 - web server  need to test and add additional functionality
 - printer reset
 - an icon for the main screen and for when minimized
-- verify slice cancel works
+- when sending gocde to prtmon, it does not initially display the info for layer 0
+
+Bugs 
+- plater does not position things correctly on export
 
 Low Hanging
-- G Code Reference
 - add acceleration to ini file somewhere - should be in slicer config
 
 Medium
