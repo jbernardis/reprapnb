@@ -20,6 +20,7 @@ from reprapserver import RepRapServer
 from tools import formatElapsed
 from macros import MacroDialog
 from gcref import GCRef
+from firmware import Firmware
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
@@ -70,6 +71,8 @@ class MainFrame(wx.Frame):
 		self.connected = False
 		self.printing = False
 		self.httpServer = None
+		
+		self.firmware = Firmware(self, self.reprap)
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:

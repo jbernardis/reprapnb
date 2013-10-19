@@ -4,16 +4,14 @@ In Progress/Need Testing
 - printer reset
 - an icon for the main screen and for when minimized
 - when sending gocde to prtmon, it does not initially display the info for layer 0
-
-Bugs 
-- plater does not position things correctly on export
+- Firmware Update
 
 Low Hanging
 - add acceleration to ini file somewhere - should be in slicer config
 
 Medium
 - SD support - print from only - no print to
-- other places for separate thread - file saving, stl file saving from plater
+- other places for separate thread - file saving
 - limit size of log
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
@@ -21,7 +19,6 @@ Need more info
 - need a tool change mechanism
 
 Larger effort
-- Firmware Update
 - integration with webcam
 - Macros - ability to add/delete/edit macros from within rrnb
 

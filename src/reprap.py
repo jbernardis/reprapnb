@@ -172,6 +172,7 @@ class SendThread:
 		nl = len(l)
 		
 		if nl < 1:
+			print "no terms"
 			return
 		
 		nl -= 1
@@ -248,6 +249,7 @@ class RepRapParser:
 	'''
 	def __init__(self, app):
 		self.app = app
+		self.firmware = self.app.firmware
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *B:([0-9\.]+)")
 		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *W:.*")
@@ -258,6 +260,60 @@ class RepRapParser:
 		self.heaters = {}
 		
 	def parseMsg(self, msg):
+		if 'M92' in msg:
+			X = self.parseG(msg, 'X')
+			Y = self.parseG(msg, 'Y')
+			Z = self.parseG(msg, 'Z')
+			E = self.parseG(msg, 'E')
+			self.firmware.m92(X, Y, Z, E)
+			return False
+		
+		if 'M201' in msg:
+			X = self.parseG(msg, 'X')
+			Y = self.parseG(msg, 'Y')
+			Z = self.parseG(msg, 'Z')
+			E = self.parseG(msg, 'E')
+			self.firmware.m201(X, Y, Z, E)
+			return False
+		
+		if 'M203' in msg:
+			X = self.parseG(msg, 'X')
+			Y = self.parseG(msg, 'Y')
+			Z = self.parseG(msg, 'Z')
+			E = self.parseG(msg, 'E')
+			self.firmware.m203(X, Y, Z, E)
+			return False
+		
+		if 'M204' in msg:
+			S = self.parseG(msg, 'S')
+			T = self.parseG(msg, 'T')
+			self.firmware.m204(S, T)
+			return False
+		
+		if 'M205' in msg:
+			S = self.parseG(msg, 'S')
+			T = self.parseG(msg, 'T')
+			B = self.parseG(msg, 'B')
+			X = self.parseG(msg, 'X')
+			Z = self.parseG(msg, 'Z')
+			E = self.parseG(msg, 'E')
+			self.firmware.m205(S, T, B, X, Z, E)
+			return False
+		
+		if 'M206' in msg:
+			X = self.parseG(msg, 'X')
+			Y = self.parseG(msg, 'Y')
+			Z = self.parseG(msg, 'Z')
+			self.firmware.m206(X, Y, Z)
+			return False
+		
+		if 'M301' in msg:
+			P = self.parseG(msg, 'P')
+			I = self.parseG(msg, 'I')
+			D = self.parseG(msg, 'D')
+			self.firmware.m301(P, I, D)
+			return False
+
 		m = self.trpt1re.search(msg)
 		if m:
 			t = m.groups()
