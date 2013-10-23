@@ -63,6 +63,8 @@ class MainFrame(wx.Frame):
 		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
 		self.SetIcon(ico)
 
+		
+		self.firmware = Firmware(self)
 		self.reprap = RepRap(self, self.evtRepRap)
 		if self.settings.speedcommand is not None:
 			self.reprap.addToAllowedCommands(self.settings.speedcommand)
@@ -71,8 +73,6 @@ class MainFrame(wx.Frame):
 		self.connected = False
 		self.printing = False
 		self.httpServer = None
-		
-		self.firmware = Firmware(self, self.reprap)
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:

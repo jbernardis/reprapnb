@@ -364,7 +364,16 @@ class RepRapParser:
 			return False
 		
 		return False
-
+	
+	def parseG(self, s, v):
+		l = s.split()
+		for p in l:
+			if p.startswith(v):
+				try:
+					return float(p[1:])
+				except:
+					return None
+		return None
 
 class RepRap:
 	def __init__(self, win, handler):
