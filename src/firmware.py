@@ -23,6 +23,8 @@ grpinfo = {'m92' : ['Steps per Unit - M92', 4, ['x', 'y', 'z', 'e'], ['X Steps',
 
 grporder = ['m92', 'm201', 'm203', 'm204', 'm205', 'm206', 'm301']
 
+EEPROMFILE = "settings.eep"
+
 def getFirmwareProfile(fn, container):
 	cfg = ConfigParser.ConfigParser()
 
@@ -64,8 +66,6 @@ def putFirmwareProfile(fn, container):
 		return False, "Error saving firmware profile to %s" % fn
 		
 	return True, "Firmware profile successfully saved to %s" % fn
-					
-					
 
 class FwSettings:
 	def __init__(self):
@@ -101,6 +101,8 @@ class Firmware:
 		
 		self.flash = FwSettings()
 		self.eeprom = FwSettings()
+		
+		getFirmwareProfile(EEPROMFILE, self.eeprom)
 
 	def start(self, reprap=None):
 		if reprap is not None:
@@ -203,8 +205,12 @@ class Firmware:
 		if not self.dlgVisible:
 			return
 		
-		self.dlgVisible = False
 		self.wDlg.Destroy()
+		self.setHidden()
+		
+	def setHidden(self):
+		self.dlgVisible = False
+		self.wDlg = None
 
 class TextBox(wx.PyWindow):
 	def __init__(self, parent, text, pos=wx.DefaultPosition, size=wx.DefaultSize):
@@ -437,6 +443,8 @@ class FirmwareDlg(wx.Dialog):
 			self.itemMap[i][2].setText(v)
 			self.eeprom.setValue(i, v)
 			
+		putFirmwareProfile(EEPROMFILE, self.eeprom)
+			
 	def onCopyEEPromToFlash(self, evt):
 		self.enableButtons(False)
 		self.reprap.send_now("M501")
@@ -445,9 +453,12 @@ class FirmwareDlg(wx.Dialog):
 	def copyEEPromToFlashResume(self):
 		self.logger.LogMessage("Resuming copy of EEProm settings to firmware")
 		for i in self.itemMap.keys():
-			v = self.itemMap[i][2].getText()
+			v = self.flash.getValue(i)
+			self.itemMap[i][2].setText(v)
 			self.itemMap[i][1].setText(v)
-			self.flash.setValue(i, v)
+			self.eeprom.setValue(i, v)
+
+		putFirmwareProfile(EEPROMFILE, self.eeprom)
 		self.enableButtons(True)
 			
 	def onCopyFlashToWork(self, evt):
@@ -503,6 +514,7 @@ class FirmwareDlg(wx.Dialog):
 		self.logger.LogMessage(msg)
 				
 	def onClose(self, event):
+		self.parent.setHidden()
 		self.Destroy()
 		
 					

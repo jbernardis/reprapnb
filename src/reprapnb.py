@@ -26,6 +26,7 @@ TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
 TB_TOOL_RESET = 12
 TB_TOOL_SLICECFG = 13
+TB_TOOL_FIRMWARE = 17
 TB_TOOL_RUNMACRO = 18
 TB_TOOL_GCREF = 19
 
@@ -38,7 +39,7 @@ FILEPREP_TAB_TEXT = "File Preparation"
 MANCTL_TAB_TEXT = "Manual Control"
 PRTMON_TAB_TEXT = "Print Monitor"
 
-MAXCFGCHARS = 40
+MAXCFGCHARS = 35
 
 BUTTONDIM = (64, 64)
 
@@ -173,6 +174,10 @@ class MainFrame(wx.Frame):
 		self.tb.AddControl(self.tSlicerCfg)
 			
 		self.tb.AddSeparator()
+		
+		self.tb.AddSimpleTool(TB_TOOL_FIRMWARE, self.images.pngFirmware, "Manage Firmware settings", "")
+		self.Bind(wx.EVT_TOOL, self.onFirmware, id=TB_TOOL_FIRMWARE)
+		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
 		
 		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
 		self.Bind(wx.EVT_TOOL, self.onMacro, id=TB_TOOL_RUNMACRO)
@@ -320,6 +325,7 @@ class MainFrame(wx.Frame):
 			self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Disconnect from the Printer")
 			self.setPrinterBusy(False)
 			self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
+			self.tb.EnableTool(TB_TOOL_FIRMWARE, True)
 			self.tb.EnableTool(TB_TOOL_RESET, True)
 			
 	def doReset(self, evt):
@@ -346,8 +352,14 @@ class MainFrame(wx.Frame):
 		self.timer = None
 		self.closeMacro()
 		self.tb.EnableTool(TB_TOOL_RESET, False)
+		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
+		self.firmware.hide()
 		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
+			
+	def onFirmware(self, evt):
+		self.firmware.show()
 			
 	def onMacro(self, evt):
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
