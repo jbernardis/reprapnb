@@ -8,7 +8,6 @@ import wx
 import wx.lib.newevent
 import ConfigParser
 
-EVT_FIRMWARE = 3000
 (FirmwareEvent, EVT_FIRMWARE) = wx.lib.newevent.NewEvent()
 wildcard="Firmware Files (*.fw)|*.fw|All Files (*.*)|*.*"
 
@@ -83,7 +82,7 @@ class FwSettings:
 class Firmware:
 	def __init__(self, app):
 		self.app = app
-		self.logger = self.app.logger
+		self.logger = None
 		
 		self.dlgVisible = False
 		self.wDlg = None
@@ -103,15 +102,12 @@ class Firmware:
 		self.eeprom = FwSettings()
 		
 		getFirmwareProfile(EEPROMFILE, self.eeprom)
-
-	def start(self, reprap=None):
-		if reprap is not None:
-			self.reprap = reprap
-			
-		if self.reprap is None:
-			self.logger.LogError("Firmware request made, but no printer")
-			return
 		
+	def config(self, logger, reprap):
+		self.logger = logger
+		self.reprap = reprap
+
+	def start(self):
 		self.got92 = False
 		self.got201 = False
 		self.got203 = False
@@ -219,7 +215,7 @@ class TextBox(wx.PyWindow):
 							 #style=wx.SUNKEN_BORDER
 							 style=wx.SIMPLE_BORDER
 							 )
-		self.text = text
+		self.text = str(text)
 		if size != wx.DefaultSize:
 			self.bestsize = size
 		else:
@@ -231,7 +227,7 @@ class TextBox(wx.PyWindow):
 		self.Bind(wx.EVT_LEFT_UP, self.OnCloseParent)
 		
 	def setText(self, text):
-		self.text = text
+		self.text = str(text)
 		self.Refresh()
 		
 	def getText(self):
@@ -269,7 +265,7 @@ class FirmwareDlg(wx.Dialog):
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 		pos = wx.DefaultPosition
-		sz = (950, 700)
+		sz = (950, 780)
 		style = wx.DEFAULT_DIALOG_STYLE
 		pre.Create(self.app, wx.ID_ANY, "Firmware Parameters", pos, sz, style)
 		self.PostCreate(pre)
@@ -379,7 +375,7 @@ class FirmwareDlg(wx.Dialog):
 		self.sizer.Add(btnSizer, pos=(0,0), span=(25,1))
 
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		self.Bind(EVT_FIRMWARE, self.copyEEPromToFlashResume())
+		self.Bind(EVT_FIRMWARE, self.copyEEPromToFlashResume)
 
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
@@ -442,7 +438,7 @@ class FirmwareDlg(wx.Dialog):
 			v = self.itemMap[i][1].getText()
 			self.itemMap[i][2].setText(v)
 			self.eeprom.setValue(i, v)
-			
+
 		putFirmwareProfile(EEPROMFILE, self.eeprom)
 			
 	def onCopyEEPromToFlash(self, evt):
@@ -450,7 +446,7 @@ class FirmwareDlg(wx.Dialog):
 		self.reprap.send_now("M501")
 		self.parent.start()
 		
-	def copyEEPromToFlashResume(self):
+	def copyEEPromToFlashResume(self, evt):
 		self.logger.LogMessage("Resuming copy of EEProm settings to firmware")
 		for i in self.itemMap.keys():
 			v = self.flash.getValue(i)
@@ -462,7 +458,7 @@ class FirmwareDlg(wx.Dialog):
 		self.enableButtons(True)
 			
 	def onCopyFlashToWork(self, evt):
-		for i in self.itemMap.key():
+		for i in self.itemMap.keys():
 			v = self.itemMap[i][1].getText()
 			self.itemMap[i][0].SetValue(v)
 			self.working.setValue(i, v)

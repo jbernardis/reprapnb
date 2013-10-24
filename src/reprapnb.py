@@ -231,6 +231,8 @@ class MainFrame(wx.Frame):
 
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
+		
+		self.firmware.config(self.logger, self.reprap)
 
 	def evtRepRap(self, evt):
 		if evt.event == RECEIVED_MSG:
