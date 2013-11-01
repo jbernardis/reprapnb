@@ -1,4 +1,5 @@
 import wx
+from settings import MAX_EXTRUDERS
 
 BUTTONDIM = (48, 48)
 
@@ -38,7 +39,7 @@ class HotEnd(wx.Window):
 		self.sliders = []
 		self.btnImport = []
 		
-		for i in range(3):
+		for i in range(MAX_EXTRUDERS):
 			sizerRow = wx.BoxSizer(wx.HORIZONTAL)
 			sizerRow.AddSpacer((10, 10))
 			if i == 0:
@@ -127,7 +128,7 @@ class HotEnd(wx.Window):
 	def onToolChange(self, evt):
 		tc_sel = evt.GetEventObject()
 
-		for i in range(3):
+		for i in range(MAX_EXTRUDERS):
 			if tc_sel is self.rbTools[i]:
 				self.currentSelection = i
 				break
@@ -135,7 +136,7 @@ class HotEnd(wx.Window):
 	def changePrinter(self, hetemps):
 		self.nextr = len(hetemps)
 		self.setProfileTarget(hetemps)
-		for i in range(3):
+		for i in range(MAX_EXTRUDERS):
 			self.rbTools[i].Enable(i<self.nextr)
 			self.btnOn[i].Enable(i<self.nextr)
 			self.btnOff[i].Enable(i<self.nextr)

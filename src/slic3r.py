@@ -6,6 +6,7 @@ Created on Jun 20, 2013
 import os, time, tempfile
 import wx
 import shlex, subprocess
+from settings import MAX_EXTRUDERS
 
 BUTTONDIM = (48, 48)
 
@@ -39,7 +40,6 @@ def loadProfiles(fnames, mergeKeys):
 				
 	return kdict
 
-#FIXIT - work with slic3r ini files - 3 files	
 def checkTagInt(s, tag):
 	if not s.startswith(tag):
 		return None
@@ -129,7 +129,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		grid.Add(t, pos=(0,4), flag=wx.ALIGN_CENTER)
 
 		self.cbFilament = []
-		for i in range(3):
+		for i in range(MAX_EXTRUDERS):
 			if i < self.nExtr:
 				v = self.vfilament[i]
 			else:
@@ -240,7 +240,7 @@ class Slic3rCfgDialog(wx.Dialog):
 		self.vprinter = self.cbPrinter.GetValue()
 		self.nExtr = self.printerext[self.vprinter]
 		
-		for i in range(3):
+		for i in range(MAX_EXTRUDERS):
 			self.cbFilament[i].Enable(i<self.nExtr)
 			if i >= oldNExtr:
 				self.vfilament.append(self.filmap.keys()[0])
@@ -338,7 +338,7 @@ class Slic3r:
 				a = ["" for i in range(nExtr - oldNExtr)]
 				self.parent.settings['filament'].extend(a)
 				self.parent.settings['filamentfile'].extend(a)
-			for i in range(3):
+			for i in range(MAX_EXTRUDERS):
 				if i < nExtr:
 					if self.parent.settings['filament'][i] != self.vfilament[i]:
 						self.parent.settings['filament'][i] = self.vfilament[i]

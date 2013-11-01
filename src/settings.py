@@ -13,6 +13,8 @@ INIFILE = "rrh.ini"
 
 TEMPFILELABEL = "<temporary>"
 
+MAX_EXTRUDERS = 2
+
 
 def parseBoolean(val, defaultVal):
 	lval = val.lower();

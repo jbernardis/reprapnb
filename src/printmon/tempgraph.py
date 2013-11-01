@@ -13,9 +13,9 @@ scale = 1.5
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
-colors = { "Bed": "cyan", "HE0": "red", "HE1": "orange"}
-columns = { "Bed": 150, "HE0": 50, "HE1": 80}
-rowOffset = { "Bed": 30, "HE0": 0, "HE1": 20}
+colors = { "Bed": "cyan", "HE0": "red", "HE1": "orange", "HE2": "yellow"}
+columns = { "Bed": 150, "HE0": 50, "HE1": 80, "HE2": 110}
+rowOffset = { "Bed": 30, "HE0": 0, "HE1": 20, "HE2": 40}
 
 def htrToColor(h):
 	if h not in colors.keys():
