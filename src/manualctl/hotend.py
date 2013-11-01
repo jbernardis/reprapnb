@@ -1,5 +1,5 @@
 import wx
-from settings import MAX_EXTRUDERS
+from reprap import MAX_EXTRUDERS
 
 BUTTONDIM = (48, 48)
 

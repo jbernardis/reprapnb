@@ -12,7 +12,7 @@ import wx
 import re
 import wx.lib.newevent
 
-from settings import MAX_EXTRUDERS
+MAX_EXTRUDERS = 2
 
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
 PRINT_COMPLETE = 1
@@ -338,9 +338,10 @@ class RepRapParser:
 			if m:
 				for t in m:
 					if t[0] > 0 and t[0] < MAX_EXTRUDERS:
-						HEtemp[t[0]] = float(t[1])
-						HEtarget[t[0]] = float(t[2])
-						gotHE[t[0]] = True
+						tool = int(t[0])
+						HEtemp[tool] = float(t[1])
+						HEtarget[tool] = float(t[2])
+						gotHE[tool] = True
 
 			for i in range(MAX_EXTRUDERS):
 				if gotHE[i]:
@@ -362,7 +363,7 @@ class RepRapParser:
 				gotHeTemp = True
 				HeTemp = float(t[0])
 			if len(t) >= 2:
-				tool = float(t[1])
+				tool = int(t[1])
 			if len(t) >= 3:
 				self.app.setBedTemp(float(t[2]))
 				
@@ -378,7 +379,7 @@ class RepRapParser:
 			if len(t) >= 1:
 				HeTemp = float(t[0])
 			if len(t) >= 2:
-				tool = float(t[1])
+				tool = int(t[1])
 
 			if gotHeTemp:
 				self.app.setHETemp(tool, HeTemp)

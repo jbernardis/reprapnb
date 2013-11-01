@@ -6,7 +6,7 @@ Created on Jun 20, 2013
 import os, time, tempfile
 import wx
 import shlex, subprocess
-from settings import MAX_EXTRUDERS
+from reprap import MAX_EXTRUDERS
 
 BUTTONDIM = (48, 48)
 
