@@ -396,7 +396,7 @@ class PrintMonitor(wx.Panel):
 		self.setLayer(layer)
 		
 	def changePrinter(self, nExt):
-		self.knownHeaters = ['bed'] + ['HE'+str(n) for n in range(nExt)]
+		self.knownHeaters = ['Bed'] + ['HE'+str(n) for n in range(nExt)]
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}

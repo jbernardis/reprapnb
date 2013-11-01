@@ -24,6 +24,7 @@ class HotEnd(wx.Window):
 		self.nextr = nextr
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerHE = wx.BoxSizer(wx.VERTICAL)
+		sizerHE.AddSpacer((10, 10))
 
 		dc = wx.WindowDC(self)
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
@@ -39,67 +40,86 @@ class HotEnd(wx.Window):
 		
 		for i in range(3):
 			sizerRow = wx.BoxSizer(wx.HORIZONTAL)
+			sizerRow.AddSpacer((10, 10))
 			if i == 0:
 				style = wx.RB_GROUP
 			else:
 				style = 0
-			rb = wx.RadioButton(self, wx.ID_ANY, " Tool %d " % (i+1), style = style)
+			rb = wx.RadioButton(self, wx.ID_ANY, " Tool %d " % i, style = style)
 			self.rbTools.append(rb)
-			sizerRow.Add(rb, flag=wx.TOP | wx.BOTTOM, border=5)
+			sizerRow.Add(rb, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER, border=5)
 			sizerRow.AddSpacer((10, 10))
 			self.Bind(wx.EVT_RADIOBUTTON, self.onToolChange, rb )
 			rb.Enable(i<self.nextr)
 
+			sizerOnOff = wx.BoxSizer(wx.VERTICAL)
 			btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeaton, size=BUTTONDIM)
 			btn.SetToolTipString("Turn hot end %d on" % i)
-			sizerRow.Add(btn)
+			sizerOnOff.Add(btn)
 			self.Bind(wx.EVT_BUTTON, self.heaterOn, btn)
 			btn.Enable(i<self.nextr)
 			self.btnOn.append(btn)
 				
 			btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeatoff, size=BUTTONDIM)
 			btn.SetToolTipString("Turn hot end %d off" % i)
-			sizerRow.Add(btn)
+			sizerOnOff.Add(btn)
 			self.Bind(wx.EVT_BUTTON, self.heaterOff, btn)
 			btn.Enable(i<self.nextr)
 			self.btnOff.append(btn)
+			sizerRow.Add(sizerOnOff)
+			
+			sizerRow.AddSpacer((10, 10))
 
+			sizerText = wx.BoxSizer(wx.VERTICAL)
+			sizerText.AddSpacer((10, 10))
 			txt = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 			txt.SetFont(f)
 			txt.SetBackgroundColour("blue")
 			txt.SetForegroundColour(wx.Colour(255, 255, 255))
-			sizerRow.Add(txt)
+			sizerText.Add(txt)
 			self.txtTemp.append(txt)
 	
+			sizerText.AddSpacer((10, 10))
 			txt = wx.TextCtrl(self, wx.ID_ANY, "", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 			txt.SetFont(f)
 			txt.SetBackgroundColour(wx.Colour(0, 0, 0))
 			txt.SetForegroundColour(wx.Colour(255, 255, 255))
-			sizerRow.Add(txt)
+			sizerText.Add(txt)
 			self.txtTarget.append(txt)
+			
+			sizerRow.Add(sizerText)
+			
+			sizerRow.AddSpacer((10, 10))
 
+			if i < self.nextr:
+				tgt = target[i]
+			else:
+				tgt = 20
+				
 			sldr = wx.Slider(
-				self, wx.ID_ANY, target[i], self.trange[i][0], self.trange[i][1], size=(320, -1), 
+				self, wx.ID_ANY, tgt, self.trange[i][0], self.trange[i][1], size=(320, -1), 
 				style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
 				)
 			sldr.SetTickFreq(5, 1)
 			sldr.SetPageSize(1)
 			sldr.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 			sldr.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
-			sizerRow.Add(sldr)
+			sizerRow.Add(sldr, flag=wx.ALIGN_CENTER)
 			self.sliders.append(sldr)
 
 			btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
 			btn.SetToolTipString("Import from profile")
 			sizerRow.Add(btn)
 			self.Bind(wx.EVT_BUTTON, self.importProfile, btn)
-			sizerRow.Add(btn)
+			sizerRow.Add(btn, flag=wx.ALIGN_CENTER)
 			self.btnImport.append(btn)
 			
+			sizerRow.AddSpacer((10, 10))
 			sizerHE.Add(sizerRow)
 
 		self.rbTools[0].SetValue(True)
 
+		sizerHE.AddSpacer((10, 10))
 		self.SetSizer(sizerHE)
 		self.Layout()
 		self.Fit()
@@ -112,8 +132,9 @@ class HotEnd(wx.Window):
 				self.currentSelection = i
 				break
 		
-	def changePrinter(self, nextr):
-		self.nextr = nextr
+	def changePrinter(self, hetemps):
+		self.nextr = len(hetemps)
+		self.setProfileTarget(hetemps)
 		for i in range(3):
 			self.rbTools[i].Enable(i<self.nextr)
 			self.btnOn[i].Enable(i<self.nextr)
@@ -138,13 +159,13 @@ class HotEnd(wx.Window):
 		if sel is None:
 			return
 		
-		self.slTarget[sel].SetValue(self.profileTarget[sel])
+		self.sliders[sel].SetValue(self.profileTarget[sel])
 			
 	def setProfileTarget(self, t):
 		self.profileTarget = t
 		
 	def setHeatTarget(self, tool, temp):
-		if tool < 0 or tool >- self.nextr:
+		if tool < 0 or tool >= self.nextr:
 			self.logger.LogError("Tool number out of range")
 			return
 		
@@ -164,7 +185,7 @@ class HotEnd(wx.Window):
 		self.currentTarget[tool] = ft
 
 	def setHeatTemp(self, tool, temp):
-		if tool < 0 or tool >- self.nextr:
+		if tool < 0 or tool >= self.nextr:
 			self.logger.LogError("Tool number out of range")
 			return
 		

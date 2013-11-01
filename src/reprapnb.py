@@ -203,7 +203,7 @@ class MainFrame(wx.Frame):
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
-		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemp)
+		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps, bedTemp)
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
