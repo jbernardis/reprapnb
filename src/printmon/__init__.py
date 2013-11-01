@@ -42,7 +42,7 @@ class PrintMonitor(wx.Panel):
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
-		self.knownHeaters = ['HE', 'Bed']
+		self.knownHeaters = ['HE0', 'Bed']
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
@@ -395,7 +395,8 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
-	def changePrinter(self, hetemps, bedtemps):
+	def changePrinter(self, nExt):
+		self.knownHeaters = ['bed'] + ['HE'+str(n) for n in range(nExt)]
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
@@ -420,12 +421,14 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setTemps(self.tempData)
 		self.gTemp.setTargets({})
 		
-	def setHETarget(self, temp):
-		self.targets['HE'] = temp
+	def setHETarget(self, tool, temp):
+		key = 'HE' + str(tool)
+		self.targets[key] = temp
 		self.gTemp.setTargets(self.targets)
 		
-	def setHETemp(self, temp):
-		self.temps['HE'] = temp
+	def setHETemp(self, tool, temp):
+		key = 'HE' + str(tool)
+		self.temps[key] = temp
 			
 	def setBedTarget(self, temp):
 		self.targets['Bed'] = temp

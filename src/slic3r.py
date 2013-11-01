@@ -360,7 +360,7 @@ class Slic3r:
 		
 	def getSlicerParameters(self):
 		heTemps = []
-		bedTemps = []
+		bedTemp = None
 		fl = self.parent.settings['filamentfile']
 		for fn in fl:
 			if fn is not None:
@@ -377,7 +377,7 @@ class Slic3r:
 					else:
 						a = checkTagInt(i, "first_layer_bed_temperature = ")
 						if a is not None:
-							bedTemps.append(a)
+							bedTemp = a
 	
 		bedSize = None
 		nExtruders = None
@@ -409,12 +409,7 @@ class Slic3r:
 			for i in range(x):
 				heTemps.append(185)
 		
-		if len(bedTemps) < nExtruders:
-			x = nExtruders-len(bedTemps)
-			for i in range(x):
-				bedTemps.append(60)
-			
-		return [bedSize, nExtruders, heTemps, bedTemps]
+		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.replace(".stl", ".gcode")

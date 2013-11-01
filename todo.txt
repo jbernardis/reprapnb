@@ -3,8 +3,8 @@ In Progress/Need Testing
 - web server  need to test and add additional functionality
 - printer reset
 - an icon for the main screen and for when minimized
-- when sending gocde to prtmon, it does not initially display the info for layer 0
-- Firmware Update
+- check firmware dlg closes when I disconnect
+- reset when not printing 
 
 Low Hanging
 - add acceleration to ini file somewhere - should be in slicer config
@@ -17,10 +17,11 @@ Medium
 
 Need more info
 - need a tool change mechanism
+- in general need to handle 2 or 3 extruders - temp graphs, etc
 
 Larger effort
 - integration with webcam
-- Macros - ability to add/delete/edit macros from within rrnb
+- Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
 
 Pie in the sky
 - drive two printers simultaneously

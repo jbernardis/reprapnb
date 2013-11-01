@@ -2,17 +2,17 @@ import wx
 import os.path
 from imagemap import ImageMap
 from extruder import Extruder
-from heater import Heater
+from hotbed import HotBed
 from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
-from toolchange import ToolChange
+from hotend import HotEnd
 from images import Images
 
 #FIXIT  G code ref
 BUTTONDIMWIDE = (96, 48)
 
 class ManualControl(wx.Panel): 
-	def __init__(self, parent, app, nExtr, heTemp, bedTemp):
+	def __init__(self, parent, app, nExtr, heTemps, bedTemp):
 		self.model = None
 		self.parent = parent
 		self.app = app
@@ -36,20 +36,20 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruder(heTemp)
-		self.sizerHeat = self.addHeater(bedTemp)
+		self.sizerExtrude = self.addExtruder(heTemps)
+		self.sizerBed = self.addBed(bedTemp)
 		self.sizerSpeed = self.addSpeedControls(self.appsettings.speedcommand)
 		self.sizerGCode = self.addGCEntry()
 		
 		self.sizerMain = wx.GridBagSizer(hgap=5, vgap=5)
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
-		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(3,1))
-		self.sizerMain.Add(self.sizerExtrude, pos=(1,3), span=(2,1))
-		self.sizerMain.Add(self.sizerHeat, pos=(1,5), span=(1,1))
-		self.sizerMain.Add(self.sizerSpeed, pos=(2,5), span=(1,1))
-		self.sizerMain.Add(self.sizerGCode, pos=(3,3), span=(1,3))
+		self.sizerMain.Add(self.sizerMove, pos=(1,1), span=(4,1))
+		self.sizerMain.Add(self.sizerExtrude, pos=(1,3), span=(2,2))
+		self.sizerMain.Add(self.sizerBed, pos=(3,3), span=(1,1))
+		self.sizerMain.Add(self.sizerSpeed, pos=(3,4), span=(1,1))
+		self.sizerMain.Add(self.sizerGCode, pos=(4,3), span=(1,3))
 		self.sizerMain.AddSpacer((10,10), pos=(0,2))
-		self.sizerMain.AddSpacer((10,10), pos=(0,4))
+		self.sizerMain.AddSpacer((10,10), pos=(0,5))
 
 		self.SetSizer(self.sizerMain)
 		self.Layout()
@@ -58,66 +58,58 @@ class ManualControl(wx.Panel):
 	def setBedTarget(self, temp):
 		self.bedWin.setHeatTarget(temp)
 		
-	def setHETarget(self, temp):
+	def setHETarget(self, tool, temp):
 		self.heWin.setHeatTarget(temp)
 		
 	def setBedTemp(self, temp):
 		self.bedWin.setHeatTemp(temp)
 		
-	def setHETemp(self, temp):
+	def setHETemp(self, tool, temp):
 		self.heWin.setHeatTemp(temp)
 		
-	def addExtruder(self, startTemp):
+	def addExtruder(self, startTemps):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
 
 		self.font12bold = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		self.font16 = wx.Font(16, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 
-		t = wx.StaticText(self, wx.ID_ANY, "Current Tool", style=wx.ALIGN_LEFT, size=(200, -1))
+		t = wx.StaticText(self, wx.ID_ANY, "Hot End(s)", style=wx.ALIGN_LEFT, size=(200, -1))
 		t.SetFont(self.font12bold)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
-		self.toolChange = ToolChange(self, self.app, 1)
-		sizerExtrude.Add(self.toolChange, flag=wx.ALIGN_LEFT | wx.EXPAND)
-		sizerExtrude.AddSpacer((10, 10))
-
-		t = wx.StaticText(self, wx.ID_ANY, "Hot End", style=wx.ALIGN_LEFT, size=(200, -1))
-		t.SetFont(self.font12bold)
-		sizerExtrude.Add(t, flag=wx.LEFT)
-		sizerExtrude.AddSpacer((10,10))
-		
-		self.heWin = Heater(self, self.app, name="Hot End", shortname="HE", 
-					target=startTemp, trange=[20, 250], oncmd="M104")
+		self.heWin = HotEnd(self, self.app, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=("HE0", "HE1", "HE2"), 
+					target=startTemps, trange=((20, 250), (20, 250), (20, 250)))
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 
-		self.extWin = Extruder(self, self.app)
 		t = wx.StaticText(self, wx.ID_ANY, "Extruder", style=wx.ALIGN_LEFT, size=(200, -1))
 		t.SetFont(self.font12bold)
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
+		
+		self.extWin = Extruder(self, self.app)
 		sizerExtrude.Add(self.extWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude
 			
-	def addHeater(self, startTemp):
-		sizerHeat = wx.BoxSizer(wx.VERTICAL)
-		sizerHeat.AddSpacer((10,10))
+	def addBed(self, startTemp):
+		sizerBed = wx.BoxSizer(wx.VERTICAL)
+		sizerBed.AddSpacer((10,10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Heated Print Bed", style=wx.ALIGN_LEFT, size=(200, -1))
 		t.SetFont(self.font12bold)
-		sizerHeat.Add(t, flag=wx.LEFT)
-		sizerHeat.AddSpacer((10,10))
+		sizerBed.Add(t, flag=wx.LEFT)
+		sizerBed.AddSpacer((10,10))
 		
-		self.bedWin = Heater(self, self.app, name="Heated Print Bed", shortname="Bed", 
-					target=startTemp, trange=[20, 150], oncmd="M140")
-		sizerHeat.Add(self.bedWin)
-		sizerHeat.AddSpacer((10,10))
+		self.bedWin = HotBed(self, self.app, name="Heated Print Bed", shortname="Bed", 
+					target=startTemp, trange=[20, 150])
+		sizerBed.Add(self.bedWin)
+		sizerBed.AddSpacer((10,10))
 
-		return sizerHeat
+		return sizerBed
 	
 	def addSpeedControls(self, speedcommand):
 		sizerSpeed = wx.BoxSizer(wx.VERTICAL)
@@ -217,9 +209,9 @@ class ManualControl(wx.Panel):
 		
 		return sizerGCode
 		
-	def changePrinter(self, hetemps, bedtemps):
-		self.heWin.setProfileTarget(hetemps[self.currentTool])
-		self.bedWin.setProfileTarget(bedtemps[self.currentTool])
+	def changePrinter(self, hetemps, bedtemp):
+		self.heWin.setProfileTarget(hetemps)
+		self.bedWin.setProfileTarget(bedtemp)
 		self.toolChange.changePrinter(len(hetemps))
 
 	def onClose(self, evt):

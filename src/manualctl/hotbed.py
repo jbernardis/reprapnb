@@ -13,8 +13,8 @@ BUTTONDIM = (48, 48)
 
 orange = wx.Colour(237, 139, 33)
 
-class Heater(wx.Window):
-	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100), oncmd = "G104"):
+class HotBed(wx.Window):
+	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100)):
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
@@ -22,15 +22,14 @@ class Heater(wx.Window):
 		self.shortname = shortname
 		self.profileTarget = target
 		self.trange = trange
-		self.onCmd = oncmd
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
 		self.currentTempColor = None
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
-		sizerHtr = wx.GridBagSizer(vgap=10, hgap=10)
+		sizerHB = wx.GridBagSizer(vgap=10, hgap=10)
 		
-		sizerHtr.AddSpacer((5, 5), pos=(0,0))
-		sizerHtr.AddSpacer((5, 5), pos=(4,6))
+		sizerHB.AddSpacer((5, 5), pos=(0,0))
+		sizerHB.AddSpacer((5, 5), pos=(4,6))
 
 		dc = wx.WindowDC(self)
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
@@ -40,25 +39,25 @@ class Heater(wx.Window):
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerHtr.Add(t, pos=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL) 
+		sizerHB.Add(t, pos=(1,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL) 
 		
 		self.tTemp = wx.TextCtrl(self, wx.ID_ANY, "???", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		self.tTemp.SetFont(f)
 		self.tTemp.SetBackgroundColour("blue")
 		self.tTemp.SetForegroundColour(wx.Colour(255, 255, 255))
-		sizerHtr.Add(self.tTemp, pos=(1,4))
+		sizerHB.Add(self.tTemp, pos=(1,4))
 
 		text = "Target: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		sizerHtr.Add(t, pos=(2,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER)
+		sizerHB.Add(t, pos=(2,3), flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER)
 		
 		self.tTarget = wx.TextCtrl(self, wx.ID_ANY, "", size=(60, -1), style=wx.TE_RIGHT | wx.TE_READONLY)
 		self.tTarget.SetFont(f)
 		self.tTarget.SetBackgroundColour(wx.Colour(0, 0, 0))
 		self.tTarget.SetForegroundColour(wx.Colour(255, 255, 255))
-		sizerHtr.Add(self.tTarget, pos=(2,4))
+		sizerHB.Add(self.tTarget, pos=(2,4))
 		
 		self.slTarget = wx.Slider(
 			self, wx.ID_ANY, target, self.trange[0], self.trange[1], size=(320, -1), 
@@ -68,24 +67,24 @@ class Heater(wx.Window):
 		self.slTarget.SetPageSize(1)
 		self.slTarget.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 		self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
-		sizerHtr.Add(self.slTarget, pos=(3,1), span=(1,5))
+		sizerHB.Add(self.slTarget, pos=(3,1), span=(1,5))
 
 		self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeaton, size=BUTTONDIM)
 		self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
-		sizerHtr.Add(self.bHeatOn, pos=(1,1),span=(2,1))
+		sizerHB.Add(self.bHeatOn, pos=(1,1),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOn, self.bHeatOn)
 				
 		self.bHeatOff = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeatoff, size=BUTTONDIM)
 		self.bHeatOff.SetToolTipString("Turn %s heater off" % self.name)
-		sizerHtr.Add(self.bHeatOff, pos=(1,2),span=(2,1))
+		sizerHB.Add(self.bHeatOff, pos=(1,2),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
 				
 		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
 		self.bProfile.SetToolTipString("Import from profile")
-		sizerHtr.Add(self.bProfile, pos=(1,5),span=(2,1))
+		sizerHB.Add(self.bProfile, pos=(1,5),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)
 
-		self.SetSizer(sizerHtr)
+		self.SetSizer(sizerHB)
 		self.Layout()
 		self.Fit()
 		
@@ -162,8 +161,8 @@ class Heater(wx.Window):
 	
 	def heaterOn(self, evt):
 		t = self.slTarget.GetValue()
-		self.app.reprap.send_now("%s S%d" % (self.onCmd, t))
+		self.app.reprap.send_now("M140 S%d" % t)
 		
 	def heaterOff(self, evt):
-		self.app.reprap.send_now("%s S0" % self.onCmd)
+		self.app.reprap.send_now("M140 S0")
 

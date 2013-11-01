@@ -251,8 +251,9 @@ class RepRapParser:
 		self.app = app
 		self.firmware = self.app.firmware
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
-		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *B:([0-9\.]+)")
-		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:[0-9\.]+ *W:.*")
+		self.trpt1bre = re.compile("ok *T: *[0-9\.]+ */ *[0-9\.]+ *B: *([0-9\.]+) */ *([0-9\.]+) *T0: *([0-9\.]+) */ *([0-9\.]+) *T1: *([0-9\.]+) */ *([0-9\.]+)")
+		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
+		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *W:.*")
 		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
 		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
 		
@@ -314,13 +315,34 @@ class RepRapParser:
 			self.firmware.m301(P, I, D)
 			return False
 
+		m = self.trpt1bre.search(msg)
+		if m:
+			t = m.groups()
+			if len(t) >= 1:
+				self.app.setBedTemp(float(t[0]))
+			if len(t) >= 2:
+				self.app.setBedTarget(float(t[1]))
+			if len(t) >= 3:
+				self.app.setHETemp(0, float(t[2]))
+			if len(t) >= 4:
+				self.app.setHETarget(0, float(t[3]))
+			if len(t) >= 5:
+				self.app.setHETemp(1, float(t[4]))
+			if len(t) >= 6:
+				self.app.setHETarget(1, float(t[5]))
+			if self.app.M105pending:
+				self.app.M105pending = False
+				return True
+			else:
+				return False
+			
 		m = self.trpt1re.search(msg)
 		if m:
 			t = m.groups()
 			if len(t) >= 1:
-				self.app.setHETemp(float(t[0]))
+				self.app.setHETemp(0, float(t[0]))
 			if len(t) >= 2:
-				self.app.setHETarget(float(t[1]))
+				self.app.setHETarget(0, float(t[1]))
 			if len(t) >= 3:
 				self.app.setBedTemp(float(t[2]))
 			if len(t) >= 4:
@@ -334,17 +356,32 @@ class RepRapParser:
 		m = self.trpt2re.search(msg)
 		if m:
 			t = m.groups()
+			tool = 0
+			gotHeTemp = False
 			if len(t) >= 1:
-				self.app.setHETemp(float(t[0]))
+				gotHeTemp = True
+				HeTemp = float(t[0])
 			if len(t) >= 2:
-				self.app.setBedTemp(float(t[1]))
+				tool = float(t[1])
+			if len(t) >= 3:
+				self.app.setBedTemp(float(t[2]))
+				
+			if gotHeTemp:
+				self.app.setHETemp(tool, HeTemp)
 			return False
 		
 		m = self.trpt3re.search(msg)
 		if m:
 			t = m.groups()
+			tool = 0
+			gotHeTemp = False
 			if len(t) >= 1:
-				self.app.setHETemp(float(t[0]))
+				HeTemp = float(t[0])
+			if len(t) >= 2:
+				tool = float(t[1])
+
+			if gotHeTemp:
+				self.app.setHETemp(tool, HeTemp)
 			return False
 		
 		m = self.speedrptre.search(msg)

@@ -79,7 +79,7 @@ class MainFrame(wx.Frame):
 		if self.slicer is None:
 			print "Unable to get slicer settings"
 			
-		(self.buildarea, nExtr, heTemps, bedTemps) = self.slicer.getSlicerParameters()
+		(self.buildarea, nExtr, heTemps, bedTemp) = self.slicer.getSlicerParameters()
 			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		self.nbil = wx.ImageList(16, 16)
@@ -203,7 +203,7 @@ class MainFrame(wx.Frame):
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
-		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemps[0])
+		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps[0], bedTemp)
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
@@ -264,18 +264,18 @@ class MainFrame(wx.Frame):
 
 	def updateWithSlicerInfo(self):	
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
-		(hetemps, bedtemps) = self.slicer.getSlicerParameters()[2:4]
+		(hetemps, bedtemp) = self.slicer.getSlicerParameters()[2:4]
 		
 		if len(hetemps) < 1:
 			self.logger.LogError("No hot end temperatures configured in slicer")
 			return
 	
-		if len(bedtemps) < 1:
+		if bedtemp is None:
 			self.logger.LogError("No bed temperatures configured in slicer")
 			return
 
-		self.pgManCtl.changePrinter(hetemps, bedtemps)
-		self.pgPrtMon.changePrinter(hetemps, bedtemps)
+		self.pgManCtl.changePrinter(hetemps, bedtemp)
+		self.pgPrtMon.changePrinter(len(hetemps))
 		
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -339,6 +339,7 @@ class MainFrame(wx.Frame):
 
 		if rc == wx.ID_YES:
 			self.reprap.reset()
+			self.M105pending = False
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
@@ -511,13 +512,13 @@ class MainFrame(wx.Frame):
 			if rc == wx.ID_YES:
 				self.nb.SetSelection(self.pxPrtMon)
 		
-	def setHETarget(self, temp):
-		self.pgManCtl.setHETarget(temp)
-		self.pgPrtMon.setHETarget(temp)
+	def setHETarget(self, tool, temp):
+		self.pgManCtl.setHETarget(tool, temp)
+		self.pgPrtMon.setHETarget(tool, temp)
 		
-	def setHETemp(self, temp):
-		self.pgManCtl.setHETemp(temp)
-		self.pgPrtMon.setHETemp(temp)
+	def setHETemp(self, tool, temp):
+		self.pgManCtl.setHETemp(tool, temp)
+		self.pgPrtMon.setHETemp(tool, temp)
 		
 	def setBedTarget(self, temp):
 		self.pgManCtl.setBedTarget(temp)
