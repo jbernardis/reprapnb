@@ -49,6 +49,8 @@ class SendThread:
 		self.okWait = False
 		self.holdFan = False
 		self.checksum = True
+		self.resendFrom = None
+		self.sentLines = {}
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -60,6 +62,9 @@ class SendThread:
 		
 	def isKilled(self):
 		return self.endoflife
+	
+	def setResendFrom(self, n):
+		self.resendFrom = n
 	
 	def getPrintIndex(self):
 		return self.printIndex
@@ -83,6 +88,15 @@ class SendThread:
 						self.processCmd(cmd, string, True)
 					except Queue.Empty:
 						pass
+					
+				elif self.resendFrom is not None:
+					try:
+						string = self.sentLines[self.resendFrom]
+						self.resendFrom += 1
+						self.processCmd(CMD_GCODE, string, True)
+					except:
+						self.resendFrom = None
+						self.sentLines = {}
 					
 				elif not self.okWait:
 					if not self.mainQ.empty():
@@ -125,6 +139,8 @@ class SendThread:
 				if self.checksum:
 					prefix = "N" + str(self.sequence) + " " + string
 					string = prefix + "*" + str(self._checksum(prefix))
+					if verb != "M110":
+						self.sentLines[self.sequence] = string
 					self.sequence += 1
 					
 				self.okWait = True
@@ -141,25 +157,35 @@ class SendThread:
 			self.printer.write(str(string+"\n"))
 			self.printIndex = 0
 			self.sequence = 0
+			self.sentLines = {}
+			self.resendFrom = None
 			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_STARTED)
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_RESUMEPRINT:
+			self.sentLines = {}
+			self.resendFrom = None
 			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_RESUMED)
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_STOPPRINT:
 			self.isPrinting = False
+			self.sentLines = {}
+			self.resendFrom = None
 			evt = RepRapEvent(event = PRINT_STOPPED)
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_ENDOFPRINT:
 			evt = RepRapEvent(event = PRINT_COMPLETE)
+			self.sentLines = {}
+			self.resendFrom = None
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_DRAINQUEUE:
+			self.sentLines = {}
+			self.resendFrom = None
 			while True:
 				try:
 					(cmd, string) = self.mainQ.get(False)
@@ -200,6 +226,7 @@ class ListenThread:
 		self.isRunning = False
 		self.endoflife = False
 		self.sender = sender
+		self.resendre = re.compile("resend: *([0-9]+)")
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -231,10 +258,25 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
-				if line.strip().lower().startswith("ok"):
+				llow = line.strip().lower()
+				
+				if llow.startswith("resend:"):
+					m = self.resendre.search(llow)
+					if m:
+						t = m.groups()
+						if len(t) >= 1:
+							try:
+								n = int(t[0])
+							except:
+								n = None
+								
+						if n:
+							self.sender.setResendFrom(n)
+				
+				if llow.startswith("ok"):
 					self.sender.endWait()
 
-				if line.strip().lower() == "ok":
+				if llow == "ok":
 					continue
 						
 				if line.startswith("echo:"):
@@ -327,11 +369,13 @@ class RepRapParser:
 				HEtemp[0] = float(t[0])
 				gotHE[0] = True
 			if len(t) >= 2:
+				print "to be setting he target to ", t[1]
 				HEtarget[0] = float(t[1])
 				gotHE[0] = True
 			if len(t) >= 3:
 				self.app.setBedTemp(float(t[2]))
 			if len(t) >= 4:
+				print "setting bed target to ", t[3]
 				self.app.setBedTarget(float(t[3]))
 				
 			m = self.toolre.findall(msg)
@@ -345,7 +389,9 @@ class RepRapParser:
 
 			for i in range(MAX_EXTRUDERS):
 				if gotHE[i]:
+					print "setting he temp to ", i, HEtemp[i]
 					self.app.setHETemp(i, HEtemp[i])
+					print "setting he tgt to ", i, HEtarget[i]
 					self.app.setHETarget(i, HEtarget[i])
 					
 			if self.app.M105pending:

@@ -190,7 +190,7 @@ class Slic3rCfgDialog(wx.Dialog):
 
 		args = shlex.split(str(cmd))
 		try:
-			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+			subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:
 			print "Exception occurred trying to spawn slicer"
 			return
