@@ -34,12 +34,15 @@ def findallpos(regexp, mstr):
 class myEditor(editor.Editor):
 	def __init__(self, parent, iD):
 		self.editwindow = parent
+		self.findData = wx.FindReplaceData()
 		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
-		self.Bind(wx.EVT_FIND, self.OnFind)
-		self.Bind(wx.EVT_FIND_NEXT, self.OnFind)
-		self.Bind(wx.EVT_FIND_REPLACE, self.OnFind)
-		self.Bind(wx.EVT_FIND_REPLACE_ALL, self.OnFind)
-		self.Bind(wx.EVT_FIND_CLOSE, self.OnFindClose)
+		
+	def BindFindEvents(self, win):
+		win.Bind(wx.EVT_FIND, self.OnFind)
+		win.Bind(wx.EVT_FIND_NEXT, self.OnFind)
+		win.Bind(wx.EVT_FIND_REPLACE, self.OnFind)
+		win.Bind(wx.EVT_FIND_REPLACE_ALL, self.OnFind)
+		win.Bind(wx.EVT_FIND_CLOSE, self.OnFindClose)
 		
 	def DrawCursor(self, dc=None):
 		editor.Editor.DrawCursor(self, dc)
@@ -49,18 +52,17 @@ class myEditor(editor.Editor):
 		action['r'] = self.doFindReplace
 		
 	def doFind(self, evt):
-		data = wx.FindReplaceData()
-		dlg = wx.FindReplaceDialog(self, data, "Find")
-		dlg.data = data  # save a reference to it...
+		dlg = wx.FindReplaceDialog(self, self.findData, "Find")
+		self.BindFindEvents(dlg)
 		dlg.Show(True)
 	
 	def doFindReplace(self, evt):
-		data = wx.FindReplaceData()
-		dlg = wx.FindReplaceDialog(self, data, "Find/Replace", wx.FR_REPLACEDIALOG)
-		dlg.data = data  # save a reference to it...
+		dlg = wx.FindReplaceDialog(self, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
+		self.BindFindEvents(dlg)
 		dlg.Show(True)
 		
 	def OnFind(self, evt):
+		print "On find"
 		et = evt.GetEventType()
 		flags = evt.GetFlags()
 		buf = self.GetText()
@@ -178,6 +180,7 @@ class myEditor(editor.Editor):
 			
 		
 	def OnFindClose(self, evt):
+		print "on close"
 		evt.GetDialog().Destroy()
 		
 class EditGCodeDlg(wx.Dialog):
