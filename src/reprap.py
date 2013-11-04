@@ -19,6 +19,7 @@ PRINT_COMPLETE = 1
 PRINT_STOPPED = 2
 PRINT_STARTED = 3
 PRINT_RESUMED = 4
+QUEUE_DRAINED = 5
 RECEIVED_MSG = 10
 
 CMD_GCODE = 1
@@ -193,6 +194,8 @@ class SendThread:
 						break
 				except Queue.Empty:
 					break
+			evt = RepRapEvent(event = QUEUE_DRAINED)
+			wx.PostEvent(self.win, evt)
 	
 	def metaCommand(self, cmd):
 		print "Meta command: ", cmd
@@ -468,6 +471,8 @@ class RepRap:
 		self.online = False
 		self.printing = False
 		self.holdFan = False
+		self.restarting = False
+		self.restartData = None
 		win.Bind(EVT_REPRAP_UPDATE, handler)
 		
 	def setHoldFan(self, flag):
@@ -560,15 +565,24 @@ class RepRap:
 		
 	def restartPrint(self, data):
 		print "restarting print"
+		self.restarting = True
+		self.restartData = data
 		self._sendCmd(CMD_DRAINQUEUE)
-		self.startPrint(data)
-		self.printing = True
-		self.paused = False
 		
 	def clearPrint(self):
 		self._sendCmd(CMD_DRAINQUEUE)
-		self.printing = False
-		self.paused = False
+		
+	def reprapEvent(self, evt):
+		if evt.event == QUEUE_DRAINED:
+			if self.restarting:
+				self.startPrint(self.restartDdata)
+				self.printing = True
+				self.paused = False
+				self.restarting = False
+				self.restartData = None
+			else:
+				self.printing = False
+				self.paused = False
 		
 	def printStopped(self):
 		self.printing = False

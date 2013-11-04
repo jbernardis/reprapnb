@@ -202,6 +202,16 @@ class PrintMonitor(wx.Panel):
 		
 	def hasFileLoaded(self):
 		return self.model is not None
+	
+	def printerReset(self):
+		self.printing = False
+		self.paused = False
+		self.setStatus(PMSTATUS_READY)
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.bPrint.Enable(True)
+		self.bPause.Enable(False)
+		self.app.setPrinterBusy(False)
 		
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
@@ -233,13 +243,16 @@ class PrintMonitor(wx.Panel):
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
-			self.bPause.Enable(True)
+			self.bPause.Enable(False)
 			self.app.setPrinterBusy(False)
 			self.endTime = time.time()
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
 			self.updatePrintPosition(0)
 			self.infoPane.setPrintComplete()
+			
+		else:
+			self.reprap.reprapEvent(evt)
 			
 	def getPrintTimes(self):
 		return self.startTime, self.endTime

@@ -33,9 +33,50 @@ def findallpos(regexp, mstr):
 
 class myEditor(editor.Editor):
 	def __init__(self, parent, iD):
-		self.editwindow = parent
-		self.findData = wx.FindReplaceData()
+		self.parent = parent
 		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
+		
+	def DrawCursor(self, dc=None):
+		editor.Editor.DrawCursor(self, dc)
+		
+	def SetAltFuncs(self, action):
+		action['f'] = self.parent.doFind
+		action['r'] = self.parent.doFindReplace
+			
+		
+class EditGCodeDlg(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
+		
+		self.app = parent
+		self.model = self.app.model
+		
+		self.ed = myEditor(self, -1)
+		box = wx.BoxSizer(wx.VERTICAL)
+		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
+		self.SetSizer(box)
+		self.SetAutoLayout(True)
+		
+		self.findData = wx.FindReplaceData()
+		self.editbuffer = self.app.gcode[:]
+
+		self.ed.SetText(self.editbuffer)
+
+		btnsizer = wx.StdDialogButtonSizer()
+
+		btn = wx.Button(self, wx.ID_OK)
+		btn.SetHelpText("Save Modified buffer")
+		btn.SetDefault()
+		btn.SetLabel("Save")
+		btnsizer.AddButton(btn)
+
+		btn = wx.Button(self, wx.ID_CANCEL)
+		btn.SetHelpText("Exit without changing code")
+		btnsizer.AddButton(btn)		
+		
+		btnsizer.Realize()
+
+		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
 	def BindFindEvents(self, win):
 		win.Bind(wx.EVT_FIND, self.OnFind)
@@ -44,20 +85,27 @@ class myEditor(editor.Editor):
 		win.Bind(wx.EVT_FIND_REPLACE_ALL, self.OnFind)
 		win.Bind(wx.EVT_FIND_CLOSE, self.OnFindClose)
 		
-	def DrawCursor(self, dc=None):
-		editor.Editor.DrawCursor(self, dc)
+	def GetText(self):
+		return self.ed.GetText()
+	
+	def hasChanged(self):
+		eb = self.GetText()
+		if len(eb) != len(self.app.gcode):
+			return True
 		
-	def SetAltFuncs(self, action):
-		action['f'] = self.doFind
-		action['r'] = self.doFindReplace
-		
+		for i in range(len(eb)):
+			if eb[i] != self.app.gcode[i]:
+				return True
+			
+		return False
+			
 	def doFind(self, evt):
-		dlg = wx.FindReplaceDialog(self.editwindow, self.findData, "Find")
+		dlg = wx.FindReplaceDialog(self, self.findData, "Find")
 		self.BindFindEvents(dlg)
 		dlg.Show(True)
 	
 	def doFindReplace(self, evt):
-		dlg = wx.FindReplaceDialog(self.editwindow, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
+		dlg = wx.FindReplaceDialog(self, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
 		self.BindFindEvents(dlg)
 		dlg.Show(True)
 		
@@ -65,7 +113,7 @@ class myEditor(editor.Editor):
 		print "On find"
 		et = evt.GetEventType()
 		flags = evt.GetFlags()
-		buf = self.GetText()
+		buf = self.ed.GetText()
 		down = False
 		if flags & 0x01: down = True
 
@@ -135,7 +183,7 @@ class myEditor(editor.Editor):
 				cy = loc[1]
 			
 	def findString(self, mstr, down, wholeword, casematch, start, replace=None):
-		buf = self.GetText()
+		buf = self.ed.GetText()
 		
 		if wholeword:
 			mstr = r"\b" + mstr + r"\b"
@@ -177,56 +225,8 @@ class myEditor(editor.Editor):
 				
 		return None
 			
-			
 		
 	def OnFindClose(self, evt):
 		print "on close"
 		evt.GetDialog().Destroy()
-		
-class EditGCodeDlg(wx.Dialog):
-	def __init__(self, parent):
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
-		
-		self.app = parent
-		self.model = self.app.model
-		
-		self.ed = myEditor(self, -1)
-		box = wx.BoxSizer(wx.VERTICAL)
-		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
-		self.SetSizer(box)
-		self.SetAutoLayout(True)
-		
-		self.editbuffer = self.app.gcode[:]
-
-		self.ed.SetText(self.editbuffer)
-
-		btnsizer = wx.StdDialogButtonSizer()
-
-		btn = wx.Button(self, wx.ID_OK)
-		btn.SetHelpText("Save Modified buffer")
-		btn.SetDefault()
-		btn.SetLabel("Save")
-		btnsizer.AddButton(btn)
-
-		btn = wx.Button(self, wx.ID_CANCEL)
-		btn.SetHelpText("Exit without changing code")
-		btnsizer.AddButton(btn)		
-		
-		btnsizer.Realize()
-
-		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
-	def GetText(self):
-		return self.ed.GetText()
 	
-	def hasChanged(self):
-		eb = self.GetText()
-		if len(eb) != len(self.app.gcode):
-			return True
-		
-		for i in range(len(eb)):
-			if eb[i] != self.app.gcode[i]:
-				return True
-			
-		return False
-		

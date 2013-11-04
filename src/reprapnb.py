@@ -340,6 +340,7 @@ class MainFrame(wx.Frame):
 		if rc == wx.ID_YES:
 			self.reprap.reset()
 			self.M105pending = False
+			self.pgPrtMon.printerReset()
 
 	def finishDisconnection(self):
 		if not self.reprap.checkDisconnection():
