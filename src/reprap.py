@@ -372,13 +372,11 @@ class RepRapParser:
 				HEtemp[0] = float(t[0])
 				gotHE[0] = True
 			if len(t) >= 2:
-				print "to be setting he target to ", t[1]
 				HEtarget[0] = float(t[1])
 				gotHE[0] = True
 			if len(t) >= 3:
 				self.app.setBedTemp(float(t[2]))
 			if len(t) >= 4:
-				print "setting bed target to ", t[3]
 				self.app.setBedTarget(float(t[3]))
 				
 			m = self.toolre.findall(msg)
@@ -392,9 +390,7 @@ class RepRapParser:
 
 			for i in range(MAX_EXTRUDERS):
 				if gotHE[i]:
-					print "setting he temp to ", i, HEtemp[i]
 					self.app.setHETemp(i, HEtemp[i])
-					print "setting he tgt to ", i, HEtarget[i]
 					self.app.setHETarget(i, HEtarget[i])
 					
 			if self.app.M105pending:
@@ -575,7 +571,7 @@ class RepRap:
 	def reprapEvent(self, evt):
 		if evt.event == QUEUE_DRAINED:
 			if self.restarting:
-				self.startPrint(self.restartDdata)
+				self.startPrint(self.restartData)
 				self.printing = True
 				self.paused = False
 				self.restarting = False
