@@ -49,7 +49,6 @@ class EditGCodeDlg(wx.Dialog):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
 		
 		self.app = parent
-		self.model = self.app.model
 		
 		self.ed = myEditor(self, -1)
 		box = wx.BoxSizer(wx.VERTICAL)
