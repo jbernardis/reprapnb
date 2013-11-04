@@ -52,12 +52,12 @@ class myEditor(editor.Editor):
 		action['r'] = self.doFindReplace
 		
 	def doFind(self, evt):
-		dlg = wx.FindReplaceDialog(self, self.findData, "Find")
+		dlg = wx.FindReplaceDialog(self.editwindow, self.findData, "Find")
 		self.BindFindEvents(dlg)
 		dlg.Show(True)
 	
 	def doFindReplace(self, evt):
-		dlg = wx.FindReplaceDialog(self, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
+		dlg = wx.FindReplaceDialog(self.editwindow, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
 		self.BindFindEvents(dlg)
 		dlg.Show(True)
 		

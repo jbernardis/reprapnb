@@ -260,13 +260,16 @@ class PrintMonitor(wx.Panel):
 			self.bPause.SetToolTipString("Resume the print from the paused point")
 		
 	def doPrint(self, evt):
+		print "print/restart pressed"
 		self.printPos = 0
 		self.startTime = time.time()
 		self.endTime = None
 		if self.printMode == PRINT_MODE_RESTART:
+			print "restart mode"
 			action = "restarted"
 			self.reprap.restartPrint(self.model)
 		else:
+			print "start mode"
 			action = "started"
 			self.reprap.startPrint(self.model)
 		self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
