@@ -201,6 +201,7 @@ class FilePrepare(wx.Panel):
 		self.sliceActive = False
 		self.exporting = False
 		self.status = FPSTATUS_IDLE
+		self.dlg = None
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -811,32 +812,29 @@ class FilePrepare(wx.Panel):
 		self.bShift.Enable(self.gcodeLoaded)
 		self.bEdit.Enable(self.gcodeLoaded)
 		self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+		
+	def disableButtons(self):
+		self.bSave.Enable(False)
+		self.bSaveLayer.Enable(False)
+		self.bFilamentChange.Enable(False)
+		self.bShift.Enable(False)
+		self.bEdit.Enable(False)
+		self.bToPrinter.Enable(False)
 
 	def editGCode(self, event):
-		dlg = EditGCodeDlg(self)
-		dlg.CenterOnScreen()
-
-		while True:		
-			val = dlg.ShowModal()
-			chg = dlg.hasChanged()
-				
-			if val != wx.ID_OK:
-				if chg:
-					askok = wx.MessageDialog(self, "Are you Sure you want to Cancel and lose your changes?",
-					'Lose Changes', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-			
-					rc = askok.ShowModal()
-					askok.Destroy()
-
-					if rc != wx.ID_YES:
-						continue
-			break
-					
-		if (val == wx.ID_OK and not chg) or val != wx.ID_OK:
-			dlg.Destroy()
+		self.disableButtons()
+		if self.dlg is None:
+			self.dlg = EditGCodeDlg(self)
+			self.dlg.CenterOnScreen()
+			self.dlg.show()
+		
+	def dlgClosed(self, rc, data):
+		self.dlg = None
+		if not rc:
+			self.enableButtons()
 			return
 
-		self.gcode = dlg.GetText()[:]
+		self.gcode = data[:]
 		self.buildModel()
 		
 		self.layerCount = self.model.countLayers()
@@ -845,10 +843,7 @@ class FilePrepare(wx.Panel):
 		self.setLayer(l)
 		self.gcf.setLayer(l)
 		self.setModified(True)
-
-		dlg.Destroy()
-		self.Fit()
-		self.Layout()
+		self.enableButtons()
 
 	def shiftModel(self, event):
 		dlg = ShiftModelDlg(self)

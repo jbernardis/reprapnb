@@ -34,49 +34,9 @@ def findallpos(regexp, mstr):
 class myEditor(editor.Editor):
 	def __init__(self, parent, iD):
 		self.parent = parent
-		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
-		
-	def DrawCursor(self, dc=None):
-		editor.Editor.DrawCursor(self, dc)
-		
-	def SetAltFuncs(self, action):
-		action['f'] = self.parent.doFind
-		action['r'] = self.parent.doFindReplace
-			
-		
-class EditGCodeDlg(wx.Dialog):
-	def __init__(self, parent):
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
-		
-		self.app = parent
-		
-		self.ed = myEditor(self, -1)
-		box = wx.BoxSizer(wx.VERTICAL)
-		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
-		self.SetSizer(box)
-		self.SetAutoLayout(True)
-		
 		self.findData = wx.FindReplaceData()
-		self.editbuffer = self.app.gcode[:]
+		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
 
-		self.ed.SetText(self.editbuffer)
-
-		btnsizer = wx.StdDialogButtonSizer()
-
-		btn = wx.Button(self, wx.ID_OK)
-		btn.SetHelpText("Save Modified buffer")
-		btn.SetDefault()
-		btn.SetLabel("Save")
-		btnsizer.AddButton(btn)
-
-		btn = wx.Button(self, wx.ID_CANCEL)
-		btn.SetHelpText("Exit without changing code")
-		btnsizer.AddButton(btn)		
-		
-		btnsizer.Realize()
-
-		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
 	def BindFindEvents(self, win):
 		win.Bind(wx.EVT_FIND, self.OnFind)
 		win.Bind(wx.EVT_FIND_NEXT, self.OnFind)
@@ -84,35 +44,30 @@ class EditGCodeDlg(wx.Dialog):
 		win.Bind(wx.EVT_FIND_REPLACE_ALL, self.OnFind)
 		win.Bind(wx.EVT_FIND_CLOSE, self.OnFindClose)
 		
-	def GetText(self):
-		return self.ed.GetText()
-	
-	def hasChanged(self):
-		eb = self.GetText()
-		if len(eb) != len(self.app.gcode):
-			return True
+	def DrawCursor(self, dc=None):
+		editor.Editor.DrawCursor(self, dc)
 		
-		for i in range(len(eb)):
-			if eb[i] != self.app.gcode[i]:
-				return True
-			
-		return False
-			
+	def SetAltFuncs(self, action):
+		action['f'] = self.doFind
+		action['r'] = self.doFindReplace
+
 	def doFind(self, evt):
 		dlg = wx.FindReplaceDialog(self, self.findData, "Find")
 		self.BindFindEvents(dlg)
+		dlg.SetFocus()
 		dlg.Show(True)
 	
 	def doFindReplace(self, evt):
 		dlg = wx.FindReplaceDialog(self, self.findData, "Find/Replace", wx.FR_REPLACEDIALOG)
 		self.BindFindEvents(dlg)
+		dlg.SetFocus()
 		dlg.Show(True)
 		
 	def OnFind(self, evt):
 		print "On find"
 		et = evt.GetEventType()
 		flags = evt.GetFlags()
-		buf = self.ed.GetText()
+		buf = self.GetText()
 		down = False
 		if flags & 0x01: down = True
 
@@ -182,7 +137,7 @@ class EditGCodeDlg(wx.Dialog):
 				cy = loc[1]
 			
 	def findString(self, mstr, down, wholeword, casematch, start, replace=None):
-		buf = self.ed.GetText()
+		buf = self.GetText()
 		
 		if wholeword:
 			mstr = r"\b" + mstr + r"\b"
@@ -229,3 +184,68 @@ class EditGCodeDlg(wx.Dialog):
 		print "on close"
 		evt.GetDialog().Destroy()
 	
+			
+		
+class EditGCodeDlg(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
+		
+		self.app = parent
+		
+		self.ed = myEditor(self, -1)
+		box = wx.BoxSizer(wx.VERTICAL)
+		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
+		self.SetSizer(box)
+		self.SetAutoLayout(True)
+		
+		self.editbuffer = self.app.gcode[:]
+
+		self.ed.SetText(self.editbuffer)
+
+		btnsizer = wx.BoxSizer()
+
+		btn = wx.Button(self, wx.ID_ANY, "Save")
+		btn.SetHelpText("Save Modified buffer")
+		btn.SetDefault()
+		btnsizer.Add(btn)
+		self.Bind(wx.EVT_BUTTON, self.doSave, btn)
+
+		btn = wx.Button(self, wx.ID_ANY, "Cancel")
+		btn.SetHelpText("Exit without changing code")
+		btnsizer.Add(btn)		
+		self.Bind(wx.EVT_BUTTON, self.doCancel, btn)
+		
+		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+
+	def doSave(self, evt):
+		self.app.dlgClosed(True, self.ed.GetText())
+		self.Destroy()
+		
+	def doCancel(self, evt):
+		if self.hasChanged():
+			askok = wx.MessageDialog(self, "Are you Sure you want to Cancel and lose your changes?",
+				'Lose Changes', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+			
+			rc = askok.ShowModal()
+			askok.Destroy()
+			
+			if rc != wx.ID_YES:
+				return
+
+		self.app.dlgClosed(False, None)
+		self.Destroy()
+		
+	def GetText(self):
+		return self.ed.GetText()
+	
+	def hasChanged(self):
+		eb = self.GetText()
+		if len(eb) != len(self.app.gcode):
+			return True
+		
+		for i in range(len(eb)):
+			if eb[i] != self.app.gcode[i]:
+				return True
+			
+		return False
+			
