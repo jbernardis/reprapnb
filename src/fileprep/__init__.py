@@ -38,6 +38,7 @@ FPSTATUS_EQUAL = 1
 FPSTATUS_EQUAL_DIRTY = 2
 FPSTATUS_UNEQUAL = 3
 FPSTATUS_UNEQUAL_DIRTY = 4
+FPSTATUS_BUSY = 5
 
 TEXT_PAD = 10
 
@@ -523,6 +524,7 @@ class FilePrepare(wx.Panel):
 		self.bSlice.Enable(False)
 		self.bToPrinter.Enable(False)
 		self.exporting = True
+		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
 		self.modelerThread = ModelerThread(self, self.gcode, 0)
 		self.modelerThread.Start()
 		
@@ -568,6 +570,7 @@ class FilePrepare(wx.Panel):
 		self.bToPrinter.Enable(False)
 		self.setSliceMode(False)
 		self.sliceActive = True
+		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -589,6 +592,7 @@ class FilePrepare(wx.Panel):
 			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			self.app.slicer.sliceComplete()
 			self.sliceActive = False
+			self.app.updateFilePrepStatus(self.status)
 			
 		elif evt.state == SLICER_FINISHED:
 			if evt.msg is not None:
@@ -806,6 +810,7 @@ class FilePrepare(wx.Panel):
 		self.enableButtons()
 		
 	def enableButtons(self):
+		print "enabling: ", self.gcodeLoaded, self.printerBusy
 		self.bSave.Enable(self.gcodeLoaded)
 		self.bSaveLayer.Enable(self.gcodeLoaded)
 		self.bFilamentChange.Enable(self.gcodeLoaded)
@@ -814,6 +819,7 @@ class FilePrepare(wx.Panel):
 		self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 		
 	def disableButtons(self):
+		print "disabling: ", self.gcodeLoaded, self.printerBusy
 		self.bSave.Enable(False)
 		self.bSaveLayer.Enable(False)
 		self.bFilamentChange.Enable(False)
@@ -826,7 +832,7 @@ class FilePrepare(wx.Panel):
 		if self.dlg is None:
 			self.dlg = EditGCodeDlg(self)
 			self.dlg.CenterOnScreen()
-			self.dlg.show()
+			self.dlg.Show()
 		
 	def dlgClosed(self, rc, data):
 		self.dlg = None

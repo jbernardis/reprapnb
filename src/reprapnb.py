@@ -8,7 +8,7 @@ cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( ins
 if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
-from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_UNEQUAL_DIRTY
+from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_BUSY, FPSTATUS_UNEQUAL_DIRTY
 from printmon import PrintMonitor, PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED
 from manualctl import ManualControl
 from plater import Plater, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
@@ -476,6 +476,8 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalIdx)
 		elif status == FPSTATUS_UNEQUAL_DIRTY:
 			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalDirtyIdx)
+		elif status == FPSTATUS_BUSY:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilNotReadyIdx)
 		else:
 			self.nb.SetPageImage(self.pxFilePrep, -1)
 			

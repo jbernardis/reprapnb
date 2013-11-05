@@ -367,6 +367,7 @@ class PrintMonitor(wx.Panel):
 		self.gcf.redrawCurrentLayer()
 	
 	def forwardModel(self, model, name=""):
+		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
 		self.name = name
