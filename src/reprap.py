@@ -29,12 +29,44 @@ CMD_DRAINQUEUE = 4
 CMD_ENDOFPRINT = 5
 CMD_RESUMEPRINT = 6
 
+CACHE_SIZE = 50
+
 # printer commands that are permissible while actively printing
 allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
 					"M104", "M105", "M106", "M107", "M114", "M115", "M117", "M119", "M140",
 					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M220", "M221", "M240",
 					"M301", "M302", "M303",
 					"M500", "M501", "M502", "M503"]
+
+class MsgCache:
+	def __init__(self, size):
+		self.cacheSize = size
+		self.reinit()
+		
+	def reinit(self):
+		self.cache = []
+		self.lastKey = None
+		
+	def addMsg(self, key, msg):
+		if self.lastKey is not None and key != self.lastKey+1:
+			self.reinit()
+			
+		self.lastKey = key
+		self.cache.append(msg)
+		d = self.cacheSize - len(self.cache)
+		if d < 0:
+			self.cache = self.cache[-d:]
+			
+	def getMsg(self, key):
+		l = len(self.cache)
+		if key > self.lastKey or key <= self.lastKey - l:
+			return None
+		
+		i = l - (self.lastKey - key) - 1
+		if i < 0 or i >= self.cacheSize:
+			return None
+		
+		return self.cache[i]
 
 class SendThread:
 	def __init__(self, win, printer, priQ, mainQ):
@@ -51,7 +83,7 @@ class SendThread:
 		self.holdFan = False
 		self.checksum = True
 		self.resendFrom = None
-		self.sentLines = {}
+		self.sentCache = MsgCache(CACHE_SIZE)
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -91,13 +123,13 @@ class SendThread:
 						pass
 					
 				elif self.resendFrom is not None:
-					try:
-						string = self.sentLines[self.resendFrom]
+					string = self.sentCache.getMsg(self.resendFrom)
+					if string is None:
+						self.resendFrom = None
+						self.sentCache.reinit()
+					else:
 						self.resendFrom += 1
 						self.processCmd(CMD_GCODE, string, True)
-					except:
-						self.resendFrom = None
-						self.sentLines = {}
 					
 				elif not self.okWait:
 					if not self.mainQ.empty():
@@ -141,7 +173,7 @@ class SendThread:
 					prefix = "N" + str(self.sequence) + " " + string
 					string = prefix + "*" + str(self._checksum(prefix))
 					if verb != "M110":
-						self.sentLines[self.sequence] = string
+						self.sentCache.addMsg(self.sequence, string)
 					self.sequence += 1
 					
 				self.okWait = True
@@ -158,14 +190,14 @@ class SendThread:
 			self.printer.write(str(string+"\n"))
 			self.printIndex = 0
 			self.sequence = 0
-			self.sentLines = {}
+			self.sentCache.reinit()
 			self.resendFrom = None
 			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_STARTED)
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_RESUMEPRINT:
-			self.sentLines = {}
+			self.sentCache.reinit()
 			self.resendFrom = None
 			self.isPrinting = True
 			evt = RepRapEvent(event = PRINT_RESUMED)
@@ -173,19 +205,19 @@ class SendThread:
 			
 		elif cmd == CMD_STOPPRINT:
 			self.isPrinting = False
-			self.sentLines = {}
+			self.sentCache.reinit()
 			self.resendFrom = None
 			evt = RepRapEvent(event = PRINT_STOPPED)
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_ENDOFPRINT:
 			evt = RepRapEvent(event = PRINT_COMPLETE)
-			self.sentLines = {}
+			self.sentCache.reinit()
 			self.resendFrom = None
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_DRAINQUEUE:
-			self.sentLines = {}
+			self.sentCache.reinit()
 			self.resendFrom = None
 			while True:
 				try:
@@ -274,6 +306,7 @@ class ListenThread:
 								n = None
 								
 						if n:
+							
 							self.sender.setResendFrom(n)
 				
 				if llow.startswith("ok"):
@@ -297,12 +330,14 @@ class RepRapParser:
 	def __init__(self, app):
 		self.app = app
 		self.firmware = self.app.firmware
+		self.manctl = self.app.manctl
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
 		self.toolre = re.compile(".*?T([0-2]): *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
 		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *W:.*")
 		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
 		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
+		self.toolchgre = re.compile("Active tool is now T([0-9])")
 		
 		self.sdre = re.compile("SD printing byte *([0-9]+) *\/ *([0-9]+)")
 		self.heaters = {}
@@ -382,8 +417,8 @@ class RepRapParser:
 			m = self.toolre.findall(msg)
 			if m:
 				for t in m:
-					if t[0] > 0 and t[0] < MAX_EXTRUDERS:
-						tool = int(t[0])
+					tool = int(t[0])
+					if tool >= 0 and tool < MAX_EXTRUDERS:
 						HEtemp[tool] = float(t[1])
 						HEtarget[tool] = float(t[2])
 						gotHE[tool] = True
@@ -446,6 +481,17 @@ class RepRapParser:
 			self.app.updateSpeeds(fan, feed, flow)
 			return False
 		
+		m = self.toolchgre.search(msg)
+		if m:
+			tool = None
+			t = m.groups()
+			if len(t) >= 1:
+				tool = int(t[0])
+				
+			if tool:
+				self.app.setActiveTool(tool)
+			return False
+	
 		return False
 	
 	def parseG(self, s, v):

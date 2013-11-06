@@ -1,7 +1,4 @@
 import wx
-import os.path
-
-from images import Images
 
 BUTTONDIM = (48, 48)
 
@@ -72,13 +69,13 @@ class Extruder(wx.Window):
 		
 	def evtESpeedKillFocus(self, evt):
 		try:
-			v = float(self.tESpeed.GetValue())
+			float(self.tESpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for E Speed: %s" % self.tESpeed.GetValue())
 		
 	def evtEDistanceKillFocus(self, evt):
 		try:
-			v = float(self.tEDistance.GetValue())
+			float(self.tEDistance.GetValue())
 		except:
 			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			

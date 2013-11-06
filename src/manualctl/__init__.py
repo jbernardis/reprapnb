@@ -79,6 +79,9 @@ class ManualControl(wx.Panel):
 	def setHETemp(self, tool, temp):
 		self.heWin.setHeatTemp(tool, temp)
 		
+	def setActiveTool(self, tool):
+		self.heWin.setActiveTool(tool)
+		
 	def addExtruder(self, startTemps):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))

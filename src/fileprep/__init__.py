@@ -520,10 +520,10 @@ class FilePrepare(wx.Panel):
 	
 	def toPrinter(self, evt):
 		#name = self.ipFileName.GetLabel()
-		self.bOpen.Enable(False)
-		self.bSlice.Enable(False)
+		self.disableButtons()
 		self.bToPrinter.Enable(False)
 		self.exporting = True
+		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
 		self.modelerThread = ModelerThread(self, self.gcode, 0)
 		self.modelerThread.Start()
@@ -766,10 +766,13 @@ class FilePrepare(wx.Panel):
 					name = TEMPFILELABEL
 				else:
 					name = self.gcFile
+					
+				self.logger.LogMessage("Modeling complete - forwarding %s to print monitor" % name)
 				self.app.forwardToPrintMon(model, name=name)
+				self.logger.LogMessage("Forwarding complete")
 				self.bOpen.Enable(True)
 				self.bSlice.Enable(True)
-				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+				self.enableButtons()
 				
 				newstat = False
 				if self.status == FPSTATUS_UNEQUAL:
@@ -820,6 +823,8 @@ class FilePrepare(wx.Panel):
 		
 	def disableButtons(self):
 		print "disabling: ", self.gcodeLoaded, self.printerBusy
+		self.bOpen.Enable(False)
+		self.bSlice.Enable(False)
 		self.bSave.Enable(False)
 		self.bSaveLayer.Enable(False)
 		self.bFilamentChange.Enable(False)
@@ -838,6 +843,8 @@ class FilePrepare(wx.Panel):
 		self.dlg = None
 		if not rc:
 			self.enableButtons()
+			self.bOpen.Enable(True)
+			self.bSlice.Enable(True)
 			return
 
 		self.gcode = data[:]
@@ -850,6 +857,8 @@ class FilePrepare(wx.Panel):
 		self.gcf.setLayer(l)
 		self.setModified(True)
 		self.enableButtons()
+		self.bOpen.Enable(True)
+		self.bSlice.Enable(True)
 
 	def shiftModel(self, event):
 		dlg = ShiftModelDlg(self)

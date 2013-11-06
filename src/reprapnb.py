@@ -240,6 +240,9 @@ class MainFrame(wx.Frame):
 				self.logger.LogMessage(evt.msg)
 		else:
 			self.pgPrtMon.reprapEvent(evt)
+			
+	def setActiveTool(self, tool):
+		self.pgManCtl.setActiveTool(tool)
 		
 	def checkPageChanged(self, evt):
 		newPage = evt.GetSelection()

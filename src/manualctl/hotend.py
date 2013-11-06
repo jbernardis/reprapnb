@@ -127,11 +127,22 @@ class HotEnd(wx.Window):
 		
 	def onToolChange(self, evt):
 		tc_sel = evt.GetEventObject()
+		
+		sel = None
 
 		for i in range(MAX_EXTRUDERS):
 			if tc_sel is self.rbTools[i]:
-				self.currentSelection = i
+				sel = i
 				break
+			
+		if sel is not None and sel != self.currentSelection:
+			self.currentSelection = sel
+			self.logger.LogMessage("Setting tool to T%d" % sel)
+			self.app.reprap.send_now("T%d" % sel)
+			
+	def setActiveTool(self, tool):
+		if tool >= 0 and tool < self.nextr:
+			self.rbTools[tool].SetValue(True)
 		
 	def changePrinter(self, hetemps):
 		self.nextr = len(hetemps)

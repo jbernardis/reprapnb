@@ -1,10 +1,10 @@
 In Progress/Need Testing
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - web server  need to test and add additional functionality
-- printer reset
 - an icon for the main screen and for when minimized
-- check firmware dlg closes when I disconnect
-- reset when not printing 
+- cancellation of slice - subsequent slice did not present file open dialog box
+- need a tool change mechanism
+- in general need to handle 2 or 3 extruders - temp graphs, etc
 
 Low Hanging
 - add acceleration to ini file somewhere - should be in slicer config
@@ -16,8 +16,6 @@ Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
-- need a tool change mechanism
-- in general need to handle 2 or 3 extruders - temp graphs, etc
 
 Larger effort
 - integration with webcam
