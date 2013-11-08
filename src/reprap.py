@@ -330,7 +330,6 @@ class RepRapParser:
 	def __init__(self, app):
 		self.app = app
 		self.firmware = self.app.firmware
-		self.manctl = self.app.manctl
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
 		self.toolre = re.compile(".*?T([0-2]): *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
