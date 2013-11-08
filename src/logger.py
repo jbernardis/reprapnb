@@ -15,6 +15,11 @@ class Logger(wx.Panel):
 		self.parent = parent
 		self.app = app
 		self.settings = app.settings
+		
+		self.nLines = 0
+		self.maxLines = 20;
+		self.chunk = 10;
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
@@ -82,6 +87,10 @@ class Logger(wx.Panel):
 		s = time.strftime('%H:%M:%S', time.localtime(time.time()))
 		try:
 			self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
+			self.nLines += 1
+			if self.nLines > self.maxLines:
+				self.t.Remove(0L, self.t.XYToPosition(0, self.chunk))
+				self.nLines -= self.chunk
 		except:
 			print "Unable to add (%s) to log" % text
 			

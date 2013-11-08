@@ -16,6 +16,7 @@ Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
+- plater hangs up on large file reads
 
 Larger effort
 - integration with webcam

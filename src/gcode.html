@@ -435,11 +435,11 @@ Example: <b>M98</b>
 Report the current hysteresis values in mm for all of the axis. 
 
 <a name="M104"/><h3>M104: Set Extruder Temperature</h3> 
-Example: <b>M104 S190</b> 
+Example: <b>M104 S190 T1</b> 
 <br>
 <br>
-Set the temperature of the current extruder to 190oC and return control to the host immediately (i.e. before that temperature has been reached by the extruder). See also M109. 
-<br>
+Set the temperature of tool 1 hot end to 190C and return control to the host immediately (i.e. before that temperature has been reached by the extruder). See also M109. 
+If T is not specified, sets the temperature of the currently selected tool<br>
 This is deprecated because temperatures should be set using the G10 and T commands (q.v.). 
 <br>
 <br>
@@ -472,7 +472,7 @@ Deprecated. Use M106 S0 instead.
 Sets speed of extruder motor. (Deprecated in current firmware, see M113) 
 
 <a name="M109"/><h3>M109: Set Extruder Temperature and Wait</h3> 
-Example: <b>M109 S185</b>
+Example: <b>M109 S185 T1</b>
 <br>
 <br>
 Set extruder heater temperature in degrees celsius and wait for this temperature to be achieved. 
