@@ -17,8 +17,10 @@ class Logger(wx.Panel):
 		self.settings = app.settings
 		
 		self.nLines = 0
-		self.maxLines = 20;
-		self.chunk = 10;
+		self.maxLines = self.settings.maxloglines;
+		self.chunk = 100;
+		if self.maxLines is not None and self.chunk > self.maxLines:
+			self.chunk = self.maxLines/2
 		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
@@ -88,7 +90,7 @@ class Logger(wx.Panel):
 		try:
 			self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
 			self.nLines += 1
-			if self.nLines > self.maxLines:
+			if self.maxLines is not None and self.nLines > self.maxLines:
 				self.t.Remove(0L, self.t.XYToPosition(0, self.chunk))
 				self.nLines -= self.chunk
 		except:

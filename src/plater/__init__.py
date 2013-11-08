@@ -363,8 +363,11 @@ class Plater(wx.Panel):
 			
 		name = "OBJECT%03d" % self.objNumber
 		self.objNumber += 1
+		print "Reading STL file"
 		stlFile = stltool.stl(filename=fn, name=name)
+		print "Back from read - adding to the frame"
 		self.stlFrame.addStl(stlFile, highlight=True)
+		print "back from add"
 		itemId = self.stlFrame.getSelection()
 		self.enableButtons(True)
 
@@ -375,7 +378,9 @@ class Plater(wx.Panel):
 		self.lb.SetSelection(self.lbSelection)
 		
 		if self.settings.autoarrange:
+			print "calling arrange"
 			self.doArrange(None)
+			print "back form arrange"
 			
 	def doClone(self, evt):
 		stlObj = self.stlFrame.getSelectedStl()

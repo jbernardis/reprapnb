@@ -102,6 +102,7 @@ class Settings:
 		self.lastlogdirectory = "."
 		self.speedcommand = None
 		self.port = 8989
+		self.maxloglines = 5000
 		self.macroList = {}
 		self.macroOrder = []
 		
@@ -146,6 +147,16 @@ class Settings:
 						self.speedcommand = None
 					else:
 						self.speedcommand = value
+				elif opt == 'maxloglines':
+					if value.lower() == "none":
+						self.maxloglines = None
+					else:
+						try:
+							self.maxloglines = int(value)
+						except:
+							self.showWarning("Invalid value for maxloglines")
+							self.maxloglines = 5000
+							self.modified = True
 				elif opt == 'port':
 					try:
 						self.port = int(value)
@@ -250,6 +261,7 @@ class Settings:
 			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
 			self.cfg.set(self.section, "port", str(self.port))
+			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
