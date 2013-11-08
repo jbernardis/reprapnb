@@ -58,7 +58,7 @@ class MacroDialog(wx.Dialog):
 		try:
 			l = list(open(fn))
 		except:
-			self.logger.LogMessage("Unable to open macro file: ", fn)
+			self.logger.LogMessage("Unable to open macro file: " + fn)
 			return
 		
 		for ln in l:
