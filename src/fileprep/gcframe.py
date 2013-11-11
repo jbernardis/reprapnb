@@ -6,6 +6,7 @@ Created on Apr 10, 2013
 import wx, math
 
 MAXZOOM = 10
+ZOOMDELTA = 0.1
 			
 def triangulate(p1, p2):
 	dx = p2[0] - p1[0]
@@ -127,12 +128,12 @@ class GcFrame (wx.Window):
 					
 	def zoomIn(self):
 		if self.zoom < MAXZOOM:
-			zoom = self.zoom + 1
+			zoom = self.zoom + ZOOMDELTA
 			self.setZoom(zoom)
 
 	def zoomOut(self):
 		if self.zoom > 1:
-			zoom = self.zoom - 1
+			zoom = self.zoom - ZOOMDELTA
 			self.setZoom(zoom)
 
 	def loadModel(self, model, layer=0, zoom=1):

@@ -38,7 +38,7 @@ def getFirmwareProfile(fn, container):
 		for i in grpinfo[g][2]:
 			k = "%s_%s" % (g, i)
 			if not cfg.has_option(section, k):
-				v = "0"
+				v = None
 			else:
 				v = str(cfg.get(section, k))
 				
@@ -54,9 +54,13 @@ def putFirmwareProfile(fn, container):
 		for i in grpinfo[g][2]:
 			k = "%s_%s" % (g, i)
 			v = container.getValue(k)
-			if v is None: v = "0"
-			
-			cfg.set(section, k, str(v))
+			if v is not None:
+				cfg.set(section, k, str(v))
+			else:
+				try:
+					cfg.remove_option(section, k)
+				except:
+					pass
 
 	try:				
 		with open(fn, 'wb') as configfile:

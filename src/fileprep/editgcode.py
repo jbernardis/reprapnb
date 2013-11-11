@@ -214,6 +214,7 @@ class EditGCodeDlg(wx.Dialog):
 		btn.SetHelpText("Exit without changing code")
 		btnsizer.Add(btn)		
 		self.Bind(wx.EVT_BUTTON, self.doCancel, btn)
+		self.Bind(wx.EVT_CLOSE, self.doCancel)
 		
 		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 

@@ -7,6 +7,7 @@ import wx
 import math
 
 MAXZOOM = 10
+ZOOMDELTA = 0.1
 			
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
@@ -108,12 +109,12 @@ class GcmFrame (wx.Window):
 					
 	def zoomIn(self):
 		if self.zoom < MAXZOOM:
-			zoom = self.zoom + 1
+			zoom = self.zoom + ZOOMDELTA
 			self.setZoom(zoom)
 
 	def zoomOut(self):
 		if self.zoom > 1:
-			zoom = self.zoom - 1
+			zoom = self.zoom - ZOOMDELTA
 			self.setZoom(zoom)
 
 	def loadModel(self, model, layer=0, zoom=1):
