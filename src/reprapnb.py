@@ -21,6 +21,7 @@ from tools import formatElapsed
 from macros import MacroDialog
 from gcref import GCRef
 from firmware import Firmware
+from sdcard import SDCard
 
 TB_TOOL_PORTS = 10
 TB_TOOL_CONNECT = 11
@@ -200,11 +201,15 @@ class MainFrame(wx.Frame):
 		self.pxFilePrep = 2
 		self.pxManCtl = 3
 		self.pxPrtMon = 4
+		
+		self.sdcard = SDCard(self, self.reprap, self.logger)
 
 		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self)
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps, bedTemp)
-		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap)
+		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap, self.sdcard)
+
+		self.parser.setHandler(self.evtSDCard, self.evtPrtMon)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
@@ -240,6 +245,15 @@ class MainFrame(wx.Frame):
 				self.logger.LogMessage(evt.msg)
 		else:
 			self.pgPrtMon.reprapEvent(evt)
+
+	def evtSDCard(self, evt):
+		self.sdcard.sdEvent(evt)
+
+	def evtPrtMon(self, evt):
+		self.pgPrtMon.prtMonEvent(evt)
+		
+	def resumeSDPrintFrom(self, fn):
+		self.pgPrtMon.resumeSDPrintFrom(fn)
 			
 	def setActiveTool(self, tool):
 		self.pgManCtl.setActiveTool(tool)
@@ -449,7 +463,7 @@ class MainFrame(wx.Frame):
 		self.printing = flag
 			
 		self.pgFilePrep.setPrinterBusy(flag)
-
+		
 	def updatePrintMonStatus(self, status):	
 		if status == PMSTATUS_NOT_READY:
 			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotReadyIdx)

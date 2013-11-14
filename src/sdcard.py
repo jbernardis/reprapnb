@@ -1,0 +1,300 @@
+'''
+Created on Aug 21, 2012
+
+@author: jbernard
+'''
+import wx
+
+SD_CARD_OK = 0
+SD_CARD_FAIL = 1
+SD_CARD_LIST = 2
+
+SDSTATUS_IDLE = 0
+SDSTATUS_CHECKING = 1
+SDSTATUS_LISTING = 2
+
+SDTASK_PRINT_FROM = 0
+SDTASK_PRINT_TO = 1
+SDTASK_DELETE = 2
+
+class SDDir:
+	def __init__(self, name, path):
+		self.name = name
+		self.path = path
+		self.files = []
+		self.dirs = []
+		self.dx = 0
+		self.fx = 0
+		
+	def addFile(self, fn, fqn=None):
+		if fqn:
+			self.files.append([fn, fqn])
+		else:
+			self.files.append([fn, fn])
+		
+	def addDir(self, dn, pth):
+		nd = SDDir(dn, pth)
+		self.dirs.append(nd)
+		return nd
+		
+	def getDir(self, dn):
+		for d in self.dirs:
+			if dn == d.dirName():
+				return d
+		return None
+	
+	
+	def sortAll(self):
+		def cmpDirs(a, b):
+			return cmp(a.dirName(), b.dirName())
+		
+		def cmpFiles(a, b):
+			return cmp(a[0], b[0])
+		
+		s = sorted(self.dirs, cmpDirs)
+		self.dirs = s
+
+		for d in self.dirs:
+			d.sortAll()
+			
+		s = sorted(self.files, cmpFiles)
+		self.files = s
+
+	def dirName(self):
+		return self.name
+		
+	def dirPath(self):
+		if len(self.path) > 1 and self.path.endswith('/'):
+			return self.path[:-1]
+		else:
+			return self.path
+		
+	def resetDir(self):
+		self.dx = 0
+	
+	def nextDir(self):
+		x = self.dx
+		if x >= len(self.dirs):
+			return None
+		
+		self.dx += 1
+		return self.dirs[x]
+	
+	def findDir(self, dn):
+		dl = dn.split('/')
+		return self.traverse(dl)
+
+	def traverse(self, dl):
+		if dl[0] != self.name:
+			return None
+		
+		if len(dl) == 1:
+			return self
+
+		ndl = [x for x in dl[1:]]
+		for sd in self.dirs:
+			d = sd.traverse(ndl)
+			if d:
+				return d
+
+		return None
+		
+	def resetFile(self):
+		self.fx = 0
+	
+	def nextFile(self):
+		x = self.fx
+		if x >= len(self.files):
+			return None
+		
+		self.fx += 1
+		return self.files[x]
+	
+class SDCard:
+	def __init__(self, app, printer, logger):
+		self.app = app
+		self.logger = logger
+		self.printer = printer
+		self.status = SDSTATUS_IDLE
+		self.task = None
+		
+	def getStatus(self):
+		return self.status
+		
+	def startPrintFromSD(self):
+		if self.status != SDSTATUS_IDLE:
+			self.logger.LogMessage("SD Checking already started")
+			return
+		
+		self.status = SDSTATUS_CHECKING
+		self.task = SDTASK_PRINT_FROM
+		self.printer.send_now("M21")
+		
+	def sdEvent(self, evt):
+		if evt.event == SD_CARD_OK:
+			if self.status != SDSTATUS_CHECKING:
+				return
+			self.status = SDSTATUS_LISTING
+			self.printer.send_now("M20")
+			return
+		
+		if evt.event == SD_CARD_FAIL:
+			if self.status != SDSTATUS_CHECKING:
+				return
+			self.status = SDSTATUS_IDLE
+			self.logger.LogMessage("Error initializing SD card")
+			return
+		
+		if evt.event == SD_CARD_LIST:
+			if self.status != SDSTATUS_LISTING:
+				return
+			self.status = SDSTATUS_IDLE
+			self.sdListComplete(evt.data)
+			
+	def sdListComplete(self, sdlist):
+		self.SDroot = SDDir('', "/")
+		for item in sdlist:
+			if item.startswith('/'):
+				item = item[1:]
+				
+			cd = self.SDroot
+			pth = "/"
+				
+			l = item.split('/')
+			for d in l[:-1]:
+				ncd = cd.getDir(d)
+				pth += d + '/'
+				if ncd == None:
+					ncd = cd.addDir(d, pth)
+		
+				cd = ncd
+			cd.addFile(l[-1], fqn='/' + item)
+					
+				
+		self.SDroot.sortAll()
+		
+		if self.task == SDTASK_PRINT_FROM:
+			dlg = SDChooseFileDlg(self.app, self.SDRoot)
+			while True:
+				okFlag = dlg.ShowModal()
+				if not okFlag:
+					break
+				
+				fileName = dlg.getSelection()
+				if fileName is not None:
+					self.app.resumeSDPrintFrom(fileName)
+					break
+				
+				msgdlg = wx.MessageDialog(self.app, "Please choose a file - not a directory - or cancel",
+					'Choose file', wx.OK | wx.CANCEL | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+				rc = msgdlg.ShowModal()
+				msgdlg.Destroy()
+				
+				if rc != wx.ID_OK:
+					break
+					
+			dlg.Destroy()
+				
+		elif self.task == SDTASK_PRINT_TO:
+			print "print to"
+		elif self.task == SDTASK_DELETE:
+			print "delete"
+			
+		self.task = None
+		
+	def SDChooseFileDlg(self, sddir):
+		return False, None
+
+class SDChooseFileDlg(wx.Dialog):
+	def __init__(self, parent, sddir):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Choose File from SD")
+		
+		self.win = parent
+		
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		tID = wx.NewId()
+		self.tree = wx.TreeCtrl(self, tID, wx.DefaultPosition, wx.DefaultSize,
+							   wx.TR_DEFAULT_STYLE
+							   #wx.TR_HAS_BUTTONS
+							   #| wx.TR_EDIT_LABELS
+							   #| wx.TR_MULTIPLE
+							   #| wx.TR_HIDE_ROOT
+							   )
+		
+		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self.tree)
+
+		isz = (16,16)
+		il = wx.ImageList(isz[0], isz[1])
+		self.fldridx	 = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER,	  wx.ART_OTHER, isz))
+		self.fldropenidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, isz))
+		self.fileidx	 = il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, isz))
+
+		self.tree.SetImageList(il)
+		self.il = il
+
+		self.root = self.tree.AddRoot("/")
+		self.tree.SetPyData(self.root, sddir)
+		self.tree.SetItemImage(self.root, self.fldridx, wx.TreeItemIcon_Normal)
+		self.tree.SetItemImage(self.root, self.fldropenidx, wx.TreeItemIcon_Expanded)
+
+		self.loadDirIntoTree(sddir, self.root)
+		
+		sizer.Add(self.tree)
+
+		btnsizer = wx.StdDialogButtonSizer()
+		
+		btn = wx.Button(self, wx.ID_OK)
+		btn.SetHelpText("Select the file and proceed")
+		btn.SetDefault()
+		btnsizer.AddButton(btn)
+
+		btn = wx.Button(self, wx.ID_CANCEL)
+		btn.SetHelpText("Cancel operation")
+		btnsizer.AddButton(btn)
+		btnsizer.Realize()
+
+		sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+
+		self.SetSizer(sizer)
+		sizer.Fit(self)
+		
+	def getSelection(self):
+		try:
+			len(self.selection)
+			print "Returning Selection: ", self.selection, type(self.selection)
+			return self.selection
+		except:
+			print "exception - returning None"
+			return None
+	
+	def onSelChanged(self, evt):
+		item = evt.GetItem()
+		if item:
+			self.selection = item.GetPyData()
+			print "New Selection: ", self.selection, type(self.selection)
+		
+	
+	def loadDirIntoTree(self, direct, tnode):
+		if direct is None:
+			return
+
+		direct.resetDir()
+		dn = direct.nextDir()
+		while dn is not None:
+			child = self.tree.AppendItem(tnode, dn.dirPath())
+			self.tree.SetPyData(child, dn)
+			self.tree.SetItemImage(child, self.fldridx, wx.TreeItemIcon_Normal)
+			self.tree.SetItemImage(child, self.fldropenidx, wx.TreeItemIcon_Expanded)
+			self.loadDirIntoTree(dn, child)
+			dn = direct.nextDir()
+			
+		direct.resetFile()
+		fn = direct.nextFile()
+		while fn is not None:
+			child = self.tree.AppendItem(tnode, fn[0])
+			self.tree.SetPyData(child, fn)
+			self.tree.SetItemImage(child, self.fileidx, wx.TreeItemIcon_Normal)
+			self.tree.SetItemImage(child, self.fileidx, wx.TreeItemIcon_Selected)
+			fn = direct.nextFile()	
+	

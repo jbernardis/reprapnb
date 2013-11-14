@@ -11,10 +11,17 @@ import time
 import wx
 import re
 import wx.lib.newevent
+from sdcard import SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST
 
 MAX_EXTRUDERS = 2
 
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
+(SDCardEvent, EVT_SD_CARD) = wx.lib.newevent.NewEvent()
+(PrtMonEvent, EVT_PRT_MON) = wx.lib.newevent.NewEvent()
+
+SD_PRINT_COMPLETE = 0
+SD_PRINT_POSITION = 1
+
 PRINT_COMPLETE = 1
 PRINT_STOPPED = 2
 PRINT_STARTED = 3
@@ -341,6 +348,13 @@ class RepRapParser:
 		self.sdre = re.compile("SD printing byte *([0-9]+) *\/ *([0-9]+)")
 		self.heaters = {}
 		
+		self.sd = None
+		self.insideListing = False
+		
+	def setHandlers(self, sdhdlr, prtmonhdlr):
+		self.app.Bind(EVT_SD_CARD, sdhdlr)
+		self.app.Bind(EVT_PRT_MON, prtmonhdlr)
+		
 	def parseMsg(self, msg):
 		if 'M92' in msg:
 			X = self.parseG(msg, 'X')
@@ -395,7 +409,45 @@ class RepRapParser:
 			D = self.parseG(msg, 'D')
 			self.firmware.m301(P, I, D)
 			return False
+		
+		if "SD card ok" in msg:
+			evt = SDCardEvent(event = SD_CARD_OK)
+			wx.PostEvent(self.app, evt)
+			return False
+		
+		if "SD init fail" in msg:
+			evt = SDCardEvent(event = SD_CARD_FAIL)
+			wx.PostEvent(self.app, evt)
+			return False
+				
+		if "Begin file list" in msg:
+			self.insidelisting = True
+			self.sdfiles = []
+			return False
+		
+		if "End file list" in msg:
+			self.insidelisting = False
+			evt = SDCardEvent(event = SD_CARD_LIST, data=self.sdfiles)
+			wx.PostEvent(self.app, evt)
+			return False
+
+		if self.insidelisting:
+			self.sdfiles.append(msg.strip())
+			return False
+		
+		if "SD printing byte" in msg:
+			m = self.sdre.search(msg)
+			t = m.groups()
+			if len(t) != 2: return
+			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=int(t[0]), max=int(t[1]))
+			wx.PostEvent(self.app, evt)
+			return False
 			
+		if "Done printing file" in msg:
+			evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
+			wx.PostEvent(self.app, evt)
+			return False
+
 		m = self.trpt1re.search(msg)
 		if m:
 			gotHE = [False for i in range(MAX_EXTRUDERS)]

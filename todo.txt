@@ -1,8 +1,6 @@
 In Progress/Need Testing
-- if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - web server  need to test and add additional functionality
 - an icon for the main screen and for when minimized
-- cancellation of slice - subsequent slice did not present file open dialog box
 - need a tool change mechanism
 - in general need to handle 2 or 3 extruders - temp graphs, etc
 
@@ -15,6 +13,8 @@ Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
+- cancellation of slice - subsequent slice did not present file open dialog box
+- if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - plater hangs up on large file reads
 
 Larger effort
@@ -23,3 +23,70 @@ Larger effort
 
 Pie in the sky
 - drive two printers simultaneously
+
+
+
+
+
+Delete from SD
+	- list SD card contents M21; M20; get responses
+	- allow the user to choose file or cancel
+	- if cancelled exit
+	- ask for confirmation
+	- if no exit
+	- delete the file: M30 <lowercase fn>
+	- report deleted
+
+Print to SD
+	Initial:
+		SD Printing = False
+		SD File = None
+		abandon button disabled
+
+	- list SD card contents M21; M20; get responses
+	- allow the user to choose file or enter a new filename or cancel
+	- if cancelled exit
+	- if an existing file, ask for overwrite confirmation
+
+	- SD File = <lowercase fn>
+	- display target on screen
+	- enable abandon button
+
+	- in prtmon:
+		- if SD printing:
+			- if print completion:
+				M29 <lfn>
+				SD Printing, printing = false
+				SD File = None
+				clear target from screen
+				enable print
+				disable pause
+
+			- if pause:
+				- confirm pause will terminate printing to SD
+				if no exit
+				M29 <lfn>
+				print completion/SD print completion
+				SD printing, printing = False
+				enable abandon button
+				enable start
+				disable pause
+
+			- if abandon:
+				SD File = None
+				clear target from screen
+				disable abandon button
+
+		- if start and SD File is not None:
+			M28 <lfn>
+			SD Printing, printing = True
+			disable print button
+			enable pause button
+
+		if forwarded file:
+			SD File = None
+			clear target from screen
+			disable abandon button
+			Disable abandon button
+			
+

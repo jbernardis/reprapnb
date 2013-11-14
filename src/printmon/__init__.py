@@ -7,10 +7,11 @@ from infopane import InfoPane
 from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
-					PRINT_RESUMED)
+					PRINT_RESUMED, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
 from tools import formatElapsed
 
 BUTTONDIM = (48, 48)
+BUTTONDIMWIDE = (96, 48)
 #FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
 	
 myRed = wx.Colour(254, 142, 82, 179) 
@@ -29,16 +30,21 @@ PMSTATUS_READY = 1
 PMSTATUS_PRINTING = 2
 PMSTATUS_PAUSED = 3
 
+M27Interval = 2000
+
 class PrintMonitor(wx.Panel):
-	def __init__(self, parent, app, reprap):
+	def __init__(self, parent, app, reprap, sdcard):
 		self.model = None
 		self.app = app
 		self.buildarea = self.app.buildarea
 		self.reprap = reprap
+		self.sdcard = sdcard
 		self.logger = self.app.logger
 		self.printPos = 0
 		self.printing = False
 		self.paused = False
+		self.sdpaused = False
+		self.sdprintingfrom = False
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -59,6 +65,10 @@ class PrintMonitor(wx.Panel):
 		self.syncPrint = True
 		self.holdFan = False
 		self.status = PMSTATUS_NOT_READY
+		
+		self.M27timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onM27Timer, self.M27Timer)
+		self.printingfrom = False
 
 		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
@@ -81,6 +91,26 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns.Add(self.bPause)
 		self.Bind(wx.EVT_BUTTON, self.doPause, self.bPause)
 		self.bPause.Enable(False)
+
+		self.sizerBtns.AddSpacer((10,10))
+		
+		self.bSDPrintFrom = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintfrom, size=BUTTONDIMWIDE)
+		self.bSDPrintFrom.SetToolTipString("Print from SD Card")
+		self.sizerBtns.Add(self.bSDPrintFrom)
+		self.Bind(wx.EVT_BUTTON, self.doPrintFrom, self.bSDPrintFrom)
+		self.bSDPrintFrom.Enable(True)
+		
+		self.bSDPrintTo = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintto, size=BUTTONDIMWIDE)
+		self.bSDPrintTo.SetToolTipString("Print to SD Card")
+		self.sizerBtns.Add(self.bSDPrintTo)
+		self.Bind(wx.EVT_BUTTON, self.doPrintTo, self.bSDPrintTo)
+		self.bSDPrintTo.Enable(False)
+		
+		self.bSDDelete = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSddelete, size=BUTTONDIM)
+		self.bSDDelete.SetToolTipString("Delete a file from SD Card")
+		self.sizerBtns.Add(self.bSDDelete)
+		self.Bind(wx.EVT_BUTTON, self.doSDDelete, self.bSDDelete)
+		self.bSDDelete.Enable(True)
 		
 		self.sizerBtns.AddSpacer((10,10))
 	
@@ -185,6 +215,23 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
+		
+	def prtMonEvent(self, evt):
+		if evt.event == SD_PRINT_POSITION:
+			if self.sdprintingfrom:
+				print "SD Position ", evt.pos, "/", evt.max
+				self.M27Timer.Start(M27Interval, True)
+			return
+
+		if evt.event == SD_PRINT_COMPLETE:
+			self.sdprintingfrom = False
+			self.bPrint.Enable(True)
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(True)
+			self.bSDDelete.Enable(True)
+			self.app.setPrinterBusy(False)
+			return
+
 	
 	def setStatus(self, s):
 		self.status = s
@@ -212,6 +259,29 @@ class PrintMonitor(wx.Panel):
 		self.bPrint.Enable(True)
 		self.bPause.Enable(False)
 		self.app.setPrinterBusy(False)
+		
+	def doSDPrintFrom(self, evt):
+		self.sdcard.startPrintFromSD()
+		
+	def resumeSDPrintFrom(self, fn):
+		self.reprap.send_now("M23 " + fn.lower())
+		self.reprap.send_now("M24")
+		self.sdprintingfrom = True
+		self.M27Timer.Start(M27Interval, True)
+		self.bPrint.enable(False)
+		self.bSDPrintFrom.enable(False)
+		self.bSDPrintTo.enable(False)
+		self.bSDDelete.enable(False)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.bPause.enable(True)
+		self.app.setPrinterBusy(True)
+		self.sdpaused = False
+		
+	def doSDPrintTo(self, evt):
+		pass
+		
+	def doSDDelete(self, evt):
+		pass
 		
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
@@ -256,6 +326,9 @@ class PrintMonitor(wx.Panel):
 			
 	def getPrintTimes(self):
 		return self.startTime, self.endTime
+	
+	def onM27Timer(self, evt):
+		self.reprap.send_now("M27")
 
 	def setPrintMode(self, mode):
 		self.printMode = mode
@@ -274,34 +347,64 @@ class PrintMonitor(wx.Panel):
 		
 	def doPrint(self, evt):
 		print "print/restart pressed"
-		self.printPos = 0
-		self.startTime = time.time()
-		self.endTime = None
-		if self.printMode == PRINT_MODE_RESTART:
-			print "restart mode"
-			action = "restarted"
-			self.reprap.restartPrint(self.model)
+		if self.sdpaused:
+			self.reprap.send_now("M26 S0")
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.bPrint.Enable(False)
+			self.app.setPrinterBusy(True)
+			self.sdprintingfrom = True
+			self.reprap.send_now("M24")
+			self.M27Timer.Start(M27Interval, True)
 		else:
-			print "start mode"
-			action = "started"
-			self.reprap.startPrint(self.model)
-		self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
-		self.origEta = self.startTime + self.model.duration
-		self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration)), formatElapsed(self.model.duration)))
-		self.countGLines = len(self.model)
-		self.infoPane.setStartTime(self.startTime)
-		self.bPrint.Enable(False)
-		self.bPause.Enable(False)
+			self.printPos = 0
+			self.startTime = time.time()
+			self.endTime = None
+			if self.printMode == PRINT_MODE_RESTART:
+				print "restart mode"
+				action = "restarted"
+				self.reprap.restartPrint(self.model)
+			else:
+				print "start mode"
+				action = "started"
+				self.reprap.startPrint(self.model)
+			self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
+			self.origEta = self.startTime + self.model.duration
+			self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration)), formatElapsed(self.model.duration)))
+			self.countGLines = len(self.model)
+			self.infoPane.setStartTime(self.startTime)
+			self.bPrint.Enable(False)
+			self.bPause.Enable(False)
 		
 	def doPause(self, evt):
-		if self.paused:
-			self.bPause.Enable(False)
-			self.bPrint.Enable(False)
-			self.reprap.resumePrint()
+		if self.sdprintingfrom:
+			if self.paused:
+				self.reprap.send_now("M24")
+				self.setPauseMode(PAUSE_MODE_PAUSE)
+				self.setPrintMode(PRINT_MODE_PRINT)
+				self.bPrint.Enable(False)
+				self.app.setPrinterBusy(True)
+				self.sdprintingfrom = True
+				self.M27Timer.Start(M27Interval, True)
+				self.sdpaused = False
+			else:
+				self.reprap.send_now("M25")
+				self.setPauseMode(PAUSE_MODE_RESUME)
+				self.setPrintMode(PRINT_MODE_RESTART)
+				self.bPrint.Enable(True)
+				self.app.setPrinterBusy(False)
+				self.sdprintingfrom = False
+				self.sdpaused = True
+
 		else:
-			self.bPause.Enable(False)
-			self.bPrint.Enable(False)
-			self.reprap.pausePrint()
+			if self.paused:
+				self.bPause.Enable(False)
+				self.bPrint.Enable(False)
+				self.reprap.resumePrint()
+			else:
+				self.bPause.Enable(False)
+				self.bPrint.Enable(False)
+				self.reprap.pausePrint()
 		
 	def updatePrintPosition(self, pos):
 		self.printPos = pos
@@ -367,6 +470,7 @@ class PrintMonitor(wx.Panel):
 		self.gcf.redrawCurrentLayer()
 	
 	def forwardModel(self, model, name=""):
+
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
@@ -406,6 +510,10 @@ class PrintMonitor(wx.Panel):
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPrint.Enable(True)
 		self.bPause.Enable(False)
+		self.bSDPrintFrom.Enable(True)
+		self.bSDPrintTo.Enable(True)
+		self.bSDDelete.Enable(True)
+		self.sdprintingfrom = False
 		
 		self.app.setPrinterBusy(False)
 		self.setStatus(PMSTATUS_READY)
