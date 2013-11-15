@@ -421,17 +421,17 @@ class RepRapParser:
 			return False
 				
 		if "Begin file list" in msg:
-			self.insidelisting = True
+			self.insideListing = True
 			self.sdfiles = []
 			return False
 		
 		if "End file list" in msg:
-			self.insidelisting = False
+			self.insideListing = False
 			evt = SDCardEvent(event = SD_CARD_LIST, data=self.sdfiles)
 			wx.PostEvent(self.app, evt)
 			return False
 
-		if self.insidelisting:
+		if self.insideListing:
 			self.sdfiles.append(msg.strip())
 			return False
 		
@@ -439,7 +439,12 @@ class RepRapParser:
 			m = self.sdre.search(msg)
 			t = m.groups()
 			if len(t) != 2: return
-			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=int(t[0]), max=int(t[1]))
+			gpos = int(t[0])
+			gmax = int(t[1])
+			if gmax == 0:
+				evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
+			else:
+				evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
 			wx.PostEvent(self.app, evt)
 			return False
 			

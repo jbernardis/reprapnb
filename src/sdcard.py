@@ -174,15 +174,15 @@ class SDCard:
 		self.SDroot.sortAll()
 		
 		if self.task == SDTASK_PRINT_FROM:
-			dlg = SDChooseFileDlg(self.app, self.SDRoot)
+			dlg = SDChooseFileDlg(self.app, self.SDroot)
 			while True:
 				okFlag = dlg.ShowModal()
-				if not okFlag:
+				if okFlag != wx.ID_OK:
 					break
 				
-				fileName = dlg.getSelection()
-				if fileName is not None:
-					self.app.resumeSDPrintFrom(fileName)
+				fileList = dlg.getSelection()
+				if isinstance(fileList, list):
+					self.app.resumeSDPrintFrom(fileList)
 					break
 				
 				msgdlg = wx.MessageDialog(self.app, "Please choose a file - not a directory - or cancel",
@@ -204,22 +204,20 @@ class SDCard:
 		
 	def SDChooseFileDlg(self, sddir):
 		return False, None
-
+	
 class SDChooseFileDlg(wx.Dialog):
 	def __init__(self, parent, sddir):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Choose File from SD")
 		
 		self.win = parent
+		self.selection = None
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		
 		tID = wx.NewId()
-		self.tree = wx.TreeCtrl(self, tID, wx.DefaultPosition, wx.DefaultSize,
+		self.tree = wx.TreeCtrl(self, tID, wx.DefaultPosition, (300, 300),
 							   wx.TR_DEFAULT_STYLE
-							   #wx.TR_HAS_BUTTONS
-							   #| wx.TR_EDIT_LABELS
-							   #| wx.TR_MULTIPLE
-							   #| wx.TR_HIDE_ROOT
+							   | wx.TR_HIDE_ROOT
 							   )
 		
 		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self.tree)
@@ -260,19 +258,12 @@ class SDChooseFileDlg(wx.Dialog):
 		sizer.Fit(self)
 		
 	def getSelection(self):
-		try:
-			len(self.selection)
-			print "Returning Selection: ", self.selection, type(self.selection)
-			return self.selection
-		except:
-			print "exception - returning None"
-			return None
+		return self.selection
 	
 	def onSelChanged(self, evt):
 		item = evt.GetItem()
 		if item:
-			self.selection = item.GetPyData()
-			print "New Selection: ", self.selection, type(self.selection)
+			self.selection = self.tree.GetPyData(item)
 		
 	
 	def loadDirIntoTree(self, direct, tnode):

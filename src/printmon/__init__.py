@@ -66,7 +66,7 @@ class PrintMonitor(wx.Panel):
 		self.holdFan = False
 		self.status = PMSTATUS_NOT_READY
 		
-		self.M27timer = wx.Timer(self)
+		self.M27Timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onM27Timer, self.M27Timer)
 		self.printingfrom = False
 
@@ -92,18 +92,18 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doPause, self.bPause)
 		self.bPause.Enable(False)
 
-		self.sizerBtns.AddSpacer((10,10))
+		self.sizerBtns.AddSpacer(BUTTONDIM)
 		
 		self.bSDPrintFrom = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintfrom, size=BUTTONDIMWIDE)
 		self.bSDPrintFrom.SetToolTipString("Print from SD Card")
 		self.sizerBtns.Add(self.bSDPrintFrom)
-		self.Bind(wx.EVT_BUTTON, self.doPrintFrom, self.bSDPrintFrom)
+		self.Bind(wx.EVT_BUTTON, self.doSDPrintFrom, self.bSDPrintFrom)
 		self.bSDPrintFrom.Enable(True)
 		
 		self.bSDPrintTo = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintto, size=BUTTONDIMWIDE)
 		self.bSDPrintTo.SetToolTipString("Print to SD Card")
 		self.sizerBtns.Add(self.bSDPrintTo)
-		self.Bind(wx.EVT_BUTTON, self.doPrintTo, self.bSDPrintTo)
+		self.Bind(wx.EVT_BUTTON, self.doSDPrintTo, self.bSDPrintTo)
 		self.bSDPrintTo.Enable(False)
 		
 		self.bSDDelete = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSddelete, size=BUTTONDIM)
@@ -112,7 +112,7 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doSDDelete, self.bSDDelete)
 		self.bSDDelete.Enable(True)
 		
-		self.sizerBtns.AddSpacer((10,10))
+		self.sizerBtns.AddSpacer(BUTTONDIM)
 	
 		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomin, size=BUTTONDIM)
 		self.bZoomIn.SetToolTipString("Zoom the view in")
@@ -225,9 +225,12 @@ class PrintMonitor(wx.Panel):
 
 		if evt.event == SD_PRINT_COMPLETE:
 			self.sdprintingfrom = False
-			self.bPrint.Enable(True)
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.bPrint.Enable(self.hasFileLoaded())
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPause.Enable(False)
 			self.bSDPrintFrom.Enable(True)
-			self.bSDPrintTo.Enable(True)
+			self.bSDPrintTo.Enable(self.hasFileLoaded())
 			self.bSDDelete.Enable(True)
 			self.app.setPrinterBusy(False)
 			return
@@ -264,16 +267,16 @@ class PrintMonitor(wx.Panel):
 		self.sdcard.startPrintFromSD()
 		
 	def resumeSDPrintFrom(self, fn):
-		self.reprap.send_now("M23 " + fn.lower())
+		self.reprap.send_now("M23 " + fn[1].lower())
 		self.reprap.send_now("M24")
 		self.sdprintingfrom = True
 		self.M27Timer.Start(M27Interval, True)
-		self.bPrint.enable(False)
-		self.bSDPrintFrom.enable(False)
-		self.bSDPrintTo.enable(False)
-		self.bSDDelete.enable(False)
+		self.bPrint.Enable(False)
+		self.bSDPrintFrom.Enable(False)
+		self.bSDPrintTo.Enable(False)
+		self.bSDDelete.Enable(False)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
-		self.bPause.enable(True)
+		self.bPause.Enable(True)
 		self.app.setPrinterBusy(True)
 		self.sdpaused = False
 		
@@ -508,10 +511,10 @@ class PrintMonitor(wx.Panel):
 
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
-		self.bPrint.Enable(True)
+		self.bPrint.Enable(self.hasFileLoaded())
 		self.bPause.Enable(False)
 		self.bSDPrintFrom.Enable(True)
-		self.bSDPrintTo.Enable(True)
+		self.bSDPrintTo.Enable(self.hasFileLoaded())
 		self.bSDDelete.Enable(True)
 		self.sdprintingfrom = False
 		

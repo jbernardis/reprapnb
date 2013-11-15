@@ -209,7 +209,7 @@ class MainFrame(wx.Frame):
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps, bedTemp)
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap, self.sdcard)
 
-		self.parser.setHandler(self.evtSDCard, self.evtPrtMon)
+		self.parser.setHandlers(self.evtSDCard, self.evtPrtMon)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
