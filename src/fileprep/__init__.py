@@ -566,6 +566,7 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
 		self.bOpen.Enable(False)
+		self.disableEditButtons()
 		#self.bSlice.Enable(False)
 		self.bToPrinter.Enable(False)
 		self.setSliceMode(False)
@@ -586,10 +587,8 @@ class FilePrepare(wx.Panel):
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 			self.gcFile = None
-			self.bOpen.Enable(True)
 			self.setSliceMode()
-			self.bSlice.Enable(True)
-			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+			self.enableButtons()
 			self.app.slicer.sliceComplete()
 			self.sliceActive = False
 			self.app.updateFilePrepStatus(self.status)
@@ -606,8 +605,7 @@ class FilePrepare(wx.Panel):
 				self.stlFile = None
 			self.setSliceMode()
 			self.sliceActive = False
-			self.bSlice.Enable(True)
-			self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+			self.enableButtons()
 			self.app.slicer.sliceComplete()
 			if os.path.exists(self.gcFile):
 				self.loadFile(self.gcFile)
@@ -642,6 +640,7 @@ class FilePrepare(wx.Panel):
 	def loadFile(self, fn):
 		self.bOpen.Enable(False)
 		self.bSlice.Enable(False)
+		self.disableEditButtons()
 		self.bToPrinter.Enable(False)
 		self.filename = fn
 		self.gcFile = fn
@@ -696,6 +695,7 @@ class FilePrepare(wx.Panel):
 			self.gcFile = None
 			self.gcodeLoaded = False
 			self.model = None
+			self.enableButtons()
 		
 			if self.temporaryFile:
 				try:
@@ -770,8 +770,6 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Modeling complete - forwarding %s to print monitor" % name)
 				self.app.forwardToPrintMon(model, name=name)
 				self.logger.LogMessage("Forwarding complete")
-				self.bOpen.Enable(True)
-				self.bSlice.Enable(True)
 				self.enableButtons()
 				
 				newstat = False
@@ -793,16 +791,12 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
 				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
 				self.enableButtons();
-				self.bOpen.Enable(True)
-				self.bSlice.Enable(True)
-				self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 			
 		elif evt.state == MODELER_CANCELLED:
 			if evt.msg is not None:
 				self.logger.LogMessage(evt.msg)
 				
-			self.bOpen.Enable(True)
-			self.bSlice.Enable(True)
+			self.enableButtons()
 			self.model = None
 				
 		else:
@@ -813,7 +807,8 @@ class FilePrepare(wx.Panel):
 		self.enableButtons()
 		
 	def enableButtons(self):
-		print "enabling: ", self.gcodeLoaded, self.printerBusy
+		self.bOpen.Enable(True)
+		self.bSlice.Enable(True)
 		self.bSave.Enable(self.gcodeLoaded)
 		self.bSaveLayer.Enable(self.gcodeLoaded)
 		self.bFilamentChange.Enable(self.gcodeLoaded)
@@ -822,7 +817,6 @@ class FilePrepare(wx.Panel):
 		self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
 		
 	def disableButtons(self):
-		print "disabling: ", self.gcodeLoaded, self.printerBusy
 		self.bOpen.Enable(False)
 		self.bSlice.Enable(False)
 		self.bSave.Enable(False)
@@ -831,6 +825,13 @@ class FilePrepare(wx.Panel):
 		self.bShift.Enable(False)
 		self.bEdit.Enable(False)
 		self.bToPrinter.Enable(False)
+		
+	def disableEditButtons(self):
+		self.bSave.Enable(False)
+		self.bSaveLayer.Enable(False)
+		self.bFilamentChange.Enable(False)
+		self.bShift.Enable(False)
+		self.bEdit.Enable(False)
 
 	def editGCode(self, event):
 		self.disableButtons()
@@ -843,8 +844,6 @@ class FilePrepare(wx.Panel):
 		self.dlg = None
 		if not rc:
 			self.enableButtons()
-			self.bOpen.Enable(True)
-			self.bSlice.Enable(True)
 			return
 
 		self.gcode = data[:]
@@ -857,8 +856,6 @@ class FilePrepare(wx.Panel):
 		self.gcf.setLayer(l)
 		self.setModified(True)
 		self.enableButtons()
-		self.bOpen.Enable(True)
-		self.bSlice.Enable(True)
 
 	def shiftModel(self, event):
 		dlg = ShiftModelDlg(self)
