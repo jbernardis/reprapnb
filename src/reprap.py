@@ -218,7 +218,6 @@ class SendThread:
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_ENDOFPRINT:
-			print "send thread sending print complete"
 			evt = RepRapEvent(event = PRINT_COMPLETE)
 			self.sentCache.reinit()
 			self.resendFrom = None
@@ -638,7 +637,6 @@ class RepRap:
 			self.printer.setDTR(0)
 	
 	def startPrint(self, data):
-		print "start print"
 		self._sendCmd(CMD_STARTPRINT)
 		for l in data:
 			if l.raw.rstrip() != "":
@@ -654,13 +652,11 @@ class RepRap:
 		self.paused = True
 		
 	def resumePrint(self):
-		print "resuming print"
 		self._sendCmd(CMD_RESUMEPRINT)
 		self.printing = True
 		self.paused = False
 		
 	def restartPrint(self, data):
-		print "restarting print"
 		self.restarting = True
 		self.restartData = data
 		self._sendCmd(CMD_DRAINQUEUE)

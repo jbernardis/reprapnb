@@ -316,29 +316,20 @@ class PrintMonitor(wx.Panel):
 			self.app.setPrinterBusy(False)
 			
 		elif evt.event == PRINT_COMPLETE:
-			print "Print complete arrives"
 			self.printing = False
 			self.paused = False
-			print "1"
 			self.setStatus(PMSTATUS_READY)
-			print "2"
 			self.reprap.printComplete()
-			print "3"
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
 			self.bPause.Enable(False)
 			self.app.setPrinterBusy(False)
-			print "4"
 			self.endTime = time.time()
-			print "5"
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
-			print "6"
 			self.updatePrintPosition(0)
-			print "7"
 			self.infoPane.setPrintComplete()
-			print "END PC"
 			
 		else:
 			self.reprap.reprapEvent(evt)
@@ -424,15 +415,16 @@ class PrintMonitor(wx.Panel):
 				self.reprap.pausePrint()
 		
 	def updatePrintPosition(self, pos):
-		self.printPos = pos
-		self.gcf.setPrintPosition(self.printPos, self.syncPrint)
-		l = self.model.findLayerByLine(pos)
-		gcl = None
-		lt = None
-		if l is not None:
-			gcl = self.model.layerlines[l]
-			lt = self.model.layer_time[l]
-		self.infoPane.setPrintInfo(pos, l, gcl, lt)
+		if self.printing:
+			self.printPos = pos
+			self.gcf.setPrintPosition(self.printPos, self.syncPrint)
+			l = self.model.findLayerByLine(pos)
+			gcl = None
+			lt = None
+			if l is not None:
+				gcl = self.model.layerlines[l]
+				lt = self.model.layer_time[l]
+			self.infoPane.setPrintInfo(pos, l, gcl, lt)
 		
 	def onMouseLayer(self, evt):
 		l = self.slideLayer.GetValue()-1

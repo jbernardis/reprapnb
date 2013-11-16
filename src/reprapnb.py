@@ -54,6 +54,7 @@ class MainFrame(wx.Frame):
 		self.skipCycles = 0
 		self.discPending = False
 		self.M105pending = False
+		self.suspendM105 = False
 		self.printPosition = None
 		self.logger = None
 		self.macroActive = False
@@ -563,7 +564,7 @@ class MainFrame(wx.Frame):
 		if self.discPending:
 			self.finishDisconnection()
 		
-		if self.connected and (self.cycle % TEMPINTERVAL == 0):
+		if self.connected and not self.suspendM105 and (self.cycle % TEMPINTERVAL == 0):
 			if not self.M105pending:
 				self.M105pending = True
 				self.reprap.send_now("M105")
@@ -573,6 +574,9 @@ class MainFrame(wx.Frame):
 			if n is not None and n != self.printPosition:
 				self.printPosition = n
 				self.pgPrtMon.updatePrintPosition(n)
+				
+	def suspendTempProbe(self, flag):
+		self.suspendM105 = flag
 		
 	def onClose(self, evt):
 		if self.checkPrinting():

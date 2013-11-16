@@ -64,7 +64,6 @@ class myEditor(editor.Editor):
 		dlg.Show(True)
 		
 	def OnFind(self, evt):
-		print "On find"
 		et = evt.GetEventType()
 		flags = evt.GetFlags()
 		buf = self.GetText()
@@ -181,7 +180,6 @@ class myEditor(editor.Editor):
 			
 		
 	def OnFindClose(self, evt):
-		print "on close"
 		evt.GetDialog().Destroy()
 	
 			
