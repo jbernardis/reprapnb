@@ -218,6 +218,7 @@ class SendThread:
 			wx.PostEvent(self.win, evt)
 			
 		elif cmd == CMD_ENDOFPRINT:
+			print "send thread sending print complete"
 			evt = RepRapEvent(event = PRINT_COMPLETE)
 			self.sentCache.reinit()
 			self.resendFrom = None

@@ -51,6 +51,7 @@ class MainFrame(wx.Frame):
 		self.ctr = 0
 		self.cycle = 0
 		self.timer = None
+		self.skipCycles = 0
 		self.discPending = False
 		self.M105pending = False
 		self.printPosition = None
@@ -356,6 +357,7 @@ class MainFrame(wx.Frame):
 
 		if rc == wx.ID_YES:
 			self.reprap.reset()
+			self.skipCycles = 5
 			self.M105pending = False
 			self.pgPrtMon.printerReset()
 
@@ -552,6 +554,10 @@ class MainFrame(wx.Frame):
 		self.pgManCtl.updateSpeeds(fan, feed, flow)
 		
 	def onTimer(self, evt):
+		if self.skipCycles > 0:
+			self.skipCycles -= 1
+			return
+		
 		self.cycle += 1
 		
 		if self.discPending:

@@ -257,8 +257,11 @@ class PrintMonitor(wx.Panel):
 		return self.model is not None
 	
 	def printerReset(self):
+		self.printPos = 0
 		self.printing = False
 		self.paused = False
+		self.sdpaused = False
+		self.sdprintingfrom = False
 		self.setStatus(PMSTATUS_READY)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -313,20 +316,29 @@ class PrintMonitor(wx.Panel):
 			self.app.setPrinterBusy(False)
 			
 		elif evt.event == PRINT_COMPLETE:
+			print "Print complete arrives"
 			self.printing = False
 			self.paused = False
+			print "1"
 			self.setStatus(PMSTATUS_READY)
+			print "2"
 			self.reprap.printComplete()
+			print "3"
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
 			self.bPause.Enable(False)
 			self.app.setPrinterBusy(False)
+			print "4"
 			self.endTime = time.time()
+			print "5"
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
+			print "6"
 			self.updatePrintPosition(0)
+			print "7"
 			self.infoPane.setPrintComplete()
+			print "END PC"
 			
 		else:
 			self.reprap.reprapEvent(evt)
