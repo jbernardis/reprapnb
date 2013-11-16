@@ -221,6 +221,7 @@ class SDChooseFileDlg(wx.Dialog):
 							   )
 		
 		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self.tree)
+		self.tree.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
 
 		isz = (16,16)
 		il = wx.ImageList(isz[0], isz[1])
@@ -265,6 +266,12 @@ class SDChooseFileDlg(wx.Dialog):
 		if item:
 			self.selection = self.tree.GetPyData(item)
 		
+	def OnLeftDClick(self, event):
+		pt = event.GetPosition();
+		item = self.tree.HitTest(pt)[0]
+		if item:
+			self.selection = self.tree.GetPyData(item)
+			self.EndModal(wx.ID_OK)
 	
 	def loadDirIntoTree(self, direct, tnode):
 		if direct is None:

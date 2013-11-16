@@ -142,6 +142,16 @@ class InfoPane (wx.Window):
 		else:
 			self.setValue("layertime", "%s/%s" % (formatElapsed(ltime), formatElapsed(self.duration)))
 	
+	def setSDPrintInfo(self, position, maxposition):
+		self.sdposition = position
+		pct = "??"
+		if self.maxsdposition != 0:
+			pct = "%.2f" % (float(self.sdposition) / float(self.maxsdposition) * 100.0)
+		
+		self.setValue("gcode", "SD Byte %d/%d total (%s%%)" % (position, maxposition, pct))
+		self.setValue("eta", "")
+		self.setValue("eta2", "")
+		
 	def setPrintInfo(self, position, layer, gcodelines, layertime):
 		self.position = position
 		pct = "??"
@@ -204,6 +214,11 @@ class InfoPane (wx.Window):
 		
 		self.setValue("gcode", "")
 		self.setValue("eta", "Print completed at %s, elapsed %s (%.2f%%)" % (strEnd, strElapsed, pctDiff))
+		self.setValue("eta2", "")
+
+	def setSDPrintComplete(self):		
+		self.setValue("gcode", "")
+		self.setValue("eta", "Print completed")
 		self.setValue("eta2", "")
 
 
