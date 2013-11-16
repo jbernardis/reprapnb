@@ -43,6 +43,13 @@ class SDDir:
 				return d
 		return None
 	
+	def deleteFileByName(self, fn):
+		print "Delete file ", fn, " by name for ", self.name
+		print "before: ", self.files
+		self.files = [f for f in self.files if f[1] != fn]
+		print "after: ", self.files
+		for d in self.dirs:
+			d.deleteFileByName(fn)
 	
 	def sortAll(self):
 		def cmpDirs(a, b):
@@ -130,6 +137,15 @@ class SDCard:
 		self.task = SDTASK_PRINT_FROM
 		self.printer.send_now("M21")
 		
+	def startDeleteFromSD(self):
+		if self.status != SDSTATUS_IDLE:
+			self.logger.LogMessage("SD Checking already started")
+			return
+		
+		self.status = SDSTATUS_CHECKING
+		self.task = SDTASK_DELETE
+		self.printer.send_now("M21")
+		
 	def sdEvent(self, evt):
 		if evt.event == SD_CARD_OK:
 			if self.status != SDSTATUS_CHECKING:
@@ -174,7 +190,7 @@ class SDCard:
 		self.SDroot.sortAll()
 		
 		if self.task == SDTASK_PRINT_FROM:
-			dlg = SDChooseFileDlg(self.app, self.SDroot)
+			dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a file to print")
 			while True:
 				okFlag = dlg.ShowModal()
 				if okFlag != wx.ID_OK:
@@ -195,10 +211,43 @@ class SDCard:
 					
 			dlg.Destroy()
 				
+
 		elif self.task == SDTASK_PRINT_TO:
-			print "print to"
+			print "Print To SD"
+
 		elif self.task == SDTASK_DELETE:
-			print "delete"
+			dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a file to delete")
+			while True:
+				okFlag = dlg.ShowModal()
+				if okFlag != wx.ID_OK:
+					break
+				
+				fileList = dlg.getSelection()
+				if isinstance(fileList, list):
+					msgdlg = wx.MessageDialog(self.app, "Are you sure you want to delete this file",
+											'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+					rc = msgdlg.ShowModal()
+					msgdlg.Destroy()
+					
+					if rc == wx.ID_YES:
+						self.printer.send_now("M30 " + fileList[1].lower())
+						msgdlg = wx.MessageDialog(self.app, "Delete command sent",
+											'Deleted', wx.OK | wx.ICON_INFORMATION)
+						msgdlg.ShowModal()
+						msgdlg.Destroy()
+						self.SDroot.deleteFileByName(fileList[1])
+						dlg.Destroy()
+						dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a file to delete")
+				else:	
+					msgdlg = wx.MessageDialog(self.app, "Please choose a file - not a directory - or cancel",
+											'Choose file', wx.OK | wx.CANCEL | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+					rc = msgdlg.ShowModal()
+					msgdlg.Destroy()
+				
+					if rc != wx.ID_OK:
+						break
+					
+			dlg.Destroy()
 			
 		self.task = None
 		
@@ -206,8 +255,8 @@ class SDCard:
 		return False, None
 	
 class SDChooseFileDlg(wx.Dialog):
-	def __init__(self, parent, sddir):
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Choose File from SD")
+	def __init__(self, parent, sddir, title):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
 		
 		self.win = parent
 		self.selection = None

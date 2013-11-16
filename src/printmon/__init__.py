@@ -282,6 +282,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(True)
 		self.app.setPrinterBusy(True)
 		self.sdpaused = False
+		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
 		pass
@@ -334,7 +335,6 @@ class PrintMonitor(wx.Panel):
 		return self.startTime, self.endTime
 	
 	def onM27Timer(self, evt):
-		print "M27 timer fired"
 		self.reprap.send_now("M27")
 
 	def setPrintMode(self, mode):
@@ -384,7 +384,7 @@ class PrintMonitor(wx.Panel):
 			self.bPause.Enable(False)
 		
 	def doPause(self, evt):
-		if self.sdprintingfrom:
+		if self.sdprintingfrom or self.sdpaused:
 			if self.paused:
 				self.reprap.send_now("M24")
 				self.setPauseMode(PAUSE_MODE_PAUSE)

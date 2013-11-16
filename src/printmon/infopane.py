@@ -26,7 +26,10 @@ class InfoPane (wx.Window):
 		self.gcount = 0
 		self.layers = 0
 		self.filament = 0
-
+		self.sdposition = 0
+		self.maxsdposition = 0
+		self.sdstartTime = None
+		
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
 		self.sizerInfo = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerTag = wx.BoxSizer(wx.VERTICAL)
@@ -144,12 +147,21 @@ class InfoPane (wx.Window):
 	
 	def setSDPrintInfo(self, position, maxposition):
 		self.sdposition = position
+		self.maxsdposition = maxposition
 		pct = "??"
 		if self.maxsdposition != 0:
 			pct = "%.2f" % (float(self.sdposition) / float(self.maxsdposition) * 100.0)
 		
 		self.setValue("gcode", "SD Byte %d/%d total (%s%%)" % (position, maxposition, pct))
-		self.setValue("eta", "")
+		
+		if self.sdstartTime != None:
+			start = time.strftime('%H:%M:%S', time.localtime(self.sdstartTime))
+			elapsed = time.time() - self.sdstartTime
+			strElapsed = formatElapsed(elapsed)
+			self.setValue("eta", "Start: %s  Elapsed: %s" % (start, strElapsed))
+		else:
+			self.setValue("eta", "")
+			
 		self.setValue("eta2", "")
 		
 	def setPrintInfo(self, position, layer, gcodelines, layertime):
@@ -202,6 +214,9 @@ class InfoPane (wx.Window):
 		self.startTime = start
 		self.eta = start + self.duration
 		
+	def setSDStartTime(self, start):
+		self.sdstartTime = start
+		
 	def setPrintComplete(self):
 		end = time.time();
 		strEnd = time.strftime('%H:%M:%S', time.localtime(end))
@@ -218,7 +233,13 @@ class InfoPane (wx.Window):
 
 	def setSDPrintComplete(self):		
 		self.setValue("gcode", "")
-		self.setValue("eta", "Print completed")
+		
+		now = time.time()
+		strNow = time.strftime('%H:%M:%S', time.localtime(now))
+		elapsed = now - self.sdstartTime
+		strElapsed = formatElapsed(elapsed)
+		self.setValue("eta", "Print completed at %s, elapsed %s" % (strNow, strElapsed))
 		self.setValue("eta2", "")
+		self.sdstartTime = None
 
 
