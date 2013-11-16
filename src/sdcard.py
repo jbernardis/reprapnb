@@ -3,7 +3,7 @@ Created on Aug 21, 2012
 
 @author: jbernard
 '''
-import wx
+import wx, os
 
 SD_CARD_OK = 0
 SD_CARD_FAIL = 1
@@ -42,6 +42,19 @@ class SDDir:
 			if dn == d.dirName():
 				return d
 		return None
+	
+	def fileExists(self, fl):
+		a=[ai.lower() for ai in fl]
+		b=[ai.lower() for ai in self.files]
+		print "Compare ", a, " to ", b
+		if a == b:
+			return True
+		
+		for d in self.dirs:
+			if d.fileExists(fl):
+				return True
+			
+		return False
 	
 	def deleteFileByName(self, fn):
 		self.files = [f for f in self.files if f[1] != fn]
@@ -134,6 +147,15 @@ class SDCard:
 		self.task = SDTASK_PRINT_FROM
 		self.printer.send_now("M21")
 		
+	def startPrintToSD(self):
+		if self.status != SDSTATUS_IDLE:
+			self.logger.LogMessage("SD Checking already started")
+			return
+		
+		self.status = SDSTATUS_CHECKING
+		self.task = SDTASK_PRINT_TO
+		self.printer.send_now("M21")
+		
 	def startDeleteFromSD(self):
 		if self.status != SDSTATUS_IDLE:
 			self.logger.LogMessage("SD Checking already started")
@@ -210,7 +232,39 @@ class SDCard:
 				
 
 		elif self.task == SDTASK_PRINT_TO:
-			print "Print To SD"
+			dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a target file to print to", printTo=True)
+			okFlag = dlg.ShowModal()
+			if okFlag == wx.ID_OK:
+				fileList = dlg.getSelection()
+				newFile = dlg.getNewFileName()
+				target = None
+				if isinstance(fileList, list):
+					target = fileList
+				else:
+					try:
+						target = [newFile, os.path.join(fileList.dirPath(), newFile)]
+					except:
+						target = None
+	
+				if target:						
+					print "Target file name = ", target
+					
+					if self.SDroot.fileExists(target):
+						msgdlg = wx.MessageDialog(self.app, "Are you sure you want to overwrite this file",
+											'Confirm Overwrite', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+					rc = msgdlg.ShowModal()
+					msgdlg.Destroy()
+					
+					if rc == wx.ID_YES:
+						self.app.resumeSDPrintTo(target)
+					
+				else:
+					msgdlg = wx.MessageDialog(self.app, "No target file specified",
+						'No Selection', wx.OK | wx.ICON_ERROR)
+					rc = msgdlg.ShowModal()
+					msgdlg.Destroy()
+			dlg.Destroy()
+		
 
 		elif self.task == SDTASK_DELETE:
 			dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a file to delete")
@@ -252,7 +306,7 @@ class SDCard:
 		return False, None
 	
 class SDChooseFileDlg(wx.Dialog):
-	def __init__(self, parent, sddir, title):
+	def __init__(self, parent, sddir, title, printTo=False):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
 		
 		self.win = parent
@@ -286,6 +340,12 @@ class SDChooseFileDlg(wx.Dialog):
 		self.loadDirIntoTree(sddir, self.root)
 		
 		sizer.Add(self.tree)
+		
+		if printTo:
+			self.tbNewFile = wx.TextCtrl(self, wx.ID_ANY, "", size=(80, 1))
+			sizer.Add(self.tbNewFile)
+		else:
+			self.tbNewFile = None
 
 		btnsizer = wx.StdDialogButtonSizer()
 		
@@ -306,6 +366,16 @@ class SDChooseFileDlg(wx.Dialog):
 		
 	def getSelection(self):
 		return self.selection
+	
+	def getNewFileName(self):
+		if self.tbNewFile is None:
+			return None
+		
+		fn = self.tbNewFile.GetValue().strip()
+		if fn == "":
+			return None
+		
+		return fn
 	
 	def onSelChanged(self, evt):
 		item = evt.GetItem()

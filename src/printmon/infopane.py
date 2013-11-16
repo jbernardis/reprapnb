@@ -29,6 +29,7 @@ class InfoPane (wx.Window):
 		self.sdposition = 0
 		self.maxsdposition = 0
 		self.sdstartTime = None
+		self.sdTargetFile = None
 		
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
 		self.sizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -118,7 +119,10 @@ class InfoPane (wx.Window):
 		for i in self.layertimes:
 			self.prevTimes.append(t)
 			t += i
-		
+			
+	def setSDTargetFile(self, fn):
+		self.sdTargetFile = fn
+	
 	def setLayerInfo(self, layernbr, z, minxy, maxxy, filament, prevfilament, ltime, gclines):
 		self.gclines = gclines
 		self.layernbr = layernbr
@@ -171,44 +175,50 @@ class InfoPane (wx.Window):
 			pct = "%.2f" % (float(self.position) / float(self.gcount) * 100.0)
 		
 		self.setValue("gcode", "Line %d/%d total lines (%s%%)" % (position, self.gcount, pct))
+		
 		start = time.strftime('%H:%M:%S', time.localtime(self.startTime))
 		now = time.time()
 		elapsed = now - self.startTime
-		self.remains = self.eta - now
 		strElapsed = formatElapsed(elapsed)
-		eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
-		
-		self.setValue("eta", "Start: %s  Elapsed: %s  Orig ETA: %s" % (start, strElapsed, eta))
-		
-		if layer is not None and layer != 0:
-			expectedTime = self.prevTimes[layer]
-			delta = 0
-			if position >= gcodelines[0] and position <= gcodelines[1]:
-				lct = gcodelines[1] - gcodelines[0]
-				if lct != 0:
-					lpos = position - gcodelines[0]
-					lpct = float(lpos)/float(lct)
-					delta = layertime * lpct
-			expectedTime += delta
-			self.revisedeta = expectedTime
-			
-			diff = elapsed - expectedTime
-			remains = self.eta + diff - now
-			self.remains = remains
-			strRemains = formatElapsed(remains)
-			pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
-			secDiff = math.fabs(elapsed + remains - self.duration)
-			strDiff = formatElapsed(secDiff)
-			if pctDiff < 100:
-				schedule = "%s ahead of sched (%.2f%%)" % (strDiff, (100.0-pctDiff))
-			elif pctDiff >100:
-				schedule = "%s behind sched (%.2f%%)" % (strDiff, (pctDiff - 100))
-			else:
-				schedule = "on schedule"
-			self.setValue("eta2", "Remaining: %s - %s" % (strRemains, schedule))
+		if self.sdTargetFile is None:
+			self.remains = self.eta - now
+			eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
+			self.setValue("eta", "Start: %s  Elapsed: %s  Orig ETA: %s" % (start, strElapsed, eta))
 		else:
-			self.setValue("eta2", "")
-		
+			self.setValue("eta", "Start: %s  Elapsed: %s" % (start, strElapsed))
+
+		if self.sdTargetFile is None:
+			if layer is not None and layer != 0:
+				expectedTime = self.prevTimes[layer]
+				delta = 0
+				if position >= gcodelines[0] and position <= gcodelines[1]:
+					lct = gcodelines[1] - gcodelines[0]
+					if lct != 0:
+						lpos = position - gcodelines[0]
+						lpct = float(lpos)/float(lct)
+						delta = layertime * lpct
+				expectedTime += delta
+				self.revisedeta = expectedTime
+				
+				diff = elapsed - expectedTime
+				remains = self.eta + diff - now
+				self.remains = remains
+				strRemains = formatElapsed(remains)
+				pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
+				secDiff = math.fabs(elapsed + remains - self.duration)
+				strDiff = formatElapsed(secDiff)
+				if pctDiff < 100:
+					schedule = "%s ahead of sched (%.2f%%)" % (strDiff, (100.0-pctDiff))
+				elif pctDiff >100:
+					schedule = "%s behind sched (%.2f%%)" % (strDiff, (pctDiff - 100))
+				else:
+					schedule = "on schedule"
+				self.setValue("eta2", "Remaining: %s - %s" % (strRemains, schedule))
+			else:
+				self.setValue("eta2", "")
+		else:
+			self.setValue("eta2", "Target File: %s" % self.sdTargetFile)
+			
 	
 	def setStartTime(self, start):
 		self.startTime = start

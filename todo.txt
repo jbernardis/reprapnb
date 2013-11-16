@@ -3,12 +3,12 @@ In Progress/Need Testing
 - an icon for the main screen and for when minimized
 - need a tool change mechanism
 - in general need to handle 2 or 3 extruders - temp graphs, etc
+- SD support - print from only - no print to
 
 Low Hanging
 - add acceleration to ini file somewhere - should be in slicer config
 
 Medium
-- SD support - print from only - no print to
 - other places for separate thread - file saving
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
@@ -26,67 +26,54 @@ Pie in the sky
 
 
 
-
-
-Delete from SD
-	- list SD card contents M21; M20; get responses
-	- allow the user to choose file or cancel
-	- if cancelled exit
-	- ask for confirmation
-	- if no exit
-	- delete the file: M30 <lowercase fn>
-	- report deleted
-
 Print to SD
-	Initial:
-		SD Printing = False
-		SD File = None
-		abandon button disabled
-
-	- list SD card contents M21; M20; get responses
-	- allow the user to choose file or enter a new filename or cancel
-	- if cancelled exit
-	- if an existing file, ask for overwrite confirmation
-
-	- SD File = <lowercase fn>
-	- display target on screen
-	- enable abandon button
-
-	- in prtmon:
-		- if SD printing:
-			- if print completion:
-				M29 <lfn>
-				SD Printing, printing = false
-				SD File = None
-				clear target from screen
-				enable print
-				disable pause
-
-			- if pause:
-				- confirm pause will terminate printing to SD
-				if no exit
-				M29 <lfn>
-				print completion/SD print completion
-				SD printing, printing = False
-				enable abandon button
-				enable start
-				disable pause
-
-			- if abandon:
-				SD File = None
-				clear target from screen
-				disable abandon button
-
-		- if start and SD File is not None:
-			M28 <lfn>
-			SD Printing, printing = True
-			disable print button
-			enable pause button
-
-		if forwarded file:
-			SD File = None
-			clear target from screen
-			disable abandon button
-			Disable abandon button
-			
-
+x	Initial:
+x		sd-file = None
+x		clear target from screen
+		
+x	Print button (normal):
+x		sd-file = None
+x		clear target from screen
+		
+	Print to SD button:
+		tree/select
+		if cancel exit
+		if existing file, confirm overwrite
+		
+x		suspend M105
+x		sd-file = user selection.lower()
+x		M28 sd-file
+x		display file name somewhere
+x		start printing
+x		disable Print in print mode, Print From, Print To, Delete
+x		enable Pause in Pause Mode
+x		printer busy
+		
+x	Pause button:
+x		if sd-file:
+x			warn that pausing will terminate job
+x			if OK
+x				M29 sd-file
+x				enable print in print mode, print from, print to, delete
+x				disable pause in pause mode
+x				sd-file = None
+x				clear target from screen
+x				resume M105
+x				printer not busy
+x		else the same as now
+		
+x	at end of print:	
+x		if sd-file:
+x			M29 sd-file
+x			message about file closed
+x			enable print in print mode, print from, print to, delete
+x			disable pause in pause mode
+x			sd-file = None
+x			clear target from screen
+x			resume M105
+x			printer not busy
+x		else the same as now
+		
+x	if forwarded file:
+x		sd-file = None
+x		clear target from screen

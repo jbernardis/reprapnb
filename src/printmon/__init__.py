@@ -215,6 +215,8 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
+		self.setSDTargetFile(None)
+
 		
 	def prtMonEvent(self, evt):
 		if evt.event == SD_PRINT_POSITION:
@@ -288,7 +290,26 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
-		pass
+		self.sdcard.startPrintToSD()
+		
+	def resumeSDPrintTo(self, tfn):
+		self.setSDTargetFile(tfn[1].lower())
+		self.app.suspendTempProbe(True)
+		self.reprap.send_now("M28 %s" % self.sdTargetFile)
+		self.printPos = 0
+		self.startTime = time.time()
+		self.endTime = None
+		self.reprap.startPrint(self.model)
+		self.logger.LogMessage("Print to SD: %s started at %s" % (self.sdTargetFile, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
+		self.origEta = self.startTime + self.model.duration
+		self.countGLines = len(self.model)
+		self.infoPane.setStartTime(self.startTime)
+		self.bPrint.Enable(False)
+		self.bPause.Enable(False)
+		
+	def setSDTargetFile(self, tfn):
+		self.sdTargetFile = tfn
+		self.infoPane.setSDTargetFile(tfn)
 		
 	def doSDDelete(self, evt):
 		self.sdcard.startDeleteFromSD()
@@ -302,6 +323,9 @@ class PrintMonitor(wx.Panel):
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(False)
 			self.bPause.Enable(True)
+			self.bSDPrintFrom.Enable(False)
+			self.bSDPrintTo.Enable(False)
+			self.bSDDelete.Enable(False)
 			self.app.setPrinterBusy(True)
 			
 		elif evt.event == PRINT_STOPPED:
@@ -313,9 +337,20 @@ class PrintMonitor(wx.Panel):
 			self.setPauseMode(PAUSE_MODE_RESUME)
 			self.bPrint.Enable(True)
 			self.bPause.Enable(True)
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(True)
+			self.bSDDelete.Enable(True)
 			self.app.setPrinterBusy(False)
 			
 		elif evt.event == PRINT_COMPLETE:
+			
+			self.endTime = time.time()
+			self.infoPane.setPrintComplete()
+			if self.sdTargetFile is not None:
+				self.reprap.send_Now("M29 %s" % self.sdTargetFile)
+				self.app.suspendTempProbe(False)
+				self.setSDTargetFile(None)
+
 			self.printing = False
 			self.paused = False
 			self.setStatus(PMSTATUS_READY)
@@ -324,12 +359,13 @@ class PrintMonitor(wx.Panel):
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
 			self.bPause.Enable(False)
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(True)
+			self.bSDDelete.Enable(True)
 			self.app.setPrinterBusy(False)
-			self.endTime = time.time()
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
 			self.updatePrintPosition(0)
-			self.infoPane.setPrintComplete()
 			
 		else:
 			self.reprap.reprapEvent(evt)
@@ -383,9 +419,30 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setStartTime(self.startTime)
 			self.bPrint.Enable(False)
 			self.bPause.Enable(False)
+			self.setSDTargetFile(None)
 		
 	def doPause(self, evt):
-		if self.sdprintingfrom or self.sdpaused:
+		if self.sdTargetFile is not None:
+			msgdlg = wx.MessageDialog(self.app, "Are you sure you want to terminate this job",
+					'Confirm', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+			rc = msgdlg.ShowModal()
+			msgdlg.Destroy()
+			
+			if rc == wx.ID_YES:
+				self.reprap.pausePrint()
+				self.reprap.send_now("M29 %s" % self.sdTargetFile)
+				self.setPauseMode(PAUSE_MODE_PAUSE)
+				self.bPause.Enable(False)
+				self.setPrintMode(PRINT_MODE_PRINT)
+				self.bPrint.Enable(True)
+				self.bSDPrintFrom(True)
+				self.bSDPrintTo(True)
+				self.bSDDelete(True)
+				self.setSDTargetFile(None)
+				self.app.suspendTempProbe(False)
+				self.app.setPrinterBusy(False)
+		
+		elif self.sdprintingfrom or self.sdpaused:
 			if self.sdpaused:
 				self.reprap.send_now("M24")
 				self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -479,7 +536,8 @@ class PrintMonitor(wx.Panel):
 		self.gcf.redrawCurrentLayer()
 	
 	def forwardModel(self, model, name=""):
-
+		self.setSDTargetFile(None)
+		
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model

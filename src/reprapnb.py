@@ -256,6 +256,9 @@ class MainFrame(wx.Frame):
 		
 	def resumeSDPrintFrom(self, fn):
 		self.pgPrtMon.resumeSDPrintFrom(fn)
+		
+	def resumeSDPrintTo(self, fn):
+		self.pgPrtMon.resumeSDPrintTo(fn)
 			
 	def setActiveTool(self, tool):
 		self.pgManCtl.setActiveTool(tool)
