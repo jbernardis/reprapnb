@@ -44,10 +44,7 @@ class SDDir:
 		return None
 	
 	def deleteFileByName(self, fn):
-		print "Delete file ", fn, " by name for ", self.name
-		print "before: ", self.files
 		self.files = [f for f in self.files if f[1] != fn]
-		print "after: ", self.files
 		for d in self.dirs:
 			d.deleteFileByName(fn)
 	

@@ -288,7 +288,7 @@ class PrintMonitor(wx.Panel):
 		pass
 		
 	def doSDDelete(self, evt):
-		pass
+		self.sdcard.startDeleteFromSD()
 		
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
@@ -353,7 +353,6 @@ class PrintMonitor(wx.Panel):
 			self.bPause.SetToolTipString("Resume the print from the paused point")
 		
 	def doPrint(self, evt):
-		print "print/restart pressed"
 		if self.sdpaused:
 			self.reprap.send_now("M26 S0")
 			self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -362,17 +361,16 @@ class PrintMonitor(wx.Panel):
 			self.app.setPrinterBusy(True)
 			self.sdprintingfrom = True
 			self.reprap.send_now("M24")
+			self.infoPane.setSDStartTime(time.time())
 			self.M27Timer.Start(M27Interval, True)
 		else:
 			self.printPos = 0
 			self.startTime = time.time()
 			self.endTime = None
 			if self.printMode == PRINT_MODE_RESTART:
-				print "restart mode"
 				action = "restarted"
 				self.reprap.restartPrint(self.model)
 			else:
-				print "start mode"
 				action = "started"
 				self.reprap.startPrint(self.model)
 			self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
@@ -385,7 +383,7 @@ class PrintMonitor(wx.Panel):
 		
 	def doPause(self, evt):
 		if self.sdprintingfrom or self.sdpaused:
-			if self.paused:
+			if self.sdpaused:
 				self.reprap.send_now("M24")
 				self.setPauseMode(PAUSE_MODE_PAUSE)
 				self.setPrintMode(PRINT_MODE_PRINT)
@@ -521,6 +519,7 @@ class PrintMonitor(wx.Panel):
 		self.bSDPrintTo.Enable(self.hasFileLoaded())
 		self.bSDDelete.Enable(True)
 		self.sdprintingfrom = False
+		self.sdpaused = False
 		
 		self.app.setPrinterBusy(False)
 		self.setStatus(PMSTATUS_READY)
