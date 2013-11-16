@@ -441,10 +441,7 @@ class RepRapParser:
 			if len(t) != 2: return
 			gpos = int(t[0])
 			gmax = int(t[1])
-			if gmax == 0:
-				evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
-			else:
-				evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
+			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
 			wx.PostEvent(self.app, evt)
 			return False
 			

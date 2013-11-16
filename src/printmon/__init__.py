@@ -220,19 +220,22 @@ class PrintMonitor(wx.Panel):
 		if evt.event == SD_PRINT_POSITION:
 			if self.sdprintingfrom:
 				print "SD Position ", evt.pos, "/", evt.max
-				self.M27Timer.Start(M27Interval, True)
+				if evt.pos < evt.max:
+					self.M27Timer.Start(M27Interval, True)
+				else:
+					self.sdprintingfrom = False
+					self.setPrintMode(PRINT_MODE_PRINT)
+					self.bPrint.Enable(self.hasFileLoaded())
+					self.setPauseMode(PAUSE_MODE_PAUSE)
+					self.bPause.Enable(False)
+					self.bSDPrintFrom.Enable(True)
+					self.bSDPrintTo.Enable(self.hasFileLoaded())
+					self.bSDDelete.Enable(True)
+					self.app.setPrinterBusy(False)
 			return
 
 		if evt.event == SD_PRINT_COMPLETE:
-			self.sdprintingfrom = False
-			self.setPrintMode(PRINT_MODE_PRINT)
-			self.bPrint.Enable(self.hasFileLoaded())
-			self.setPauseMode(PAUSE_MODE_PAUSE)
-			self.bPause.Enable(False)
-			self.bSDPrintFrom.Enable(True)
-			self.bSDPrintTo.Enable(self.hasFileLoaded())
-			self.bSDDelete.Enable(True)
-			self.app.setPrinterBusy(False)
+			print "SD print complete"
 			return
 
 	
@@ -331,6 +334,7 @@ class PrintMonitor(wx.Panel):
 		return self.startTime, self.endTime
 	
 	def onM27Timer(self, evt):
+		print "M27 timer fired"
 		self.reprap.send_now("M27")
 
 	def setPrintMode(self, mode):
