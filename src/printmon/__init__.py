@@ -290,7 +290,6 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
-		print "main print to"
 		self.sdcard.startPrintToSD()
 		
 	def resumeSDPrintTo(self, tfn):
