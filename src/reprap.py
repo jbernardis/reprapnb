@@ -39,7 +39,7 @@ CMD_RESUMEPRINT = 6
 CACHE_SIZE = 50
 
 # printer commands that are permissible while actively printing
-allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
+allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M29", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
 					"M104", "M105", "M106", "M107", "M114", "M115", "M117", "M119", "M140",
 					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M220", "M221", "M240",
 					"M301", "M302", "M303",

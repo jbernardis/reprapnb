@@ -290,6 +290,7 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
+		print "main print to"
 		self.sdcard.startPrintToSD()
 		
 	def resumeSDPrintTo(self, tfn):
@@ -347,7 +348,7 @@ class PrintMonitor(wx.Panel):
 			self.endTime = time.time()
 			self.infoPane.setPrintComplete()
 			if self.sdTargetFile is not None:
-				self.reprap.send_Now("M29 %s" % self.sdTargetFile)
+				self.reprap.send_now("M29 %s" % self.sdTargetFile)
 				self.app.suspendTempProbe(False)
 				self.setSDTargetFile(None)
 

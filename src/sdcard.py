@@ -45,10 +45,10 @@ class SDDir:
 	
 	def fileExists(self, fl):
 		a=[ai.lower() for ai in fl]
-		b=[ai.lower() for ai in self.files]
-		print "Compare ", a, " to ", b
-		if a == b:
-			return True
+		for f in self.files:
+			b=[ai.lower() for ai in f]
+			if a == b:
+				return True
 		
 		for d in self.dirs:
 			if d.fileExists(fl):
@@ -178,6 +178,12 @@ class SDCard:
 				return
 			self.status = SDSTATUS_IDLE
 			self.logger.LogMessage("Error initializing SD card")
+			
+			msgdlg = wx.MessageDialog(self.app, "SD Card not present/failed to initialize",
+					'SD Card Error', wx.OK | wx.ICON_ERROR)
+			msgdlg.ShowModal()
+			msgdlg.Destroy()
+
 			return
 		
 		if evt.event == SD_CARD_LIST:
@@ -247,15 +253,15 @@ class SDCard:
 						target = None
 	
 				if target:						
-					print "Target file name = ", target
-					
 					if self.SDroot.fileExists(target):
 						msgdlg = wx.MessageDialog(self.app, "Are you sure you want to overwrite this file",
 											'Confirm Overwrite', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-					rc = msgdlg.ShowModal()
-					msgdlg.Destroy()
+						rc = msgdlg.ShowModal()
+						msgdlg.Destroy()
 					
-					if rc == wx.ID_YES:
+						if rc == wx.ID_YES:
+							self.app.resumeSDPrintTo(target)
+					else:
 						self.app.resumeSDPrintTo(target)
 					
 				else:
@@ -342,7 +348,7 @@ class SDChooseFileDlg(wx.Dialog):
 		sizer.Add(self.tree)
 		
 		if printTo:
-			self.tbNewFile = wx.TextCtrl(self, wx.ID_ANY, "", size=(80, 1))
+			self.tbNewFile = wx.TextCtrl(self, wx.ID_ANY, "", size=(80, -1))
 			sizer.Add(self.tbNewFile)
 		else:
 			self.tbNewFile = None
