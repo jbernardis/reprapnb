@@ -323,7 +323,7 @@ class SDChooseFileDlg(wx.Dialog):
 		tID = wx.NewId()
 		self.tree = wx.TreeCtrl(self, tID, wx.DefaultPosition, (300, 300),
 							   wx.TR_DEFAULT_STYLE
-							   | wx.TR_HIDE_ROOT
+							   #| wx.TR_HIDE_ROOT
 							   )
 		
 		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self.tree)
@@ -345,11 +345,25 @@ class SDChooseFileDlg(wx.Dialog):
 
 		self.loadDirIntoTree(sddir, self.root)
 		
-		sizer.Add(self.tree)
+		self.tree.Expand(self.root)
+		self.tree.SelectItem(self.root)
+		self.selection = self.tree.GetPyData(self.root)
+		
+		sizer.Add(self.tree, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER, 5)
 		
 		if printTo:
+			text = "Enter new file name:"
+			dc = wx.WindowDC(self)
+			f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+			dc.SetFont(f)
+			sz = dc.GetTextExtent(text)
+
+			t = wx.StaticText(self, wx.ID_ANY, text, size=sz)
+			t.SetFont(f)
+			sizer.AddSpacer((20, 20))
+			sizer.Add(t, 0, wx.LEFT | wx.ALIGN_LEFT, 5)
 			self.tbNewFile = wx.TextCtrl(self, wx.ID_ANY, "", size=(80, -1))
-			sizer.Add(self.tbNewFile)
+			sizer.Add(self.tbNewFile, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL, 5)
 		else:
 			self.tbNewFile = None
 
