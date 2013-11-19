@@ -60,6 +60,9 @@ class MainFrame(wx.Frame):
 		self.macroActive = False
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
 		
+		self.timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
+
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)
@@ -333,6 +336,7 @@ class MainFrame(wx.Frame):
 			self.discPending = True
 			self.setPrinterBusy(True)
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
+			self.timer.Stop()
 
 		else:
 			port = 	self.cbPort.GetStringSelection()
@@ -340,9 +344,8 @@ class MainFrame(wx.Frame):
 
 			self.reprap.connect(port, baud)
 			self.connected = True
-			
-			self.timer = wx.Timer(self)
-			self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
+
+			self.m105pending = False			
 			self.timer.Start(1000)
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)

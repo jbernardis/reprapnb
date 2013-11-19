@@ -23,7 +23,3 @@ Larger effort
 Pie in the sky
 - drive two printers simultaneously
 
-
-
-Print to SD
-	clean up new file field in the dialog box
