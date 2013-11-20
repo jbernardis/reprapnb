@@ -569,11 +569,16 @@ class MainFrame(wx.Frame):
 		
 		if self.discPending:
 			self.finishDisconnection()
-		
-		if self.connected and not self.suspendM105 and (self.cycle % TEMPINTERVAL == 0):
-			if not self.M105pending:
-				self.M105pending = True
-				self.reprap.send_now("M105")
+
+		if self.cycle % TEMPINTERVAL == 0:
+			if self.connected:
+				if self.suspendM105:
+					self.m105pending = False
+				else:
+					self.m105pending = True
+					self.reprap.send_now("M105")
+			else:
+				self.m105pending = False
 			
 		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
 			n = self.reprap.getPrintPosition()

@@ -431,7 +431,7 @@ class Slic3r:
 			dProfile.update(loadProfiles([self.parent.settings['printerfile']], []))
 		if 'filamentfile' in self.parent.settings.keys():
 			dProfile.update(loadProfiles(self.parent.settings['filamentfile'], 
-					['filament_diameter', 'first_layer_temperature', 'temperature']))
+					['extrusion_multiplier', 'filament_diameter', 'first_layer_temperature', 'temperature']))
 	
 		tfn = tempfile.NamedTemporaryFile(delete=False)
 	

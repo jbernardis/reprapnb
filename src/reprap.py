@@ -443,7 +443,7 @@ class RepRapParser:
 			gmax = int(t[1])
 			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
 			wx.PostEvent(self.app, evt)
-			return False
+			return True
 			
 		if "Done printing file" in msg:
 			evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
