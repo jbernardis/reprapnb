@@ -530,16 +530,6 @@ class MainFrame(wx.Frame):
 
 	def forwardToPrintMon(self, model, name=""):
 		self.pgPrtMon.forwardModel(model, name=name)
-# 		pg = self.nb.GetSelection()
-# 		if pg != self.pxPrtMon:
-# 			askok = wx.MessageDialog(self, "Do you want to switch to the Print Monitor Tab",
-# 					'Model Transfer Complete', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-# 			
-# 			rc = askok.ShowModal()
-# 			askok.Destroy()
-# 
-# 			if rc == wx.ID_YES:
-# 				self.nb.SetSelection(self.pxPrtMon)
 		
 	def setHETarget(self, tool, temp):
 		self.pgManCtl.setHETarget(tool, temp)
@@ -576,6 +566,7 @@ class MainFrame(wx.Frame):
 					self.M105pending = False
 				else:
 					self.M105pending = True
+					self.reprap.setEatOk()
 					self.reprap.send_now("M105")
 			else:
 				self.M105pending = False

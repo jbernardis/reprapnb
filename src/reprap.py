@@ -67,12 +67,10 @@ class MsgCache:
 	def getMsg(self, key):
 		l = len(self.cache)
 		if key > self.lastKey or key <= self.lastKey - l:
-			print "cannot find in cache - want ", key, self.lastKey, l
 			return None
 		
 		i = l - (self.lastKey - key) - 1
 		if i < 0 or i >= self.cacheSize:
-			print "Second test, i = ", i, self.cacheSize
 			return None
 		
 		return self.cache[i]
@@ -92,6 +90,7 @@ class SendThread:
 		self.holdFan = False
 		self.checksum = True
 		self.resendFrom = None
+		self.resends = 0
 		self.sentCache = MsgCache(CACHE_SIZE)
 		thread.start_new_thread(self.Run, ())
 		
@@ -116,6 +115,12 @@ class SendThread:
 		
 	def setCheckSum(self, flag):
 		self.checksum = flag
+		
+	def resetCounters(self):
+		self.resends = 0
+		
+	def getCounters(self):
+		return self.resends
 			
 	def _checksum(self,command):
 		return reduce(lambda x,y:x^y, map(ord,command))
@@ -133,11 +138,10 @@ class SendThread:
 					
 				elif self.resendFrom is not None:
 					string = self.sentCache.getMsg(self.resendFrom)
-					print "re-send ", string
 					if string is None:
 						self.resendFrom = None
-						#self.sentCache.reinit()
 					else:
+						self.resends += 1
 						self.resendFrom += 1
 						self.processCmd(CMD_GCODE, string, False, True)
 					
@@ -178,7 +182,6 @@ class SendThread:
 						return
 					
 					if self.checksum:
-						print "new send: ", self.sequence
 						prefix = "N" + str(self.sequence) + " " + string
 						string = prefix + "*" + str(self._checksum(prefix))
 						if verb != "M110":
@@ -270,6 +273,8 @@ class ListenThread:
 		self.isRunning = False
 		self.endoflife = False
 		self.sender = sender
+		self.eatOK = 0
+		self.resendRequests = 0
 		self.resendre = re.compile("resend: *([0-9]+)")
 		thread.start_new_thread(self.Run, ())
 		
@@ -277,8 +282,17 @@ class ListenThread:
 		self.isRunning = False
 		self.printer = None
 		
+	def resetCounters(self):
+		self.resendRequests = 0
+		
+	def getCounters(self):
+		return self.resendRequests
+		
 	def isKilled(self):
 		return self.endoflife
+	
+	def setEatOk(self):
+		self.eatOK = 1
 		
 	def Run(self):
 		self.isRunning = True
@@ -305,10 +319,8 @@ class ListenThread:
 				llow = line.strip().lower()
 				
 				if llow.startswith("resend:"):
-					print "resend"
 					m = self.resendre.search(llow)
 					if m:
-						print "parsed"
 						t = m.groups()
 						if len(t) >= 1:
 							try:
@@ -317,11 +329,14 @@ class ListenThread:
 								n = None
 								
 						if n:
-							print "attempting to resend from ", n
+							self.resendRequests += 1
 							self.sender.setResendFrom(n)
 				
 				if llow.startswith("ok"):
-					self.sender.endWait()
+					if self.eatOK > 0:
+						self.eatOK -= 1
+					else:
+						self.sender.endWait()
 
 				if llow == "ok":
 					continue
@@ -597,11 +612,15 @@ class RepRap:
 			self.sender.setHoldFan(self.holdFan)
 			self.sender.setCheckSum(True)
 			self.listener = ListenThread(self.win, self.printer, self.sender)
-			self.send_now("M105")
+			self.setEatOk()
+			self.send_now("M105")		
 			self.online = True
 				
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
+		
+	def setEatOk(self):
+		self.listener.setEatOk()
 
 	def getPrintPosition(self):
 		if self.sender and self.sender.isPrinting:
@@ -641,6 +660,8 @@ class RepRap:
 			self.printer.setDTR(0)
 	
 	def startPrint(self, data):
+		self.sender.resetCounters()
+		self.listener.resetCounters()
 		self._sendCmd(CMD_STARTPRINT)
 		for l in data:
 			if l.raw.rstrip() != "":
@@ -660,7 +681,12 @@ class RepRap:
 		self.printing = True
 		self.paused = False
 		
+	def getCounters(self):
+		return self.sender.getCounters(), self.listener.getCounters()
+		
 	def restartPrint(self, data):
+		self.sender.resetCounters()
+		self.listener.resetCounters()
 		self.restarting = True
 		self.restartData = data
 		self._sendCmd(CMD_DRAINQUEUE)

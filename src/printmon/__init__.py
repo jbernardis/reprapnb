@@ -365,6 +365,9 @@ class PrintMonitor(wx.Panel):
 			self.app.setPrinterBusy(False)
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
+			rs, rq = self.reprap.getCounters()
+			if rs + rq != 0:
+				self.logger.LogMessage("Resend Requests: %d, messages retransmitted: %d" % (rq, rs))
 			self.updatePrintPosition(0)
 			
 		else:
