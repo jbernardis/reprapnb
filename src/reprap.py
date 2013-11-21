@@ -67,10 +67,12 @@ class MsgCache:
 	def getMsg(self, key):
 		l = len(self.cache)
 		if key > self.lastKey or key <= self.lastKey - l:
+			print "cannot find in cache - want ", key, self.lastKey, l
 			return None
 		
 		i = l - (self.lastKey - key) - 1
 		if i < 0 or i >= self.cacheSize:
+			print "Second test, i = ", i, self.cacheSize
 			return None
 		
 		return self.cache[i]
@@ -125,24 +127,25 @@ class SendThread:
 				if not self.priQ.empty():
 					try:
 						(cmd, string) = self.priQ.get(True, 0.01)
-						self.processCmd(cmd, string, True)
+						self.processCmd(cmd, string, False, False)
 					except Queue.Empty:
 						pass
 					
 				elif self.resendFrom is not None:
 					string = self.sentCache.getMsg(self.resendFrom)
+					print "re-send ", string
 					if string is None:
 						self.resendFrom = None
-						self.sentCache.reinit()
+						#self.sentCache.reinit()
 					else:
 						self.resendFrom += 1
-						self.processCmd(CMD_GCODE, string, True)
+						self.processCmd(CMD_GCODE, string, False, True)
 					
 				elif not self.okWait:
 					if not self.mainQ.empty():
 						try:
 							(cmd, string) = self.mainQ.get(True, 0.01)
-							self.processCmd(cmd, string, False)
+							self.processCmd(cmd, string, True, True)
 
 						except Queue.Empty:
 							pass
@@ -154,36 +157,35 @@ class SendThread:
 			else:
 				try:
 					(cmd, string) = self.priQ.get(True, 0.01)
-					self.processCmd(cmd, string, True)
+					self.processCmd(cmd, string, False, False)
 				except Queue.Empty:
 					time.sleep(0.01)
 		self.endoflife = True
 				
-	def processCmd(self, cmd, string, priQ):
+	def processCmd(self, cmd, string, calcCS, setOK):
 		if cmd == CMD_GCODE:
 			if string.startswith('@'):
 				self.metaCommand(string)
-			elif priQ:  # GCode off of the priority queue
-				self.printer.write(str(string+"\n"))
-
-			else:  # Gcode off of the main queue
-				self.printIndex += 1
-				try:
-					verb = string.split()[0]
-				except:
-					verb = ""
-				
-				if (verb == "M106" or verb == "M107") and self.holdFan:
-					return
-				
-				if self.checksum:
-					prefix = "N" + str(self.sequence) + " " + string
-					string = prefix + "*" + str(self._checksum(prefix))
-					if verb != "M110":
-						self.sentCache.addMsg(self.sequence, string)
-					self.sequence += 1
+			else:  
+				if calcCS:
+					self.printIndex += 1
+					try:
+						verb = string.split()[0]
+					except:
+						verb = ""
 					
-				self.okWait = True
+					if (verb == "M106" or verb == "M107") and self.holdFan:
+						return
+					
+					if self.checksum:
+						print "new send: ", self.sequence
+						prefix = "N" + str(self.sequence) + " " + string
+						string = prefix + "*" + str(self._checksum(prefix))
+						if verb != "M110":
+							self.sentCache.addMsg(self.sequence, string)
+						self.sequence += 1
+					
+				self.okWait = setOK
 				self.printer.write(str(string+"\n"))
 			
 		elif cmd == CMD_STARTPRINT:
@@ -303,8 +305,10 @@ class ListenThread:
 				llow = line.strip().lower()
 				
 				if llow.startswith("resend:"):
+					print "resend"
 					m = self.resendre.search(llow)
 					if m:
+						print "parsed"
 						t = m.groups()
 						if len(t) >= 1:
 							try:
@@ -313,7 +317,7 @@ class ListenThread:
 								n = None
 								
 						if n:
-							
+							print "attempting to resend from ", n
 							self.sender.setResendFrom(n)
 				
 				if llow.startswith("ok"):
@@ -480,7 +484,7 @@ class RepRapParser:
 				if gotHE[i]:
 					self.app.setHETemp(i, HEtemp[i])
 					self.app.setHETarget(i, HEtarget[i])
-					
+	
 			if self.app.M105pending:
 				self.app.M105pending = False
 				return True

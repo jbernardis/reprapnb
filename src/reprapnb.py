@@ -345,7 +345,7 @@ class MainFrame(wx.Frame):
 			self.reprap.connect(port, baud)
 			self.connected = True
 
-			self.m105pending = False			
+			self.M105pending = False			
 			self.timer.Start(1000)
 
 			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
@@ -573,12 +573,12 @@ class MainFrame(wx.Frame):
 		if self.cycle % TEMPINTERVAL == 0:
 			if self.connected:
 				if self.suspendM105:
-					self.m105pending = False
+					self.M105pending = False
 				else:
-					self.m105pending = True
+					self.M105pending = True
 					self.reprap.send_now("M105")
 			else:
-				self.m105pending = False
+				self.M105pending = False
 			
 		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
 			n = self.reprap.getPrintPosition()
