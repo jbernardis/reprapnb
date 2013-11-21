@@ -13,6 +13,8 @@ import re
 import wx.lib.newevent
 from sdcard import SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST
 
+TRACE = True
+
 MAX_EXTRUDERS = 2
 
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
@@ -189,6 +191,8 @@ class SendThread:
 						self.sequence += 1
 					
 				self.okWait = setOK
+				if TRACE:
+					print "==>", self.okWait, string
 				self.printer.write(str(string+"\n"))
 			
 		elif cmd == CMD_STARTPRINT:
@@ -200,6 +204,8 @@ class SendThread:
 			self.okWait = True
 
 			self.printer.write(str(string+"\n"))
+			if TRACE:
+				print "==>", self.okWait, string
 			self.printIndex = 0
 			self.sequence = 0
 			self.sentCache.reinit()
@@ -316,6 +322,8 @@ class ListenThread:
 				break
 
 			if(len(line)>1):
+				if TRACE:
+					print "<==", line
 				llow = line.strip().lower()
 				
 				if llow.startswith("resend:"):
@@ -334,6 +342,8 @@ class ListenThread:
 				
 				if llow.startswith("ok"):
 					if self.eatOK > 0:
+						if TRACE:
+							print "EATEN"
 						self.eatOK -= 1
 					else:
 						self.sender.endWait()
