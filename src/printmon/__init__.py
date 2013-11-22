@@ -476,8 +476,10 @@ class PrintMonitor(wx.Panel):
 		
 	def updatePrintPosition(self, pos):
 		if self.printing:
-			self.printPos = pos
-			self.gcf.setPrintPosition(self.printPos, self.syncPrint)
+			if pos != self.printPos:
+				self.printPos = pos
+				self.gcf.setPrintPosition(self.printPos, self.syncPrint)
+				
 			l = self.model.findLayerByLine(pos)
 			gcl = None
 			lt = None

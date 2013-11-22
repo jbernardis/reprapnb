@@ -336,7 +336,6 @@ class MainFrame(wx.Frame):
 			self.discPending = True
 			self.setPrinterBusy(True)
 			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-			self.timer.Stop()
 
 		else:
 			port = 	self.cbPort.GetStringSelection()
@@ -372,6 +371,7 @@ class MainFrame(wx.Frame):
 		if not self.reprap.checkDisconnection():
 			return
 					
+		self.timer.Stop()
 		self.tb.EnableTool(TB_TOOL_CONNECT, True)
 		self.pgPrtMon.disconnect()
 		self.connected = False 
@@ -571,7 +571,7 @@ class MainFrame(wx.Frame):
 			
 		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
 			n = self.reprap.getPrintPosition()
-			if n is not None and n != self.printPosition:
+			if n is not None:
 				self.printPosition = n
 				self.pgPrtMon.updatePrintPosition(n)
 				

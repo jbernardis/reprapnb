@@ -187,7 +187,7 @@ class InfoPane (wx.Window):
 			self.setValue("eta", "Start: %s  Orig ETA: %s" % (start, eta))
 			self.setValue("eta2", "Start: %s  Orig ETA: %s" % (start, eta))
 
-			if layer is not None and layer != 0:
+			if layer is not None:
 				expectedTime = self.prevTimes[layer]
 				delta = 0
 				if position >= gcodelines[0] and position <= gcodelines[1]:
