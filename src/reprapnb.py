@@ -564,12 +564,10 @@ class MainFrame(wx.Frame):
 			if self.connected:
 				if self.suspendM105:
 					self.M105pending = False
-				else:
+				elif not self.M105pending:
 					self.M105pending = True
 					self.reprap.setEatOk()
 					self.reprap.send_now("M105")
-			else:
-				self.M105pending = False
 			
 		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
 			n = self.reprap.getPrintPosition()

@@ -13,7 +13,7 @@ import re
 import wx.lib.newevent
 from sdcard import SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST
 
-TRACE = True
+TRACE = False
 
 MAX_EXTRUDERS = 2
 
@@ -190,7 +190,7 @@ class SendThread:
 							self.sentCache.addMsg(self.sequence, string)
 						self.sequence += 1
 					
-				self.okWait = setOK
+				if setOK: self.okWait = True
 				if TRACE:
 					print "==>", self.okWait, string
 				self.printer.write(str(string+"\n"))
@@ -539,6 +539,7 @@ class RepRapParser:
 			tool = 0
 			gotHeTemp = False
 			if len(t) >= 1:
+				gotHeTemp = True
 				HeTemp = float(t[0])
 			if len(t) >= 2:
 				tool = int(t[1])
