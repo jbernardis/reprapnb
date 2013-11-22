@@ -11,8 +11,8 @@ filetagorder = ["filename"]
 layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
 layertagorder = ["layer", "minmaxxy", "filament", "gclines", "layertime"]
 
-printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": ""}
-printtagorder = ["gcode", "eta", "eta2"]
+printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
+printtagorder = ["gcode", "eta", "eta2", "eta3"]
 
 
 class InfoPane (wx.Window):
@@ -167,6 +167,7 @@ class InfoPane (wx.Window):
 			self.setValue("eta", "")
 			
 		self.setValue("eta2", "")
+		self.setValue("eta3", "")
 		
 	def setPrintInfo(self, position, layer, gcodelines, layertime):
 		self.position = position
@@ -183,11 +184,9 @@ class InfoPane (wx.Window):
 		if self.sdTargetFile is None:
 			self.remains = self.eta - now
 			eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
-			self.setValue("eta", "Start: %s  Elapsed: %s  Orig ETA: %s" % (start, strElapsed, eta))
-		else:
-			self.setValue("eta", "Start: %s  Elapsed: %s" % (start, strElapsed))
+			self.setValue("eta", "Start: %s  Orig ETA: %s" % (start, eta))
+			self.setValue("eta2", "Start: %s  Orig ETA: %s" % (start, eta))
 
-		if self.sdTargetFile is None:
 			if layer is not None and layer != 0:
 				expectedTime = self.prevTimes[layer]
 				delta = 0
@@ -204,6 +203,9 @@ class InfoPane (wx.Window):
 				remains = self.eta + diff - now
 				self.remains = remains
 				strRemains = formatElapsed(remains)
+				strNewEta = time.strftime('%H:%M:%S', time.localtime(now+remains))
+				self.setValue("eta2", "Remaining: %s  New ETA: %s" % (strRemains, strNewEta))
+				
 				pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
 				secDiff = math.fabs(elapsed + remains - self.duration)
 				strDiff = formatElapsed(secDiff)
@@ -213,11 +215,14 @@ class InfoPane (wx.Window):
 					schedule = "%s behind sched (%.2f%%)" % (strDiff, (pctDiff - 100))
 				else:
 					schedule = "on schedule"
-				self.setValue("eta2", "Remaining: %s - %s" % (strRemains, schedule))
+				self.setValue("eta3", "Elapsed: %s - %s" % (strElapsed, schedule))
 			else:
 				self.setValue("eta2", "")
+				self.setValue("eta3", "")
 		else:
-			self.setValue("eta2", "Target File: %s" % self.sdTargetFile)
+			self.setValue("eta", "Start: %s" % start)
+			self.setValue("eta2", "Elapsed: %s" % strElapsed)
+			self.setValue("eta3", "Target File: %s" % self.sdTargetFile)
 			
 	
 	def setStartTime(self, start):
