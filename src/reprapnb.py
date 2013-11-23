@@ -378,14 +378,12 @@ class MainFrame(wx.Frame):
 		self.discPending = False
 		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
 		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-		self.timer.Stop()
-		self.timer = None
 		self.closeMacro()
 		self.tb.EnableTool(TB_TOOL_RESET, False)
 		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
 		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
 		self.firmware.hide()
-		if self.nb.GetSelection() not in [ self.pxPlater, self.pxFilePrep ]:
+		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 			
 	def onFirmware(self, evt):
@@ -524,8 +522,7 @@ class MainFrame(wx.Frame):
 				
 		return stat
 	
-	def switchToFilePrep(self, fn):
-		self.nb.SetSelection(self.pxFilePrep)
+	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)
 
 	def forwardToPrintMon(self, model, name=""):

@@ -523,7 +523,7 @@ class Plater(wx.Panel):
 			self.stlFrame.redrawStl()
 			self.enableButtons(True)
 			if self.tempFn:
-				self.app.switchToFilePrep(self.tempFn)
+				self.app.sendToFilePrep(self.tempFn)
 
 		elif evt.state == WRITER_CANCELLED:
 			if evt.msg is not None:
