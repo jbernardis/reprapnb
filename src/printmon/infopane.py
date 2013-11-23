@@ -245,6 +245,7 @@ class InfoPane (wx.Window):
 		self.setValue("gcode", "")
 		self.setValue("eta", "Print completed at %s, elapsed %s (%.2f%%)" % (strEnd, strElapsed, pctDiff))
 		self.setValue("eta2", "")
+		self.setValue("eta3", "")
 
 	def setSDPrintComplete(self):		
 		self.setValue("gcode", "")
@@ -255,6 +256,7 @@ class InfoPane (wx.Window):
 		strElapsed = formatElapsed(elapsed)
 		self.setValue("eta", "Print completed at %s, elapsed %s" % (strNow, strElapsed))
 		self.setValue("eta2", "")
+		self.setValue("eta3", "")
 		self.sdstartTime = None
 
 
