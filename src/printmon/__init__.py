@@ -7,7 +7,7 @@ from infopane import InfoPane
 from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
-					PRINT_RESUMED, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
+					PRINT_RESUMED, PRINT_ERROR, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
 from tools import formatElapsed
 
 BUTTONDIM = (48, 48)
@@ -370,6 +370,21 @@ class PrintMonitor(wx.Panel):
 				self.logger.LogMessage("Resend Requests: %d, messages retransmitted: %d" % (rq, rs))
 			self.updatePrintPosition(0)
 			
+		elif evt.event == PRINT_ERROR:
+			self.logger.LogError(evt.msg)
+			self.paused = False
+			self.setStatus(PMSTATUS_NOT_READY)
+			self.printing = False
+			self.reprap.printComplete()
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPrint.Enable(True)
+			self.bPause.Enable(True)
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(True)
+			self.bSDDelete.Enable(True)
+			self.app.doPrinterError()
+
 		else:
 			self.reprap.reprapEvent(evt)
 			

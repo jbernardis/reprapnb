@@ -30,6 +30,7 @@ PRINT_STARTED = 3
 PRINT_RESUMED = 4
 QUEUE_DRAINED = 5
 RECEIVED_MSG = 10
+PRINT_ERROR = 99
 
 CMD_GCODE = 1
 CMD_STARTPRINT = 2
@@ -193,7 +194,13 @@ class SendThread:
 				if setOK: self.okWait = True
 				if TRACE:
 					print "==>", self.okWait, string
-				self.printer.write(str(string+"\n"))
+					
+				try:
+					self.printer.write(str(string+"\n"))
+				except:
+					evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to write to printer")
+					wx.PostEvent(self.win, evt)
+					self.kill()
 			
 		elif cmd == CMD_STARTPRINT:
 			string = "M110"
@@ -203,7 +210,13 @@ class SendThread:
 				
 			self.okWait = True
 
-			self.printer.write(str(string+"\n"))
+			try:
+				self.printer.write(str(string+"\n"))
+			except:
+				evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to write to printer")
+				wx.PostEvent(self.win, evt)
+				self.kill()
+				
 			if TRACE:
 				print "==>", self.okWait, string
 			self.printIndex = 0
@@ -309,16 +322,22 @@ class ListenThread:
 				line=self.printer.readline()
 			except SelectError, e:
 				if 'Bad file descriptor' in e.args[1]:
-					print "Can't read from printer (disconnected?)."
+					evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
+					wx.PostEvent(self.win, evt)
+					self.kill()
 					break
 				else:
 					raise
 				
 			except SerialException, e:
-				print "Can't read from printer (disconnected?)."
+				evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
+				wx.PostEvent(self.win, evt)
+				self.kill()
 				break
 			except OSError, e:
-				print "Can't read from printer (disconnected?)."
+				evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
+				wx.PostEvent(self.win, evt)
+				self.kill()
 				break
 
 			if(len(line)>1):

@@ -385,6 +385,23 @@ class MainFrame(wx.Frame):
 		self.firmware.hide()
 		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
+
+	def doPrinterError(self):
+		self.setPrinterBusy(True)
+		self.timer.Stop()
+		self.tb.EnableTool(TB_TOOL_CONNECT, True)
+		self.pgPrtMon.disconnect()
+		self.connected = False 
+		self.discPending = False
+		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
+		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
+		self.closeMacro()
+		self.tb.EnableTool(TB_TOOL_RESET, False)
+		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
+		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
+		self.firmware.hide()
+		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
+			self.nb.SetSelection(self.pxFilePrep)
 			
 	def onFirmware(self, evt):
 		self.firmware.show()
