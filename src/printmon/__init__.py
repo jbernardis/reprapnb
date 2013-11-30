@@ -3,7 +3,7 @@ import os
 import time
 from gcmframe import GcmFrame
 from tempgraph import TempGraph, MAXX
-from infopane import InfoPane
+from infopane import InfoPane, MODE_NORMAL, MODE_TO_SD, MODE_FROM_SD
 from images import Images
 from settings import TEMPFILELABEL
 from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
@@ -215,6 +215,8 @@ class PrintMonitor(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
+		
+		self.infoPane.setMode(MODE_NORMAL)
 		self.setSDTargetFile(None)
 
 		
@@ -287,6 +289,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(True)
 		self.app.setPrinterBusy(True)
 		self.sdpaused = False
+		self.infoPane.setMode(MODE_FROM_SD)
 		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
@@ -303,6 +306,7 @@ class PrintMonitor(wx.Panel):
 		self.logger.LogMessage("Print to SD: %s started at %s" % (self.sdTargetFile, time.strftime('%H:%M:%S', time.localtime(self.startTime))))
 		self.origEta = self.startTime + self.model.duration
 		self.countGLines = len(self.model)
+		self.infoPane.setMode(MODE_TO_SD)
 		self.infoPane.setStartTime(self.startTime)
 		self.bPrint.Enable(False)
 		self.bPause.Enable(False)
@@ -443,6 +447,7 @@ class PrintMonitor(wx.Panel):
 			self.origEta = self.startTime + self.model.duration
 			self.logger.LogMessage("ETA at %s (%s)" % (time.strftime('%H:%M:%S', time.localtime(self.startTime+self.model.duration)), formatElapsed(self.model.duration)))
 			self.countGLines = len(self.model)
+			self.infoPane.setMode(MODE_NORMAL)
 			self.infoPane.setStartTime(self.startTime)
 			self.bPrint.Enable(False)
 			self.bPause.Enable(False)

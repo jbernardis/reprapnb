@@ -14,6 +14,10 @@ layertagorder = ["layer", "minmaxxy", "filament", "gclines", "layertime"]
 printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
 printtagorder = ["gcode", "eta", "eta2", "eta3"]
 
+MODE_NORMAL = 0
+MODE_TO_SD = 1
+MODE_FROM_SD = 2
+
 
 class InfoPane (wx.Window):
 	def __init__(self, parent, app):
@@ -22,6 +26,7 @@ class InfoPane (wx.Window):
 		self.logger = self.app.logger
 		self.wValues = {}
 		
+		self.mode = MODE_NORMAL
 		self.duration = 0
 		self.gcount = 0
 		self.layers = 0
@@ -30,6 +35,7 @@ class InfoPane (wx.Window):
 		self.maxsdposition = 0
 		self.sdstartTime = None
 		self.sdTargetFile = None
+		self.newEta = None
 		
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
 		self.sizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -94,16 +100,64 @@ class InfoPane (wx.Window):
 	def getStatus(self):
 		stat = {}
 		
-		stat['filename'] = self.filename
-		stat['currentlayer'] = self.layernbr
-		stat['currentheight'] = self.z
-		stat['position'] = self.position
-		stat['gcount'] = self.gcount
-		stat['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
-		stat['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
-		stat['remaining'] = formatElapsed(self.remains)
-		stat['duration'] = formatElapsed(self.duration)
+		if self.mode == MODE_NORMAL:
+			stat['filename'] = self.filename
+			stat['currentlayer'] = self.layernbr
+			stat['layers'] = self.layers
+			stat['currentheight'] = self.z
+			
+			gcode = {}
+			gcode['position'] = self.position
+			gcode['linecount'] = self.gcount
+			if self.gcount != 0:
+				stat['percent'] = "%.2f%%" % (float(self.position) / float(self.gcount) * 100.0)
+			stat['gcode'] = gcode
+			
+			times = {}
+			times['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
+			times['expectedduration'] = formatElapsed(self.duration)
+			times['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
+			times['remaining'] = formatElapsed(self.remains)
+			times['neweta'] = time.strftime('%H:%M:%S', time.localtime(self.newEta))
+			stat['times'] = times
+			
+		elif self.mode == MODE_TO_SD:
+			stat['targetfile'] = self.sdTargetFile
+			
+			times = {}
+			times['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
+			now = time.time()
+			elapsed = now - self.startTime
+			times['elapsed'] = formatElapsed(elapsed)
+			stat['times'] = times
+
+		elif self.mode == MODE_FROM_SD:
+			gcode = {}
+			gcode['position'] = self.sdposition
+			gcode['maxposition'] = self.maxsdposition
+			if self.maxsdposition != 0:
+				gcode['percent'] = "%.2f%%" % (float(self.sdposition) / float(self.maxsdposition) * 100.0)
+			stat['gcode'] = gcode
+			
+			times = {}
+			times['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.sdstartTime))
+			elapsed = time.time() - self.sdstartTime
+			times['elapsed'] = formatElapsed(elapsed)
+			stat['times'] = times
+		
 		return stat
+	
+	def setMode(self, mode):
+		if mode not in [MODE_NORMAL, MODE_TO_SD, MODE_FROM_SD]:
+			return
+		
+		self.mode = mode
+		for t in filetagorder:
+			self.setValue(t, "")
+		for t in layertagorder:
+			self.setValue(t, "")
+		for t in printtagorder:
+			self.setValue(t, "")
 		
 		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
@@ -149,7 +203,7 @@ class InfoPane (wx.Window):
 		else:
 			self.setValue("layertime", "%s/%s" % (formatElapsed(ltime), formatElapsed(self.duration)))
 	
-	def setSDPrintInfo(self, position, maxposition):
+	def setSDPrintInfo(self, position, maxposition):  # printing FROM SD card
 		self.sdposition = position
 		self.maxsdposition = maxposition
 		pct = "??"
@@ -181,11 +235,10 @@ class InfoPane (wx.Window):
 		now = time.time()
 		elapsed = now - self.startTime
 		strElapsed = formatElapsed(elapsed)
-		if self.sdTargetFile is None:
+		if self.sdTargetFile is None:  # printing TO SD card
 			self.remains = self.eta - now
 			eta = time.strftime('%H:%M:%S', time.localtime(self.eta))
 			self.setValue("eta", "Start: %s  Orig ETA: %s" % (start, eta))
-			self.setValue("eta2", "Start: %s  Orig ETA: %s" % (start, eta))
 
 			if layer is not None:
 				expectedTime = self.prevTimes[layer]
@@ -203,7 +256,8 @@ class InfoPane (wx.Window):
 				remains = self.eta + diff - now
 				self.remains = remains
 				strRemains = formatElapsed(remains)
-				strNewEta = time.strftime('%H:%M:%S', time.localtime(now+remains))
+				self.newEta = now+remains
+				strNewEta = time.strftime('%H:%M:%S', time.localtime(self.newEta))
 				self.setValue("eta2", "Remaining: %s  New ETA: %s" % (strRemains, strNewEta))
 				
 				pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
