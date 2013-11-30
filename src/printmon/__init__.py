@@ -6,7 +6,7 @@ from tempgraph import TempGraph, MAXX
 from infopane import InfoPane
 from images import Images
 from settings import TEMPFILELABEL
-from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED,
+from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
 					PRINT_RESUMED, PRINT_ERROR, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
 from tools import formatElapsed
 
@@ -384,7 +384,16 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
 			self.app.doPrinterError()
+			
+		elif evt.event == PRINT_MESSAGE:
+			if evt.primary:
+				self.logger.LogCMessage(evt.msg)
+			else:
+				self.logger.LogGMessage(evt.msg)
 
+		elif evt.event == QUEUE_DRAINED:
+			self.logger.LogMessage("Print Queue drained")
+			self.reprap.reprapEvent(evt)
 		else:
 			self.reprap.reprapEvent(evt)
 			

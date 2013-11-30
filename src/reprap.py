@@ -28,6 +28,7 @@ PRINT_COMPLETE = 1
 PRINT_STOPPED = 2
 PRINT_STARTED = 3
 PRINT_RESUMED = 4
+PRINT_MESSAGE = 9
 QUEUE_DRAINED = 5
 RECEIVED_MSG = 10
 PRINT_ERROR = 99
@@ -135,7 +136,7 @@ class SendThread:
 				if not self.priQ.empty():
 					try:
 						(cmd, string) = self.priQ.get(True, 0.01)
-						self.processCmd(cmd, string, False, False)
+						self.processCmd(cmd, string, False, False, True)
 					except Queue.Empty:
 						pass
 					
@@ -146,13 +147,13 @@ class SendThread:
 					else:
 						self.resends += 1
 						self.resendFrom += 1
-						self.processCmd(CMD_GCODE, string, False, True)
+						self.processCmd(CMD_GCODE, string, False, True, False)
 					
 				elif not self.okWait:
 					if not self.mainQ.empty():
 						try:
 							(cmd, string) = self.mainQ.get(True, 0.01)
-							self.processCmd(cmd, string, True, True)
+							self.processCmd(cmd, string, True, True, False)
 
 						except Queue.Empty:
 							pass
@@ -164,12 +165,12 @@ class SendThread:
 			else:
 				try:
 					(cmd, string) = self.priQ.get(True, 0.01)
-					self.processCmd(cmd, string, False, False)
+					self.processCmd(cmd, string, False, False, True)
 				except Queue.Empty:
 					time.sleep(0.01)
 		self.endoflife = True
 				
-	def processCmd(self, cmd, string, calcCS, setOK):
+	def processCmd(self, cmd, string, calcCS, setOK, PriQ):
 		if cmd == CMD_GCODE:
 			if string.startswith('@'):
 				self.metaCommand(string)
@@ -194,6 +195,9 @@ class SendThread:
 				if setOK: self.okWait = True
 				if TRACE:
 					print "==>", self.okWait, string
+					
+				evt = RepRapEvent(event = PRINT_MESSAGE, msg = string, primary=PriQ)
+				wx.PostEvent(self.win, evt)
 					
 				try:
 					self.printer.write(str(string+"\n"))

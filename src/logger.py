@@ -16,6 +16,9 @@ class Logger(wx.Panel):
 		self.app = app
 		self.settings = app.settings
 		
+		self.logCommands = False
+		self.logGCode = False
+		
 		self.nLines = 0
 		self.maxLines = self.settings.maxloglines;
 		self.chunk = 100;
@@ -44,6 +47,19 @@ class Logger(wx.Panel):
 		self.bSave.SetToolTipString("Save the log to a file")
 		bsz.Add(self.bSave, flag=wx.ALL, border=10)
 		self.Bind(wx.EVT_BUTTON, self.doSave, self.bSave)
+		
+		self.cbLogCmds = wx.CheckBox(self, wx.ID_ANY, "Log Commands")
+		self.cbLogCmds.SetToolTipString("Log G Code commands entered interactively")
+		self.Bind(wx.EVT_CHECKBOX, self.checkLogCmds, self.cbLogCmds)
+		self.cbLogCmds.SetValue(self.logCommands)
+		bsz.Add(self.cbLogCmds)
+		
+		self.cbLogGCode = wx.CheckBox(self, wx.ID_ANY, "Log G Code")
+		self.cbLogGCode.SetToolTipString("Log G Code from printed file")
+		self.Bind(wx.EVT_CHECKBOX, self.checkLogGCode, self.cbLogGCode)
+		self.cbLogGCode.SetValue(self.logGCode)
+		bsz.Add(self.cbLogGCode)
+
 
 		sz.Add(bsz, flag=wx.EXPAND | wx.ALL, border=10)
 
@@ -51,6 +67,12 @@ class Logger(wx.Panel):
 		self.Layout()
 		self.Fit()
 		
+	def checkLogCmds(self, evt):
+		self.logCommands = evt.IsChecked()
+		
+	def checkLogGCode(self, evt):
+		self.logGCode = evt.IsChecked()
+
 	def onHiLiteTabTimer(self, evt):
 		self.app.hiLiteLogTab(False)
 		
@@ -99,6 +121,14 @@ class Logger(wx.Panel):
 		if not self.app.onLoggerPage():
 			self.hiLiteTabTimer.Start(3000, True)
 			self.app.hiLiteLogTab(True)
+
+	def LogCMessage(self, text):
+		if self.logCommands:
+			self.LogMessage("(c) - " + text)
+
+	def LogGMessage(self, text):
+		if self.logGCode:
+			self.LogMessage("(g) - " + text)
 
 	def LogMessageCR(self, text):
 		self.LogMessage(text)

@@ -575,17 +575,16 @@ class FilePrepare(wx.Panel):
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
+		if evt.msg is not None:
+			self.logger.LogMessage("(s) - " + evt.msg)
+			
 		if evt.state == SLICER_RUNNING:
-			if evt.msg is not None:
-				self.logger.LogMessage(evt.msg)
+			pass
 				
 		elif evt.state == SLICER_RUNNINGCR:
-			if evt.msg is not None:
-				self.logger.LogMessageCR(evt.msg)
+			pass
 				
 		elif evt.state == SLICER_CANCELLED:
-			if evt.msg is not None:
-				self.logger.LogMessage(evt.msg)
 			self.gcFile = None
 			self.setSliceMode()
 			self.enableButtons()
@@ -594,8 +593,6 @@ class FilePrepare(wx.Panel):
 			self.app.updateFilePrepStatus(self.status)
 			
 		elif evt.state == SLICER_FINISHED:
-			if evt.msg is not None:
-				self.logger.LogMessage(evt.msg)
 			if self.temporaryFile:
 				try:
 					self.logger.LogMessage("Removing temporary STL file: %s" % self.stlFile)
