@@ -48,17 +48,21 @@ class Logger(wx.Panel):
 		bsz.Add(self.bSave, flag=wx.ALL, border=10)
 		self.Bind(wx.EVT_BUTTON, self.doSave, self.bSave)
 		
+		bsz.AddSpacer((20, 20))
+		
 		self.cbLogCmds = wx.CheckBox(self, wx.ID_ANY, "Log Commands")
 		self.cbLogCmds.SetToolTipString("Log G Code commands entered interactively")
 		self.Bind(wx.EVT_CHECKBOX, self.checkLogCmds, self.cbLogCmds)
 		self.cbLogCmds.SetValue(self.logCommands)
-		bsz.Add(self.cbLogCmds)
+		bsz.Add(self.cbLogCmds, 1, wx.EXPAND)
+		
+		bsz.AddSpacer((20, 20))
 		
 		self.cbLogGCode = wx.CheckBox(self, wx.ID_ANY, "Log G Code")
 		self.cbLogGCode.SetToolTipString("Log G Code from printed file")
 		self.Bind(wx.EVT_CHECKBOX, self.checkLogGCode, self.cbLogGCode)
 		self.cbLogGCode.SetValue(self.logGCode)
-		bsz.Add(self.cbLogGCode)
+		bsz.Add(self.cbLogGCode, 1, wx.EXPAND)
 
 
 		sz.Add(bsz, flag=wx.EXPAND | wx.ALL, border=10)
