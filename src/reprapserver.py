@@ -89,11 +89,21 @@ class RepRapServer:
 	def dispatch(self, cgi, path, query):
 		if path == '/status':
 			return True, self.queryStatus(query)
+		elif path == "/stop":
+			return True, self.stopPrint(query)
+		elif path == "/temps":
+			return True, self.getTemps(query)
 		else:
 			return False, None
 		
 	def queryStatus(self, q):
 		return {'status' : self.app.getStatus()}
+	
+	def stopPrint(self, q):
+		return {'stop': self.app.stopPrint()}
+	
+	def getTemps(self, q):
+		return {'temps': self.app.getTemps()}
 	
 	def close(self):
 		if self.port != 0:

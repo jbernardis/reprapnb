@@ -539,6 +539,25 @@ class MainFrame(wx.Frame):
 				
 		return stat
 	
+	def stopPrint(self):
+		if self.connected and self.printing:
+			return self.pgPrtMon.stopPrint()
+		else:
+			return {'result': "Failed - not printing"}
+		
+	def getTemps(self):
+		result = {}
+		if self.connected:
+			result['result'] = "Success"
+			result['temps'] = self.pgPrtMon.getTemps()
+		else:
+			result['result'] = "Failed - not connected"
+			
+		return result
+			
+		
+			
+	
 	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)
 
