@@ -101,6 +101,7 @@ class InfoPane (wx.Window):
 		stat = {}
 		
 		if self.mode == MODE_NORMAL:
+			stat['printmode'] = "Normal Print"
 			stat['filename'] = self.filename
 			stat['currentlayer'] = self.layernbr
 			stat['layers'] = self.layers
@@ -119,19 +120,22 @@ class InfoPane (wx.Window):
 			times['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
 			times['remaining'] = formatElapsed(self.remains)
 			times['neweta'] = time.strftime('%H:%M:%S', time.localtime(self.newEta))
+			elapsed = time.time() - self.startTime
+			times['elapsed'] = formatElapsed(elapsed)
 			stat['times'] = times
 			
 		elif self.mode == MODE_TO_SD:
+			stat['printmode'] = "Print to SD"
 			stat['targetfile'] = self.sdTargetFile
 			
 			times = {}
 			times['starttime'] = time.strftime('%H:%M:%S', time.localtime(self.startTime))
-			now = time.time()
-			elapsed = now - self.startTime
+			elapsed = time.time() - self.startTime
 			times['elapsed'] = formatElapsed(elapsed)
 			stat['times'] = times
 
 		elif self.mode == MODE_FROM_SD:
+			stat['printmode'] = "Print from SD"
 			gcode = {}
 			gcode['position'] = self.sdposition
 			gcode['maxposition'] = self.maxsdposition

@@ -1,5 +1,5 @@
 In Progress/Need Testing
-- web server  need to test and add additional functionality
+- web server  need to test and add additional functionality - cool command - check status for SD to/from printing
 - an icon for the main screen and for when minimized
 - need a tool change mechanism
 - in general need to handle 2 or 3 extruders - temp graphs, etc
