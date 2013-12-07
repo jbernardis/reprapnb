@@ -155,10 +155,11 @@ MODELER_FINISHED = 2
 MODELER_CANCELLED = 3
 
 class ModelerThread:
-	def __init__(self, win, gcode, layer):
+	def __init__(self, win, gcode, layer, acceleration):
 		self.win = win
 		self.gcode = gcode
 		self.layer = layer
+		self.acceleration = acceleration
 		self.running = False
 		self.cancelled = False
 		self.model = None
@@ -183,7 +184,7 @@ class ModelerThread:
 	def Run(self):
 		evt = ModelerEvent(msg = "Processing...", state = MODELER_RUNNING)
 		wx.PostEvent(self.win, evt)
-		self.model = GCode(self.gcode)
+		self.model = GCode(self.gcode, self.acceleration)
 		evt = ModelerEvent(msg = None, state = MODELER_FINISHED)
 		wx.PostEvent(self.win, evt)	
 		self.running = False
@@ -525,7 +526,7 @@ class FilePrepare(wx.Panel):
 		self.exporting = True
 		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
-		self.modelerThread = ModelerThread(self, self.gcode, 0)
+		self.modelerThread = ModelerThread(self, self.gcode, 0, self.acceleration)
 		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
@@ -707,7 +708,7 @@ class FilePrepare(wx.Panel):
 
 	def buildModel(self, layer=0):
 		self.exporting = False
-		self.modelerThread = ModelerThread(self, self.gcode, layer)
+		self.modelerThread = ModelerThread(self, self.gcode, layer, self.acceleration)
 		self.modelerThread.Start()
 		
 	def getModelData(self, layer=0):

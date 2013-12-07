@@ -492,10 +492,12 @@ class PrintMonitor(wx.Panel):
 			
 		elif self.sdprintingfrom:
 			self.stopPrintFromSD()
+			self.stopMotorsAndHeaters()
 			result['result'] = "Success - Print from SD stopped"
 			
 		else:
 			self.stopPrintNormal()
+			self.stopMotorsAndHeaters()
 			result['result'] = "Success - Print stopped"
 			
 		return result
@@ -527,6 +529,14 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		self.bPrint.Enable(False)
 		self.reprap.pausePrint()
+		
+	def stopMotorsAndHeaters(self):
+		self.reprap.send_now("M84")
+		self.reprap.send_now("M106 S0")
+		self.reprap.send_now("M140 S0")
+		for h in self.knownHeaters:
+			if h.startswith("HE"):
+				self.reprap.send_now("M104 S0 T" + h[2])
 		
 	def updatePrintPosition(self, pos):
 		if self.printing:

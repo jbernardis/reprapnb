@@ -306,6 +306,7 @@ class SettingsFilePrep:
 		self.showprevious = True
 		self.showmoves = True
 		self.usebuffereddc = True
+		self.acceleration = 1500
 		
 		if cfg is None:
 			self.modified = True
@@ -322,6 +323,13 @@ class SettingsFilePrep:
 					except:
 						self.parent.showWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
+						
+				elif opt == 'acceleration':
+					try:
+						self.acceleration = float(value)
+					except:
+						self.parent.showWarning("Non-valid value in ini file for acceleration")
+						self.acceleration = 1500
 			
 				elif opt == 'laststldirectory':
 					self.laststldirectory = value
@@ -362,6 +370,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
+			self.cfg.set(self.section, "acceleration", str(self.acceleration))
 						
 	
 class SettingsPlater:

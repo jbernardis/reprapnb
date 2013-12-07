@@ -199,7 +199,8 @@ class Layer:
 					
 
 class GCode(object):
-	def __init__(self,data):
+	def __init__(self, data, acceleration=1500):
+		self.acceleration = acceleration
 		self.lines = []
 		
 		for i in data:
@@ -506,7 +507,6 @@ class GCode(object):
 		x = y = z = e = f = 0.0
 		currenttravel = 0.0
 		moveduration = 0.0
-		acceleration = 1500.0 #mm/s/s  ASSUMING THE DEFAULT FROM SPRINTER !!!!
 		layerbeginduration = 0.0
 		layercount=0
 		relative=False
@@ -610,7 +610,7 @@ class GCode(object):
 						# FIXME: review this better
 						# this looks wrong : there's little chance that the feedrate we'll decelerate to is the previous feedrate
 						# shouldn't we instead look at three consecutive moves ?
-						distance = 2 * abs(((lastf + f) * (f - lastf) * 0.5) / acceleration)  # multiply by 2 because we have to accelerate and decelerate
+						distance = 2 * abs(((lastf + f) * (f - lastf) * 0.5) / self.acceleration)  # multiply by 2 because we have to accelerate and decelerate
 						if distance <= currenttravel and lastf + f != 0 and f != 0:
 							moveduration = 2 * distance / (lastf + f)  # This is distance / mean(lastf, f)
 							moveduration += (currenttravel - distance) / f

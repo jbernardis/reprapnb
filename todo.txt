@@ -5,11 +5,11 @@ In Progress/Need Testing
 - in general need to handle 2 or 3 extruders - temp graphs, etc
 
 Low Hanging
-- add acceleration to ini file somewhere - should be in slicer config
 
 Medium
 - other places for separate thread - file saving
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
+- STL merging -> AMF.XML file
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
