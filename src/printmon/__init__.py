@@ -248,7 +248,7 @@ class PrintMonitor(wx.Panel):
 		self.app.updatePrintMonStatus(s)
 		
 	def getStatus(self):
-		if self.printing:
+		if self.printing or self.sdprintingfrom:
 			status = self.infoPane.getStatus()
 			status['printing'] = "True"
 		else:

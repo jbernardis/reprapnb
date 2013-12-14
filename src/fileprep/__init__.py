@@ -526,7 +526,7 @@ class FilePrepare(wx.Panel):
 		self.exporting = True
 		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
-		self.modelerThread = ModelerThread(self, self.gcode, 0, self.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, 0, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
@@ -708,7 +708,7 @@ class FilePrepare(wx.Panel):
 
 	def buildModel(self, layer=0):
 		self.exporting = False
-		self.modelerThread = ModelerThread(self, self.gcode, layer, self.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, layer, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def getModelData(self, layer=0):
