@@ -4,13 +4,15 @@ Created on Apr 10, 2013
 @author: Jeff
 '''
 import wx
-import math
 
 MAXZOOM = 10
 ZOOMDELTA = 0.1
 			
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
+
+drawnColors = ["red", "orange", "yellow"]
+undrawnColors = ["blue", "green", "cyan"]
 
 class GcmFrame (wx.Window):
 	def __init__(self, parent, model, settings, buildarea):
@@ -280,11 +282,12 @@ class GcmFrame (wx.Window):
 		while p:
 			if prev == [None, None, None, None]:
 				prev = [p[0], p[1], p[2], p[3]]
-			elif p[6]: # axis reset
+			elif p[7]: # axis reset
 				prev = [p[0], p[1], p[2], p[3]]
 				last_e = p[3]
 			else:
-				self.drawLine(dc, prev, p, last_e, background=background)
+				tool = p[4]
+				self.drawLine(dc, prev, p, last_e, tool, background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -293,9 +296,13 @@ class GcmFrame (wx.Window):
 				
 			p = layer.getNextMove()
 
-	def drawLine(self, dc, prev, p, last_e, background=False):				
+	def drawLine(self, dc, prev, p, last_e, tool, background=False):				
 		if background and (p[3] is None):
 			return
+
+		t = tool
+		if t < 0 or t > 2:
+			t = 0
 			
 		if p[3] is None or p[3] == 0:
 			if not self.settings.showmoves:
@@ -303,11 +310,12 @@ class GcmFrame (wx.Window):
 			if p[5] <= self.printPosition:
 				c = "dimgray"	
 			else:
-				c = "white"	
+				c = "white"
+
 		elif p[5] <= self.printPosition:
-			c = "red"
+			c = drawnColors[t]
 		else:
-			c = "blue"
+			c = undrawnColors[t]
 					
 		if background:
 			c = "dimgray"

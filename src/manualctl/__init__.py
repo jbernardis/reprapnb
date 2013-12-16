@@ -36,7 +36,7 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruder(heTemps)
+		self.sizerExtrude = self.addExtruder(heTemps, nExtr)
 		self.sizerBed = self.addBed(bedTemp)
 		self.sizerSpeed = self.addSpeedControls(self.appsettings.speedcommand)
 		self.sizerGCode = self.addGCEntry()
@@ -82,7 +82,7 @@ class ManualControl(wx.Panel):
 	def setActiveTool(self, tool):
 		self.heWin.setActiveTool(tool)
 		
-	def addExtruder(self, startTemps):
+	def addExtruder(self, startTemps, nExtr):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -95,7 +95,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.AddSpacer((10,10))
 		
 		self.heWin = HotEnd(self, self.app, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=("HE0", "HE1", "HE2"), 
-					target=startTemps, trange=((20, 250), (20, 250), (20, 250)))
+					target=startTemps, trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 

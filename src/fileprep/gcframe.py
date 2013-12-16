@@ -14,9 +14,11 @@ def triangulate(p1, p2):
 	d = math.sqrt(dx*dx + dy*dy)
 	return d
 
-orange = wx.Colour(237, 139, 33)
+#orange = wx.Colour(237, 139, 33)
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
+
+toolColor = ["blue", "green", "cyan"]
 
 class GcFrame (wx.Window):
 	def __init__(self, parent, model, settings, buildarea):
@@ -288,11 +290,12 @@ class GcFrame (wx.Window):
 		while p:
 			if prev == [None, None, None, None]:
 				prev = [p[0], p[1], p[2], p[3]]
-			elif p[6]: # axis reset
+			elif p[7]: # axis reset
 				prev = [p[0], p[1], p[2], p[3]]
 				last_e = p[3]
 			else:
-				self.drawLine(dc, prev, p, last_e, background=background)
+				tool = p[4]
+				self.drawLine(dc, prev, p, last_e, tool, background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -301,9 +304,13 @@ class GcFrame (wx.Window):
 				
 			p = layer.getNextMove()
 
-	def drawLine(self, dc, prev, p, last_e, background=False):				
+	def drawLine(self, dc, prev, p, last_e, tool, background=False):				
 		if background and (p[3] is None):
 			return
+
+		t = tool
+		if t < 0 or t > 2:
+			t = 0
 			
 		if background:
 			c = "gray"
@@ -321,16 +328,17 @@ class GcFrame (wx.Window):
 			evolume = edist * 1.5 * 1.5 * 3.14159
 			dist = triangulate(prev, p)
 				
-			if p[4] < 1200:
-				c = orange
-			elif p[4] < 3000:
-						c = "red"
-			elif p[4] < 3600:
-				c = "blue"
-			elif p[4] >= 7200:
-				c = "green"
-			else:
-				c = "purple"
+			c = toolColor[t]
+			#if p[4] < 1200:
+				#c = orange
+			#elif p[4] < 3000:
+						#c = "red"
+			#elif p[4] < 3600:
+				#c = "blue"
+			#elif p[4] >= 7200:
+				#c = "green"
+			#else:
+				#c = "purple"
 
 			if dist == 0:
 				w = 1.0

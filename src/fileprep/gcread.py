@@ -114,18 +114,19 @@ class Line(object):
 		return "G1" in self.raw or "G0" in self.raw
 
 class Layer:
-	def __init__(self, x=0, y=0, z=0, e=0, speed=0, prev=None, ln=0, lx=0):
+	def __init__(self, x=0, y=0, z=0, e=0, tool=0, speed=0, prev=None, ln=0, lx=0):
 		self.prevLayer = prev
 		self.currentx = self.startx = x
 		self.currenty = self.starty = y
 		self.currentz = self.startz = z
 		self.currente = self.starte = e
 		self.currentspeed = self.startspeed = speed
+		self.currenttool = tool
 		self.moves = []
 		self.layernumber = ln
 		self.startlx = lx
 		
-	def addMove(self, x=None, y=None, z=None, e=None, speed=None, relative=False, relative_e=False, line=0):
+	def addMove(self, x=None, y=None, z=None, e=None,  tool=0, speed=None, relative=False, relative_e=False, line=0):
 		if x is None:
 			cx = self.currentx
 		elif relative:
@@ -153,12 +154,13 @@ class Layer:
 		if speed is None or speed == 0.0:
 			cspeed = self.currentspeed
 			
-		self.moves.append([cx, cy, cz, ce, cspeed, line, False])
+		self.moves.append([cx, cy, cz, ce, tool, cspeed, line, False])
 		
 		self.currentx = cx
 		self.currenty = cy
 		self.currentz = cz
 		self.currente = ce
+		self.currenttool = tool
 		self.currentspeed = cspeed
 		
 	def getLayerHeight(self):
@@ -169,7 +171,7 @@ class Layer:
 		
 	def getLayerStart(self):
 		self.mx = -1
-		return (self.startx, self.starty, self.startz, self.starte, self.startspeed, self.startlx)
+		return (self.startx, self.starty, self.startz, self.starte, self.currenttool, self.startspeed, self.startlx)
 	
 	def getNextMove(self):
 		self.mx += 1
@@ -181,7 +183,7 @@ class Layer:
 		return self.prevLayer
 		
 		
-	def resetAxis(self, x=None, y=None, z=None, e=None, line=0):
+	def resetAxis(self, x=None, y=None, z=None, e=None, tool=None, line=0):
 		if x is not None:
 			self.currentx = x
 			
@@ -194,8 +196,11 @@ class Layer:
 		if e is not None:
 			self.currente = e
 		
+		if tool is not None:
+			self.currenttool = tool
+		
 		self.moves.append([self.currentx, self.currenty, self.currentz,
-			self.currente, self.currentspeed, line, True])
+			self.currente, self.currenttool, self.currentspeed, line, True])
 					
 
 class GCode(object):
@@ -233,10 +238,11 @@ class GCode(object):
 		
 	def process(self):			
 		lnbr = 0
+		self.currenttool = 0
 		self.layers = []
 		self.layerlines = []
 		
-		lyr = Layer(ln = lnbr, lx=0)
+		lyr = Layer(ln = lnbr, lx=0, tool=0)
 		self.currentheight = 0.0
 		self.layers.append(lyr)
 		
@@ -260,6 +266,15 @@ class GCode(object):
 				relative_e = True
 			elif ln.command() == "G92":
 				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e, lx)
+			elif ln.command().startswith("T"):
+				try:
+					t = int(ln.command()[1:])
+				except:
+					t = None
+
+				if t:
+					self.currenttool = t
+
 			elif ln.is_move():
 				ln.setRelative(relative)
 				ln.setRelativeE(relative_e)
@@ -291,12 +306,12 @@ class GCode(object):
 					else:
 						self.currentheight = ln.z
 
-					lyr = Layer(cx, cy, self.currentheight, ce, cf, prev=olyr, ln=lnbr, lx=lx)
+					lyr = Layer(cx, cy, self.currentheight, ce, self.currenttool, cf, prev=olyr, ln=lnbr, lx=lx)
 					self.layers.append(lyr)
 					self.layerlines.append([layerstartx, lx-1])
 					layerstartx = lx
 				else:
-					lyr.addMove(ln.x, ln.y, ln.z, ln.e, ln.f, relative, relative_e, lx)
+					lyr.addMove(ln.x, ln.y, ln.z, ln.e, self.currenttool, ln.f, relative, relative_e, lx)
 
 		self.layerlines.append([layerstartx, lx])	
 						
