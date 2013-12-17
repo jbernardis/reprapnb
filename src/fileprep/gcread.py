@@ -1,6 +1,8 @@
 import math
 import re
 
+from reprap import MAX_EXTRUDERS
+
 gcRegex = re.compile("[-]?\d+[.]?\d*")
 
 def hypot3d(X1, Y1, Z1, X2=0.0, Y2=0.0, Z2=0.0): 
@@ -272,7 +274,7 @@ class GCode(object):
 				except:
 					t = None
 
-				if t:
+				if t is not None:
 					self.currenttool = t
 
 			elif ln.is_move():
@@ -468,47 +470,65 @@ class GCode(object):
 		self.height = zmax-zmin
 		
 	def filament_length(self):
-		self.total_e = 0		
-		cur_e = 0
-		segment_e = 0
-		segment_start_e = 0
-		layer_e = 0
+		self.total_e = []
+		cur_e = []
+		segment_e = []
+		segment_start_e = []
+		layer_e = []
+		for i in range(MAX_EXTRUDERS):
+			self.total_e.append(0)
+			cur_e.append(0)
+			segment_e.append(0)
+			segment_start_e.append(0)
+			layer_e.append(0)
+
 		cur_z = 0
 		self.layer_e = []
 		self.layer_e_end = []
-		self.layer_e_start = [0]
+		self.layer_e_start = [[0 for i in range(MAX_EXTRUDERS)]]
+		currentTool = 0
 
 		lx = 0	
 		for line in self.lines:
 			lx += 1
 			if line.command() == "G92":
 				if line.e != None:
-					layer_e += (cur_e - segment_start_e)
-					cur_e = line.e
-					segment_e = cur_e
-					segment_start_e = cur_e
+					layer_e[currentTool] += (cur_e[currentTool] - segment_start_e[currentTool])
+					cur_e[currentTool] = line.e
+					segment_e[currentTool] = cur_e[currentTool]
+					segment_start_e[currentTool] = cur_e[currentTool]
+					
 			elif line.is_move():
 				if line.z and line.z != cur_z:
-					layer_e += (cur_e - segment_start_e)
+					layer_e[currentTool] += (cur_e[currentTool] - segment_start_e[currentTool])
 					self.layer_e.append(layer_e)
-					self.total_e += layer_e
+					for i in range(MAX_EXTRUDERS):
+						self.total_e[i] += layer_e[i]
+						layer_e[i] = 0
+						segment_start_e[i] = cur_e[i]
 					
 					self.layer_e_start.append(self.total_e)
 					self.layer_e_end.append(self.total_e)
 					cur_z = line.z
-					layer_e = 0
-					segment_start_e = cur_e
 					
 				if line.e:
 					if line.relative_e:
-						cur_e += line.e
+						cur_e[currentTool] += line.e
 					else:
-						cur_e = line.e
+						cur_e[currentTool] = line.e
 
-		layer_e += (cur_e - segment_start_e)
-		self.total_e += layer_e
+		layer_e[currentTool] += (cur_e[currentTool] - segment_start_e[currentTool])
+		self.total_e[currentTool] += layer_e[currentTool]
 		self.layer_e_end.append(self.total_e)
 		self.layer_e.append(layer_e)
+		
+		print "calculated filament lengths:"
+		for i in range(len(self.layer_e)):
+			print self.layer_e[i], self.layer_e_start[i], self.layer_e_end[i]
+			
+		print ""
+		print "total: "
+		print self.total_e
 
 	def _get_float(self,raw,which):
 		l = raw.split(which)

@@ -307,12 +307,12 @@ class GcmFrame (wx.Window):
 		if p[3] is None or p[3] == 0:
 			if not self.settings.showmoves:
 				return
-			if p[5] <= self.printPosition:
+			if p[6] <= self.printPosition:
 				c = "dimgray"	
 			else:
 				c = "white"
 
-		elif p[5] <= self.printPosition:
+		elif p[6] <= self.printPosition:
 			c = drawnColors[t]
 		else:
 			c = undrawnColors[t]

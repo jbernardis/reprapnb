@@ -13,6 +13,8 @@ from editgcode import EditGCodeDlg
 from images import Images
 from tools import formatElapsed 
 
+from reprap import MAX_EXTRUDERS
+
 from settings import TEMPFILELABEL
 
 wildcard = "G Code (*.gcode)|*.gcode"
@@ -987,8 +989,9 @@ class FilePrepare(wx.Panel):
 			fp.write(ln + "\n")
 		
 		if v[7]:
-			fp.write("G92 E%.3f\n" % (self.model.layer_e_end[v[1]]+2))
-			fp.write("G1 E%.3f\n" % self.model.layer_e_end[v[1]])
+			# TODO: need to revisit this later - for now, assume tool 0
+			fp.write("G92 E%.3f\n" % (self.model.layer_e_end[v[1]][0]+2))
+			fp.write("G1 E%.3f\n" % self.model.layer_e_end[v[1][0]])
 		
 		if v[6]:
 			fp.write("G1 Z%.3f" % (z+10))
@@ -1130,7 +1133,13 @@ class FilePrepare(wx.Panel):
 			s = "%9.3f/%9.3f" % (self.layerInfo[1][1], self.layerInfo[2][1])
 		self.ipMinMaxY.SetLabel(s)
 
-		self.ipFilament.SetLabel("%9.3f/%9.3f" % (self.layerInfo[3], self.model.total_e))
+		
+		s = ""
+		for i in MAX_EXTRUDERS:
+			if s != "":
+				s += ":"
+			s += "%9.3f/%9.3f" % (self.layerInfo[3][i], self.model.total_e[i])
+		self.ipFilament.SetLabel(s)
 		self.ipGCLines.SetLabel("%4d/%4d" % (self.layerInfo[4][0]+1, self.layerInfo[4][1]+1))
 		
 		lt = time.strftime('%H:%M:%S', time.gmtime(self.layerInfo[5]))

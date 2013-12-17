@@ -4,6 +4,7 @@ import time
 import math
 
 from tools import formatElapsed
+from reprap import MAX_EXTRUDERS
 
 filetags = { "filename" : "Name:" }
 filetagorder = ["filename"]
@@ -194,11 +195,16 @@ class InfoPane (wx.Window):
 			self.setValue("minmaxxy", "")
 		else:
 			self.setValue("minmaxxy", "(%.3f, %.3f) <-> (%.3f, %.3f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
-		
-		if self.filament == 0:
-			self.setValue("filament", "%.3f (%.3f mm on previous layers)" % (filament, prevfilament))
-		else:
-			self.setValue("filament", "%.3f/%.3f (%.3f mm on previous layers)" % (filament, self.filament, prevfilament))
+
+		s = ""
+		sp = ""
+		for i in range(MAX_EXTRUDERS):
+			if s != "":
+				s += ":"
+				sp += ":"
+			s += "%.3f/%.3f" % (filament[i], self.filament[i])
+			sp += "%.3f" % prevfilament[i]
+		self.setValue("filament", "%s (%s prev layers)" % (s, sp))
 		
 		self.setValue("gclines", "%d -> %d" % (gclines[0], gclines[1]))
 		
