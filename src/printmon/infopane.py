@@ -37,7 +37,7 @@ class InfoPane (wx.Window):
 		self.layertagorder = ["layer", "minmaxxy"]
 		for i in range(MAX_EXTRUDERS):
 			tag = "filament%d" % i
-			self.layertagorder.extend(tag)
+			self.layertagorder.append(tag)
 			if i != 0:
 				layertags[tag] = ""
 

@@ -582,96 +582,95 @@ class GCode(object):
 				if line.x is None and line.y is None and line.z is None:
 					lastx = lasty = lastz = 0
 				
-			elif "G4" in line.raw or "G1" in line.raw:
-				if "G4" in line.raw:
-					moveduration = self._get_float(line.raw, "P")
-					if moveduration is None:
-						moveduration = self._get_float(line.raw, "S")
-						if moveduration == None:
-							continue
-					else:
-						moveduration /= 1000.0
-						
-					self.duration += moveduration
+			elif "G4" in line.raw:
+				moveduration = self._get_float(line.raw, "P")
+				if moveduration is None:
+					moveduration = self._get_float(line.raw, "S")
+					if moveduration == None:
+						continue
+				else:
+					moveduration /= 1000.0
 					
-				if "G1" in line.raw:
-					x = line.x
-					if x is None: 
-						x=lastx
-					elif relative:
-						x+=lastx
-						
-					y = line.y
-					if y is None:
-						y=lasty
-					elif relative:
-						y+=lasty
-						
-					z = line.z
-					if z is None:
-						z=lastz
-					elif relative:
-						z+=lastz
-						
-					e = line.e
-					if e is None:
-						e=laste
-					elif relative_e:
-						e+=laste
-						
-					f = line.f
-					if f is None or f == 0: 
-						f=lastf
-					else:
-						f /= 60.0 # mm/s vs mm/m
+				self.duration += moveduration
+				
+			elif "G0" in line.raw or "G1" in line.raw:
+				x = line.x
+				if x is None: 
+					x=lastx
+				elif relative:
+					x+=lastx
 					
-					# given last feedrate and current feedrate calculate the distance needed to achieve current feedrate.
-					# if travel is longer than req'd distance, then subtract distance to achieve full speed, and add the time it took to get there.
-					# then calculate the time taken to complete the remaining distance
+				y = line.y
+				if y is None:
+					y=lasty
+				elif relative:
+					y+=lasty
 					
-					dx = x - lastx
-					dy = y - lasty
-					if dx * lastdx + dy * lastdy <= 0:
-						lastf = 0
+				z = line.z
+				if z is None:
+					z=lastz
+				elif relative:
+					z+=lastz
+					
+				e = line.e
+				if e is None:
+					e=laste
+				elif relative_e:
+					e+=laste
+					
+				f = line.f
+				if f is None or f == 0: 
+					f=lastf
+				else:
+					f /= 60.0 # mm/s vs mm/m
+				
+				# given last feedrate and current feedrate calculate the distance needed to achieve current feedrate.
+				# if travel is longer than req'd distance, then subtract distance to achieve full speed, and add the time it took to get there.
+				# then calculate the time taken to complete the remaining distance
+				
+				dx = x - lastx
+				dy = y - lasty
+				if dx * lastdx + dy * lastdy <= 0:
+					lastf = 0
 
-					moveduration = 0.0
-					currenttravel = math.hypot(dx, dy)
-					if currenttravel == 0:
-						if line.z is not None:
-							currenttravel = abs(line.z) if line.relative else abs(line.z - lastz)
-						elif line.e is not None:
-							currenttravel = abs(line.e) if line.relative_e else abs(line.e - laste)
-					# Feedrate hasn't changed, no acceleration/decceleration planned
-					if f == lastf:
-						moveduration = currenttravel / f if f != 0 else 0.
+				moveduration = 0.0
+				currenttravel = math.hypot(dx, dy)
+				if currenttravel == 0:
+					if line.z is not None:
+						currenttravel = abs(line.z) if line.relative else abs(line.z - lastz)
+					elif line.e is not None:
+						currenttravel = abs(line.e) if line.relative_e else abs(line.e - laste)
+				# Feedrate hasn't changed, no acceleration/decceleration planned
+				if f == lastf:
+					moveduration = currenttravel / f if f != 0 else 0.
+				else:
+					# FIXME: review this better
+					# this looks wrong : there's little chance that the feedrate we'll decelerate to is the previous feedrate
+					# shouldn't we instead look at three consecutive moves ?
+					distance = 2 * abs(((lastf + f) * (f - lastf) * 0.5) / self.acceleration)  # multiply by 2 because we have to accelerate and decelerate
+					if distance <= currenttravel and lastf + f != 0 and f != 0:
+						moveduration = 2 * distance / (lastf + f)  # This is distance / mean(lastf, f)
+						moveduration += (currenttravel - distance) / f
 					else:
-						# FIXME: review this better
-						# this looks wrong : there's little chance that the feedrate we'll decelerate to is the previous feedrate
-						# shouldn't we instead look at three consecutive moves ?
-						distance = 2 * abs(((lastf + f) * (f - lastf) * 0.5) / self.acceleration)  # multiply by 2 because we have to accelerate and decelerate
-						if distance <= currenttravel and lastf + f != 0 and f != 0:
-							moveduration = 2 * distance / (lastf + f)  # This is distance / mean(lastf, f)
-							moveduration += (currenttravel - distance) / f
-						else:
-							moveduration = 2 * currenttravel / (lastf + f)  # This is currenttravel / mean(lastf, f)
-							# FIXME: probably a little bit optimistic, but probably a much better estimate than the previous one:
-							# moveduration = math.sqrt(2 * distance / acceleration) # probably buggy : not taking actual travel into account
+						moveduration = 2 * currenttravel / (lastf + f)  # This is currenttravel / mean(lastf, f)
+						# FIXME: probably a little bit optimistic, but probably a much better estimate than the previous one:
+						# moveduration = math.sqrt(2 * distance / acceleration) # probably buggy : not taking actual travel into account
 
-					lastdx = dx
-					lastdy = dy
-							
-					self.duration += moveduration
-		
-					if z != lastz:
-						layercount +=1
-						self.layer_time.append(self.duration-layerbeginduration)
-						layerbeginduration = self.duration
-		
-					if x is not None: lastx = x
-					if y is not None: lasty = y
-					if z is not None: lastz = z
-					if e is not None: laste = e
-					if f is not None: lastf = f
+				lastdx = dx
+				lastdy = dy
+						
+				self.duration += moveduration
+	
+				if z != lastz:
+					layercount +=1
+					self.layer_time.append(self.duration-layerbeginduration)
+					layerbeginduration = self.duration
+	
+				if x is not None: lastx = x
+				if y is not None: lasty = y
+				if z is not None: lastz = z
+				if e is not None: laste = e
+				if f is not None: lastf = f
 				
 		self.layer_time.append(self.duration-layerbeginduration)
 		
