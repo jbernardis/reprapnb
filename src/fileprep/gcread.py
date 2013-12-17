@@ -498,19 +498,30 @@ class GCode(object):
 					segment_e[currentTool] = cur_e[currentTool]
 					segment_start_e[currentTool] = cur_e[currentTool]
 					
+			elif line.command().startswith("T"):
+				try:
+					t = int(line.command()[1:])
+				except:
+					t = None
+
+				if t is not None:
+					currentTool = t
+					
 			elif line.is_move():
 				if line.z and line.z != cur_z:
 					layer_e[currentTool] += (cur_e[currentTool] - segment_start_e[currentTool])
-					self.layer_e.append(layer_e)
+					s = [e for e in layer_e]
+					self.layer_e.append(s)
 					for i in range(MAX_EXTRUDERS):
 						self.total_e[i] += layer_e[i]
 						layer_e[i] = 0
 						segment_start_e[i] = cur_e[i]
 					
-					self.layer_e_start.append(self.total_e)
-					self.layer_e_end.append(self.total_e)
+					s = [e for e in self.total_e]
+					self.layer_e_start.append(s)
+					self.layer_e_end.append(s)
 					cur_z = line.z
-					
+				
 				if line.e:
 					if line.relative_e:
 						cur_e[currentTool] += line.e
@@ -522,14 +533,6 @@ class GCode(object):
 		self.layer_e_end.append(self.total_e)
 		self.layer_e.append(layer_e)
 		
-		print "calculated filament lengths:"
-		for i in range(len(self.layer_e)):
-			print self.layer_e[i], self.layer_e_start[i], self.layer_e_end[i]
-			
-		print ""
-		print "total: "
-		print self.total_e
-
 	def _get_float(self,raw,which):
 		l = raw.split(which)
 		if len(l) < 2:

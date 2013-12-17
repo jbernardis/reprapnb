@@ -40,7 +40,7 @@ FILEPREP_TAB_TEXT = "File Preparation"
 MANCTL_TAB_TEXT = "Manual Control"
 PRTMON_TAB_TEXT = "Print Monitor"
 
-MAXCFGCHARS = 35
+MAXCFGCHARS = 50
 
 BUTTONDIM = (64, 64)
 
@@ -174,6 +174,7 @@ class MainFrame(wx.Frame):
 		
 		text = self.slicer.type.getConfigString()
 		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
+		w = int(0.75 * w)
 		self.tSlicerCfg = wx.StaticText(self.tb, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
 		self.tSlicerCfg.SetFont(f)
 		self.updateSlicerConfigString(text)

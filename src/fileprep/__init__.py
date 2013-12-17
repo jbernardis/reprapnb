@@ -353,7 +353,7 @@ class FilePrepare(wx.Panel):
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
 		f = wx.Font(18,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		t.SetFont(f)
-		self.infoPane.AddSpacer((100, 80), pos=(0,0))
+		self.infoPane.AddSpacer((100, 1), pos=(0,0))
 		self.infoPane.Add(t, pos=(1,0), span=(1,2), flag=wx.ALIGN_CENTER)
 		
 		self.infoPane.AddSpacer((20, 20), pos=(2,0))
@@ -421,84 +421,92 @@ class FilePrepare(wx.Panel):
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(11,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipFilament = wx.StaticText(self, wx.ID_ANY)
-		self.ipFilament.SetFont(ipfont)
-		self.infoPane.Add(self.ipFilament, pos=(11,1), flag=wx.ALIGN_LEFT)
+		self.ipFilament = []
+		ln = 11
+		for i in range(MAX_EXTRUDERS):
+			w = wx.StaticText(self, wx.ID_ANY, "", size=(-1, h+TEXT_PAD))
+			w.SetFont(ipfont)
+			self.infoPane.Add(w, pos=(ln, 1), flag=wx.ALIGN_LEFT)
+			ln += 1
+			self.ipFilament.append(w)
 		
 		text = "G Code Line from/to: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(12,0), flag=wx.ALIGN_RIGHT)
+		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
 		
 		self.ipGCLines = wx.StaticText(self, wx.ID_ANY, "")
 		self.ipGCLines.SetFont(ipfont)
-		self.infoPane.Add(self.ipGCLines, pos=(12,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(self.ipGCLines, pos=(ln,1), flag=wx.ALIGN_LEFT)
 		
+		ln += 1
 		text = "Print Time: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(13,0), flag=wx.ALIGN_RIGHT)
+		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
 		
 		self.ipPrintTime = wx.StaticText(self, wx.ID_ANY, "")
 		self.ipPrintTime.SetFont(ipfont)
-		self.infoPane.Add(self.ipPrintTime, pos=(13,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(self.ipPrintTime, pos=(ln,1), flag=wx.ALIGN_LEFT)
 		
+		ln += 1
 		text = "Extrusion Speeds: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(14,0), flag=wx.ALIGN_RIGHT)
+		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
 		
 		ipHeight = dc.GetTextExtent("20")[1] + TEXT_PAD
 		t = wx.TextCtrl(self, wx.ID_ANY, "< 20 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour(wx.Colour(237, 139, 33))
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(14,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(t, pos=(ln,1), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((10, 10), pos=(15, 1))
+		self.infoPane.AddSpacer((10, 10), pos=(ln+1, 1))
 		
 		t = wx.TextCtrl(self, wx.ID_ANY, "< 50 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour(wx.Colour(240, 0, 0))
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(16,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(t, pos=(ln+2,1), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((10, 10), pos=(17, 1))
+		self.infoPane.AddSpacer((10, 10), pos=(ln+3, 1))
 		
 		t = wx.TextCtrl(self, wx.ID_ANY, "< 60 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour("blue")
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(18,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(t, pos=(ln+4,1), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((10, 10), pos=(19, 1))
+		self.infoPane.AddSpacer((10, 10), pos=(ln+5, 1))
 		
 		t = wx.TextCtrl(self, wx.ID_ANY, "< 120 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour("purple")
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(20,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(t, pos=(ln+6,1), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((10, 10), pos=(21, 1))
+		self.infoPane.AddSpacer((10, 10), pos=(ln+7, 1))
 		
 		t = wx.TextCtrl(self, wx.ID_ANY, ">= 120 mm/s", size=(150, ipHeight),
 						style=wx.TE_RICH2|wx.TE_READONLY)
 		t.SetBackgroundColour("green")
 		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(22,1), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(t, pos=(ln+8,1), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((40, 40), pos=(23, 0))
+		self.infoPane.AddSpacer((40, 40), pos=(ln+9, 0))
 		
+		ln += 10
 		self.ipGCodeLine = wx.StaticText(self, wx.ID_ANY, "", size=(-1, ipHeight))
 		self.ipGCodeLine.SetFont(ipfont)
-		self.infoPane.Add(self.ipGCodeLine, pos=(24,0), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(self.ipGCodeLine, pos=(ln,0), flag=wx.ALIGN_LEFT)
 		
 		self.ipGCodeSource = wx.StaticText(self, wx.ID_ANY, "")
 		self.ipGCodeSource.SetFont(ipfont)
-		self.infoPane.Add(self.ipGCodeSource, pos=(25, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
+		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
 		self.sizerMain.Add(self.infoPane, pos=(2,5), span=(4,1))
 		self.sizerMain.AddSpacer((40, 20), pos=(0,6))
@@ -788,7 +796,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Min/Max X: %.2f/%.2f" % (self.model.xmin, self.model.xmax))
 				self.logger.LogMessage("Min/Max Y: %.2f/%.2f" % (self.model.ymin, self.model.ymax))
 				self.logger.LogMessage("Max Z: %.2f" % self.model.zmax)
-				self.logger.LogMessage("Total Filament Length: %.2f" % self.model.total_e)
+				self.logger.LogMessage("Total Filament Length: %s" % str(self.model.total_e))
 				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
 				self.enableButtons();
 			
@@ -1134,12 +1142,10 @@ class FilePrepare(wx.Panel):
 		self.ipMinMaxY.SetLabel(s)
 
 		
-		s = ""
-		for i in MAX_EXTRUDERS:
-			if s != "":
-				s += ":"
-			s += "%9.3f/%9.3f" % (self.layerInfo[3][i], self.model.total_e[i])
-		self.ipFilament.SetLabel(s)
+		for i in range(MAX_EXTRUDERS):
+			s = "T%d: %.3f/%.3f" % (i, self.layerInfo[3][i], self.model.total_e[i])
+			self.ipFilament[i].SetLabel(s)
+			
 		self.ipGCLines.SetLabel("%4d/%4d" % (self.layerInfo[4][0]+1, self.layerInfo[4][1]+1))
 		
 		lt = time.strftime('%H:%M:%S', time.gmtime(self.layerInfo[5]))
