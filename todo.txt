@@ -11,13 +11,14 @@ Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 - STL merging -> AMF.XML file
 - STL viewer
+- take AMF file into slicer - added slicer routines - need to make use of when presenting file chooser
+- slicer property - takesAMF
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - plater hangs up on large file reads
 - got confused when cancelled from-SD print
-- HTTP status is incorrect when printing from SD
 
 Larger effort
 - integration with webcam

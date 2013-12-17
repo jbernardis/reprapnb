@@ -7,13 +7,8 @@ from tools import formatElapsed
 from reprap import MAX_EXTRUDERS
 
 filetags = { "filename" : "Name:" }
-filetagorder = ["filename"]
-
-layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
-layertagorder = ["layer", "minmaxxy", "filament", "gclines", "layertime"]
-
+layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
 printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
-printtagorder = ["gcode", "eta", "eta2", "eta3"]
 
 MODE_NORMAL = 0
 MODE_TO_SD = 1
@@ -38,6 +33,17 @@ class InfoPane (wx.Window):
 		self.sdTargetFile = None
 		self.newEta = None
 		
+		self.filetagorder = ["filename"]
+		self.layertagorder = ["layer", "minmaxxy"]
+		for i in range(MAX_EXTRUDERS):
+			tag = "filament%d" % i
+			self.layertagorder.extend(tag)
+			if i != 0:
+				layertags[tag] = ""
+
+		self.layertagorder.extend(["gclines", "layertime"])
+		self.printtagorder = ["gcode", "eta", "eta2", "eta3"]
+			
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
 		self.sizerInfo = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerTag = wx.BoxSizer(wx.VERTICAL)
@@ -56,9 +62,9 @@ class InfoPane (wx.Window):
 		self.sizerTag.AddSpacer((2,2))
 		self.sizerValue.AddSpacer((2,2))
 
-		self.addTags("File Information", filetags, filetagorder)
-		self.addTags("Layer Information", layertags, layertagorder)
-		self.addTags("Print Status", printtags, printtagorder)
+		self.addTags("File Information", filetags, self.filetagorder)
+		self.addTags("Layer Information", layertags, self.layertagorder)
+		self.addTags("Print Status", printtags, self.printtagorder)
 
 		self.sizerInfo.AddSpacer((5,5))
 		self.sizerInfo.Add(self.sizerTag, flag=wx.EXPAND)
@@ -157,11 +163,11 @@ class InfoPane (wx.Window):
 			return
 		
 		self.mode = mode
-		for t in filetagorder:
+		for t in self.filetagorder:
 			self.setValue(t, "")
-		for t in layertagorder:
+		for t in self.layertagorder:
 			self.setValue(t, "")
-		for t in printtagorder:
+		for t in self.printtagorder:
 			self.setValue(t, "")
 		
 		
@@ -196,15 +202,10 @@ class InfoPane (wx.Window):
 		else:
 			self.setValue("minmaxxy", "(%.3f, %.3f) <-> (%.3f, %.3f)" % (minxy[0], minxy[1], maxxy[0], maxxy[1]))
 
-		s = ""
-		sp = ""
 		for i in range(MAX_EXTRUDERS):
-			if s != "":
-				s += ":"
-				sp += ":"
-			s += "%.3f/%.3f" % (filament[i], self.filament[i])
-			sp += "%.3f" % prevfilament[i]
-		self.setValue("filament", "%s (%s prev layers)" % (s, sp))
+			tag = "filament%d" % i
+			s = "T%d: %.3f/%.3f (%.3f)" % (i, filament[i], self.filament[i], prevfilament[i])
+			self.setValue(tag, s)
 		
 		self.setValue("gclines", "%d -> %d" % (gclines[0], gclines[1]))
 		

@@ -71,11 +71,17 @@ class SlicerSettings:
 		if self.type is not None:
 			self.type.sliceComplete()
 			
+	def takesAMF(self):
+		if self.type is None:
+			return False
+
+		return self.type.takesAMF()
+			
 	def configSlicer(self):
 		if self.type is None:
 			return False
-		else:
-			return self.type.configSlicer()
+
+		return self.type.configSlicer()
 		
 	def getSlicerParameters(self):
 		if self.type is None:
