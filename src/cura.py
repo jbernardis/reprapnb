@@ -264,6 +264,7 @@ class Cura:
 		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']
+		self.parent.settings['configfile'] = self.profilemap[self.parent.settings['profile']]
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
 	def sliceComplete(self):
