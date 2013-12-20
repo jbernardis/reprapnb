@@ -417,7 +417,7 @@ class Slic3r:
 		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
-		return fn.replace(".stl", ".gcode")
+		return fn.split('.')[0] + ".gcode"
 		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']

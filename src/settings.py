@@ -8,6 +8,7 @@ import os
 
 from slic3r import Slic3r
 from skeinforge import Skeinforge
+from cura import Cura
 
 INIFILE = "rrh.ini"
 
@@ -35,6 +36,8 @@ class SlicerSettings:
 			self.type = Slic3r(self.app, self)
 		elif self.name == 'skeinforge':
 			self.type = Skeinforge(self.app, self)
+		elif self.name == 'cura':
+			self.type = Cura(self.app, self)
 		else:
 			self.type = None
 			print "Unknown slicer type: %s" % self.name

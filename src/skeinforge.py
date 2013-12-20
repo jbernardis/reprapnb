@@ -202,7 +202,7 @@ class Skeinforge:
 		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
-		return fn.replace(".stl", "_export.gcode")
+		return fn.split('.')[0] + "_export.gcode"
 		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']
