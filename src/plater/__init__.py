@@ -339,7 +339,7 @@ class Plater(wx.Panel):
 	def doAdd(self, evt):
 		dlg = wx.FileDialog(
 			self, message="Choose an STL file",
-			defaultDir=self.settings.lastdirectory, 
+			defaultDir=self.settings.lastdirectory,
 			defaultFile="",
 			wildcard=wildcard,
 			style=wx.FD_OPEN | wx.FD_CHANGE_DIR
@@ -364,7 +364,7 @@ class Plater(wx.Panel):
 		name = "OBJECT%03d" % self.objNumber
 		self.objNumber += 1
 		print "Reading STL file"
-		stlFile = stltool.stl(filename=fn, name=name)
+		stlFile = stltool.stl(filename=fn, name=name, zZero=True)
 		print "Back from read - adding to the frame"
 		self.stlFrame.addStl(stlFile, highlight=True)
 		print "back from add"

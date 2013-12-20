@@ -1,6 +1,107 @@
 import os
 import wx
 
+import stltool
+
+class volume:
+	def __init__(self, fn, startIdx, zzero, xoffset, yoffset):
+		self.vertexMap = {}
+		self.vertexVal = []
+		self.vertexIdx = startIdx
+		self.triangles = []
+		self.name = fn
+		
+		self.stl = stltool.stl(filename=fn, zZero=zzero, xOffset=xoffset, yOffset=yoffset)
+		for f in self.stl.facets:
+			triangle = [None, None, None]
+			for px in range(3):
+				key = str(f[1][px][0]) + ";" + str(f[1][px][1]) + ";" + str(f[1][px][2])
+				if key not in self.vertexMap.keys():
+					self.vertexMap[key] = self.vertexIdx
+					self.vertexVal.append(key)
+					self.vertexIdx += 1
+			
+				triangle[px] = self.vertexMap[key]
+	
+			self.triangles.append(triangle)
+			
+	def maxVertexIdx(self):
+		return self.vertexIdx
+	
+	def getName(self):
+		return self.name
+	
+	def getVertices(self):
+		result = ""
+		for v in self.vertexVal:
+			x, y, z = v.split(";")
+			result += "        <vertex>\n"
+			result += "          <coordinates>\n"
+			result += "            <x>%s</x>\n" % x
+			result += "            <y>%s</y>\n" % y
+			result += "            <z>%s</z>\n" % z
+			result += "          </coordinates>\n"
+			result += "        </vertex>\n"	
+
+		return result
+	
+	def getTriangles(self):
+		result = ""
+		for t in self.triangles:
+			result += "        <triangle>\n"
+			result += "          <v1>%s</v1>\n" % t[0]
+			result += "          <v2>%s</v2>\n" % t[1]
+			result += "          <v3>%s</v3>\n" % t[2]
+			result += "        </triangle>\n"
+		
+		return result
+			
+class amf:
+	def __init__(self):
+		self.volumes = []
+		self.vIdx = 0
+		
+	def addStl(self, fn, zZero=False, xOffset=0, yOffset=0):
+		v = volume(fn, self.vIdx, zZero, xOffset, yOffset)
+		self.vIdx = v.maxVertexIdx()
+		self.volumes.append(v)
+
+	def merge(self):
+		result = ""
+		
+		result += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		result += "<amf unit=\"millimeter\">\n"
+		result += "  <metadata type=\"cad\">stlmerge.py</metadata>\n"
+		
+		vx = 0
+		for v in self.volumes:
+			result += "  <material id=\"%d\">\n" % vx
+			vx += 1
+			result += "    <metadata type=\"Name\">%s</metadata>\n" % v.getName()
+			result += "  </material>\n"
+		
+		result += "  <object id=\"0\">\n"
+		result += "    <mesh>\n"
+		result += "      <vertices>\n"
+		
+		for v in self.volumes:
+			result += v.getVertices()
+			
+		result += "      </vertices>\n"
+		
+		vx = 0
+		for v in self.volumes:
+			result += "      <volume materialid=\"%d\">\n" % vx
+			result += v.getTriangles()
+			result += "      </volume>\n"
+			vx += 1
+
+		result += "    </mesh>\n"
+		result += "  </object>\n"
+		result += "</amf>"
+		return result
+
+
 BUTTONDIM = (48, 48)
 
 class StlMergeDlg(wx.Dialog):
@@ -135,15 +236,28 @@ class StlMergeDlg(wx.Dialog):
 			dlg.Destroy()
 			return
 		
-		path = dlg.GetPath()
+		amfFn = dlg.GetPath()
 		dlg.Destroy()
-		
-		# do merge here
-		print self.fileList, " ==> ", path
-		
 
+		self.logger.LogMessage("Beginning merge")
+				
+		a = amf()
+		for s in self.fileList:
+			self.logger.LogMessage("Loading " + s)
+			a.addStl(s)
+
+		self.logger.LogMessage("Saving AMF output file " + amfFn)
+		try:
+			f=open(amfFn,"w")
+		except:
+			self.logger.LogMessage("Unable to open output file %s" % amfFn)
+			return
+	
+		f.write(a.merge())
+		f.close()
+		
 		dlg = wx.MessageDialog(self, "Merge Completed",
-					'Merges', wx.OK | wx.ICON_INFORMATION)
+					'Merged', wx.OK | wx.ICON_INFORMATION)
 			
 		dlg.ShowModal()
 		self.parent.dlgMergeClosed()

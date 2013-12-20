@@ -95,7 +95,7 @@ def emitstl(filename,facets=[],objname="stltool_export",binary=False):
 	return True
 		
 class stl:
-	def __init__(self, filename=None, name=None):
+	def __init__(self, filename=None, name=None, zZero=False, xOffset=0, yOffset=0):
 		self.facet=[[0,0,0],[[0,0,0],[0,0,0],[0,0,0]]]
 		self.facets=[]
 		self.facetsminz=[]
@@ -151,15 +151,15 @@ class stl:
 			else:
 				for i in self.f:
 					self.parseline(i)
-			self.setHull()
+			self.setHull(zZero, xOffset, yOffset)
 			
-	def setId(self, id):
-		self.id = id
+	def setId(self, sid):
+		self.id = sid
 		
 	def getId(self):
 		return self.id
 	
-	def setHull(self):
+	def setHull(self, zZero, xOffset, yOffset):
 		self.projection = numpy.array([])
 		minz = 99999
 		for f in self.facets:
@@ -177,11 +177,22 @@ class stl:
 		self.projection = self.projection.reshape(n/2,2)
 		h = self.qhull(self.projection)
 		self.adjustHull(h)
-		if minz != 0:
+		
+		modFacets = False
+		if zZero and minz != 0:
 			for i in range(len(self.facets)):
 				for j in range(3):
 					self.facets[i][1][j][2] -= minz
-					
+			modFacets = True
+			
+		if xOffset + yOffset != 0:
+			for i in range(len(self.facets)):
+				for j in range(3):
+					self.facets[i][1][j][0] += xOffset
+					self.facets[i][1][j][1] += yOffset
+			modFacets = True
+
+		if modFacets:					
 			self.facetsminz=[]
 			self.facetsmaxz=[]
 			for facet in self.facets:
