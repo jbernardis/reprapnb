@@ -451,55 +451,56 @@ class FilePrepare(wx.Panel):
 		self.ipPrintTime.SetFont(ipfont)
 		self.infoPane.Add(self.ipPrintTime, pos=(ln,1), flag=wx.ALIGN_LEFT)
 		
-		ln += 1
-		text = "Extrusion Speeds: "
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
-		
-		ipHeight = dc.GetTextExtent("20")[1] + TEXT_PAD
-		t = wx.TextCtrl(self, wx.ID_ANY, "< 20 mm/s", size=(150, ipHeight),
-						style=wx.TE_RICH2|wx.TE_READONLY)
-		t.SetBackgroundColour(wx.Colour(237, 139, 33))
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln,1), flag=wx.ALIGN_LEFT)
-		
-		self.infoPane.AddSpacer((10, 10), pos=(ln+1, 1))
-		
-		t = wx.TextCtrl(self, wx.ID_ANY, "< 50 mm/s", size=(150, ipHeight),
-						style=wx.TE_RICH2|wx.TE_READONLY)
-		t.SetBackgroundColour(wx.Colour(240, 0, 0))
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln+2,1), flag=wx.ALIGN_LEFT)
-		
-		self.infoPane.AddSpacer((10, 10), pos=(ln+3, 1))
-		
-		t = wx.TextCtrl(self, wx.ID_ANY, "< 60 mm/s", size=(150, ipHeight),
-						style=wx.TE_RICH2|wx.TE_READONLY)
-		t.SetBackgroundColour("blue")
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln+4,1), flag=wx.ALIGN_LEFT)
-		
-		self.infoPane.AddSpacer((10, 10), pos=(ln+5, 1))
-		
-		t = wx.TextCtrl(self, wx.ID_ANY, "< 120 mm/s", size=(150, ipHeight),
-						style=wx.TE_RICH2|wx.TE_READONLY)
-		t.SetBackgroundColour("purple")
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln+6,1), flag=wx.ALIGN_LEFT)
-		
-		self.infoPane.AddSpacer((10, 10), pos=(ln+7, 1))
-		
-		t = wx.TextCtrl(self, wx.ID_ANY, ">= 120 mm/s", size=(150, ipHeight),
-						style=wx.TE_RICH2|wx.TE_READONLY)
-		t.SetBackgroundColour("green")
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln+8,1), flag=wx.ALIGN_LEFT)
-		
-		self.infoPane.AddSpacer((40, 40), pos=(ln+9, 0))
-		
+# 		ln += 1
+# 		text = "Extrusion Speeds: "
+# 		w, h = dc.GetTextExtent(text)
+# 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
+# 		
+# 		ipHeight = dc.GetTextExtent("20")[1] + TEXT_PAD
+# 		t = wx.TextCtrl(self, wx.ID_ANY, "< 20 mm/s", size=(150, ipHeight),
+# 						style=wx.TE_RICH2|wx.TE_READONLY)
+# 		t.SetBackgroundColour(wx.Colour(237, 139, 33))
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln,1), flag=wx.ALIGN_LEFT)
+# 		
+# 		self.infoPane.AddSpacer((10, 10), pos=(ln+1, 1))
+# 		
+# 		t = wx.TextCtrl(self, wx.ID_ANY, "< 50 mm/s", size=(150, ipHeight),
+# 						style=wx.TE_RICH2|wx.TE_READONLY)
+# 		t.SetBackgroundColour(wx.Colour(240, 0, 0))
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln+2,1), flag=wx.ALIGN_LEFT)
+# 		
+# 		self.infoPane.AddSpacer((10, 10), pos=(ln+3, 1))
+# 		
+# 		t = wx.TextCtrl(self, wx.ID_ANY, "< 60 mm/s", size=(150, ipHeight),
+# 						style=wx.TE_RICH2|wx.TE_READONLY)
+# 		t.SetBackgroundColour("blue")
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln+4,1), flag=wx.ALIGN_LEFT)
+# 		
+# 		self.infoPane.AddSpacer((10, 10), pos=(ln+5, 1))
+# 		
+# 		t = wx.TextCtrl(self, wx.ID_ANY, "< 120 mm/s", size=(150, ipHeight),
+# 						style=wx.TE_RICH2|wx.TE_READONLY)
+# 		t.SetBackgroundColour("purple")
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln+6,1), flag=wx.ALIGN_LEFT)
+# 		
+# 		self.infoPane.AddSpacer((10, 10), pos=(ln+7, 1))
+# 		
+# 		t = wx.TextCtrl(self, wx.ID_ANY, ">= 120 mm/s", size=(150, ipHeight),
+# 						style=wx.TE_RICH2|wx.TE_READONLY)
+# 		t.SetBackgroundColour("green")
+# 		t.SetFont(ipfont)
+# 		self.infoPane.Add(t, pos=(ln+8,1), flag=wx.ALIGN_LEFT)
+# 		
+# 		self.infoPane.AddSpacer((40, 40), pos=(ln+9, 0))
+# 		
 		ln += 10
+		ipHeight = dc.GetTextExtent("20")[1] + TEXT_PAD
 		self.ipGCodeLine = wx.StaticText(self, wx.ID_ANY, "", size=(-1, ipHeight))
 		self.ipGCodeLine.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeLine, pos=(ln,0), flag=wx.ALIGN_LEFT)

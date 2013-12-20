@@ -287,6 +287,7 @@ class GcFrame (wx.Window):
 		last_e = p[3]
 		if last_e is None:
 			last_e = 0
+		nn = 0
 		while p:
 			if prev == [None, None, None, None]:
 				prev = [p[0], p[1], p[2], p[3]]
@@ -295,7 +296,7 @@ class GcFrame (wx.Window):
 				last_e = p[3]
 			else:
 				tool = p[4]
-				self.drawLine(dc, prev, p, last_e, tool, background=background)
+				self.drawLine(dc, prev, p, last_e, tool, nn, background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -303,8 +304,9 @@ class GcFrame (wx.Window):
 				last_e = prev[3]
 				
 			p = layer.getNextMove()
+			nn += 1
 
-	def drawLine(self, dc, prev, p, last_e, tool, background=False):				
+	def drawLine(self, dc, prev, p, last_e, tool, ln, background=False):				
 		if background and (p[3] is None):
 			return
 
@@ -349,6 +351,9 @@ class GcFrame (wx.Window):
 				
 		if p[5] == self.hilite:
 			w = w * 3
+			
+		if w > 5:
+			print "Width: ", w, prev[0], prev[1], p[0], p[1], ln
 
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])

@@ -173,7 +173,7 @@ class Layer:
 		
 	def getLayerStart(self):
 		self.mx = -1
-		return (self.startx, self.starty, self.startz, self.starte, self.currenttool, self.startspeed, self.startlx)
+		return (self.startx, self.starty, self.startz, self.starte, self.currenttool, self.startspeed, self.startlx, False)
 	
 	def getNextMove(self):
 		self.mx += 1
