@@ -10,6 +10,7 @@ from savelayer import SaveLayerDlg
 from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
 from editgcode import EditGCodeDlg
+from stlmerge import StlMergeDlg
 from images import Images
 from tools import formatElapsed 
 
@@ -18,7 +19,6 @@ from reprap import MAX_EXTRUDERS
 from settings import TEMPFILELABEL
 
 wildcard = "G Code (*.gcode)|*.gcode"
-STLwildcard = "STL (*.stl)|*.stl"
 
 GCODELINETEXT = "Current G Code Line: (%d)"
 
@@ -231,6 +231,13 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
+		
+		self.sizerBtns.AddSpacer((20, 20))
+		
+		self.bMerge = wx.BitmapButton(self, wx.ID_ANY, self.images.pngMerge, size=BUTTONDIM)
+		self.bMerge.SetToolTipString("Merge 2 or more STL files into an AMF file")
+		self.sizerBtns.Add(self.bMerge)
+		self.Bind(wx.EVT_BUTTON, self.fileMerge, self.bMerge)
 		
 		self.sizerBtns.AddSpacer((20, 20))
 		
@@ -546,6 +553,7 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(False)
 			self.bToPrinter.Enable(False)
 			self.bOpen.Enable(False)
+			self.bMerge.Enable(False)
 			return
 		
 		if self.checkModified(message='Close file without saving changes?'):
@@ -555,7 +563,7 @@ class FilePrepare(wx.Panel):
 			self, message="Choose an STL file",
 			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
-			wildcard=STLwildcard,
+			wildcard=self.app.slicer.fileTypes(),
 			style=wx.OPEN | wx.CHANGE_DIR
 			)
 		
@@ -578,6 +586,7 @@ class FilePrepare(wx.Panel):
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
 		self.bOpen.Enable(False)
+		self.bMerge.Enable(False)
 		self.disableEditButtons()
 		#self.bSlice.Enable(False)
 		self.bToPrinter.Enable(False)
@@ -622,6 +631,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Slicer failed to produce expected G Code file: %s" % self.gcFile)
 				self.gcFile = None
 				self.bOpen.Enable(True)
+				self.bMerge.Enable(True)
 			
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
@@ -645,9 +655,21 @@ class FilePrepare(wx.Panel):
 			self.loadFile(path)
 
 		dlg.Destroy()
+		
+	def fileMerge(self, event):
+		self.disableButtons()
+		if self.dlgMerge is None:
+			self.dlgMerge = StlMergeDlg(self)
+			self.dlgMerge.CenterOnScreen()
+			self.dlgMerge.Show()
+		
+	def dlgMergeClosed(self):
+		self.dlgMerge = None
+		self.enableButtons()
 
 	def loadFile(self, fn):
 		self.bOpen.Enable(False)
+		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
 		self.disableEditButtons()
 		self.bToPrinter.Enable(False)
@@ -817,6 +839,7 @@ class FilePrepare(wx.Panel):
 		
 	def enableButtons(self):
 		self.bOpen.Enable(True)
+		self.bMerge.Enable(True)
 		self.bSlice.Enable(True)
 		self.bSave.Enable(self.gcodeLoaded)
 		self.bSaveLayer.Enable(self.gcodeLoaded)
@@ -827,6 +850,7 @@ class FilePrepare(wx.Panel):
 		
 	def disableButtons(self):
 		self.bOpen.Enable(False)
+		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
 		self.bSave.Enable(False)
 		self.bSaveLayer.Enable(False)

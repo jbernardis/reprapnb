@@ -7,12 +7,13 @@ In Progress/Need Testing
 Low Hanging
 
 Medium
+- Incorporate Cura
+- Use toasterbox to display log messages momentarily
 - other places for separate thread - file saving
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 - STL merging -> AMF.XML file
 - STL viewer
 - take AMF file into slicer - added slicer routines - need to make use of when presenting file chooser
-- slicer property - takesAMF
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box

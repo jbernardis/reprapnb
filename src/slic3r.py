@@ -263,8 +263,8 @@ class Slic3r:
 		self.app = app
 		self.parent = parent
 		
-	def takesAMF(self):
-		return True
+	def fileTypes(self):
+		return "STL (*.stl)|*.stl*.STL|AMF XML files|*.amf.xml"
 		
 	def getSettingsKeys(self):
 		return ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config'], ['filament', 'filamentfile']

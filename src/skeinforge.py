@@ -118,8 +118,8 @@ class Skeinforge:
 		self.app = app
 		self.parent = parent
 		
-	def takesAMF(self):
-		return False
+	def fileTypes(self):
+		return "STL (*.stl)|*.stl*.STL"
 		
 	def getSettingsKeys(self):
 		return ['profilefile', 'profiledir', 'profile', 'command', 'config'], []
