@@ -21,29 +21,38 @@ class StlMergeDlg(wx.Dialog):
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-		btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnSizer1 = wx.BoxSizer(wx.HORIZONTAL)
+		btnSizer2 = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.bAddStl = wx.Button(self, wx.ID_ANY, "Add STL", size=BUTTONDIM)
 		self.bAddStl.SetToolTipString("Add an STL file to the merge")
 		self.Bind(wx.EVT_BUTTON, self.onAddStl, self.bAddStl)
-		btnSizer.Add(self.bAddStl)
+		btnSizer1.Add(self.bAddStl)
 
 		self.bDelStl = wx.Button(self, wx.ID_ANY, "Del STL", size=BUTTONDIM)
 		self.bDelStl.SetToolTipString("Remove an STL file from the merge")
 		self.Bind(wx.EVT_BUTTON, self.onDelStl, self.bDelStl)
-		btnSizer.Add(self.bDelStl)
+		self.bDelStl.Enable(False)
+		btnSizer1.Add(self.bDelStl)
+		
+		self.sizer.Add(btnSizer1)
+
+		self.lb = wx.ListBox(self, wx.ID_ANY, size=(90, 120), [], wx.LB_SINGLE)
+		self.Bind(wx.EVT_LISTBOX, self.EvtListBox, self.lb)
+		self.sizer.Add(self.lb, 0, wx.ALL, 10)
 
 		self.bMerge = wx.Button(self, wx.ID_ANY, "Merge Files", size=BUTTONDIM)
 		self.bMerge.SetToolTipString("Execute the merge")
 		self.Bind(wx.EVT_BUTTON, self.onMerge, self.bMerge)
-		btnSizer.Add(self.bMerge)
+		self.bMerge.Enable(False)
+		btnSizer2.Add(self.bMerge)
 
 		self.bCancel = wx.Button(self, wx.ID_ANY, "Cancel", size=BUTTONDIM)
 		self.bCancel.SetToolTipString("Exit without merging")
 		self.Bind(wx.EVT_BUTTON, self.onCancel, self.bCancel)
-		btnSizer.Add(self.bCancel)
+		btnSizer2.Add(self.bCancel)
 		
-		self.sizer.Add(btnSizer)
+		self.sizer.Add(btnSizer2)
 
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
@@ -64,16 +73,40 @@ class StlMergeDlg(wx.Dialog):
 			self.settings.laststldirectory = os.path.dirname(path)
 			self.settings.setModified()
 			self.fileList.append(path)
+			self.lb.Append(path)
 				
 		dlg.Destroy()
+		if len(self.fileList) > 0:
+			self.bDelStl.Enable(True)
+		if len(self.fileList) > 1:
+			self.bMerge.Enable(True)
 		
 	def onDelStl(self, event):
-		pass
+		print "selection = ", self.lb.GetSelection()
+		if len(self.fileList) <= 0:
+			self.bDelStl.Enable(False)
+		if len(self.fileList) <= 1:
+			self.bMerge.Enable(False)
 		
 	def onMerge(self, event):
-		pass
+		dlg = wx.MessageDialog(self, "Merge Completed",
+					'Merges', wx.OK | wx.ICON_INFORMATION)
+			
+		dlg.ShowModal()
+		self.parent.dlgMergeClosed()
+		self.Destroy()
 		
 	def onCancel(self, event):
+		if len(self.fileList) > 0:
+			dlg = wx.MessageDialog(self, "Are you sure you want to exit without merging?",
+					'Cancel Merge', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+			
+			rc = dlg.ShowModal()
+			dlg.Destroy()
+
+			if rc != wx.ID_YES:
+				return
+
 		self.parent.dlgMergeClosed()
 		self.Destroy()
 		
