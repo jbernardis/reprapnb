@@ -10,6 +10,7 @@ import ConfigParser
 
 BUTTONDIM = (48, 48)
 CBSIZE = 200
+PREFSECTION = 'preference'
 
 class CuraCfgDialog(wx.Dialog):
 	def __init__(self, slicer):
@@ -35,41 +36,37 @@ class CuraCfgDialog(wx.Dialog):
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		dc = wx.WindowDC(self)
 		dc.SetFont(f)
-		prf = wx.BoxSizer(wx.HORIZONTAL)
+		cbsz = wx.BoxSizer(wx.HORIZONTAL)
 		
 		text = " Profile:"
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		prf.Add(t, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP, 10)
+		cbsz.Add(t, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP, 10)
 	
 		self.cbProfile = wx.ComboBox(self, wx.ID_ANY, self.vprofile,
  			(-1, -1), (CBSIZE, -1), self.profilemap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbProfile.SetFont(f)
 		self.cbProfile.SetToolTipString("Choose which cura profile to use")
-		prf.Add(self.cbProfile, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		cbsz.Add(self.cbProfile, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		self.cbProfile.SetStringSelection(self.vprofile)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseProfile, self.cbProfile)
 
-		sizer.Add(prf, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-
-		prt = wx.BoxSizer(wx.HORIZONTAL)
-		
 		text = " Printer:"
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w,h))
 		t.SetFont(f)
-		prt.Add(t, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP, 10)
+		cbsz.Add(t, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP, 10)
 	
 		self.cbPrinter = wx.ComboBox(self, wx.ID_ANY, self.vprofile,
  			(-1, -1), (CBSIZE, -1), self.printermap.keys(), wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbPrinter.SetFont(f)
 		self.cbPrinter.SetToolTipString("Choose which cura printer to use")
-		prt.Add(self.cbPrinter, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		cbsz.Add(self.cbPrinter, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		self.cbPrinter.SetStringSelection(self.vprinter)
 		self.Bind(wx.EVT_COMBOBOX, self.doChoosePrinter, self.cbPrinter)
 
-		sizer.Add(prt, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		sizer.Add(cbsz, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 		
 		btnsizer = wx.StdDialogButtonSizer()
 		
@@ -128,6 +125,13 @@ class CuraCfgDialog(wx.Dialog):
 		self.cbProfile.SetItems(self.profilemap.keys())
 		self.cbProfile.SetStringSelection(self.vprofile)
 		
+		self.printermap = self.slicer.printermap
+		if self.vprinter not in self.printermap.keys():
+			self.vprinter = self.printermap.keys()[0]
+			
+		self.cbPrinter.SetItems(self.printermap.keys())
+		self.cbPrinter.SetStringSelection(self.vprinter)
+		
 	def getValues(self):
 		return [self.vprofile, self.vprinter, self.refreshed]
 		
@@ -149,29 +153,32 @@ class Cura:
 		
 	def getSettingsKeys(self):
 		return ['curapreferences', 'profiledir', 'profile', 'printer', 'command', 'config'], []
-		
-	def initialize(self, flag=False):
-		if flag:
-			self.vprinter = self.parent.settings['printer']
-			self.vprofile = self.parent.settings['profile']
-
+	
+	def loadPrefs(self):
 		self.prefs = ConfigParser.ConfigParser()
 		self.prefs.optionxform = str
 		self.prefFile = self.parent.settings['curapreferences']
 		if not self.prefs.read(self.prefFile):
 			self.showWarning("Cura preferences file %s does not exist.  Using default values" % self.prefFile)
+		
+	def initialize(self, flag=False):
+		if flag:
+			self.vprinter = self.parent.settings['printer']
+			self.vprofile = self.parent.settings['profile']
 			
+		self.loadPrefs()
+
 		self.getProfileOptions()
 		p = self.vprofile
 		if p in self.profilemap.keys():
 			self.parent.settings['profile'] = p
 		else:
 			self.parent.settings['profile'] = None
-			
-		self.getPrinterOptions()		
+
+		self.getPrinterOptions()
 		p = self.vprinter
 		if p in self.printermap.keys():
-			self.parent.settings['printer'] = self.printermap[p]
+			self.parent.settings['printer'] = p
 		else:
 			self.parent.settings['printer'] = None
 
@@ -210,7 +217,7 @@ class Cura:
 			return
 		
 		n = self.printermap[self.vprinter][0]
-		self.prefs.set("preferences", "active_machine", n)
+		self.prefs.set(PREFSECTION, "active_machine", n)
 		
 		try:		
 			cfp = open(self.prefFile, 'wb')
@@ -228,8 +235,8 @@ class Cura:
 		bedTemp = 60
 		nExtruders = 1
 		bedSize = [200, 200]
-		if self.prefs.has_option('preferences', 'extruder_amount'):
-			nExtruders = self.prefs.getint('preferences', 'extruder_amount')
+		if self.prefs.has_option(PREFSECTION, 'extruder_amount'):
+			nExtruders = self.prefs.getint(PREFSECTION, 'extruder_amount')
 			
 		if self.parent.settings['printer'] in self.printermap.keys():
 			p = self.parent.settings['printer']
@@ -242,8 +249,8 @@ class Cura:
 				prof = ConfigParser.ConfigParser()
 				prof.optionxform = str
 				if prof.read(fn):
-					if prof.has_option('preferences', 'print_bed_temperature'):
-						bedTemp = prof.getfloat('preferences', 'print_bed_temperature')
+					if prof.has_option(PREFSECTION, 'print_bed_temperature'):
+						bedTemp = prof.getfloat(PREFSECTION, 'print_bed_temperature')
 	
 					heTemps = []
 					for i in range(nExtruders):
@@ -251,8 +258,8 @@ class Cura:
 						t = 185
 						if i > 0:
 							key += ("%d" % i+1)
-							if prof.has_option('preferences', key):
-								t = prof.getfloat('preferences', key)
+							if prof.has_option(PREFSECTION, key):
+								t = prof.getfloat(PREFSECTION, key)
 						heTemps.append(t)
 			except:
 				print "Unable to process cura profile file %s: " % fn
@@ -280,10 +287,10 @@ class Cura:
 			return {}
 		r = {}
 		for f in sorted(l):
-			ext = os.path.splitext(f)[1]
+			bn, ext = os.path.splitext(f)
 			if ext in [".ini", ".INI"]:
 				p = os.path.join(d, f)
-				r[f] = p
+				r[bn] = p
 				
 		self.profilemap = r
 		return r
@@ -292,8 +299,8 @@ class Cura:
 		self.printermap = {}
 		r = {}
 		self.vxprinter = 0
-		if self.prefs.has_option('preferences', 'active_machine'):
-			self.vxprinter = self.prefs.getint('preferences', 'active_machine')
+		if self.prefs.has_option(PREFSECTION, 'active_machine'):
+			self.vxprinter = self.prefs.getint(PREFSECTION, 'active_machine')
 		for ix in range(5):
 			section = "machine_%d" % ix
 			if self.prefs.has_section(section):
@@ -303,12 +310,12 @@ class Cura:
 					name = section
 					
 				if self.prefs.has_option(section, 'machine_width'):
-					width = self.prefs.get(section, 'machine_width')
+					width = self.prefs.getint(section, 'machine_width')
 				else:
 					width = 200
 					
 				if self.prefs.has_option(section, 'machine_depth'):
-					depth = self.prefs.get(section, 'machine_depth')
+					depth = self.prefs.getint(section, 'machine_depth')
 				else:
 					depth = 200
 					
