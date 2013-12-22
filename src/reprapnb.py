@@ -638,6 +638,9 @@ class MainFrame(wx.Frame):
 
 		if self.httpServer is not None:
 			self.httpServer.close()
+			
+		if self.logger is not None:
+			self.logger.close()
 				
 		self.settings.cleanUp()	
 		self.Destroy()

@@ -161,7 +161,8 @@ class Layer:
 		self.currentx = cx
 		self.currenty = cy
 		self.currentz = cz
-		self.currente = ce
+		if ce is not None:
+			self.currente = ce
 		self.currenttool = tool
 		self.currentspeed = cspeed
 		

@@ -17,11 +17,9 @@ class Toaster(wx.Frame):
 		panel = wx.Panel(self, wx.ID_ANY, size=size, pos=(0,0))
 		lbsize = self.GetClientSize()
 		self.lb = wx.ListBox(panel, wx.ID_ANY, (0, 0), lbsize, [], wx.LB_SINGLE)
-		self.Timers = []
-		self.alpha = 0
 		self.showTime = 4000
-		self.fadeTime = 1000
-		self.SetTransparent(self.alpha)
+		self.Timers = []
+		self.lct = 0
 		self.Hide()
 		
 	def SetPositionByCorner(self, pos):
@@ -42,74 +40,23 @@ class Toaster(wx.Frame):
 	def SetShowTime(self, t):
 		self.showTime = t
 		
-	def SetFadeTime(self, t):
-		self.fadeTime = t
-
 	def Append(self, v):
 		self.lb.Append(v)
 		timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, timer)  
 		timer.Start(self.showTime, True) 
+
 		self.Timers.append(timer)
 		if len(self.Timers) == 1:
-			self.FadeIn()
+			self.Show()
 		
 	def onTimer(self, evt):
 		del self.Timers[0]
 		self.lb.Delete(0)
 		if len(self.Timers) == 0:
-			self.alpha = 0
-			self.FadeOut()
-			
-	def FadeIn(self):
-		try:
-			self.timerFadeOut.Stop()
-		except:
-			pass
-		
-		self.timerFadeIn = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, self.onFadeIn, self.timerFadeIn)
-		self.alpha = 0
-		self.Show()
-		self.timerFadeIn.Start(self.fadeTime/25.5)
-		
-	def onFadeIn(self, evt):
-		self.alpha += 10
-		if self.alpha >= 255:
-			self.alpha = 255
-			self.timerFadeIn.Stop()
-		self.SetTransparent(self.alpha)
-			
-	def FadeOut(self):
-		try:
-			self.timerFadeIn.Stop()
-		except:
-			pass
-		
-		self.timerFadeOut = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, self.onFadeOut, self.timerFadeOut)
-		self.alpha = 255
-		self.timerFadeOut.Start(self.fadeTime/25.5)
-		
-	def onFadeOut(self, evt):
-		self.alpha -= 10
-		if self.alpha <= 0:
-			self.alpha = 0
-			self.timerFadeOut.Stop()
 			self.Hide()
-		self.SetTransparent(self.alpha)
-			
+		
 	def Close(self):
-		try:
-			self.timerFadeIn.Stop()
-		except:
-			pass
-		
-		try:
-			self.timerFadeOut.Stop()
-		except:
-			pass
-		
 		for t in self.Timers:
 			try:
 				t.Stop()

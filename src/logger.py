@@ -33,7 +33,6 @@ class Logger(wx.Panel):
 		
 		self.toaster = TB.Toaster()
 		self.toaster.SetPositionByCorner(TB.TB_LOWERRIGHT)
-		self.toaster.SetFadeTime(1000)
 		self.toaster.SetShowTime(2000)
 
 		self.hiLiteTabTimer = wx.Timer(self)
@@ -166,3 +165,7 @@ class Logger(wx.Panel):
 
 	def LogWarning(self, text):
 		self.LogMessage("Warning - " +string.rstrip(text))
+		
+	def close(self):
+		if self.toaster is not None:
+			self.toaster.Close()

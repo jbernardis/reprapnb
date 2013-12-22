@@ -331,16 +331,6 @@ class GcFrame (wx.Window):
 			dist = triangulate(prev, p)
 				
 			c = toolColor[t]
-			#if p[4] < 1200:
-				#c = orange
-			#elif p[4] < 3000:
-						#c = "red"
-			#elif p[4] < 3600:
-				#c = "blue"
-			#elif p[4] >= 7200:
-				#c = "green"
-			#else:
-				#c = "purple"
 
 			if dist == 0:
 				w = 1.0
@@ -353,7 +343,11 @@ class GcFrame (wx.Window):
 			w = w * 3
 			
 		if w > 5:
-			print "Width: ", w, prev[0], prev[1], p[0], p[1], ln
+			print "Width, Height: ", w, p[2]
+			print "Points F->T", prev[0], prev[1], p[0], p[1]
+			print "Move number: ", ln
+			print "change in extrusion amt: ", last_e, p[3]
+			print "calculated volume and distance",  evolume, dist
 
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])
