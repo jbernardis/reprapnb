@@ -405,7 +405,9 @@ class PrintMonitor(wx.Panel):
 		return self.startTime, self.endTime
 	
 	def onM27Timer(self, evt):
-		self.reprap.send_now("M27")
+		if not self.app.M27Pending:
+			self.app.M27Pending = True
+			self.reprap.send_now("M27")
 
 	def setPrintMode(self, mode):
 		self.printMode = mode

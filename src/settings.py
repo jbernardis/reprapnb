@@ -109,6 +109,7 @@ class Settings:
 		self.slicersettings = []
 		self.startpane=0
 		self.lastlogdirectory = "."
+		self.usepopup = True
 		self.speedcommand = None
 		self.port = 8989
 		self.maxloglines = 5000
@@ -156,6 +157,8 @@ class Settings:
 						self.speedcommand = None
 					else:
 						self.speedcommand = value
+				elif opt == 'usepopuplog':
+					self.usepopup = parseBoolean(value, True)
 				elif opt == 'maxloglines':
 					if value.lower() == "none":
 						self.maxloglines = None
@@ -271,6 +274,7 @@ class Settings:
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
+			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]

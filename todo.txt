@@ -1,19 +1,14 @@
 In Progress/Need Testing
-- web server  need to test and add additional functionality - cool command - check status for SD to/from printing
-- an icon for the main screen and for when minimized
-- need a tool change mechanism
-- in general need to handle 2 or 3 extruders - temp graphs, etc
+- cura support
+- plater hanging
 
 Low Hanging
 
 Medium
-- Incorporate Cura
 - Use toasterbox to display log messages momentarily
-- other places for separate thread - file saving
+- other places for separate thread - file saving from plater, amf merge, etc
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
-- STL merging -> AMF.XML file
 - STL viewer
-- take AMF file into slicer - added slicer routines - need to make use of when presenting file chooser
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box

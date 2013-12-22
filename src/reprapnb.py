@@ -54,6 +54,7 @@ class MainFrame(wx.Frame):
 		self.skipCycles = 0
 		self.discPending = False
 		self.M105pending = False
+		self.M27pending = False
 		self.suspendM105 = False
 		self.printPosition = None
 		self.logger = None

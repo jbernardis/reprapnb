@@ -7,6 +7,7 @@ import os
 import wx
 import time
 import string
+import toaster as TB
 
 BUTTONDIM = (48, 48)
 
@@ -29,6 +30,11 @@ class Logger(wx.Panel):
 		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
+		
+		self.toaster = TB.Toaster()
+		self.toaster.SetPositionByCorner(TB.TB_LOWERRIGHT)
+		self.toaster.SetFadeTime(1000)
+		self.toaster.SetShowTime(2000)
 
 		self.hiLiteTabTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onHiLiteTabTimer, self.hiLiteTabTimer)
@@ -52,6 +58,14 @@ class Logger(wx.Panel):
 		
 		bsz.AddSpacer((20, 60))
 		
+		self.cbUsePopup = wx.CheckBox(self, wx.ID_ANY, "Use Popup Display")
+		self.cbUsePopup.SetToolTipString("Display log messages in a popup display")
+		self.Bind(wx.EVT_CHECKBOX, self.checkUsePopup, self.cbUsePopup)
+		self.cbUsePopup.SetValue(self.settings.usepopup)
+		bsz.Add(self.cbUsePopup, 0, wx.TOP, 10)
+		
+		bsz.AddSpacer((20, 60))
+		
 		self.cbLogCmds = wx.CheckBox(self, wx.ID_ANY, "Log Commands")
 		self.cbLogCmds.SetToolTipString("Log G Code commands entered interactively")
 		self.Bind(wx.EVT_CHECKBOX, self.checkLogCmds, self.cbLogCmds)
@@ -72,6 +86,10 @@ class Logger(wx.Panel):
 		self.SetSizer(sz)
 		self.Layout()
 		self.Fit()
+		
+	def checkUsePopup(self, evt):
+		self.settings.usepopup = evt.IsChecked()
+		self.settings.setModified()
 		
 	def checkLogCmds(self, evt):
 		self.logCommands = evt.IsChecked()
@@ -116,7 +134,11 @@ class Logger(wx.Panel):
 	def LogMessage(self, text):
 		s = time.strftime('%H:%M:%S', time.localtime(time.time()))
 		try:
-			self.t.AppendText(s+" - " +string.rstrip(text)+"\n")
+			msg = s+" - "+string.rstrip(text)
+			if self.settings.usepopup:
+				self.toaster.Append(msg)
+				
+			self.t.AppendText(msg+"\n")
 			self.nLines += 1
 			if self.maxLines is not None and self.nLines > self.maxLines:
 				self.t.Remove(0L, self.t.XYToPosition(0, self.chunk))
