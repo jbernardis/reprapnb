@@ -5,7 +5,6 @@ In Progress/Need Testing
 Low Hanging
 
 Medium
-- Use toasterbox to display log messages momentarily
 - other places for separate thread - file saving from plater, amf merge, etc
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 - STL viewer

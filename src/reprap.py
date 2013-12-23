@@ -152,8 +152,8 @@ class SendThread:
 				elif not self.okWait:
 					if not self.mainQ.empty():
 						try:
-							(cmd, string) = self.mainQ.get(True, 0.01)
-							self.processCmd(cmd, string, True, True, False)
+							(cmd, string, index) = self.mainQ.get(True, 0.01)
+							self.processCmd(cmd, string, True, True, False, index=index)
 
 						except Queue.Empty:
 							pass
@@ -170,13 +170,14 @@ class SendThread:
 					time.sleep(0.01)
 		self.endoflife = True
 				
-	def processCmd(self, cmd, string, calcCS, setOK, PriQ):
+	def processCmd(self, cmd, string, calcCS, setOK, PriQ, index=None):
 		if cmd == CMD_GCODE:
 			if string.startswith('@'):
 				self.metaCommand(string)
 			else:  
 				if calcCS:
-					self.printIndex += 1
+					if index is not None:
+						self.printIndex = index
 					try:
 						verb = string.split()[0]
 					except:
@@ -256,7 +257,7 @@ class SendThread:
 			self.resendFrom = None
 			while True:
 				try:
-					(cmd, string) = self.mainQ.get(False)
+					(cmd, string, index) = self.mainQ.get(False)
 					if cmd == CMD_ENDOFPRINT:
 						break
 				except Queue.Empty:
@@ -701,9 +702,11 @@ class RepRap:
 		self.sender.resetCounters()
 		self.listener.resetCounters()
 		self._sendCmd(CMD_STARTPRINT)
+		idx = -1
 		for l in data:
+			idx += 1
 			if l.raw.rstrip() != "":
-				self._send(l.raw)
+				self._send(l.raw, index=idx)
 
 		self._sendCmd(CMD_ENDOFPRINT, priority=False)			
 		self.printing = True
@@ -766,14 +769,14 @@ class RepRap:
 	def send(self, cmd):
 		return self._send(cmd)
 
-	def _send(self, command, priority=False):
+	def _send(self, command, priority=False, index=None):
 		if not self.printer:
 			return False
 		
 		if priority:		
 			self.priQ.put((CMD_GCODE, command))
 		else:
-			self.mainQ.put((CMD_GCODE, command))
+			self.mainQ.put((CMD_GCODE, command, index))
 			
 		return True
 	
@@ -781,4 +784,4 @@ class RepRap:
 		if priority:
 			self.priQ.put((cmd, ""))
 		else:
-			self.mainQ.put((cmd, ""))
+			self.mainQ.put((cmd, "", None))
