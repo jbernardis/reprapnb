@@ -342,7 +342,7 @@ class GcFrame (wx.Window):
 		if p[5] == self.hilite:
 			w = w * 3
 			
-		if w > 5:
+		if w > 10:
 			print "Width, Height: ", w, p[2]
 			print "Points F->T", prev[0], prev[1], p[0], p[1]
 			print "Move number: ", ln

@@ -10,7 +10,7 @@ from slic3r import Slic3r
 from skeinforge import Skeinforge
 from cura import Cura
 
-INIFILE = "rrh.ini"
+INIFILE = "reprap.ini"
 
 TEMPFILELABEL = "<temporary>"
 
