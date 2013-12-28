@@ -100,6 +100,9 @@ class stl:
 		self.facets=[]
 		self.facetsminz=[]
 		self.facetsmaxz=[]
+		self.zZero = zZero
+		self.xOffset = xOffset
+		self.yOffset = yOffset
 		
 		self.name=name
 		self.insolid=0
@@ -151,7 +154,7 @@ class stl:
 			else:
 				for i in self.f:
 					self.parseline(i)
-			self.setHull(zZero, xOffset, yOffset)
+			self.setHull()
 			
 	def setId(self, sid):
 		self.id = sid
@@ -159,7 +162,7 @@ class stl:
 	def getId(self):
 		return self.id
 	
-	def setHull(self, zZero, xOffset, yOffset):
+	def setHull(self):
 		self.projection = numpy.array([])
 		minz = 99999
 		for f in self.facets:
@@ -179,18 +182,21 @@ class stl:
 		self.adjustHull(h)
 		
 		modFacets = False
-		if zZero and minz != 0:
+		if self.zZero and minz != 0:
 			for i in range(len(self.facets)):
 				for j in range(3):
 					self.facets[i][1][j][2] -= minz
 			modFacets = True
+			self.zZero = False
 			
-		if xOffset + yOffset != 0:
+		if self.xOffset + self.yOffset != 0:
 			for i in range(len(self.facets)):
 				for j in range(3):
-					self.facets[i][1][j][0] += xOffset
-					self.facets[i][1][j][1] += yOffset
+					self.facets[i][1][j][0] += self.xOffset
+					self.facets[i][1][j][1] += self.yOffset
 			modFacets = True
+			self.xOffset = 0
+			self.yOffset = 0
 
 		if modFacets:					
 			self.facetsminz=[]

@@ -327,7 +327,7 @@ class STLCanvas(MyCanvasBase):
 			c = color(index)
 
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(0.2, 0.2, 0.2, 0.2))
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(0.2, 0.2, 0.2, 0.9))
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 30)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vec(0, 0, 0, 0.9))
 	
