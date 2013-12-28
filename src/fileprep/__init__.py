@@ -13,6 +13,7 @@ from editgcode import EditGCodeDlg
 from stlmerge import StlMergeDlg
 from images import Images
 from tools import formatElapsed 
+from stlview import StlViewer
 
 from reprap import MAX_EXTRUDERS
 
@@ -205,8 +206,9 @@ class FilePrepare(wx.Panel):
 		self.sliceActive = False
 		self.exporting = False
 		self.status = FPSTATUS_IDLE
-		self.dlg = None
+		self.dlgEdit = None
 		self.dlgMerge = None
+		self.dlgView = None
 
 		self.shiftX = 0
 		self.shiftY = 0
@@ -232,6 +234,10 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
+		
+		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
+		self.sizerBtns.Add(self.bView)
+		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
 		
 		self.sizerBtns.AddSpacer((20, 20))
 		
@@ -475,6 +481,14 @@ class FilePrepare(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def stlView(self, evt):
+		self.dlgView = StlViewer(self, "title")
+		self.dlgView.CenterOnScreen()
+		self.dlgView.Show()
+		
+	def stlViewExit(self):
+		self.dlgView = None
 
 	def setSliceMode(self, flag=True):
 		if flag:
@@ -487,7 +501,13 @@ class FilePrepare(wx.Panel):
 	def onClose(self, evt):
 		if self.checkModified():
 			return False
-	
+
+		if self.dlgView:
+			self.dlgView.Destroy()
+		if self.dlgMerge:
+			self.dlgMerge.Destroy()	
+		if self.dlgEdit:
+			self.dlgEdit.Destroy()	
 		return True
 	
 	def toPrinter(self, evt):
@@ -821,13 +841,13 @@ class FilePrepare(wx.Panel):
 
 	def editGCode(self, event):
 		self.disableButtons()
-		if self.dlg is None:
-			self.dlg = EditGCodeDlg(self)
-			self.dlg.CenterOnScreen()
-			self.dlg.Show()
+		if self.dlgEdit is None:
+			self.dlgEdit = EditGCodeDlg(self)
+			self.dlgEdit.CenterOnScreen()
+			self.dlgEdit.Show()
 		
 	def dlgClosed(self, rc, data):
-		self.dlg = None
+		self.dlgEdit = None
 		if not rc:
 			self.enableButtons()
 			return

@@ -1,0 +1,67 @@
+[global]
+slicers = cura,slic3r,skeinforge
+slicer = cura
+startpane = 2
+lastlogdirectory = /home/jeff
+port = 8989
+speedcommand = M122
+maxloglines = 5000
+usepopuplog = True
+
+[slicer.slic3r]
+command = /home/jeff/Slic3r/bin/slic3r --load "%config%"  "%stl%" -o "%slicegcode%"
+config = /home/jeff/Slic3r/bin/slic3r
+profiledir = /home/jeff/.Slic3r
+print = default widths
+printfile = /home/jeff/.Slic3r/print/default widths.ini
+filament = pla
+filamentfile = /home/jeff/.Slic3r/filament/pla.ini
+printer = ob1
+printerfile = /home/jeff/.Slic3r/printer/ob1.ini
+
+[slicer.cura]
+command = /usr/bin/cura -i "%config%"  -s "%stl%" -o "%slicegcode%"
+config = /usr/bin/cura
+profile = normal05
+printer = ob1
+profiledir = /home/jeff/cura/profiles
+curapreferences = /home/jeff/.cura/13.11.2/preferences.ini
+
+[slicer.skeinforge]
+command = python /home/jeff/skeinforge/skeinforge_application/skeinforge_utilities/skeinforge_craft.py "%stl%"
+config = python /home/jeff/skeinforge/skeinforge_application/skeinforge.py
+profiledir = ~/.skeinforge/profiles/extrusion
+profilefile = /home/jeff/.skeinforge/profiles/extrusion.csv
+profile = PLA
+
+[fileprep]
+gcodescale = 3
+laststldirectory = /netgear/documents/stl files
+lastgcdirectory = /netgear/documents/stl files
+showprevious = False
+showmoves = False
+usebuffereddc = True
+acceleration = 1000.0
+
+[plater]
+stlscale = 2
+lastdirectory = /netgear/documents/stl files
+autoarrange = True
+
+[manualctl]
+xyspeed = 2000
+zspeed = 2000
+espeed = 300
+edistance = 5
+
+[printmon]
+gcodescale = 3
+showprevious = False
+showmoves = True
+usebuffereddc = True
+
+[macros]
+macro.1 = Fan On,fanon.gcode
+macro.2 = Park,park.gcode
+macro.3 = Agitate,agitate.gcode
+

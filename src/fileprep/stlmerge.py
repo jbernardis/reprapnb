@@ -104,7 +104,7 @@ class amf:
 
 BUTTONDIM = (48, 48)
 
-class StlMergeDlg(wx.Dialog):
+class StlMergeDlg(wx.Dialog): 
 	def __init__(self, parent):
 		self.parent = parent
 		self.settings = self.parent.settings

@@ -339,7 +339,7 @@ class Plater(wx.Panel):
 	def doAdd(self, evt):
 		dlg = wx.FileDialog(
 			self, message="Choose an STL file",
-			defaultDir=self.settings.lastdirectory,
+			defaultDir=self.settings.laststldirectory,
 			defaultFile="",
 			wildcard=wildcard,
 			style=wx.FD_OPEN | wx.FD_CHANGE_DIR
@@ -358,7 +358,7 @@ class Plater(wx.Panel):
 			self.setStatus(PLSTATUS_LOADED_CLEAN)
 			
 		self.filename = fn
-		self.settings.lastdirectory = os.path.dirname(fn)
+		self.settings.laststldirectory = os.path.dirname(fn)
 		self.settings.setModified()
 			
 		name = "OBJECT%03d" % self.objNumber
@@ -470,7 +470,7 @@ class Plater(wx.Panel):
 			
 		dlg = wx.FileDialog(
 			self, message="Choose an STL file",
-			defaultDir=self.settings.lastdirectory, 
+			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
 			wildcard=wildcard,
 			style=wx.SAVE | wx.CHANGE_DIR | wx.FD_OVERWRITE_PROMPT

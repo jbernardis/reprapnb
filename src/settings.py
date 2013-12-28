@@ -393,7 +393,7 @@ class SettingsPlater:
 		self.cmdfolder = os.path.join(folder, section)
 
 		self.stlscale = 2
-		self.lastdirectory="."
+		self.laststldirectory="."
 		self.autoarrange = False
 		
 		if cfg is None:
@@ -412,8 +412,8 @@ class SettingsPlater:
 						self.parent.showWarning("Non-integer value in ini file for stlscale")
 						self.stlscale = 2
 			
-				elif opt == 'lastdirectory':
-					self.lastdirectory = value
+				elif opt == 'laststldirectory':
+					self.laststldirectory = value
 						
 				elif opt == 'autoarrange':
 					self.autoarrange = parseBoolean(value, False)
@@ -439,7 +439,7 @@ class SettingsPlater:
 				pass
 			
 			self.cfg.set(self.section, "stlscale", str(self.stlscale))
-			self.cfg.set(self.section, "lastdirectory", str(self.lastdirectory))
+			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "autoarrange", str(self.autoarrange))
 	
 	
