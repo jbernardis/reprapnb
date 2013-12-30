@@ -133,14 +133,18 @@ class StlViewer(wx.Dialog):
 class MyCanvasBase(glcanvas.GLCanvas):
 	def __init__(self, parent, wid=-1, buildarea=(200, 200, 100), pos=wx.DefaultPosition,
 				 size=(400, 400), style=0, mainwindow=None):
-		glcanvas.GLCanvas.__init__(self, parent, wid, size=size, style=style, pos=pos)
+		attribList = (glcanvas.WX_GL_RGBA,  # RGBA
+					  glcanvas.WX_GL_DOUBLEBUFFER,  # Double Buffered
+					  glcanvas.WX_GL_DEPTH_SIZE, 24)  # 24 bit
+
+		glcanvas.GLCanvas.__init__(self, parent, wid, size=size, style=style, pos=pos, attribList=attribList)
 		self.init = False
 		# initial mouse position
 		self.lastx = self.x = 0
 		self.lasty = self.y = 0
 		self.anglex = self.angley = 0
 		self.transx = self.transy = 0
-		self.resetView = False
+		self.resetView = True
 		self.lightPos = [0.0, 0.0, 50]
 		self.size = None
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
@@ -238,11 +242,8 @@ class STLCanvas(MyCanvasBase):
 		MyCanvasBase.__init__(self, parent, wid, size=size, style=style, pos=pos)
 		
 	def InitGL(self):
-		self.pmat = (GLdouble * 16)()
-		self.mvmat = (GLdouble * 16)()
-		self.dist = 1000
-		self.vpmat = None
-
+		glClearColor(0, 0, 0, 1)
+		glColor3f(1, 0, 0)
 		glEnable(GL_DEPTH_TEST)
 		glEnable(GL_CULL_FACE)
 
@@ -250,17 +251,22 @@ class STLCanvas(MyCanvasBase):
 		glEnable(GL_LIGHT0)
 		glEnable(GL_LIGHT1)
 
-		glLightfv(GL_LIGHT0, GL_POSITION, vec(self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
-		glLightfv(GL_LIGHT0, GL_AMBIENT, vec(.2, .2, .2, .2))
-		glLightfv(GL_LIGHT0, GL_SPECULAR, vec(.5, .5, .5, 1))
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, vec(.5, .5, .5, 1))
-		glLightfv(GL_LIGHT1, GL_POSITION, vec(200-self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
+		glLightfv(GL_LIGHT0, GL_POSITION, vec(.5, .5, 1, 0))
+		glLightfv(GL_LIGHT0, GL_SPECULAR, vec(.5, .5, 1, 1))
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, vec(1, 1, 1, 1))
+		glLightfv(GL_LIGHT1, GL_POSITION, vec(1, 0, .5, 0))
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, vec(.5, .5, .5, 1))
-		glLightfv(GL_LIGHT1, GL_SPECULAR, vec(.5, .5, .5, 1))
-		glLightfv(GL_LIGHT1, GL_AMBIENT, vec(.2, .2, .2, .2))
+		glLightfv(GL_LIGHT1, GL_SPECULAR, vec(1, 1, 1, 1))
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.5, 0, 0.3, 1))
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(1, 1, 1, 1))
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80)
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vec(0, 0.1, 0, 0.9))
+		glLightfv(GL_LIGHT0, GL_POSITION, vec(self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
+		glLightfv(GL_LIGHT1, GL_POSITION, vec(200-self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
 
 		self.setZoom(1.0)
-		
+
 	def setZoom(self, zoom):
 		self.zoom = zoom
 		glMatrixMode(GL_PROJECTION)
@@ -298,8 +304,6 @@ class STLCanvas(MyCanvasBase):
 			self.transx = self.transy = 0
 			self.resetView = False
 			
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		
 		if self.size is None:
 			self.size = self.GetClientSize()
 		w, h = self.size
@@ -310,14 +314,16 @@ class STLCanvas(MyCanvasBase):
 		glRotatef(self.angley * yScale, 1.0, 0.0, 0.0);
 		glRotatef(self.anglex * xScale, 0.0, 1.0, 0.0);
 		glTranslatef(self.transx, self.transy, 0.0)
-		self.anglex = self.angley = 0
-		self.transx = self.transy = 0
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		self.drawGrid()
+		
 		index = 0
 		for o in self.objectList:
 			self.draw_object(o, index)
 			index += 1
 			
+		self.anglex = self.angley = 0
+		self.transx = self.transy = 0
 		self.SwapBuffers()
 		
 	def draw_object(self, obj, index):
@@ -327,13 +333,43 @@ class STLCanvas(MyCanvasBase):
 			c = color(index)
 
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(0.2, 0.2, 0.2, 0.9))
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 30)
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vec(0, 0, 0, 0.9))
 	
 		glBegin(GL_TRIANGLES)
 		for f in obj.facets:
 			glNormal3f(f[0][0], f[0][1], f[0][2])
 			for i in range(3):
 				glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
+		glEnd()
+		
+	def drawGrid(self):
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
+		glBegin(GL_LINES)
+		glNormal3f(0, 0, 1)
+		rows = 10
+		cols = 10
+		for i in xrange(-rows, rows + 1):
+			if i % 5 == 0:
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.6, 0.6, 0.6, 1))
+			else:
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
+			glVertex3f(10 * -cols, 10 * i, 0)
+			glVertex3f(10 * cols, 10 * i, 0)
+		for i in xrange(-cols, cols + 1):
+			if i % 5 == 0:
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.6, 0.6, 0.6, 1))
+			else:
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
+			glVertex3f(10 * i, 10 * -rows, 0)
+			glVertex3f(10 * i, 10 * rows, 0)
+		glEnd()
+		
+		glBegin(GL_TRIANGLES)
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(1, 0, 0, 1))
+		glNormal3f(0, 0, 1)
+		glVertex3f(2, 2, 0)
+		glVertex3f(-2, 2, 0)
+		glVertex3f(-2, -2, 0)
+		glVertex3f(2, -2, 0)
+		glVertex3f(2, 2, 0)
+		glVertex3f(-2, -2, 0)
 		glEnd()

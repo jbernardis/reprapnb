@@ -45,7 +45,7 @@ acceleration = 1000.0
 
 [plater]
 stlscale = 2
-lastdirectory = /netgear/documents/stl files
+laststldirectory = /netgear/documents/stl files
 autoarrange = True
 
 [manualctl]
