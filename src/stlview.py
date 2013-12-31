@@ -39,7 +39,7 @@ class StlViewer(wx.Dialog):
 
 		sz = self.GetClientSize()[1]-2*border
 		
-		self.canvas = STLCanvas(self, None)
+		self.canvas = STLCanvas(self, None, drawGrid=self.settings.drawstlgrid)
 		self.canvas.SetSize((sz, sz))
 		box.Add(self.canvas, 0, wx.ALL, border)
 
@@ -63,6 +63,14 @@ class StlViewer(wx.Dialog):
 		c2.Add(self.lb)
 		self.Bind(wx.EVT_LISTBOX, self.onLbSelect, self.lb)
 		
+		c2.AddSpacer((10, 20))
+		
+		self.cbDrawGrid = wx.CheckBox(self, wx.ID_ANY, "Draw Grid")
+		self.cbDrawGrid.SetToolTipString("Turn on/off display of the z=0 grid")
+		self.Bind(wx.EVT_CHECKBOX, self.onDrawGrid, self.cbDrawGrid)
+		self.cbDrawGrid.SetValue(self.settings.drawstlgrid)
+		c2.Add(self.cbDrawGrid)
+
 		c2.AddSpacer((10, 400))
 		
 		btn2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -78,6 +86,11 @@ class StlViewer(wx.Dialog):
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onWheel)
 		self.SetAutoLayout(True)
 		self.SetSizer(box)
+		
+	def onDrawGrid(self, evt):
+		self.settings.drawstlgrid = evt.IsChecked()
+		self.settings.setModified()
+		self.canvas.setDrawGrid(self.settings.drawstlgrid)
 
 	def onAddStl(self, event):
 		dlg = wx.FileDialog(
@@ -103,6 +116,9 @@ class StlViewer(wx.Dialog):
 		dlg.Destroy()
 		
 	def onDelStl(self, evt):
+		if self.selection is None:
+			return
+		
 		del self.fileList[self.selection]
 		self.lb.Delete(self.selection)
 		self.canvas.delSelectedStl()
@@ -115,13 +131,17 @@ class StlViewer(wx.Dialog):
 				self.selection = len(self.fileList)-1
 			self.lb.SetSelection(self.selection)
 			
+		self.canvas.setSelection(self.selection)
+			
 		
 	def onWheel(self, evt):
 		self.canvas.OnWheel(evt)
 		
 	def onLbSelect(self, evt):
-		self.selection = evt.GetSelection()
-		self.canvas.setSelection(self.selection)
+		s = evt.GetSelection()
+		if s >= 0:
+			self.selection = s
+			self.canvas.setSelection(self.selection)
 		
 	def onClose(self, evt):
 		try:
@@ -229,9 +249,10 @@ class MyCanvasBase(glcanvas.GLCanvas):
 		self.Refresh(False)
 
 class STLCanvas(MyCanvasBase):
-	def __init__(self, parent, obj, wid=-1, buildarea=(200, 200, 100), pos=wx.DefaultPosition,
+	def __init__(self, parent, obj, drawGrid=True, wid=-1, buildarea=(200, 200, 100), pos=wx.DefaultPosition,
 				 size=(400, 400), style=0, mainwindow=None):
 		self.clientwidth = size[0]
+		self.drawGrid = drawGrid
 		self.objectList = []
 		if obj:
 			self.objectList.append(obj)
@@ -273,10 +294,13 @@ class STLCanvas(MyCanvasBase):
 		glLoadIdentity()
 		glFrustum(-0.5*zoom, 0.5*zoom, -0.5*zoom, 0.5*zoom, 1.0, 1000.0)
 		glTranslatef(00.0, 0.0, -250)
+		
+	def setDrawGrid(self, flag):
+		self.drawGrid = flag
+		self.Refresh(False)
 
 	def addObject(self, o):
 		self.objectList.append(o)
-		self.resetView = True
 		self.selection = len(self.objectList)-1
 		self.Refresh(False)
 		
@@ -315,7 +339,8 @@ class STLCanvas(MyCanvasBase):
 		glRotatef(self.anglex * xScale, 0.0, 1.0, 0.0);
 		glTranslatef(self.transx, self.transy, 0.0)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		self.drawGrid()
+		if self.drawGrid:
+			self.doDrawGrid()
 		
 		index = 0
 		for o in self.objectList:
@@ -341,7 +366,7 @@ class STLCanvas(MyCanvasBase):
 				glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
 		glEnd()
 		
-	def drawGrid(self):
+	def doDrawGrid(self):
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
 		glBegin(GL_LINES)
 		glNormal3f(0, 0, 1)

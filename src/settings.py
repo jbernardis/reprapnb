@@ -320,6 +320,7 @@ class SettingsFilePrep:
 		self.showmoves = True
 		self.usebuffereddc = True
 		self.acceleration = 1500
+		self.drawstlgrid = True
 		
 		if cfg is None:
 			self.modified = True
@@ -353,6 +354,9 @@ class SettingsFilePrep:
 				elif opt == 'showprevious':
 					self.showprevious = parseBoolean(value, True)
 						
+				elif opt == 'drawstlgrid':
+					self.drawstlgrid = parseBoolean(value, True)
+						
 				elif opt == 'showmoves':
 					self.showmoves = parseBoolean(value, True)
 						
@@ -381,6 +385,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "lastgcdirectory", str(self.lastgcdirectory))
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
+			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
@@ -395,6 +400,7 @@ class SettingsPlater:
 		self.stlscale = 2
 		self.laststldirectory="."
 		self.autoarrange = False
+		self.drawstlgrid = True
 		
 		if cfg is None:
 			self.modified = True
@@ -417,6 +423,9 @@ class SettingsPlater:
 						
 				elif opt == 'autoarrange':
 					self.autoarrange = parseBoolean(value, False)
+						
+				elif opt == 'drawstlgrid':
+					self.drawstlgrid = parseBoolean(value, True)
 					
 				else:
 					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
@@ -441,6 +450,7 @@ class SettingsPlater:
 			self.cfg.set(self.section, "stlscale", str(self.stlscale))
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "autoarrange", str(self.autoarrange))
+			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
 	
 	
 class SettingsManualCtl:

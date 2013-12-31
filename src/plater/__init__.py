@@ -13,6 +13,8 @@ import wx.lib.newevent
 from stlframe import StlFrame
 from images import Images
 import stltool
+from stlview import StlViewer
+
 
 
 (WriterEvent, EVT_WRITER_UPDATE) = wx.lib.newevent.NewEvent()
@@ -191,6 +193,12 @@ class Plater(wx.Panel):
 		self.sizerBtn2.Add(self.bExport2Prep)
 		self.Bind(wx.EVT_BUTTON, self.doExport2Prep, self.bExport2Prep)
 		self.bExport2Prep.Enable(False)
+		
+		self.sizerBtn2.AddSpacer((20, 20))
+		
+		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
+		self.sizerBtn2.Add(self.bView)
+		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
 
 		self.sizerMain.AddSpacer((20,20), pos=(5,4))		
 		self.sizerMain.Add(self.sizerBtn2, pos=(6,4))
@@ -560,3 +568,12 @@ class Plater(wx.Panel):
 							   )
 		dlg.ShowModal()
 		dlg.Destroy()
+		
+	def stlView(self, evt):
+		self.dlgView = StlViewer(self, "title")
+		self.dlgView.CenterOnScreen()
+		self.dlgView.Show()
+		
+	def stlViewExit(self):
+		self.dlgView = None
+
