@@ -6,6 +6,7 @@ from wx import glcanvas
 from OpenGL.GL import *
 
 BUTTONDIM = (48, 48)
+InitialLightValue = 100
 
 def vec(*args):
 	return (GLfloat * len(args))(*args)
@@ -65,6 +66,16 @@ class StlViewer(wx.Dialog):
 		
 		c2.AddSpacer((10, 20))
 		
+		self.slideLights = wx.Slider(
+			self, wx.ID_ANY, InitialLightValue, 0, 200, pos=(-1, -1), size=(400, -1),
+			style = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
+		self.slideLights.SetTickFreq(10)
+		self.slideLights.Bind(wx.EVT_SCROLL_CHANGED, self.onSliderChange)
+		self.slideLights.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onSliderChange)
+		c2.Add(self.slideLights)
+
+		c2.AddSpacer((10, 20))
+		
 		self.cbDrawGrid = wx.CheckBox(self, wx.ID_ANY, "Draw Grid")
 		self.cbDrawGrid.SetToolTipString("Turn on/off display of the z=0 grid")
 		self.Bind(wx.EVT_CHECKBOX, self.onDrawGrid, self.cbDrawGrid)
@@ -86,6 +97,10 @@ class StlViewer(wx.Dialog):
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onWheel)
 		self.SetAutoLayout(True)
 		self.SetSizer(box)
+
+	def onSliderChange(self, evt):
+		l = evt.EventObject.GetValue()
+		self.canvas.animate(l)
 		
 	def onDrawGrid(self, evt):
 		self.settings.drawstlgrid = evt.IsChecked()
@@ -165,7 +180,8 @@ class MyCanvasBase(glcanvas.GLCanvas):
 		self.anglex = self.angley = 0
 		self.transx = self.transy = 0
 		self.resetView = True
-		self.lightPos = [0.0, 0.0, 50]
+		self.light0Pos = []
+		self.light1Pos = []
 		self.size = None
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -285,10 +301,21 @@ class STLCanvas(MyCanvasBase):
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, vec(1, 1, 1, 1))
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vec(0, 0.1, 0, 0.9))
-		glLightfv(GL_LIGHT0, GL_POSITION, vec(self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
-		glLightfv(GL_LIGHT1, GL_POSITION, vec(200-self.lightPos[0], self.lightPos[1], self.lightPos[2], 1))
-
+		self.setLightPosition(InitialLightValue)
 		self.setZoom(1.0)
+		
+	def setLightPosition(self, val):
+		self.light0Pos[0] = val-100
+		self.light1Pos[0] = 100-val
+		self.light0Pos[1] = val
+		self.light1Pos[1] = val
+
+		glLightfv(GL_LIGHT0, GL_POSITION, vec(self.light0Pos[0], self.light0Pos[1], self.light0Pos[2], 1))
+		glLightfv(GL_LIGHT1, GL_POSITION, vec(self.light1Pos[0], self.light1Pos[1], self.light1Pos[2], 1))
+
+	def animate(self, val):
+		self.setLightPosition(val)
+		self.Refresh(False)
 
 	def setZoom(self, zoom):
 		self.zoom = zoom

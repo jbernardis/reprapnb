@@ -193,9 +193,10 @@ class ModelerThread:
 		self.running = False
 
 class FilePrepare(wx.Panel):
-	def __init__(self, parent, app):
+	def __init__(self, parent, app, nextr=1):
 		self.model = None
 		self.app = app
+		self.nextr = nextr
 		self.buildarea = self.app.buildarea
 		self.logger = self.app.logger
 		self.settings = app.settings.fileprep
@@ -973,6 +974,14 @@ class FilePrepare(wx.Panel):
 
 		fp = file(path, 'w')
 		
+		info = self.model.getLayerInfo(v[0])
+		sx = info[4][0]
+		sTool = self.model.findToolByLine(sx)
+		info = self.model.getLayerInfo(v[1])
+		ex = info[4][1]
+		eTool = self.model.findToolByLine(ex)
+		z = info[0]
+		
 		if v[3] or v[4] or v[5]:
 			s = "G28"
 			if v[3]:
@@ -984,13 +993,9 @@ class FilePrepare(wx.Panel):
 			fp.write(s+"\n")
 				
 		if v[2]:
+			# TODO: need to revisit this later - for now, assume tool 0
 			fp.write("G92 E%.3f\n" % self.model.layer_e_start[v[0]])
 		
-		info = self.model.getLayerInfo(v[0])
-		sx = info[4][0]
-		info = self.model.getLayerInfo(v[1])
-		ex = info[4][1]
-		z = info[0]
 		for ln in self.gcode[sx:ex+1]:
 			fp.write(ln + "\n")
 		

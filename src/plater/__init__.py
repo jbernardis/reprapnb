@@ -79,6 +79,8 @@ class Plater(wx.Panel):
 		self.settings = app.settings.plater
 		self.setStatus(PLSTATUS_EMPTY)
 		
+		self.dlgView = None
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
@@ -319,6 +321,8 @@ class Plater(wx.Panel):
 		dlg.Destroy()
 				
 	def onClose(self, evt):
+		if self.dlgView:
+			self.dlgView.Destroy()
 		if self.checkModified():
 			return False
 		

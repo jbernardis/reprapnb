@@ -182,6 +182,20 @@ class Layer:
 			return None
 		return self.moves[self.mx]
 	
+	def getMoveByGcodeLine(self, lx):
+		miA = self.getLayerStart()
+		miB = None
+		while lx > miA[6]:
+			miB = self.getNextMove()
+			if miB is None:
+				return None
+			if miB[6] > lx:
+				return miA
+			
+			miA = miB
+			
+		return None
+	
 	def getPrevLayer(self):
 		return self.prevLayer
 		
@@ -344,6 +358,22 @@ class GCode(object):
 				return i
 		
 		return None
+	
+	def findToolByLine(self, lx):
+		lyx = self.findLayerByLine(lx)
+		if lyx is None:
+			return None
+		
+		lyr = self.getLayer(lyx)
+		if lyr is None:
+			return None
+		
+		mi = lyr.getMoveByGcodeLine(lx)
+		if mi is None:
+			return None
+		
+		return mi[4]
+
 	
 	def getLayerName(self, x):
 		return "Layer " + str(x)

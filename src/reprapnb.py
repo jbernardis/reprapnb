@@ -212,7 +212,7 @@ class MainFrame(wx.Frame):
 		self.sdcard = SDCard(self, self.reprap, self.logger)
 
 		self.pgPlater = Plater(self.nb, self)
-		self.pgFilePrep = FilePrepare(self.nb, self)
+		self.pgFilePrep = FilePrepare(self.nb, self, nExtr)
 		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps, bedTemp)
 		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap, self.sdcard)
 
