@@ -199,10 +199,12 @@ class MyCanvasBase(glcanvas.GLCanvas):
 			self.OnDraw()
 
 	def OnMouseDown(self, evt):
+		self.SetFocus()
 		self.CaptureMouse()
 		self.x, self.y = self.lastx, self.lasty = evt.GetPosition()
 
 	def OnMouseRightDown(self, evt):
+		self.SetFocus()
 		self.CaptureMouse()
 		self.x, self.y = self.lastx, self.lasty = evt.GetPosition()
 
@@ -352,11 +354,7 @@ class STLCanvas(MyCanvasBase):
 		self.SwapBuffers()
 		
 	def draw_object(self, obj, index):
-		if len(self.objectList) > 1 and index == self.selection:
-			c = vec(0.5, 0.5, 0.5, 1)
-		else:
-			c = color(index)
-
+		c = color(index)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
 	
 		glBegin(GL_TRIANGLES)
@@ -365,6 +363,18 @@ class STLCanvas(MyCanvasBase):
 			for i in range(3):
 				glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
 		glEnd()
+		
+		if len(self.objectList) > 1 and index == self.selection:
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(1,1,1,1))
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+		
+			glBegin(GL_TRIANGLES)
+			for f in obj.facets:
+				glNormal3f(f[0][0], f[0][1], f[0][2])
+				for i in range(3):
+					glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
+			glEnd()
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 		
 	def doDrawGrid(self):
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))

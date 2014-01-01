@@ -6,7 +6,6 @@ Low Hanging
 Medium
 - other places for separate thread - file saving from plater, amf merge, etc
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
-- STL viewer - add to plater page
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
