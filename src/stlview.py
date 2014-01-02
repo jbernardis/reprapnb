@@ -180,8 +180,8 @@ class MyCanvasBase(glcanvas.GLCanvas):
 		self.anglex = self.angley = 0
 		self.transx = self.transy = 0
 		self.resetView = True
-		self.light0Pos = []
-		self.light1Pos = []
+		self.light0Pos = [0, 0, 150]
+		self.light1Pos = [0, 0, 150]
 		self.size = None
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
