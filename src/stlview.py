@@ -1,6 +1,7 @@
 import os
 import wx
 from stltool import stl
+from amftool import amf
 
 from wx import glcanvas
 from OpenGL.GL import *
@@ -112,7 +113,7 @@ class StlViewer(wx.Dialog):
 			self, message="Choose an STL file",
 			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
-			wildcard="STL (*.stl)|*.[sS][tT][lL]",
+			wildcard="STL (*.stl)|*.stl;*STL|AMF (*.amf.xml, *.amf)|*.amf.xml;*.AMF.XML;*.amf;*.AMF",
 			style=wx.FD_OPEN | wx.FD_CHANGE_DIR
 			)
 		
@@ -124,6 +125,12 @@ class StlViewer(wx.Dialog):
 			self.lb.Append(path)
 			self.selection = len(self.fileList)-1
 			self.lb.SetSelection(self.selection)
+			if path.endswith(".stl"):
+				s = stl(filename=path)
+				s.Type = "STL"
+			else:
+				s = amf(filename=path)
+				s.Type = "AMF"
 			s = stl(filename=path)
 			self.canvas.addObject(s)
 			self.bDel.Enable(True)
@@ -371,32 +378,41 @@ class STLCanvas(MyCanvasBase):
 		if self.drawGrid:
 			self.doDrawGrid()
 		
-		index = 0
+		indexColor = 0
+		indexObject = 0
 		for o in self.objectList:
-			self.draw_object(o, index)
-			index += 1
+			if o.Type == "STL":
+				self.draw_object(o.facets, indexColor, indexObject)
+				indexColor += 1
+				
+			elif o.Type == "AMF":
+				for v in o.volumes:
+					self.draw_object(v, indexColor, indexObject)
+					indexColor += 1
+
+			indexObject += 1
 			
 		self.anglex = self.angley = 0
 		self.transx = self.transy = 0
 		self.SwapBuffers()
 		
-	def draw_object(self, obj, index):
-		c = color(index)
+	def draw_object(self, facets, indexColor, indexObject):
+		c = color(indexColor)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
 	
 		glBegin(GL_TRIANGLES)
-		for f in obj.facets:
+		for f in facets:
 			glNormal3f(f[0][0], f[0][1], f[0][2])
 			for i in range(3):
 				glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
 		glEnd()
 		
-		if len(self.objectList) > 1 and index == self.selection:
+		if len(self.objectList) > 1 and indexObject == self.selection:
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(1,1,1,1))
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 		
 			glBegin(GL_TRIANGLES)
-			for f in obj.facets:
+			for f in facets:
 				glNormal3f(f[0][0], f[0][1], f[0][2])
 				for i in range(3):
 					glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
