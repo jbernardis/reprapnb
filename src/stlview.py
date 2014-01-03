@@ -131,7 +131,6 @@ class StlViewer(wx.Dialog):
 			else:
 				s = amf(filename=path)
 				s.Type = "AMF"
-			s = stl(filename=path)
 			self.canvas.addObject(s)
 			self.bDel.Enable(True)
 				
