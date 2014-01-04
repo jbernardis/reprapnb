@@ -98,6 +98,7 @@ class stl:
 	def __init__(self, filename=None, name=None, zZero=False, xOffset=0, yOffset=0):
 		self.facet=[[0,0,0],[[0,0,0],[0,0,0],[0,0,0]]]
 		self.facets=[]
+		self.volumes=[self]
 		self.facetsminz=[]
 		self.facetsmaxz=[]
 		self.zZero = zZero

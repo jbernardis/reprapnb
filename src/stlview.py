@@ -124,16 +124,12 @@ class StlViewer(wx.Dialog):
 			ext2 = os.path.splitext(fn)[1].lower()
 			if ext == ".stl":
 				s = stl(filename=path)
-				s.Type = "STL"
-				goodFile = True
 			elif (ext == ".xml" and ext2 == ".amf") or ext == ".amf":
 				s = amf(filename=path)
-				s.Type = "AMF"
-				goodFile = True
 			else:
-				goodFile = False
+				s = None
 				
-			if goodFile:
+			if s:
 				self.settings.laststldirectory = os.path.dirname(path)
 				self.settings.setModified()
 				self.fileList.append(path)
@@ -389,14 +385,9 @@ class STLCanvas(MyCanvasBase):
 		indexColor = 0
 		indexObject = 0
 		for o in self.objectList:
-			if o.Type == "STL":
-				self.draw_object(o.facets, indexColor, indexObject)
+			for v in o.volumes:
+				self.draw_object(v.facets, indexColor, indexObject)
 				indexColor += 1
-				
-			elif o.Type == "AMF":
-				for v in o.volumes:
-					self.draw_object(v, indexColor, indexObject)
-					indexColor += 1
 
 			indexObject += 1
 			

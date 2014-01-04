@@ -103,20 +103,22 @@ class AmfXml:
 			self.triangles.append(self.currentTriangle)
 			self.inV3 = False
 		
+class amfVol:
+	def __init__(self, facets):
+		self.facets = facets
+
 class amf:
 	def __init__(self, filename=None):	
-		self.facets=[]
-		self.nVolumes = 0
+		self.volfacets=[]
 		self.volumes = []
 	
 		AmfXml(filename, self.addFacet, self.endVolume)
 		
 	def addFacet(self, f):
-		self.facets.append(genfacet(f))
+		self.volfacets.append(genfacet(f))
 		
 	def endVolume(self):
-		self.volumes.append(self.facets)
-		self.facets = []
-		self.nVolumes += 1
+		self.volumes.append(amfVol(self.volfacets))
+		self.volfacets = []
 
 	
