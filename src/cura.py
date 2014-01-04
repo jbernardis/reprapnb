@@ -147,9 +147,9 @@ class Cura:
 		self.parent = parent
 		
 	def fileTypes(self):
-		return "STL (*.stl)|*.[sS][tT][lL]|" \
-			"AMF (*.amf)|*.[aA][mM][fF]|" \
-			"STL or AMF (*.stl, *amf)|*.[sS][tT][lL];*.[aA][mM][fF]"
+		return "STL (*.stl)|*.stl;*.STL|" \
+			"AMF (*.amf)|*.amf;*.AMF|" \
+			"STL or AMF (*.stl, *amf)|*.stl;*.STL;*.amf;*.AMF"
 		
 	def getSettingsKeys(self):
 		return ['curapreferences', 'profiledir', 'profile', 'printer', 'command', 'config'], []

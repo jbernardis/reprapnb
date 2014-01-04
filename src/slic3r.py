@@ -264,9 +264,9 @@ class Slic3r:
 		self.parent = parent
 		
 	def fileTypes(self):
-		return "all (*stl, *amf.xml)|*.[sS][tT][lL];*.[aA][mM][fF].[xX][mM][lL]|" \
-			"STL (*.stl)|*.[sS][tT][lL]|" \
-			"AMF XML files|*.[aA][mM][fF].[xX][mM][lL]"
+		return "all (*stl, *amf.xml)|*.stl;*.STL;*.amf.xml;*.AMF.XML|" \
+			"STL (*.stl)|*.stl;*.STL|" \
+			"AMF XML files|*.amf.xml;*.AMF.XML"
 		
 	def getSettingsKeys(self):
 		return ['profiledir', 'print', 'printfile', 'printer', 'printerfile', 'command', 'config'], ['filament', 'filamentfile']

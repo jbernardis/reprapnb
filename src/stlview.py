@@ -32,7 +32,7 @@ class StlViewer(wx.Dialog):
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 		pos = wx.DefaultPosition
 		style = wx.DEFAULT_DIALOG_STYLE
-		pre.Create(self.parent, wx.ID_ANY, "STL File Viewer", pos, (ysize+border*2+400, ysize), style)
+		pre.Create(self.parent, wx.ID_ANY, "STL/AMF File Viewer", pos, (ysize+border*2+400, ysize), style)
 		self.PostCreate(pre)
 
 		self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -119,20 +119,29 @@ class StlViewer(wx.Dialog):
 		
 		if dlg.ShowModal() == wx.ID_OK:
 			path = dlg.GetPath()
-			self.settings.laststldirectory = os.path.dirname(path)
-			self.settings.setModified()
-			self.fileList.append(path)
-			self.lb.Append(path)
-			self.selection = len(self.fileList)-1
-			self.lb.SetSelection(self.selection)
-			if path.endswith(".stl"):
+			fn, ext = os.path.splitext(path)
+			ext = ext.lower()
+			ext2 = os.path.splitext(fn)[1].lower()
+			if ext == ".stl":
 				s = stl(filename=path)
 				s.Type = "STL"
-			else:
+				goodFile = True
+			elif (ext == ".xml" and ext2 == ".amf") or ext == ".amf":
 				s = amf(filename=path)
 				s.Type = "AMF"
-			self.canvas.addObject(s)
-			self.bDel.Enable(True)
+				goodFile = True
+			else:
+				goodFile = False
+				
+			if goodFile:
+				self.settings.laststldirectory = os.path.dirname(path)
+				self.settings.setModified()
+				self.fileList.append(path)
+				self.lb.Append(path)
+				self.selection = len(self.fileList)-1
+				self.lb.SetSelection(self.selection)
+				self.canvas.addObject(s)
+				self.bDel.Enable(True)
 				
 		dlg.Destroy()
 		

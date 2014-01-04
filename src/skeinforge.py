@@ -119,7 +119,7 @@ class Skeinforge:
 		self.parent = parent
 		
 	def fileTypes(self):
-		return "STL (*.stl)|*.[sS][tT][lL]"
+		return "STL (*.stl)|*.stl;*.STL"
 		
 	def getSettingsKeys(self):
 		return ['profilefile', 'profiledir', 'profile', 'command', 'config'], []

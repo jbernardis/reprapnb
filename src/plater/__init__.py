@@ -58,7 +58,7 @@ class WriterThread:
 		self.running = False
 
 
-wildcard = "STL (*.stl)|*.stl"
+wildcard = "STL (*.stl)|*.stl;*.STL"
 
 
 TITLETEXT = "Plater"

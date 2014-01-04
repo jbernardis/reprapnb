@@ -179,7 +179,7 @@ class StlMergeDlg(wx.Dialog):
 			self, message="Choose an STL file",
 			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
-			wildcard="STL (*.stl)|*.[sS][tT][lL]",
+			wildcard="STL (*.stl)|*.stl;*.STL",
 			style=wx.FD_OPEN | wx.FD_CHANGE_DIR
 			)
 		
@@ -219,10 +219,10 @@ class StlMergeDlg(wx.Dialog):
 	def onMerge(self, event):
 		fn = os.path.splitext(self.fileList[0])[0]
 		if self.cbXML.IsChecked():
-			wildcard = "AMF XML (*.amf.xml)|*.[aA][mM][fF].[xX][mM][lL]"
+			wildcard = "AMF XML (*.amf.xml)|*.amf.xml;*.AMF.XML"
 			ext = ".amf.xml"
 		else:
-			wildcard = "AMF (*.amf)|*.[aA][mM][fF]"
+			wildcard = "AMF (*.amf)|*.amf;*.AMF"
 			ext = ".amf"
 			
 		dlg = wx.FileDialog(
