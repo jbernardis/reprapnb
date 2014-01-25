@@ -7,19 +7,29 @@ from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
 from hotend import HotEnd
 from images import Images
-
-#FIXIT  G code ref
-BUTTONDIMWIDE = (96, 48)
+from firmware import Firmware
+from macros import MacroDialog
+from settings import BUTTONDIM, BUTTONDIMWIDE
 
 class ManualControl(wx.Panel): 
-	def __init__(self, parent, app, nExtr, heTemps, bedTemp):
+	def __init__(self, parent, app, prtname, reprap):
 		self.model = None
 		self.parent = parent
 		self.app = app
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
+		self.prtName = prtname
+		self.speedcommand = self.app.settings.printersettings[prtname].speedcommand
+		self.reprap = reprap
+		self.prtmon = None
 		self.currentTool = 0
+		self.macroActive = False
+		
+		if self.speedcommand is not None:
+			self.reprap.addToAllowedCommands(self.speedcommand)
+
+		self.firmware = Firmware(self.app, self.reprap)
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -31,14 +41,14 @@ class ManualControl(wx.Panel):
 		self.slFanTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onFanSpeedChanged, self.slFanTimer)
 
-		self.moveAxis = MoveAxis(self, self.app)				
+		self.moveAxis = MoveAxis(self, self.app, self.reprap)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruder(heTemps, nExtr)
-		self.sizerBed = self.addBed(bedTemp)
-		self.sizerSpeed = self.addSpeedControls(self.appsettings.speedcommand)
+		self.sizerExtrude = self.addExtruder(self.app.settings.printersettings[prtname].nextr)
+		self.sizerBed = self.addBed()
+		self.sizerSpeed = self.addSpeedControls()
 		self.sizerGCode = self.addGCEntry()
 		
 		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
@@ -57,6 +67,18 @@ class ManualControl(wx.Panel):
 		sizerBedSpd.Add(self.sizerSpeed)
 		sizerRight.Add(sizerBedSpd)
 		
+		sizerBtn = wx.BoxSizer(wx.HORIZONTAL)
+		self.bFirmware = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFirmware, size=BUTTONDIM)
+		self.bFirmware.SetToolTipString("Manage Firmware settings")
+		sizerBtn.Add(self.bFirmware)
+		self.Bind(wx.EVT_BUTTON, self.doFirmware, self.bFirmware)
+		sizerBtn.AddSpacer((20, 20))
+		self.bRunMacro = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRunmacro, size=BUTTONDIM)
+		self.bRunMacro.SetToolTipString("Run a macro")
+		sizerBtn.Add(self.bRunMacro)
+		self.Bind(wx.EVT_BUTTON, self.doRunMacro, self.bRunMacro)
+		sizerRight.Add(sizerBtn)
+		
 		self.sizerMain.AddSpacer((20, 20))
 		self.sizerMain.Add(sizerLeft)
 		self.sizerMain.AddSpacer((20, 20))
@@ -66,6 +88,30 @@ class ManualControl(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def setPrtMon(self, pm):
+		self.prtmon = pm
+
+	def doFirmware(self, evt):
+		self.firmware.show()
+
+	def doRunMacro(self, evt):
+		self.bRunMacro.Enable(False)
+		self.dlgMacro = MacroDialog(self, self.reprap) 
+		self.dlgMacro.CenterOnScreen()
+		self.dlgMacro.Show(True)
+		self.macroActive = True
+		
+	def onMacroExit(self):
+		self.bRunMacro.Enable(True)
+		self.macroActive = False
+		
+	def closeMacro(self):
+		if self.macroActive:
+			self.dlgMacro.Destroy()
+			self.macroActive = False
+			
+		self.bRunMacro.Enable(True)
 		
 	def setBedTarget(self, temp):
 		self.bedWin.setHeatTarget(temp)
@@ -79,10 +125,20 @@ class ManualControl(wx.Panel):
 	def setHETemp(self, tool, temp):
 		self.heWin.setHeatTemp(tool, temp)
 		
+	def getBedGCode(self):
+		if self.prtmon is None:
+			return None
+		return self.prtmon.getBedGCode()
+	
+	def getHEGCode(self, tool):
+		if self.prtmon is None:
+			return None
+		return self.prtmon.getHEGCode(tool)
+		
 	def setActiveTool(self, tool):
 		self.heWin.setActiveTool(tool)
 		
-	def addExtruder(self, startTemps, nExtr):
+	def addExtruder(self, nExtr):
 		sizerExtrude = wx.BoxSizer(wx.VERTICAL)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -94,8 +150,8 @@ class ManualControl(wx.Panel):
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
-		self.heWin = HotEnd(self, self.app, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=("HE0", "HE1", "HE2"), 
-					target=startTemps, trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
+		self.heWin = HotEnd(self, self.app, self.reprap, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=("HE0", "HE1", "HE2"), 
+					target=(185, 185, 185), trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -104,13 +160,13 @@ class ManualControl(wx.Panel):
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
-		self.extWin = Extruder(self, self.app)
+		self.extWin = Extruder(self, self.app, self.reprap)
 		sizerExtrude.Add(self.extWin, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 			
 		return sizerExtrude
 			
-	def addBed(self, startTemp):
+	def addBed(self):
 		sizerBed = wx.BoxSizer(wx.VERTICAL)
 		sizerBed.AddSpacer((10,10))
 
@@ -119,14 +175,14 @@ class ManualControl(wx.Panel):
 		sizerBed.Add(t, flag=wx.LEFT)
 		sizerBed.AddSpacer((10,10))
 		
-		self.bedWin = HotBed(self, self.app, name="Heated Print Bed", shortname="Bed", 
-					target=startTemp, trange=[20, 150])
+		self.bedWin = HotBed(self, self.app, self.reprap, name="Heated Print Bed", shortname="Bed", 
+					target=60, trange=[20, 150])
 		sizerBed.Add(self.bedWin)
 		sizerBed.AddSpacer((10,10))
 
 		return sizerBed
 	
-	def addSpeedControls(self, speedcommand):
+	def addSpeedControls(self):
 		sizerSpeed = wx.BoxSizer(wx.VERTICAL)
 		sizerSpeed.AddSpacer((10, 10))
 
@@ -159,7 +215,7 @@ class ManualControl(wx.Panel):
 		self.slFanSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFanSpeedWheel)
 		sizerSpeed.Add(self.slFanSpeed)
 	
-		if speedcommand is not None:			
+		if self.speedcommand is not None:			
 			self.bSpeedQuery = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSpeedquery, size=BUTTONDIMWIDE)
 			self.bSpeedQuery.SetToolTipString("Retrieve current feed and fan speeds from printer")
 			sizerSpeed.Add(self.bSpeedQuery, flag=wx.ALIGN_CENTER | wx.ALL, border=10)
@@ -168,7 +224,7 @@ class ManualControl(wx.Panel):
 		return sizerSpeed
 	
 	def doSpeedQuery(self, evt):
-		self.app.reprap.send_now(self.appsettings.speedcommand)
+		self.reprap.send_now(self.speedcommand)
 		
 	def updateSpeeds(self, fan, feed, flow):
 		if feed is not None:
@@ -190,7 +246,7 @@ class ManualControl(wx.Panel):
 			self.slFeedSpeed.SetValue(l)
 			
 	def setFeedSpeed(self, spd):
-		self.app.reprap.send_now("M220 S%d" % spd)
+		self.reprap.send_now("M220 S%d" % spd)
 		
 	def onFanSpeedChanged(self, evt):
 		self.setFanSpeed(self.slFanSpeed.GetValue())
@@ -206,7 +262,7 @@ class ManualControl(wx.Panel):
 			self.slFanSpeed.SetValue(l)
 		
 	def setFanSpeed(self, spd):
-		self.app.reprap.send_now("M106 S%d" % spd)
+		self.reprap.send_now("M106 S%d" % spd)
 
 	def addGCEntry(self):
 		sizerGCode = wx.BoxSizer(wx.VERTICAL)
@@ -223,10 +279,6 @@ class ManualControl(wx.Panel):
 		sizerGCode.Add(self.GCEntry)
 		
 		return sizerGCode
-		
-	def changePrinter(self, hetemps, bedtemp):
-		self.bedWin.setProfileTarget(bedtemp)
-		self.heWin.changePrinter(hetemps)
 
 	def onClose(self, evt):
 		return True

@@ -14,8 +14,7 @@ from stlframe import StlFrame
 from images import Images
 import stltool
 from stlview import StlViewer
-
-
+from settings import BUTTONDIM, BUTTONDIMWIDE, PLSTATUS_EMPTY, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
 
 (WriterEvent, EVT_WRITER_UPDATE) = wx.lib.newevent.NewEvent()
 WRITER_RUNNING = 1
@@ -57,23 +56,15 @@ class WriterThread:
 		wx.PostEvent(self.win, evt)	
 		self.running = False
 
-
 wildcard = "STL (*.stl)|*.stl;*.STL"
 
-
 TITLETEXT = "Plater"
-BUTTONDIM = (48, 48)
-BUTTONDIMWIDE = (72,48)
-
-PLSTATUS_EMPTY = 0
-PLSTATUS_LOADED_CLEAN = 1
-PLSTATUS_LOADED_DIRTY = 2
 
 class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
 		self.app = app
-		self.buildarea = self.app.buildarea
+		self.buildarea = [200, 200]
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.plater
@@ -95,7 +86,6 @@ class Plater(wx.Panel):
 		self.lbSelection = None
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((20,20), pos=(0,0))
-
 		
 		self.stlFrame =  StlFrame(self, scale=self.settings.stlscale, buildarea=self.buildarea)
 		self.sizerMain.Add(self.stlFrame, pos=(1, 1), span=(6,1))

@@ -1,18 +1,3 @@
-# This file is part of the Printrun suite.
-# 
-# Printrun is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# Printrun is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with Printrun.  If not, see <http://www.gnu.org/licenses/>.
-
 import sys, struct, math, numpy
 
 def cross(v1,v2):
@@ -37,14 +22,11 @@ I=[
 
 def transpose(matrix):
 	return zip(*matrix)
-	#return [[v[i] for v in matrix] for i in xrange(len(matrix[0]))]
 	
 def multmatrix(vector,matrix):
 	return map(sum, transpose(map(lambda x:[x[0]*p for p in x[1]], zip(vector, transpose(matrix)))))
 	
 def applymatrix(facet,matrix=I):
-	#return facet
-	#return [map(lambda x:-1.0*x,multmatrix(facet[0]+[1],matrix)[:3]),map(lambda x:multmatrix(x+[1],matrix)[:3],facet[1])]
 	return genfacet(map(lambda x:multmatrix(x+[1],matrix)[:3],facet[1]))
 	
 f=[[0,0,0],[[-3.022642, 0.642482, -9.510565],[-3.022642, 0.642482, -9.510565],[-3.022642, 0.642482, -9.510565]]]

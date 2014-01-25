@@ -1,8 +1,3 @@
-'''
-Created on Nov 18, 2012
-
-@author: Jeff
-'''
 import cgi
 import select
 import socket

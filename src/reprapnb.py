@@ -1,64 +1,45 @@
 import os.path
 import sys, inspect
 import wx
-import glob
 import time
 
 cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
 if cmd_folder not in sys.path:
 	sys.path.insert(0, cmd_folder)
 	
-from fileprep import FilePrepare, FPSTATUS_EQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_UNEQUAL, FPSTATUS_BUSY, FPSTATUS_UNEQUAL_DIRTY
-from printmon import PrintMonitor, PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED
+from settings import (Settings, MAINTIMER, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, FPSTATUS_IDLE,
+					PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED,
+					PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY)
+from fileprep import FilePrepare
+from printmon import PrintMonitor
 from manualctl import ManualControl
-from plater import Plater, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
-from settings import Settings
+from plater import Plater
 from logger import Logger
 from images import Images
-from reprap import RepRap, RepRapParser, RECEIVED_MSG
 from reprapserver import RepRapServer
 from tools import formatElapsed
-from macros import MacroDialog
 from gcref import GCRef
-from firmware import Firmware
-from sdcard import SDCard
-
-TB_TOOL_PORTS = 10
-TB_TOOL_CONNECT = 11
-TB_TOOL_RESET = 12
-TB_TOOL_SLICECFG = 13
-TB_TOOL_FIRMWARE = 17
-TB_TOOL_RUNMACRO = 18
-TB_TOOL_GCREF = 19
-
-TEMPINTERVAL = 3
-POSITIONINTERVAL = 1
+from connection import ConnectionManagerPanel
 
 LOGGER_TAB_TEXT = "Log"
+GCREF_TAB_TEXT = "G Code Reference"
 PLATER_TAB_TEXT = "Plater"
 FILEPREP_TAB_TEXT = "File Preparation"
-MANCTL_TAB_TEXT = "Manual Control"
-PRTMON_TAB_TEXT = "Print Monitor"
-
-MAXCFGCHARS = 50
-
-BUTTONDIM = (64, 64)
-
-baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
+CONNMGR_TAB_TEXT = "Connection Manager"
+MANCTL_TAB_TEXT = "Manual Control: %s"
+PRTMON_TAB_TEXT = "Print Monitor: %s"
 
 class MainFrame(wx.Frame):
 	def __init__(self):
-		self.ctr = 0
-		self.cycle = 0
 		self.timer = None
-		self.skipCycles = 0
-		self.discPending = False
-		self.M105pending = False
-		self.M27pending = False
-		self.suspendM105 = False
-		self.printPosition = None
 		self.logger = None
-		self.macroActive = False
+		
+		self.allowPulls = False
+		
+		self.pgPrinters = {}
+		self.pgManCtl = {}
+		self.pgPrtMon = {}
+		
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
 		
 		self.timer = wx.Timer(self)
@@ -71,159 +52,46 @@ class MainFrame(wx.Frame):
 		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
 		self.SetIcon(ico)
 
-		
-		self.firmware = Firmware(self)
-		self.reprap = RepRap(self, self.evtRepRap)
-		if self.settings.speedcommand is not None:
-			self.reprap.addToAllowedCommands(self.settings.speedcommand)
-			
-		self.parser = RepRapParser(self)
-		self.connected = False
-		self.printing = False
 		self.httpServer = None
 
-		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
-		if self.slicer is None:
-			print "Unable to get slicer settings"
-			
-		(self.buildarea, nExtr, heTemps, bedTemp) = self.slicer.getSlicerParameters()
-			
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 		self.nbil = wx.ImageList(16, 16)
 		self.nbilAttentionIdx = self.nbil.Add(self.images.pngAttention)
-		self.nbilEqualIdx = self.nbil.Add(self.images.pngEqual)
-		self.nbilEqualDirtyIdx = self.nbil.Add(self.images.pngEqualdirty)
-		self.nbilUnequalIdx = self.nbil.Add(self.images.pngUnequal)
-		self.nbilUnequalDirtyIdx = self.nbil.Add(self.images.pngUnequaldirty)
 		self.nbilLoadedCleanIdx = self.nbil.Add(self.images.pngLoadedclean)
 		self.nbilLoadedDirtyIdx = self.nbil.Add(self.images.pngLoadeddirty)
 		self.nbilNotReadyIdx = self.nbil.Add(self.images.pngNotready)
 		self.nbilReadyIdx = self.nbil.Add(self.images.pngReady)
+		self.nbilReadyDirtyIdx = self.nbil.Add(self.images.pngReadydirty)
 		self.nbilPrintingIdx = self.nbil.Add(self.images.pngPrinting)
 		self.nbilPausedIdx = self.nbil.Add(self.images.pngPaused)
+		self.nbilIdleIdx = self.nbil.Add(self.images.pngIdle)
 
 		p = wx.Panel(self)
-
-		self.tb = wx.ToolBar(p, style=wx.TB_HORIZONTAL) # | wx.TB_FLAT)
-		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
-		sizerBtns.AddSpacer((10,10))
-		sizerBtns.Add(self.tb)
-
-		dc = wx.WindowDC(self)
-		dc.SetFont(f)
-		text = "Port:"
-		w, h = dc.GetTextExtent(text)
-			
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-
-		self.tb.AddSimpleTool(TB_TOOL_PORTS, self.images.pngPorts, "Refresh list of available ports", "")
-		self.Bind(wx.EVT_TOOL, self.doPort, id=TB_TOOL_PORTS)
-
-		ports = self.scanSerial()	
-		choice = ""
-		if len(ports) > 0:
-			choice = ports[0]
-		
-		self.cbPort = wx.ComboBox(self.tb, wx.ID_ANY, choice, (-1, -1),  (140, -1), ports, wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbPort.SetFont(f)
-		self.cbPort.SetToolTipString("Choose the port to which to connect")
-		self.cbPort.SetStringSelection(choice)
-		self.tb.AddControl(self.cbPort)
-		text = "@"
-		w, h = dc.GetTextExtent(text)
-		
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-		
-		self.cbBaud = wx.ComboBox(self.tb, wx.ID_ANY, "115200", (-1, -1), (100, -1), baudChoices, wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbBaud.SetFont(f)
-		self.cbBaud.SetToolTipString("Choose the baud rate")
-		self.cbBaud.SetStringSelection("115200")
-		self.tb.AddControl(self.cbBaud)
-		
-		self.tb.AddSimpleTool(TB_TOOL_CONNECT, self.images.pngConnect, "Connect to the Printer", "")
-		self.Bind(wx.EVT_TOOL, self.doConnect, id=TB_TOOL_CONNECT)
-		
-		self.tb.AddSimpleTool(TB_TOOL_RESET, self.images.pngReset, "Reset the Printer", "")
-		self.Bind(wx.EVT_TOOL, self.doReset, id=TB_TOOL_RESET)
-		self.tb.EnableTool(TB_TOOL_RESET, False)
-		
-		self.tb.AddSeparator()
-
-		if len(ports) < 1:
-			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-
-		text = " Slicer:"
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self.tb, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
-		t.SetFont(f)
-		self.tb.AddControl(t)
-		
-		self.cbSlicer = wx.ComboBox(self.tb, wx.ID_ANY, self.settings.slicer, (-1, -1), (120, -1), self.settings.slicers, wx.CB_DROPDOWN | wx.CB_READONLY)
-		self.cbSlicer.SetFont(f)
-		self.cbSlicer.SetToolTipString("Choose which slicer to use")
-		self.tb.AddControl(self.cbSlicer)
-		self.cbSlicer.SetStringSelection(self.settings.slicer)
-		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
-		
-		self.tb.AddSimpleTool(TB_TOOL_SLICECFG, self.images.pngSlicecfg, "Choose slicer options", "")
-		self.Bind(wx.EVT_TOOL, self.doSliceConfig, id=TB_TOOL_SLICECFG)
-		
-		text = self.slicer.type.getConfigString()
-		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
-		w = int(0.75 * w)
-		self.tSlicerCfg = wx.StaticText(self.tb, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
-		self.tSlicerCfg.SetFont(f)
-		self.updateSlicerConfigString(text)
-		self.tb.AddControl(self.tSlicerCfg)
-			
-		self.tb.AddSeparator()
-		
-		self.tb.AddSimpleTool(TB_TOOL_FIRMWARE, self.images.pngFirmware, "Manage Firmware settings", "")
-		self.Bind(wx.EVT_TOOL, self.onFirmware, id=TB_TOOL_FIRMWARE)
-		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
-		
-		self.tb.AddSimpleTool(TB_TOOL_RUNMACRO, self.images.pngRunmacro, "Run a macro", "")
-		self.Bind(wx.EVT_TOOL, self.onMacro, id=TB_TOOL_RUNMACRO)
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		
-		self.tb.AddSimpleTool(TB_TOOL_GCREF, self.images.pngGcref, "G Code Reference", "")
-		self.Bind(wx.EVT_TOOL, self.onGCRef, id=TB_TOOL_GCREF)
-		self.tb.EnableTool(TB_TOOL_GCREF, True)
-
-		self.tb.Realize()
-		
 		sizer = wx.BoxSizer(wx.VERTICAL)
-		self.nb = wx.Notebook(p, style=wx.NB_TOP)
+
+		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.nb = wx.Notebook(p, size=(1300, 900), style=wx.NB_TOP)
 		self.nb.AssignImageList(self.nbil)
 
 		self.logger = Logger(self.nb, self)
-		
+		self.pgGCodeRef = GCRef(self.nb, self, cmd_folder)
+		self.pgConnMgr = ConnectionManagerPanel(self.nb, self)
+	
 		self.pxLogger = 0
-		self.pxPlater = 1
-		self.pxFilePrep = 2
-		self.pxManCtl = 3
-		self.pxPrtMon = 4
-		
-		self.sdcard = SDCard(self, self.reprap, self.logger)
+		self.pxGCodeRef = 1
+		self.pxPlater = 2
+		self.pxFilePrep = 3
+		self.pxConnMgr = 4
 
 		self.pgPlater = Plater(self.nb, self)
-		self.pgFilePrep = FilePrepare(self.nb, self, nExtr)
-		self.pgManCtl = ManualControl(self.nb, self, nExtr, heTemps, bedTemp)
-		self.pgPrtMon = PrintMonitor(self.nb, self, self.reprap, self.sdcard)
-
-		self.parser.setHandlers(self.evtSDCard, self.evtPrtMon)
+		self.pgFilePrep = FilePrepare(self.nb, self)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
+		self.nb.AddPage(self.pgGCodeRef, GCREF_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
-		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=-1)
-		self.nb.AddPage(self.pgManCtl, MANCTL_TAB_TEXT)
-		self.nb.AddPage(self.pgPrtMon, PRTMON_TAB_TEXT, imageId=self.nbilNotReadyIdx)
-		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.checkPageChanged, self.nb)
+		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=self.nbilIdleIdx)
+		self.nb.AddPage(self.pgConnMgr, CONNMGR_TAB_TEXT, imageId=-1)
 
 		sizer.AddSpacer((20,20))
 		sizer.Add(sizerBtns)
@@ -231,229 +99,90 @@ class MainFrame(wx.Frame):
 		sizer.Add(self.nb)
 		p.SetSizer(sizer)
 		
-		self.setPrinterBusy(True)  # disconnected printer is for all intents busy
-		self.updateWithSlicerInfo()  # initially populate with current slicer info
-		
-		if self.settings.startpane == self.pxLogger:
-			self.nb.SetSelection(self.pxLogger)
-		elif self.settings.startpane == self.pxPlater:
-			self.nb.SetSelection(self.pxPlater)
-		elif self.settings.startpane == self.pxFilePrep:
-			self.nb.SetSelection(self.pxFilePrep)
+		self.nb.SetSelection(self.pxFilePrep)
 
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
-		
-		self.firmware.config(self.logger, self.reprap)
 
-	def evtRepRap(self, evt):
-		if evt.event == RECEIVED_MSG:
-			if not self.parser.parseMsg(evt.msg):
-				self.logger.LogMessage("(r) - " + evt.msg)
-		else:
-			self.pgPrtMon.reprapEvent(evt)
-
-	def evtSDCard(self, evt):
-		self.sdcard.sdEvent(evt)
-
-	def evtPrtMon(self, evt):
-		self.pgPrtMon.prtMonEvent(evt)
+		self.timer.Start(MAINTIMER)
 		
-	def resumeSDPrintFrom(self, fn):
-		self.pgPrtMon.resumeSDPrintFrom(fn)
+	def addPages(self, printer, reprap):
+		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
+		pm = self.pgPrtMon[printer] = PrintMonitor(self.nb, self, printer, reprap)
+		pm.setManCtl(mc)
+		mc.setPrtMon(pm)
+		mcText = MANCTL_TAB_TEXT % printer
+		pmText = PRTMON_TAB_TEXT % printer
+		self.nb.AddPage(self.pgManCtl[printer], mcText)
+		self.nb.AddPage(self.pgPrtMon[printer], pmText, imageId=self.nbilNotReadyIdx)
+		self.pgPrinters[printer] = (mcText, pmText)
+		return (pm, mc)
 		
-	def resumeSDPrintTo(self, fn):
-		self.pgPrtMon.resumeSDPrintTo(fn)
-			
-	def setActiveTool(self, tool):
-		self.pgManCtl.setActiveTool(tool)
+	def delPages(self, printer):
+		if printer not in self.pgPrinters.keys():
+			return
+		mcText, pmText = self.pgPrinters[printer]
+		self.deletePageByTabText(mcText)
+		self.deletePageByTabText(pmText)
+		del self.pgPrinters[printer]
+		del self.pgManCtl[printer]
+		del self.pgPrtMon[printer]
 		
-	def checkPageChanged(self, evt):
-		newPage = evt.GetSelection()
-		currentPage = evt.GetOldSelection()
-		if newPage in [self.pxManCtl, self.pxPrtMon] and not self.connected:
-			self.logger.LogMessage("Tab is inaccessible unless printer is connected")
-			self.nb.SetSelection(currentPage)
-			evt.Veto()
-		else:
-			evt.Skip()
-			
+	def deletePageByTabText(self, text):
+		pc = self.nb.GetPageCount()
+		for i in range(pc):
+			if text == self.nb.GetPageText(i):
+				self.nb.DeletePage(i)
+				return
+		
+	def findPMPageByPrinter(self, prtname):
+		if prtname not in self.pgPrinters.keys():
+			return None
+		text = self.pgPrinters[prtname][1]
+		pc = self.nb.GetPageCount()
+		for i in range(pc):
+			if text == self.nb.GetPageText(i):
+				return i
+		return None
+		
 	def hiLiteLogTab(self, flag):
 		if flag:
 			self.nb.SetPageImage(self.pxLogger, self.nbilAttentionIdx)
 		else:
 			self.nb.SetPageImage(self.pxLogger, -1)
-						
-	def updateSlicerConfigString(self, text):
-		if len(text) > MAXCFGCHARS:
-			text = text[:MAXCFGCHARS]
-		self.tSlicerCfg.SetLabel(text)
 
-	def updateWithSlicerInfo(self):	
-		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
-		(hetemps, bedtemp) = self.slicer.getSlicerParameters()[2:4]
-		
-		if len(hetemps) < 1:
-			self.logger.LogError("No hot end temperatures configured in slicer")
-			return
-	
-		if bedtemp is None:
-			self.logger.LogError("No bed temperatures configured in slicer")
-			return
-
-		self.pgManCtl.changePrinter(hetemps, bedtemp)
-		self.pgPrtMon.changePrinter(len(hetemps))
-		
-	def doChooseSlicer(self, evt):
-		self.settings.slicer = self.cbSlicer.GetValue()
-		self.settings.setModified()
-		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
-		if self.slicer is None:
-			self.logger.LogError("Unable to get slicer settings") 
-		self.updateWithSlicerInfo()
-		
-	def doSliceConfig(self, evt):
-		if self.slicer.configSlicer():
-			self.updateWithSlicerInfo()
-		
-	def doPort(self, evt):
-		l = self.scanSerial()
-		self.cbPort.Clear()
-		if len(l) > 0:
-			self.cbPort.AppendItems(l)
-			self.cbPort.SetStringSelection(l[0])
-			self.tb.EnableTool(TB_TOOL_CONNECT, True)
-		else:
-			self.cbPort.SetStringSelection("")
-			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-	
-	def scanSerial(self):
-		"""scan for available ports. return a list of device names."""
-		baselist=[]
-		return baselist+glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') +glob.glob("/dev/tty.*")+glob.glob("/dev/cu.*")+glob.glob("/dev/rfcomm*")
-
-	def doConnect(self, evt):
-		if self.connected:
-			self.reprap.disconnect()
-			self.discPending = True
-			self.setPrinterBusy(True)
-			self.tb.EnableTool(TB_TOOL_CONNECT, False)
-
-		else:
-			port = 	self.cbPort.GetStringSelection()
-			baud = 	self.cbBaud.GetStringSelection()
-
-			self.reprap.connect(port, baud)
-			self.connected = True
-
-			self.M105pending = False			
-			self.timer.Start(1000)
-
-			self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngDisconnect)
-			self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Disconnect from the Printer")
-			self.setPrinterBusy(False)
-			self.tb.EnableTool(TB_TOOL_RUNMACRO, True)
-			self.tb.EnableTool(TB_TOOL_FIRMWARE, True)
-			self.tb.EnableTool(TB_TOOL_RESET, True)
-			
-	def doReset(self, evt):
-		dlg = wx.MessageDialog(self, "Are you sure you want to reset the printer",
-				'Printer Reset', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-		
-		rc = dlg.ShowModal()
-		dlg.Destroy()
-
-		if rc == wx.ID_YES:
-			self.reprap.reset()
-			self.skipCycles = 5
-			self.M105pending = False
-			self.pgPrtMon.printerReset()
-
-	def finishDisconnection(self):
-		if not self.reprap.checkDisconnection():
-			return
-					
-		self.timer.Stop()
-		self.tb.EnableTool(TB_TOOL_CONNECT, True)
-		self.pgPrtMon.disconnect()
-		self.connected = False 
-		self.discPending = False
-		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
-		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-		self.closeMacro()
-		self.tb.EnableTool(TB_TOOL_RESET, False)
-		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		self.firmware.hide()
+	def doPrinterError(self, printer):
 		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
-
-	def doPrinterError(self):
-		self.setPrinterBusy(True)
-		self.timer.Stop()
-		self.tb.EnableTool(TB_TOOL_CONNECT, True)
-		self.pgPrtMon.disconnect()
-		self.connected = False 
-		self.discPending = False
-		self.tb.SetToolShortHelp(TB_TOOL_CONNECT, "Connect to the Printer")
-		self.tb.SetToolNormalBitmap(TB_TOOL_CONNECT, self.images.pngConnect)
-		self.closeMacro()
-		self.tb.EnableTool(TB_TOOL_RESET, False)
-		self.tb.EnableTool(TB_TOOL_FIRMWARE, False)
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		self.firmware.hide()
-		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
-			self.nb.SetSelection(self.pxFilePrep)
-			
-	def onFirmware(self, evt):
-		self.firmware.show()
-			
-	def onMacro(self, evt):
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, False)
-		self.dlgMacro = MacroDialog(self, self.reprap) 
-		self.dlgMacro.CenterOnScreen()
-		self.dlgMacro.Show(True)
-		self.macroActive = True
-		
-	def onMacroExit(self):
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
-		self.macroActive = False
-		
-	def closeMacro(self):
-		if self.macroActive:
-			self.dlgMacro.Destroy()
-			self.macroActive = False
-			
-		self.tb.EnableTool(TB_TOOL_RUNMACRO, self.connected)
-			
-	def onGCRef(self, evt):
-		self.tb.EnableTool(TB_TOOL_GCREF, False)
-		self.dlgGCRef = GCRef(self, cmd_folder) 
-		self.dlgGCRef.CenterOnScreen()
-		self.dlgGCRef.Show(True)
-		
-	def onGCRefExit(self):
-		self.tb.EnableTool(TB_TOOL_GCREF, True)
+		self.pgConnMgr.disconnectByPrinter(printer)
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger
 
-	def replace(self, s):
+	def replace(self, s, pm=None):
 		d = {}
+
+		d['%gcodebase%'] = ""
+		d['%gcode%'] = ""
 		
-		st, et = self.pgPrtMon.getPrintTimes()
-		if st is not None:				
-			d['%starttime%'] = time.strftime('%H:%M:%S', time.localtime(st))
-		if et is not None:
-			d['%endtime%'] = time.strftime('%H:%M:%S', time.localtime(et))
-		if st is not None and et is not None:
-			d['%elapsed%'] = formatElapsed(et - st)
-			
-		if 'configfile' in self.slicer.settings.keys():
-			d['%config%'] = self.slicer.settings['configfile']
+		if pm is not None:		
+			st, et = self.pm.getPrintTimes()
+			if st is not None:				
+				d['%starttime%'] = time.strftime('%H:%M:%S', time.localtime(st))
+			if et is not None:
+				d['%endtime%'] = time.strftime('%H:%M:%S', time.localtime(et))
+			if st is not None and et is not None:
+				d['%elapsed%'] = formatElapsed(et - st)
+				
+			if self.pm.gcFile is not None:
+				d['%gcodebase%'] = os.path.basename(self.pm.gcFile)
+				d['%gcode%'] = self.pm.gcFile
+						
+		if 'configfile' in self.pgFilePrep.slicer.settings.keys():
+			d['%config%'] = self.pgFilePrep.slicer.settings['configfile']
 		else:
 			d['%config%'] = ""
-		d['%slicer%'] = self.settings.slicer
+		d['%slicer%'] = self.pgFilePrep.settings.slicer
 		
 		if self.pgFilePrep.stlFile is not None:
 			d['%stlbase%'] =  os.path.basename(self.pgFilePrep.stlFile)
@@ -469,38 +198,26 @@ class MainFrame(wx.Frame):
 			d['%slicegcodebase%'] = ""
 			d['%slicegcode%'] = ""
 			
-		if self.pgPrtMon.gcFile is not None:
-			d['%gcodebase%'] = os.path.basename(self.pgPrtMon.gcFile)
-			d['%gcode%'] = self.pgPrtMon.gcFile
-		else:
-			d['%gcodebase%'] = ""
-			d['%gcode%'] = ""
-			
 		for t in d.keys():
 			if d[t] is not None:
 				s = s.replace(t, d[t])
 			
 		s = s.replace('""', '')
 		return s
-	
-	def setPrinterBusy(self, flag=True):
-		if flag:
-			self.printPosition = None
-		self.printing = flag
-			
-		self.pgFilePrep.setPrinterBusy(flag)
 		
-	def updatePrintMonStatus(self, status):	
-		if status == PMSTATUS_NOT_READY:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilNotReadyIdx)
-		elif status == PMSTATUS_READY:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilReadyIdx)
-		elif status == PMSTATUS_PRINTING:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilPrintingIdx)
-		elif status == PMSTATUS_PAUSED:
-			self.nb.SetPageImage(self.pxPrtMon, self.nbilPausedIdx)
-		else:
-			self.nb.SetPageImage(self.pxPrtMon, -1)
+	def updatePrintMonStatus(self, pname, status):	
+		pn =  self.findPMPageByPrinter(pname)
+		if pn is not None:
+			if status == PMSTATUS_NOT_READY:
+				self.nb.SetPageImage(pn, self.nbilNotReadyIdx)
+			elif status == PMSTATUS_READY:
+				self.nb.SetPageImage(pn, self.nbilReadyIdx)
+			elif status == PMSTATUS_PRINTING:
+				self.nb.SetPageImage(pn, self.nbilPrintingIdx)
+			elif status == PMSTATUS_PAUSED:
+				self.nb.SetPageImage(pn, self.nbilPausedIdx)
+			else:
+				self.nb.SetPageImage(pn, -1)
 		
 	def updatePlaterStatus(self, status):
 		if status == PLSTATUS_LOADED_CLEAN:
@@ -511,16 +228,14 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxPlater, -1)
 
 	def updateFilePrepStatus(self, status):
-		if status == FPSTATUS_EQUAL:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilEqualIdx)
-		elif status == FPSTATUS_EQUAL_DIRTY:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilEqualDirtyIdx)
-		elif status == FPSTATUS_UNEQUAL:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalIdx)
-		elif status == FPSTATUS_UNEQUAL_DIRTY:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilUnequalDirtyIdx)
+		if status == FPSTATUS_READY:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyIdx)
+		elif status == FPSTATUS_READY_DIRTY:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyDirtyIdx)
 		elif status == FPSTATUS_BUSY:
 			self.nb.SetPageImage(self.pxFilePrep, self.nbilNotReadyIdx)
+		elif status == FPSTATUS_IDLE:
+			self.nb.SetPageImage(self.pxFilePrep, self.nbilIdleIdx)
 		else:
 			self.nb.SetPageImage(self.pxFilePrep, -1)
 			
@@ -528,97 +243,50 @@ class MainFrame(wx.Frame):
 		return self.pgFilePrep.checkModified(message=message)
 		
 	def getStatus(self):
-		stat = {}
-		if self.connected:
-			stat['connection'] = "on line"
-			if self.printing:
-				stat['status'] = "printing"
-				stat['printstat'] = self.pgPrtMon.getStatus()
-			else:
-				stat['status'] = "idle"
-		else:
-			stat['connection'] = "off line"
-				
-		return stat
+		return self.pgConnMgr.getStatus()
 	
 	def stopPrint(self):
-		if self.connected and self.printing:
-			return self.pgPrtMon.stopPrint()
-		else:
-			return {'result': "Failed - not printing"}
+		st = {}
+		for p in self.settings.printers:
+			if self.connected[p] and self.printing[p]:
+				pst = self.pgPrtMon[p].stopPrint()
+			else:
+				pst = {'result': "Skipped - not printing"}
+			st[p] = pst
+		return st
 		
 	def getTemps(self):
 		result = {}
-		if self.connected:
-			result['result'] = "Success"
-			result['temps'] = self.pgPrtMon.getTemps()
-		else:
-			result['result'] = "Failed - not connected"
+		for p in self.settings.printers:
+			pst = {}
+			if self.connected[p]:
+				pst['result'] = "Success"
+				pst['temps'] = self.pgPrtMon[p].getTemps()
+			else:
+				pst['result'] = "skipped - not connected"
+			result[p] = pst
 			
 		return result
-			
-		
-			
 	
 	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)
+		
+	def pullGCode(self, printmon):
+		self.pgFilePrep.pullGCode(printmon)
+		
+	def currentPullStatus(self):
+		return self.allowPulls
+		
+	def assertAllowPulls(self, flag):
+		self.allowPulls = flag
+		self.pgConnMgr.assertAllowPulls(flag)
 
-	def forwardToPrintMon(self, model, name=""):
-		self.pgPrtMon.forwardModel(model, name=name)
-		
-	def setHETarget(self, tool, temp):
-		self.pgManCtl.setHETarget(tool, temp)
-		self.pgPrtMon.setHETarget(tool, temp)
-		
-	def setHETemp(self, tool, temp):
-		self.pgManCtl.setHETemp(tool, temp)
-		self.pgPrtMon.setHETemp(tool, temp)
-		
-	def setBedTarget(self, temp):
-		self.pgManCtl.setBedTarget(temp)
-		self.pgPrtMon.setBedTarget(temp)
-		
-	def setBedTemp(self, temp):
-		self.pgManCtl.setBedTemp(temp)
-		self.pgPrtMon.setBedTemp(temp)
-		
-	def updateSpeeds(self, fan, feed, flow):
-		self.pgManCtl.updateSpeeds(fan, feed, flow)
-		
 	def onTimer(self, evt):
-		if self.skipCycles > 0:
-			self.skipCycles -= 1
-			return
-		
-		self.cycle += 1
-		
-		if self.discPending:
-			self.finishDisconnection()
-
-		if self.cycle % TEMPINTERVAL == 0:
-			if self.connected:
-				if self.suspendM105:
-					self.M105pending = False
-				elif not self.M105pending:
-					self.M105pending = True
-					self.reprap.setEatOk()
-					self.reprap.send_now("M105")
-			
-		if self.connected and (self.cycle % POSITIONINTERVAL == 0):
-			n = self.reprap.getPrintPosition()
-			if n is not None:
-				self.printPosition = n
-				self.pgPrtMon.updatePrintPosition(n)
-				
-	def suspendTempProbe(self, flag):
-		self.suspendM105 = flag
+		self.pgConnMgr.tick()
 		
 	def onClose(self, evt):
 		if self.checkPrinting():
 			return
-		
-		if self.connected:
-			self.reprap.disconnect()
 			
 		if not self.pgPlater.onClose(evt):
 			self.nb.SetSelection(self.pxPlater)
@@ -627,14 +295,14 @@ class MainFrame(wx.Frame):
 		if not self.pgFilePrep.onClose(evt):
 			self.nb.SetSelection(self.pxFilePrep)
 			return
-		
-		if not self.pgPrtMon.onClose(evt):
-			self.nb.SetSelection(self.pxPrtMon)
-			return
-		
-		if not self.pgManCtl.onClose(evt):
-			self.nb.SetSelection(self.pxManCtl)
-			return
+
+		for p in self.pgPrtMon.keys():		
+			self.pgPrtMon[p].onClose(evt)
+			
+		for p in self.pgManCtl.keys():		
+			self.pgManCtl[p].onClose(evt)
+
+		self.pgConnMgr.onClose()
 
 		if self.httpServer is not None:
 			self.httpServer.close()
@@ -646,10 +314,10 @@ class MainFrame(wx.Frame):
 		self.Destroy()
 		
 	def checkPrinting(self):
-		if self.printing and self.connected:
+		if self.pgConnMgr.isAnyPrinting():
 			dlg = wx.MessageDialog(self, "Are you sure you want to exit while printing is active",
-					'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-			
+				'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+	
 			rc = dlg.ShowModal()
 			dlg.Destroy()
 
@@ -657,7 +325,6 @@ class MainFrame(wx.Frame):
 				return True
 
 		return False
-
 
 class App(wx.App):
 	def OnInit(self):

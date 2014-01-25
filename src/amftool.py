@@ -1,8 +1,3 @@
-'''
-Created on Jun 12, 2013
-
-@author: ejefber
-'''
 import xml.parsers.expat
 
 from stltool import genfacet
@@ -120,5 +115,3 @@ class amf:
 	def endVolume(self):
 		self.volumes.append(amfVol(self.volfacets))
 		self.volfacets = []
-
-	

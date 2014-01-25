@@ -1,22 +1,20 @@
 import wx
-from reprap import MAX_EXTRUDERS
-
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM, MAX_EXTRUDERS
 
 orange = wx.Colour(237, 139, 33)
 
 
 class HotEnd(wx.Window): 
-	def __init__(self, parent, app,
+	def __init__(self, parent, app, reprap,
 				name=("", "", ""), shortname=("", "", ""),
 				target=(20, 20, 20), trange=((0, 100), (0,100), (0, 100)), nextr=1):
 		self.parent = parent
 		self.app = app
+		self.reprap = reprap
 		self.logger = self.app.logger
 		self.currentSelection = 0
 		self.name = name
 		self.shortname = shortname
-		self.profileTarget = target
 		self.trange = trange
 		self.currentTemp = [0.0, 0.0, 0.0]
 		self.currentTarget = [0.0, 0.0, 0.0]
@@ -105,11 +103,13 @@ class HotEnd(wx.Window):
 			sldr.SetPageSize(1)
 			sldr.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 			sldr.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
+			sldr.Enable(i<self.nextr)
 			sizerRow.Add(sldr, flag=wx.ALIGN_CENTER)
 			self.sliders.append(sldr)
 
 			btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
-			btn.SetToolTipString("Import from profile")
+			btn.SetToolTipString("Import from G Code")
+			btn.Enable(i<self.nextr)
 			sizerRow.Add(btn)
 			self.Bind(wx.EVT_BUTTON, self.importProfile, btn)
 			sizerRow.Add(btn, flag=wx.ALIGN_CENTER)
@@ -138,28 +138,12 @@ class HotEnd(wx.Window):
 		if sel is not None and sel != self.currentSelection:
 			self.currentSelection = sel
 			self.logger.LogMessage("Setting tool to T%d" % sel)
-			self.app.reprap.send_now("T%d" % sel)
+			self.reprap.send_now("T%d" % sel)
 			
 	def setActiveTool(self, tool):
 		if tool >= 0 and tool < self.nextr:
 			self.rbTools[tool].SetValue(True)
 		
-	def changePrinter(self, hetemps):
-		self.nextr = len(hetemps)
-		self.setProfileTarget(hetemps)
-		for i in range(MAX_EXTRUDERS):
-			self.rbTools[i].Enable(i<self.nextr)
-			self.btnOn[i].Enable(i<self.nextr)
-			self.btnOff[i].Enable(i<self.nextr)
-			self.txtTemp[i].Enable(i<self.nextr)
-			self.txtTarget[i].Enable(i<self.nextr)
-			self.sliders[i].Enable(i<self.nextr)
-			self.btnImport[i].Enable(i<self.nextr)
-			
-		if self.currentSelection >= self.nextr:
-			self.currentSelection = 0
-			self.rbTools[0].SetValue(True)
-
 	def importProfile(self, evt):
 		tc_sel = evt.GetEventObject()
 		sel = None
@@ -170,11 +154,13 @@ class HotEnd(wx.Window):
 
 		if sel is None:
 			return
+
+		temp = self.parent.getHEGCode(sel)
+		if temp is None:
+			self.logger.LogMessage("Unable to obtain temperature from G Code")
+			return
 		
-		self.sliders[sel].SetValue(self.profileTarget[sel])
-			
-	def setProfileTarget(self, t):
-		self.profileTarget = t
+		self.sliders[sel].SetValue(temp)
 		
 	def setHeatTarget(self, tool, temp):
 		if tool < 0 or tool >= self.nextr:
@@ -270,7 +256,7 @@ class HotEnd(wx.Window):
 		cmd = "M104 S%d" % t
 		if self.nextr > 1:
 			cmd += " T" + str(sel)
-		self.app.reprap.send_now(cmd)
+		self.reprap.send_now(cmd)
 		
 	def heaterOff(self, evt):
 		tc_sel = evt.GetEventObject()
@@ -286,6 +272,6 @@ class HotEnd(wx.Window):
 		cmd = "M104 S0"
 		if self.nextr > 1:
 			cmd += " T" + str(sel)
-		self.app.reprap.send_now(cmd)
+		self.reprap.send_now(cmd)
 
 

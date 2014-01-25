@@ -1,4 +1,3 @@
-
 secpday = 60 * 60 * 24
 secphour = 60 * 60
 

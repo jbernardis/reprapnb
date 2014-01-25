@@ -1,11 +1,11 @@
 import wx
-
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
 
 class Extruder(wx.Window): 
-	def __init__(self, parent, app, name="", axis="E"):
+	def __init__(self, parent, app, reprap, name="", axis="E"):
 		self.parent = parent
 		self.app = app
+		self.reprap = reprap
 		self.logger = self.app.logger
 
 		self.name = name
@@ -90,9 +90,9 @@ class Extruder(wx.Window):
 		except:
 			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			dst = 0
-		self.app.reprap.send_now("G91")
-		self.app.reprap.send_now("G1 %s%.3f F%.3f" % (self.axis.upper(), dst, sp))
-		self.app.reprap.send_now("G90")
+		self.reprap.send_now("G91")
+		self.reprap.send_now("G1 %s%.3f F%.3f" % (self.axis.upper(), dst, sp))
+		self.reprap.send_now("G90")
 		
 	def doRetract(self, evt):
 		try:
@@ -105,8 +105,8 @@ class Extruder(wx.Window):
 		except:
 			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			dst = 0
-		self.app.reprap.send_now("G91")
-		self.app.reprap.send_now("G1 %s-%.3f F%.3f" % (self.axis.upper(), dst, sp))
-		self.app.reprap.send_now("G90")
+		self.reprap.send_now("G91")
+		self.reprap.send_now("G1 %s-%.3f F%.3f" % (self.axis.upper(), dst, sp))
+		self.reprap.send_now("G90")
 		
 

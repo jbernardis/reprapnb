@@ -1,14 +1,10 @@
-'''
-Created on Jun 20, 2013
-
-@author: ejefber
-'''
 import os
 import wx
 import shlex, subprocess
 import ConfigParser
 
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
+
 CBSIZE = 200
 PREFSECTION = 'preference'
 
@@ -159,7 +155,7 @@ class Cura:
 		self.prefs.optionxform = str
 		self.prefFile = self.parent.settings['curapreferences']
 		if not self.prefs.read(self.prefFile):
-			self.showWarning("Cura preferences file %s does not exist.  Using default values" % self.prefFile)
+			print "Cura preferences file %s does not exist.  Using default values" % self.prefFile
 		
 	def initialize(self, flag=False):
 		if flag:

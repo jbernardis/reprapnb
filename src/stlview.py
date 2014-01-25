@@ -2,11 +2,10 @@ import os
 import wx
 from stltool import stl
 from amftool import amf
-
+from settings import BUTTONDIM
 from wx import glcanvas
 from OpenGL.GL import *
 
-BUTTONDIM = (48, 48)
 InitialLightValue = 100
 
 def vec(*args):
@@ -158,7 +157,6 @@ class StlViewer(wx.Dialog):
 			self.lb.SetSelection(self.selection)
 			
 		self.canvas.setSelection(self.selection)
-			
 		
 	def onWheel(self, evt):
 		self.canvas.OnWheel(evt)

@@ -1,18 +1,59 @@
-'''
-Created on Aug 21, 2012
-
-@author: jbernard
-'''
 import ConfigParser
 import os
+
+INIFILE = "reprap.ini"
+
+BUTTONDIM = (48, 48)
+BUTTONDIMWIDE = (96, 48)
+
+MAX_EXTRUDERS = 2
+MAINTIMER = 1000
+
+FPSTATUS_IDLE = 0
+FPSTATUS_READY = 1
+FPSTATUS_READY_DIRTY = 2
+FPSTATUS_BUSY = 3
+
+PLSTATUS_EMPTY = 0
+PLSTATUS_LOADED_CLEAN = 1
+PLSTATUS_LOADED_DIRTY = 2
+
+PMSTATUS_NOT_READY = 0
+PMSTATUS_READY = 1
+PMSTATUS_PRINTING = 2
+PMSTATUS_PAUSED = 3
+
+SD_CARD_OK = 0
+SD_CARD_FAIL = 1
+SD_CARD_LIST = 2
+
+SDSTATUS_IDLE = 0
+SDSTATUS_CHECKING = 1
+SDSTATUS_LISTING = 2
+
+SD_PRINT_COMPLETE = 1
+SD_PRINT_POSITION = 2
+PRINT_COMPLETE = 10
+PRINT_STOPPED = 11
+PRINT_STARTED = 12
+PRINT_RESUMED = 13
+PRINT_MESSAGE = 14
+QUEUE_DRAINED = 15
+RECEIVED_MSG = 16
+PRINT_ERROR = 99
+
+CMD_GCODE = 1
+CMD_STARTPRINT = 2
+CMD_STOPPRINT = 3
+CMD_DRAINQUEUE = 4
+CMD_ENDOFPRINT = 5
+CMD_RESUMEPRINT = 6
+
+TEMPFILELABEL = "<temporary>"
 
 from slic3r import Slic3r
 from skeinforge import Skeinforge
 from cura import Cura
-
-INIFILE = "reprap.ini"
-
-TEMPFILELABEL = "<temporary>"
 
 def parseBoolean(val, defaultVal):
 	lval = val.lower();
@@ -98,19 +139,22 @@ class SlicerSettings:
 			return None
 		
 		return self.type.getConfigString()
+	
+class PrinterSettings:
+	def __init__(self, name):
+		self.name = name
+		self.nextr = 1
+		self.buildarea = [200, 200]
+		self.speedcommand = None
 
 class Settings:
 	def __init__(self, app, folder):
 		self.app = app
 		self.cmdfolder = folder
 		self.inifile = os.path.join(folder, INIFILE)
-		self.slicer = "slic3r"
-		self.slicers = ["slic3r"]
-		self.slicersettings = []
-		self.startpane=0
+		self.printers=[]
 		self.lastlogdirectory = "."
 		self.usepopup = True
-		self.speedcommand = None
 		self.port = 8989
 		self.maxloglines = 5000
 		self.macroList = {}
@@ -133,30 +177,11 @@ class Settings:
 		self.modified = False	
 		if self.cfg.has_section(self.section):
 			for opt, value in self.cfg.items(self.section):
-				if opt == 'startpane':
-					try:
-						self.startpane = int(value)
-					except:
-						self.showWarning("Invalid value for startpane")
-						self.startpane = 0
-						self.modified = True
-					if self.startpane not in [0, 1, 2]:
-						self.showWarning("Startpane may only be 0, 1, or 2")
-						self.startpane = 0
-						self.modified = True
-						
-				elif opt == 'slicer':
-					self.slicer = value
-				elif opt == 'slicers':
+				if opt == 'printers':
 					s = value.split(',')
-					self.slicers = [x.strip() for x in s]
+					self.printers = [x.strip() for x in s]
 				elif opt == 'lastlogdirectory':
 					self.lastlogdirectory = value
-				elif opt == 'speedcommand':
-					if value.lower() == "none":
-						self.speedcommand = None
-					else:
-						self.speedcommand = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
 				elif opt == 'maxloglines':
@@ -179,33 +204,39 @@ class Settings:
 					self.showWarning("Unknown %s option: %s - ignoring" % (self.section, opt))
 		else:
 			self.showWarning("Missing %s section - assuming defaults" % self.section)
-			
-		self.slicersettings = []
-		for slicer in self.slicers:
-			err = False	
-			st = SlicerSettings(self.app, slicer)
-			slicerKeys, slicerArrayKeys = st.getSettingsKeys()
-			sc = "slicer." + slicer
-			self.slicersettings.append(st)
+				
+		self.printersettings = {}
+		for printer in self.printers:
+			pt = PrinterSettings(printer)
+			sc = "printer." + printer
+			self.printersettings[printer] = pt
 			if self.cfg.has_section(sc):
 				for opt, value in self.cfg.items(sc):
-					if opt in slicerArrayKeys:
-						st.settings[opt] = value.split(',')
-					elif opt in slicerKeys:
-						st.settings[opt] = value
+					if opt == "nextruders":
+						try:
+							pt.nextr = int(value)
+						except:
+							self.showWarning("Illegal number of extruders for %s - using 1" % sc)
+							pt.nextr = 1
+							
+					elif opt == 'speedcommand':
+						if value.lower() == "none":
+							pt.speedcommand = None
+						else:
+							pt.speedcommand = value
+
+					elif opt == 'buildarea':
+						try:
+							exec("s=%s" % value)
+							pt.buildarea = s
+						except:
+							print "invalid value in ini file for buildarea"
+							pt.buildarea = (200, 200)
+
 					else:
 						self.showWarning("Unknown %s option: %s - ignoring" % (sc, opt))
 			else:
-				self.showError("No settings for slicer %s" % slicer)
-				err = True
-
-			for k in slicerKeys:				
-				if k not in st.settings.keys():
-					err = True
-					self.showError("Settings for slicer %s missing %s" % (slicer, k))
-				
-			if not err:
-				st.initialize()
+				self.showError("No settings for printer %s" % printer)
 			
 		section = "macros"	
 		if self.cfg.has_section(section):
@@ -235,23 +266,12 @@ class Settings:
 		
 	def showError(self, msg):
 		print "Settings ERROR: " + msg
-				
-	def getSlicerSettings(self, slicer):
-		for i in range(len(self.slicers)):
-			if self.slicers[i] == slicer:
-				if i >= len(self.slicersettings):
-					return None
-				return self.slicersettings[i]
-		return None
 	
 	def setModified(self):
 		self.modified = True
 		
 	def checkModified(self):
 		if self.modified: return True
-			
-		for s in self.slicersettings:
-			if s.checkModified(): return True
 			
 		if self.fileprep.checkModified(): return True
 		if self.plater.checkModified(): return True
@@ -267,31 +287,22 @@ class Settings:
 			except ConfigParser.DuplicateSectionError:
 				pass
 			
-			self.cfg.set(self.section, "startpane", str(self.startpane))
-			self.cfg.set(self.section, "speedcommand", str(self.speedcommand))
-			self.cfg.set(self.section, "slicer", str(self.slicer))
-			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
+			self.cfg.set(self.section, "printers", ",".join(self.printers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
-			
-			for i in range(len(self.slicers)):
-				s = self.slicers[i]
-				sc = "slicer." + s
+							
+			for p in self.printersettings.keys():
+				sc = "printer." + p
+				pt = self.printersettings[p]
 				try:
 					self.cfg.add_section(sc)
 				except ConfigParser.DuplicateSectionError:
 					pass
-
-				sl = self.slicersettings[i]	
-				if sl.checkModified():			
-					slicerKeys, slicerArrayKeys = sl.getSettingsKeys()
-					for k in sl.settings.keys():
-						if k in slicerArrayKeys:
-							self.cfg.set(sc, k, ",".join(sl.settings[k]))
-						elif k in slicerKeys:
-							self.cfg.set(sc, k, sl.settings[k])
+				self.cfg.set(sc, "nextruders", str(pt.nextr))
+				self.cfg.set(sc, "speedcommand", str(pt.speedcommand))
+				self.cfg.set(sc, "buildarea", str(pt.buildarea))
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()
@@ -306,13 +317,15 @@ class Settings:
 			self.cfg.write(cfp)
 			cfp.close()
 
-
 class SettingsFilePrep:
 	def __init__(self, parent, app, cfg, folder, section):
 		self.parent = parent
 		self.app = app
 		self.cmdfolder = os.path.join(folder, section)
 
+		self.slicer = "slic3r"
+		self.slicers = ["slic3r"]
+		self.slicersettings = []
 		self.gcodescale = 3
 		self.laststldirectory="."
 		self.lastgcdirectory="."
@@ -338,6 +351,13 @@ class SettingsFilePrep:
 						self.parent.showWarning("Non-integer value in ini file for gcodescale")
 						self.gcodescale = 3
 						
+				elif opt == 'slicer':
+					self.slicer = value
+
+				elif opt == 'slicers':
+					s = value.split(',')
+					self.slicers = [x.strip() for x in s]
+
 				elif opt == 'acceleration':
 					try:
 						self.acceleration = float(value)
@@ -368,10 +388,48 @@ class SettingsFilePrep:
 			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 		
+		self.slicersettings = []
+		for slicer in self.slicers:
+			err = False	
+			st = SlicerSettings(self.app, slicer)
+			slicerKeys, slicerArrayKeys = st.getSettingsKeys()
+			sc = "slicer." + slicer
+			self.slicersettings.append(st)
+			if self.cfg.has_section(sc):
+				for opt, value in self.cfg.items(sc):
+					if opt in slicerArrayKeys:
+						st.settings[opt] = value.split(',')
+					elif opt in slicerKeys:
+						st.settings[opt] = value
+					else:
+						self.showWarning("Unknown %s option: %s - ignoring" % (sc, opt))
+			else:
+				self.showError("No settings for slicer %s" % slicer)
+				err = True
+
+			for k in slicerKeys:				
+				if k not in st.settings.keys():
+					err = True
+					self.showError("Settings for slicer %s missing %s" % (slicer, k))
+				
+			if not err:
+				st.initialize()
+
+	def getSlicerSettings(self, slicer):
+		for i in range(len(self.slicers)):
+			if self.slicers[i] == slicer:
+				if i >= len(self.slicersettings):
+					return None
+				return self.slicersettings[i]
+		return None
+
 	def setModified(self):
 		self.modified = True
 		
 	def checkModified(self):
+		for s in self.slicersettings:
+			if s.checkModified(): return True
+			
 		return self.modified
 		
 	def cleanUp(self):
@@ -381,6 +439,8 @@ class SettingsFilePrep:
 			except ConfigParser.DuplicateSectionError:
 				pass
 			
+			self.cfg.set(self.section, "slicer", str(self.slicer))
+			self.cfg.set(self.section, "slicers", ",".join(self.slicers))
 			self.cfg.set(self.section, "gcodescale", str(self.gcodescale))
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "lastgcdirectory", str(self.lastgcdirectory))
@@ -389,7 +449,23 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
-						
+			
+			for i in range(len(self.slicers)):
+				s = self.slicers[i]
+				sc = "slicer." + s
+				try:
+					self.cfg.add_section(sc)
+				except ConfigParser.DuplicateSectionError:
+					pass
+
+				sl = self.slicersettings[i]	
+				if sl.checkModified():			
+					slicerKeys, slicerArrayKeys = sl.getSettingsKeys()
+					for k in sl.settings.keys():
+						if k in slicerArrayKeys:
+							self.cfg.set(sc, k, ",".join(sl.settings[k]))
+						elif k in slicerKeys:
+							self.cfg.set(sc, k, sl.settings[k])
 	
 class SettingsPlater:
 	def __init__(self, parent, app, cfg, folder, section):
@@ -433,7 +509,6 @@ class SettingsPlater:
 			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
-
 	def setModified(self):
 		self.modified = True
 
@@ -451,7 +526,6 @@ class SettingsPlater:
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "autoarrange", str(self.autoarrange))
 			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
-	
 	
 class SettingsManualCtl:
 	def __init__(self, parent, app, cfg, folder, section):
@@ -504,7 +578,6 @@ class SettingsManualCtl:
 			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
-
 	def setModified(self):
 		self.modified = True
 
@@ -522,7 +595,6 @@ class SettingsManualCtl:
 			self.cfg.set(self.section, "zspeed", str(self.zspeed))
 			self.cfg.set(self.section, "espeed", str(self.espeed))
 			self.cfg.set(self.section, "edistance", str(self.edistance))
-	
 	
 class SettingsPrintMon:
 	def __init__(self, parent, app, cfg, folder, section):
@@ -564,7 +636,6 @@ class SettingsPrintMon:
 			self.parent.showWarning("Missing %s section - assuming defaults" % section)
 			self.modified = True
 
-
 	def setModified(self):
 		self.modified = True
 
@@ -582,4 +653,3 @@ class SettingsPrintMon:
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
-	

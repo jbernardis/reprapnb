@@ -1,11 +1,12 @@
 import wx
 
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
 
 class GCodeEntry(wx.Window): 
 	def __init__(self, parent, app, name=""):
 		self.parent = parent
 		self.app = app
+		self.reprap = self.parent.reprap
 		self.name = name
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(-1, -1), style=wx.SIMPLE_BORDER)		
 		sizerGCode = wx.BoxSizer(wx.HORIZONTAL)
@@ -35,7 +36,7 @@ class GCodeEntry(wx.Window):
 		
 	def evtGCodeSend(self, evt):
 		cmd = self.tGCode.GetValue()
-		self.app.reprap.send_now(cmd)
+		self.reprap.send_now(cmd)
 		
 	def onClear(self, evt):
 		self.tGCode.SetValue("")

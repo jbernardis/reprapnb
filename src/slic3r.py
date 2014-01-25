@@ -1,14 +1,8 @@
-'''
-Created on Jun 20, 2013
-
-@author: ejefber
-'''
 import os, time, tempfile
 import wx
 import shlex, subprocess
-from reprap import MAX_EXTRUDERS
 
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM, MAX_EXTRUDERS
 
 BASE_ID = 500
 
@@ -256,7 +250,6 @@ class Slic3rCfgDialog(wx.Dialog):
 			return
 
 		self.vfilament[myId] = self.cbFilament[myId].GetValue()
-
 	
 class Slic3r:
 	def __init__(self, app, parent):

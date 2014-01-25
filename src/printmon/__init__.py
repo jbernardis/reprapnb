@@ -1,18 +1,19 @@
 import wx
 import os
 import time
+import re
+
 from gcmframe import GcmFrame
 from tempgraph import TempGraph, MAXX
 from infopane import InfoPane, MODE_NORMAL, MODE_TO_SD, MODE_FROM_SD
 from images import Images
-from settings import TEMPFILELABEL
-from reprap import (PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
+from settings import (TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED,
+					PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
 					PRINT_RESUMED, PRINT_ERROR, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
+from sdcard import SDCard
 from tools import formatElapsed
 
-BUTTONDIM = (48, 48)
-BUTTONDIMWIDE = (96, 48)
-#FIXIT Start/Pause/Restart, SD printing, follow print progress, fan control, speed control",
+SCANTHRESHOLD = 100
 	
 myRed = wx.Colour(254, 142, 82, 179) 
 myBlue = wx.Colour(51, 115, 254, 179)
@@ -25,20 +26,27 @@ PAUSE_MODE_RESUME = 2
 PRINT_MODE_PRINT = 1
 PRINT_MODE_RESTART = 2
 
-PMSTATUS_NOT_READY = 0
-PMSTATUS_READY = 1
-PMSTATUS_PRINTING = 2
-PMSTATUS_PAUSED = 3
-
+TEMPINTERVAL = 3
+POSITIONINTERVAL = 1
 M27Interval = 2000
 
+gcRegex = re.compile("[-]?\d+[.]?\d*")
+def _get_float(l, which):
+	return float(gcRegex.findall(l.split(which)[1])[0])
+
 class PrintMonitor(wx.Panel):
-	def __init__(self, parent, app, reprap, sdcard):
+	def __init__(self, parent, app, prtname, reprap):
 		self.model = None
 		self.app = app
-		self.buildarea = self.app.buildarea
+		self.buildarea = self.app.settings.printersettings[prtname].buildarea
+		self.prtname = prtname
 		self.reprap = reprap
-		self.sdcard = sdcard
+		self.manctl = None
+
+		self.M105pending = False
+		self.suspendM105 = False
+		self.cycle = 0
+		self.skipCycles = 5
 		self.logger = self.app.logger
 		self.printPos = 0
 		self.printing = False
@@ -65,6 +73,8 @@ class PrintMonitor(wx.Panel):
 		self.syncPrint = True
 		self.holdFan = False
 		self.status = PMSTATUS_NOT_READY
+				
+		self.sdcard = SDCard(self.app, self, self.reprap, self.logger)
 		
 		self.M27Timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onM27Timer, self.M27Timer)
@@ -79,6 +89,14 @@ class PrintMonitor(wx.Panel):
 		self.sizerBtns.AddSpacer((10,10))
 
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))		
+		
+		self.bPull = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPull, size=BUTTONDIMWIDE)
+		self.sizerBtns.Add(self.bPull)
+		self.bPull.SetToolTipString("Pull model from file preparation")
+		self.Bind(wx.EVT_BUTTON, self.doPull, self.bPull)
+		self.bPull.Enable(self.app.currentPullStatus())
+		
+		self.sizerBtns.AddSpacer((20, 20))
 		
 		self.bPrint = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrint, size=BUTTONDIM)
 		self.setPrintMode(PRINT_MODE_PRINT)
@@ -218,7 +236,36 @@ class PrintMonitor(wx.Panel):
 		
 		self.infoPane.setMode(MODE_NORMAL)
 		self.setSDTargetFile(None)
+		
+	def setManCtl(self, mc):
+		self.manctl = mc;
 
+	def assertAllowPulls(self, flag):
+		self.bPull.Enable(flag)
+
+	def tick(self):
+		if self.skipCycles >= 0:
+			self.skipCycles -= 1
+			return
+		
+		self.cycle += 1
+
+		if self.cycle % TEMPINTERVAL == 0:
+			if self.suspendM105:
+				self.M105pending = False
+			elif not self.M105pending:
+				self.M105pending = True
+				self.reprap.setEatOk()
+				self.reprap.send_now("M105")
+				
+		if self.cycle % POSITIONINTERVAL == 0:
+			n = self.reprap.getPrintPosition()
+			if n is not None:
+				self.printPosition = n
+				self.updatePrintPosition(n)
+				
+	def suspendTempProbe(self, flag):
+		self.suspendM105 = flag
 		
 	def prtMonEvent(self, evt):
 		if evt.event == SD_PRINT_POSITION:
@@ -235,17 +282,18 @@ class PrintMonitor(wx.Panel):
 					self.bSDPrintFrom.Enable(True)
 					self.bSDPrintTo.Enable(self.hasFileLoaded())
 					self.bSDDelete.Enable(True)
-					self.app.setPrinterBusy(False)
 					self.infoPane.setSDPrintComplete()
 			return
 
 		if evt.event == SD_PRINT_COMPLETE:
 			return
-
 	
 	def setStatus(self, s):
 		self.status = s
-		self.app.updatePrintMonStatus(s)
+		self.app.updatePrintMonStatus(self.prtname, s)
+		
+	def isPrinting(self):
+		return self.printing or self.sdprintingfrom
 		
 	def getStatus(self):
 		if self.printing or self.sdprintingfrom:
@@ -260,8 +308,45 @@ class PrintMonitor(wx.Panel):
 	def hasFileLoaded(self):
 		return self.model is not None
 	
+	def getBedGCode(self):
+		if not self.hasFileLoaded():
+			return None;
+		
+		i = 0
+		for l in self.model:
+			if l.raw.startswith("M140 ") or l.raw.startswith("M190 "):
+				if "S" in l.raw:
+					temp = _get_float(l.raw, "S")
+					return temp
+
+			i += 1
+			if i >= SCANTHRESHOLD:
+				return None
+	
+	def getHEGCode(self, tool):
+		if not self.hasFileLoaded():
+			return None;
+		
+		i = 0
+		for l in self.model:
+			if l.raw.startswith("M104 ") or l.raw.startswith("M109 "):
+				t = 1
+				if "T" in l.raw:
+					t = _get_float(l.raw, "T")
+					
+				if (t-1) == tool:
+					if "S" in l.raw:
+						temp = _get_float(l.raw, "S")
+						return temp
+
+			i += 1
+			if i >= SCANTHRESHOLD:
+				return None
+	
 	def printerReset(self):
 		self.printPos = 0
+		self.skipCycles = 5
+		self.M105pending = False
 		self.printing = False
 		self.paused = False
 		self.sdpaused = False
@@ -271,7 +356,6 @@ class PrintMonitor(wx.Panel):
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPrint.Enable(True)
 		self.bPause.Enable(False)
-		self.app.setPrinterBusy(False)
 		
 	def doSDPrintFrom(self, evt):
 		self.sdcard.startPrintFromSD()
@@ -287,7 +371,6 @@ class PrintMonitor(wx.Panel):
 		self.bSDDelete.Enable(False)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPause.Enable(True)
-		self.app.setPrinterBusy(True)
 		self.sdpaused = False
 		self.infoPane.setMode(MODE_FROM_SD)
 		self.infoPane.setSDStartTime(time.time())
@@ -297,7 +380,7 @@ class PrintMonitor(wx.Panel):
 		
 	def resumeSDPrintTo(self, tfn):
 		self.setSDTargetFile(tfn[1].lower())
-		self.app.suspendTempProbe(True)
+		self.suspendTempProbe(True)
 		self.reprap.send_now("M28 %s" % self.sdTargetFile)
 		self.printPos = 0
 		self.startTime = time.time()
@@ -330,7 +413,6 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintFrom.Enable(False)
 			self.bSDPrintTo.Enable(False)
 			self.bSDDelete.Enable(False)
-			self.app.setPrinterBusy(True)
 			
 		elif evt.event == PRINT_STOPPED:
 			self.paused = True
@@ -344,7 +426,6 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
-			self.app.setPrinterBusy(False)
 			
 		elif evt.event == PRINT_COMPLETE:
 			
@@ -352,7 +433,7 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setPrintComplete()
 			if self.sdTargetFile is not None:
 				self.reprap.send_now("M29 %s" % self.sdTargetFile)
-				self.app.suspendTempProbe(False)
+				self.suspendTempProbe(False)
 				self.setSDTargetFile(None)
 
 			self.printing = False
@@ -366,7 +447,6 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
-			self.app.setPrinterBusy(False)
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
 			rs, rq = self.reprap.getCounters()
@@ -387,7 +467,7 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
-			self.app.doPrinterError()
+			self.app.doPrinterError(self.prtname)
 			
 		elif evt.event == PRINT_MESSAGE:
 			if evt.primary:
@@ -430,7 +510,6 @@ class PrintMonitor(wx.Panel):
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.bPrint.Enable(False)
-			self.app.setPrinterBusy(True)
 			self.sdprintingfrom = True
 			self.reprap.send_now("M24")
 			self.infoPane.setSDStartTime(time.time())
@@ -471,7 +550,6 @@ class PrintMonitor(wx.Panel):
 				self.setPauseMode(PAUSE_MODE_PAUSE)
 				self.setPrintMode(PRINT_MODE_PRINT)
 				self.bPrint.Enable(False)
-				self.app.setPrinterBusy(True)
 				self.sdprintingfrom = True
 				self.M27Timer.Start(M27Interval, True)
 				self.sdpaused = False
@@ -515,15 +593,13 @@ class PrintMonitor(wx.Panel):
 		self.bSDPrintTo(True)
 		self.bSDDelete(True)
 		self.setSDTargetFile(None)
-		self.app.suspendTempProbe(False)
-		self.app.setPrinterBusy(False)
+		self.suspendTempProbe(False)
 		
 	def stopPrintFromSD(self):
 		self.reprap.send_now("M25")
 		self.setPauseMode(PAUSE_MODE_RESUME)
 		self.setPrintMode(PRINT_MODE_RESTART)
 		self.bPrint.Enable(True)
-		self.app.setPrinterBusy(False)
 		self.sdprintingfrom = False
 		self.sdpaused = True
 		
@@ -605,6 +681,9 @@ class PrintMonitor(wx.Panel):
 		self.settings.showmoves = evt.IsChecked()
 		self.settings.setModified()
 		self.gcf.redrawCurrentLayer()
+		
+	def doPull(self, evt):
+		self.app.pullGCode(self)
 	
 	def forwardModel(self, model, name=""):
 		self.setSDTargetFile(None)
@@ -654,23 +733,10 @@ class PrintMonitor(wx.Panel):
 		self.sdprintingfrom = False
 		self.sdpaused = False
 		
-		self.app.setPrinterBusy(False)
+		self.bPull.Enable(True)
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
-		
-	def changePrinter(self, nExt):
-		self.knownHeaters = ['Bed'] + ['HE'+str(n) for n in range(nExt)]
-		self.targets = {}
-		self.temps = {}
-		self.tempData = {}
-		for h in self.knownHeaters:
-			self.temps[h] = None
-			self.targets[h] = 0
-			self.tempData[h] = []
-
-		self.gTemp.setTemps(self.tempData)
-		self.gTemp.setTargets({})
 		
 	def disconnect(self):
 		self.setStatus(PMSTATUS_NOT_READY)

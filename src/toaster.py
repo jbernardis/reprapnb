@@ -1,4 +1,3 @@
-#!/bin/env python
 import wx
 
 TB_UPPERLEFT = 0

@@ -1,19 +1,26 @@
 [global]
-slicers = cura,slic3r,skeinforge
-slicer = cura
-startpane = 2
+printers = mi3,ob1
 lastlogdirectory = /home/jeff
 port = 8989
-speedcommand = M122
 maxloglines = 5000
 usepopuplog = True
+
+[printer.ob1]
+nextruders = 1
+buildarea = [200, 200]
+speedcommand = M122
+
+[printer.mi3]
+nextruders = 2
+buildarea = [200, 200]
+speedcommand = M122
 
 [slicer.slic3r]
 command = /home/jeff/Slic3r/bin/slic3r --load "%config%"  "%stl%" -o "%slicegcode%"
 config = /home/jeff/Slic3r/bin/slic3r
 profiledir = /home/jeff/.Slic3r
-print = default widths
-printfile = /home/jeff/.Slic3r/print/default widths.ini
+print = normal-tantalus
+printfile = /home/jeff/.Slic3r/print/normal-tantalus.ini
 filament = pla
 filamentfile = /home/jeff/.Slic3r/filament/pla.ini
 printer = ob1
@@ -22,7 +29,7 @@ printerfile = /home/jeff/.Slic3r/printer/ob1.ini
 [slicer.cura]
 command = /usr/bin/cura -i "%config%"  -s "%stl%" -o "%slicegcode%"
 config = /usr/bin/cura
-profile = normal05
+profile = normalabs
 printer = ob1
 profiledir = /home/jeff/cura/profiles
 curapreferences = /home/jeff/.cura/13.11.2/preferences.ini
@@ -32,9 +39,11 @@ command = python /home/jeff/skeinforge/skeinforge_application/skeinforge_utiliti
 config = python /home/jeff/skeinforge/skeinforge_application/skeinforge.py
 profiledir = ~/.skeinforge/profiles/extrusion
 profilefile = /home/jeff/.skeinforge/profiles/extrusion.csv
-profile = PLA
+profile = ABS
 
 [fileprep]
+slicers = cura,slic3r,skeinforge
+slicer = slic3r
 gcodescale = 3
 laststldirectory = /netgear/documents/stl files
 lastgcdirectory = /netgear/documents/stl files
@@ -42,11 +51,13 @@ showprevious = False
 showmoves = False
 usebuffereddc = True
 acceleration = 1000.0
+drawstlgrid = False
 
 [plater]
 stlscale = 2
 laststldirectory = /netgear/documents/stl files
 autoarrange = True
+drawstlgrid = True
 
 [manualctl]
 xyspeed = 2000
@@ -57,7 +68,7 @@ edistance = 5
 [printmon]
 gcodescale = 3
 showprevious = False
-showmoves = True
+showmoves = False
 usebuffereddc = True
 
 [macros]

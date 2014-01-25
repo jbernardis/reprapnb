@@ -1,26 +1,17 @@
-'''
-Created on Jun 30, 2013
-
-@author: Jeff
-'''
-
 import wx
-import os
 
-from images import Images
-
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
 
 orange = wx.Colour(237, 139, 33)
 
 class HotBed(wx.Window):
-	def __init__(self, parent, app, name="", shortname="", target=20, trange=(0, 100)):
+	def __init__(self, parent, app, reprap, name="", shortname="", target=20, trange=(0, 100)):
 		self.parent = parent
 		self.app = app
+		self.reprap = reprap
 		self.logger = self.app.logger
 		self.name = name
 		self.shortname = shortname
-		self.profileTarget = target
 		self.trange = trange
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
@@ -80,7 +71,7 @@ class HotBed(wx.Window):
 		self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
 				
 		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
-		self.bProfile.SetToolTipString("Import from profile")
+		self.bProfile.SetToolTipString("Import from G Code")
 		sizerHB.Add(self.bProfile, pos=(1,5),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)
 
@@ -93,10 +84,12 @@ class HotBed(wx.Window):
 		self.slTarget.SetRange(trange[0], trange[1])
 		
 	def importProfile(self, evt):
-		self.slTarget.SetValue(self.profileTarget)
-			
-	def setProfileTarget(self, t):
-		self.profileTarget = t
+		temp = self.parent.getBedGCode()
+		if temp is None:
+			self.logger.LogMessage("Unable to obtain temperature from G Code")
+			return
+		
+		self.slTarget.SetValue(temp)
 		
 	def setHeatTarget(self, t):
 		if t is None or t == 0:
@@ -161,8 +154,8 @@ class HotBed(wx.Window):
 	
 	def heaterOn(self, evt):
 		t = self.slTarget.GetValue()
-		self.app.reprap.send_now("M140 S%d" % t)
+		self.reprap.send_now("M140 S%d" % t)
 		
 	def heaterOff(self, evt):
-		self.app.reprap.send_now("M140 S0")
+		self.reprap.send_now("M140 S0")
 

@@ -1,8 +1,3 @@
-'''
-Created on Jun 23, 2013
-
-@author: Jeff
-'''
 from serial import Serial, SerialException
 import thread
 from select import error as SelectError
@@ -11,34 +6,16 @@ import time
 import wx
 import re
 import wx.lib.newevent
-from sdcard import SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST
 
 TRACE = False
 
-MAX_EXTRUDERS = 2
-
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
 (SDCardEvent, EVT_SD_CARD) = wx.lib.newevent.NewEvent()
-(PrtMonEvent, EVT_PRT_MON) = wx.lib.newevent.NewEvent()
+(PrtMonEvent, EVT_PRT_MON) = wx.lib.newevent.NewEvent() 
 
-SD_PRINT_COMPLETE = 0
-SD_PRINT_POSITION = 1
-
-PRINT_COMPLETE = 1
-PRINT_STOPPED = 2
-PRINT_STARTED = 3
-PRINT_RESUMED = 4
-PRINT_MESSAGE = 9
-QUEUE_DRAINED = 5
-RECEIVED_MSG = 10
-PRINT_ERROR = 99
-
-CMD_GCODE = 1
-CMD_STARTPRINT = 2
-CMD_STOPPRINT = 3
-CMD_DRAINQUEUE = 4
-CMD_ENDOFPRINT = 5
-CMD_RESUMEPRINT = 6
+from settings import (MAX_EXTRUDERS, SD_PRINT_COMPLETE, SD_PRINT_POSITION, SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST,
+		PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_RESUMED, PRINT_MESSAGE, QUEUE_DRAINED, RECEIVED_MSG, PRINT_ERROR,
+		CMD_GCODE, CMD_STARTPRINT, CMD_STOPPRINT, CMD_DRAINQUEUE, CMD_ENDOFPRINT, CMD_RESUMEPRINT)
 
 CACHE_SIZE = 50
 
@@ -384,12 +361,11 @@ class ListenThread:
 		self.endoflife = True
 
 class RepRapParser:
-	'''
-	Parse a REPRAP message
-	'''
 	def __init__(self, app):
 		self.app = app
-		self.firmware = self.app.firmware
+		self.firmware = None
+		self.manctl = None
+		self.printmon = None
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
 		self.toolre = re.compile(".*?T([0-2]): *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
@@ -403,10 +379,13 @@ class RepRapParser:
 		
 		self.sd = None
 		self.insideListing = False
-		
-	def setHandlers(self, sdhdlr, prtmonhdlr):
-		self.app.Bind(EVT_SD_CARD, sdhdlr)
-		self.app.Bind(EVT_PRT_MON, prtmonhdlr)
+
+	def config(self, pm, mc):
+		self.printmon = pm
+		self.manctl = mc
+		self.firmware = mc.firmware
+		pm.Bind(EVT_SD_CARD, pm.sdcard.sdEvent)
+		pm.Bind(EVT_PRT_MON, pm.prtMonEvent)
 		
 	def parseMsg(self, msg):
 		if 'M92' in msg:
@@ -414,7 +393,8 @@ class RepRapParser:
 			Y = self.parseG(msg, 'Y')
 			Z = self.parseG(msg, 'Z')
 			E = self.parseG(msg, 'E')
-			self.firmware.m92(X, Y, Z, E)
+			if self.firmware is not None:
+				self.firmware.m92(X, Y, Z, E)
 			return False
 		
 		if 'M201' in msg:
@@ -422,7 +402,8 @@ class RepRapParser:
 			Y = self.parseG(msg, 'Y')
 			Z = self.parseG(msg, 'Z')
 			E = self.parseG(msg, 'E')
-			self.firmware.m201(X, Y, Z, E)
+			if self.firmware is not None:
+				self.firmware.m201(X, Y, Z, E)
 			return False
 		
 		if 'M203' in msg:
@@ -430,13 +411,15 @@ class RepRapParser:
 			Y = self.parseG(msg, 'Y')
 			Z = self.parseG(msg, 'Z')
 			E = self.parseG(msg, 'E')
-			self.firmware.m203(X, Y, Z, E)
+			if self.firmware is not None:
+				self.firmware.m203(X, Y, Z, E)
 			return False
 		
 		if 'M204' in msg:
 			S = self.parseG(msg, 'S')
 			T = self.parseG(msg, 'T')
-			self.firmware.m204(S, T)
+			if self.firmware is not None:
+				self.firmware.m204(S, T)
 			return False
 		
 		if 'M205' in msg:
@@ -446,21 +429,24 @@ class RepRapParser:
 			X = self.parseG(msg, 'X')
 			Z = self.parseG(msg, 'Z')
 			E = self.parseG(msg, 'E')
-			self.firmware.m205(S, T, B, X, Z, E)
+			if self.firmware is not None:
+				self.firmware.m205(S, T, B, X, Z, E)
 			return False
 		
 		if 'M206' in msg:
 			X = self.parseG(msg, 'X')
 			Y = self.parseG(msg, 'Y')
 			Z = self.parseG(msg, 'Z')
-			self.firmware.m206(X, Y, Z)
+			if self.firmware is not None:
+				self.firmware.m206(X, Y, Z)
 			return False
 		
 		if 'M301' in msg:
 			P = self.parseG(msg, 'P')
 			I = self.parseG(msg, 'I')
 			D = self.parseG(msg, 'D')
-			self.firmware.m301(P, I, D)
+			if self.firmware is not None:
+				self.firmware.m301(P, I, D)
 			return False
 		
 		if "SD card ok" in msg:
@@ -520,9 +506,9 @@ class RepRapParser:
 				HEtarget[0] = float(t[1])
 				gotHE[0] = True
 			if len(t) >= 3:
-				self.app.setBedTemp(float(t[2]))
+				self.setBedTemp(float(t[2]))
 			if len(t) >= 4:
-				self.app.setBedTarget(float(t[3]))
+				self.setBedTarget(float(t[3]))
 				
 			m = self.toolre.findall(msg)
 			if m:
@@ -535,15 +521,14 @@ class RepRapParser:
 
 			for i in range(MAX_EXTRUDERS):
 				if gotHE[i]:
-					self.app.setHETemp(i, HEtemp[i])
-					self.app.setHETarget(i, HEtarget[i])
+					self.setHETemp(i, HEtemp[i])
+					self.setHETarget(i, HEtarget[i])
 	
-			if self.app.M105pending:
-				self.app.M105pending = False
+			if self.printmon.M105pending:
+				self.printmon.M105pending = False
 				return True
-			else:
-				return False
-		
+			return False
+
 		m = self.trpt2re.search(msg)
 		if m:
 			t = m.groups()
@@ -555,10 +540,10 @@ class RepRapParser:
 			if len(t) >= 2:
 				tool = int(t[1])
 			if len(t) >= 3:
-				self.app.setBedTemp(float(t[2]))
+				self.setBedTemp(float(t[2]))
 				
 			if gotHeTemp:
-				self.app.setHETemp(tool, HeTemp)
+				self.setHETemp(tool, HeTemp)
 			return False
 		
 		m = self.trpt3re.search(msg)
@@ -573,7 +558,7 @@ class RepRapParser:
 				tool = int(t[1])
 
 			if gotHeTemp:
-				self.app.setHETemp(tool, HeTemp)
+				self.setHETemp(tool, HeTemp)
 			return False
 		
 		m = self.speedrptre.search(msg)
@@ -589,7 +574,8 @@ class RepRapParser:
 			if len(t) >= 3:
 				flow = float(t[2])
 				
-			self.app.updateSpeeds(fan, feed, flow)
+			if self.manctl is not None:
+				self.manctl.updateSpeeds(fan, feed, flow)
 			return False
 		
 		m = self.toolchgre.search(msg)
@@ -599,11 +585,35 @@ class RepRapParser:
 			if len(t) >= 1:
 				tool = int(t[0])
 				
-			if tool:
-				self.app.setActiveTool(tool)
+			if tool is not None and self.manualctl is not None:
+				self.manualctl.setActiveTool(tool)
 			return False
 	
 		return False
+
+	def setHETarget(self, tool, val):
+		if self.printmon is not None:
+			self.printmon.setHETarget(tool, val)
+		if self.manctl is not None:
+			self.manctl.setHETarget(tool, val)
+	
+	def setHETemp(self, tool, val):
+		if self.printmon is not None:
+			self.printmon.setHETemp(tool, val)
+		if self.manctl is not None:
+			self.manctl.setHETemp(tool, val)
+	
+	def setBedTarget(self, val):
+		if self.printmon is not None:
+			self.printmon.setBedTarget(val)
+		if self.manctl is not None:
+			self.manctl.setBedTarget(val)
+	
+	def setBedTemp(self, val):
+		if self.printmon is not None:
+			self.printmon.setBedTemp(val)
+		if self.manctl is not None:
+			self.manctl.setBedTemp(val)
 	
 	def parseG(self, s, v):
 		l = s.split()
@@ -616,8 +626,8 @@ class RepRapParser:
 		return None
 
 class RepRap:
-	def __init__(self, win, handler):
-		self.win = win
+	def __init__(self, app):
+		self.app = app
 		self.printer = None
 		self.sender = None
 		self.listener = None
@@ -626,7 +636,14 @@ class RepRap:
 		self.holdFan = False
 		self.restarting = False
 		self.restartData = None
+		
+	def bind(self, win, handler):
 		win.Bind(EVT_REPRAP_UPDATE, handler)
+		self.sender = SendThread(win, self.printer, self.priQ, self.mainQ)
+		self.sender.setHoldFan(self.holdFan)
+		self.sender.setCheckSum(True)
+		self.listener = ListenThread(win, self.printer, self.sender)
+		self.online = True
 		
 	def setHoldFan(self, flag):
 		self.holdFan = flag
@@ -647,13 +664,6 @@ class RepRap:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
 			self.printer = Serial(self.port, self.baud, timeout=5)
-			self.sender = SendThread(self.win, self.printer, self.priQ, self.mainQ)
-			self.sender.setHoldFan(self.holdFan)
-			self.sender.setCheckSum(True)
-			self.listener = ListenThread(self.win, self.printer, self.sender)
-			self.setEatOk()
-			self.send_now("M105")		
-			self.online = True
 				
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
@@ -758,10 +768,10 @@ class RepRap:
 	def send_now(self, cmd):
 		verb = cmd.split()[0]
 		if not self.printer:
-			self.win.logger.LogWarning("Printer is off-line")
+			self.app.logger.LogWarning("Printer is off-line")
 			return False
 		elif self.printing and verb not in allow_while_printing:
-			self.win.logger.LogWarning("Command not allowed while printing")
+			self.app.logger.LogWarning("Command not allowed while printing")
 			return False
 		else:
 			return self._send(cmd, priority=True)

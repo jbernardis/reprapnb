@@ -1,10 +1,9 @@
-
 import wx
 import time
 import math
 
 from tools import formatElapsed
-from reprap import MAX_EXTRUDERS
+from settings import MAX_EXTRUDERS
 
 filetags = { "filename" : "Name:" }
 layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
@@ -323,5 +322,3 @@ class InfoPane (wx.Window):
 		self.setValue("eta2", "")
 		self.setValue("eta3", "")
 		self.sdstartTime = None
-
-

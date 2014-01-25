@@ -1,17 +1,5 @@
-'''
-Created on Aug 21, 2012
-
-@author: jbernard
-'''
 import wx, os
-
-SD_CARD_OK = 0
-SD_CARD_FAIL = 1
-SD_CARD_LIST = 2
-
-SDSTATUS_IDLE = 0
-SDSTATUS_CHECKING = 1
-SDSTATUS_LISTING = 2
+from settings import SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST, SDSTATUS_IDLE, SDSTATUS_CHECKING, SDSTATUS_LISTING
 
 SDTASK_PRINT_FROM = 0
 SDTASK_PRINT_TO = 1
@@ -128,8 +116,9 @@ class SDDir:
 		return self.files[x]
 	
 class SDCard:
-	def __init__(self, app, printer, logger):
+	def __init__(self, app, prtmon, printer, logger):
 		self.app = app
+		self.prtmon = prtmon
 		self.logger = logger
 		self.printer = printer
 		self.status = SDSTATUS_IDLE
@@ -223,7 +212,7 @@ class SDCard:
 				
 				fileList = dlg.getSelection()
 				if isinstance(fileList, list):
-					self.app.resumeSDPrintFrom(fileList)
+					self.prtmon.resumeSDPrintFrom(fileList)
 					break
 				
 				msgdlg = wx.MessageDialog(self.app, "Please choose a file - not a directory - or cancel",
@@ -235,7 +224,6 @@ class SDCard:
 					break
 					
 			dlg.Destroy()
-				
 
 		elif self.task == SDTASK_PRINT_TO:
 			dlg = SDChooseFileDlg(self.app, self.SDroot, "Choose a target file to print to", printTo=True)
@@ -260,9 +248,9 @@ class SDCard:
 						msgdlg.Destroy()
 					
 						if rc == wx.ID_YES:
-							self.app.resumeSDPrintTo(target)
+							self.prtmon.resumeSDPrintTo(target)
 					else:
-						self.app.resumeSDPrintTo(target)
+						self.prtmon.resumeSDPrintTo(target)
 					
 				else:
 					msgdlg = wx.MessageDialog(self.app, "No target file specified",
@@ -430,5 +418,4 @@ class SDChooseFileDlg(wx.Dialog):
 			self.tree.SetPyData(child, fn)
 			self.tree.SetItemImage(child, self.fileidx, wx.TreeItemIcon_Normal)
 			self.tree.SetItemImage(child, self.fileidx, wx.TreeItemIcon_Selected)
-			fn = direct.nextFile()	
-	
+			fn = direct.nextFile()

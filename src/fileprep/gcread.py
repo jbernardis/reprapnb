@@ -1,7 +1,7 @@
 import math
 import re
 
-from reprap import MAX_EXTRUDERS
+from settings import MAX_EXTRUDERS
 
 gcRegex = re.compile("[-]?\d+[.]?\d*")
 

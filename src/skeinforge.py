@@ -1,13 +1,9 @@
-'''
-Created on Jun 20, 2013
-
-@author: ejefber
-'''
 import os
 import wx
 import shlex, subprocess
 
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
+
 CBSIZE = 200
 
 class SkeinforgeCfgDialog(wx.Dialog):

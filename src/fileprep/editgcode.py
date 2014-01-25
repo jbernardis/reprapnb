@@ -1,8 +1,3 @@
-'''
-Created on Apr 15, 2013
-
-@author: Jeff
-'''
 import wx
 import  wx.lib.editor    as  editor
 import re

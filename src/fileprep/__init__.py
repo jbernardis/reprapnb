@@ -17,15 +17,12 @@ from stlview import StlViewer
 
 from reprap import MAX_EXTRUDERS
 
-from settings import TEMPFILELABEL
+from settings import TEMPFILELABEL, BUTTONDIM, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY
+
 
 wildcard = "G Code (*.gcode)|*.gcode"
 
 GCODELINETEXT = "Current G Code Line: (%d)"
-
-TITLETEXT = "G Code Viewer"
-BUTTONDIM = (48, 48)
-BUTTONDIMWIDE = (144, 80)
 
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
@@ -36,14 +33,8 @@ SLICER_RUNNINGCR = 2
 SLICER_FINISHED = 3
 SLICER_CANCELLED = 4
 
-FPSTATUS_IDLE = 0
-FPSTATUS_EQUAL = 1
-FPSTATUS_EQUAL_DIRTY = 2
-FPSTATUS_UNEQUAL = 3
-FPSTATUS_UNEQUAL_DIRTY = 4
-FPSTATUS_BUSY = 5
-
 TEXT_PAD = 10
+MAXCFGCHARS = 50
 
 class SlicerThread:
 	def __init__(self, win, cmd):
@@ -193,16 +184,13 @@ class ModelerThread:
 		self.running = False
 
 class FilePrepare(wx.Panel):
-	def __init__(self, parent, app, nextr=1):
+	def __init__(self, parent, app):
 		self.model = None
 		self.app = app
-		self.nextr = nextr
-		self.buildarea = self.app.buildarea
 		self.logger = self.app.logger
 		self.settings = app.settings.fileprep
 		self.modified = False
 		self.temporaryFile = False	
-		self.printerBusy = True	
 		self.gcodeLoaded = False
 		self.sliceActive = False
 		self.exporting = False
@@ -210,14 +198,23 @@ class FilePrepare(wx.Panel):
 		self.dlgEdit = None
 		self.dlgMerge = None
 		self.dlgView = None
+		
+		self.allowPulls = False
 
 		self.shiftX = 0
 		self.shiftY = 0
 		
 		self.gcFile = None
 		self.stlFile = None
+		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
 
-		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
+		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
+		if self.slicer is None:
+			print "Unable to get slicer settings"
+					
+		self.buildarea = self.slicer.getSlicerParameters()[0]
+			
+		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(900, 250))
 		self.SetBackgroundColour("white")
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
@@ -226,20 +223,60 @@ class FilePrepare(wx.Panel):
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((20, 20), pos=(0,0))
 		
-		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerBtns.AddSpacer((20, 20))
-		
-		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
-		
+		self.sizerSlice = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerSlice.AddSpacer((20, 20))
+
 		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
-		self.sizerBtns.Add(self.bSlice)
+		self.sizerSlice.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
 		
+		self.sizerSlice.AddSpacer((20, 20))
+
 		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
-		self.sizerBtns.Add(self.bView)
+		self.bView.SetToolTipString("Launch the STL/AMF file viewer")
+		self.sizerSlice.Add(self.bView)
 		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
+
+		self.sizerSlice.AddSpacer((20, 20))
 		
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		dc = wx.WindowDC(self)
+		dc.SetFont(f)
+		
+		text = " Slicer:"
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
+		t.SetFont(f)
+		self.sizerSlice.Add(t, flag=wx.EXPAND | wx.ALL, border=10)
+	
+		self.cbSlicer = wx.ComboBox(self, wx.ID_ANY, self.settings.slicer, (-1, -1), (120, -1), self.settings.slicers, wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.cbSlicer.SetFont(f)
+		self.cbSlicer.SetToolTipString("Choose which slicer to use")
+		self.sizerSlice.Add(self.cbSlicer, flag=wx.TOP, border=10)
+		self.cbSlicer.SetStringSelection(self.settings.slicer)
+		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
+
+		self.bSliceCfg = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicecfg, size=BUTTONDIM)
+		self.bSliceCfg.SetToolTipString("Configure Chosen SLicer")
+		self.sizerSlice.Add(self.bSliceCfg)
+		self.Bind(wx.EVT_BUTTON, self.doSliceConfig, self.bSliceCfg)
+	
+		text = self.slicer.type.getConfigString()
+		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
+		w = int(0.75 * w)
+		self.tSlicerCfg = wx.StaticText(self, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
+		self.tSlicerCfg.SetFont(f)
+		self.updateSlicerConfigString(text)
+		self.sizerSlice.Add(self.tSlicerCfg, flag=wx.EXPAND | wx.ALL, border=10)
+		
+		self.sizerMain.Add(self.sizerSlice, pos=(1,1), span=(1,4))
+		self.sizerMain.AddSpacer((20,20), pos=(2,0))
+
+
+
+		
+		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerBtns.AddSpacer((20, 20))
 		
 		self.bMerge = wx.BitmapButton(self, wx.ID_ANY, self.images.pngMerge, size=BUTTONDIM)
@@ -299,22 +336,16 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
 		self.sizerBtns.AddSpacer((20, 20))
-	
-		self.bToPrinter = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToprinter, size=BUTTONDIMWIDE)
-		self.bToPrinter.SetToolTipString("Send this GCode file to the printer")
-		self.sizerBtns.Add(self.bToPrinter)
-		self.Bind(wx.EVT_BUTTON, self.toPrinter, self.bToPrinter)
-		self.bToPrinter.Enable(False)
 		
-		self.sizerMain.Add(self.sizerBtns, pos=(1,1), span=(1,4))
-		self.sizerMain.AddSpacer((20,20), pos=(2,0))
+		self.sizerMain.Add(self.sizerBtns, pos=(3,1), span=(1,4))
+		self.sizerMain.AddSpacer((20,20), pos=(4,0))
 
 		self.gcf = GcFrame(self, self.model, self.settings, self.buildarea)
-		self.sizerMain.Add(self.gcf, pos=(3,1))
-		self.sizerMain.AddSpacer((20,20), pos=(4,0))
+		self.sizerMain.Add(self.gcf, pos=(5,1))
+		self.sizerMain.AddSpacer((20,20), pos=(5,0))
 		sz = self.buildarea[1] * self.settings.gcodescale
 		
-		self.sizerMain.AddSpacer((20, 20), pos=(3,2))
+		self.sizerMain.AddSpacer((20, 20), pos=(5,2))
 
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
@@ -325,7 +356,7 @@ class FilePrepare(wx.Panel):
 		self.slideLayer.SetValue(1)
 		self.slideLayer.SetPageSize(1);
 		self.slideLayer.Disable()
-		self.sizerMain.Add(self.slideLayer, pos=(3,3), flag=wx.ALIGN_RIGHT)
+		self.sizerMain.Add(self.slideLayer, pos=(5,3), flag=wx.ALIGN_RIGHT)
 
 		self.slideGCode = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 99999, size=(80, sz),
@@ -336,7 +367,7 @@ class FilePrepare(wx.Panel):
 		self.slideGCode.SetValue(1)
 		self.slideGCode.SetPageSize(1);
 		self.slideGCode.Disable()
-		self.sizerMain.Add(self.slideGCode, pos=(3,4))
+		self.sizerMain.Add(self.slideGCode, pos=(5,4))
 
 		self.sizerOpts = wx.BoxSizer(wx.HORIZONTAL)
 				
@@ -361,8 +392,8 @@ class FilePrepare(wx.Panel):
 		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
 		self.sizerOpts.Add(self.cbBuffDC)
 		
-		self.sizerMain.Add(self.sizerOpts, pos=(5, 1))
-		self.sizerMain.AddSpacer((20, 20), pos=(6,0))
+		self.sizerMain.Add(self.sizerOpts, pos=(7, 1))
+		self.sizerMain.AddSpacer((20, 20), pos=(8,0))
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
@@ -378,10 +409,6 @@ class FilePrepare(wx.Panel):
 		dc = wx.WindowDC(self)
 		dc.SetFont(ipfont)
 
-		self.ipSlicerCfg = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipSlicerCfg.SetFont(ipfont)
-		self.infoPane.Add(self.ipSlicerCfg, pos=(3,0), span=(1,2), flag=wx.ALIGN_CENTER)
-		
 		self.infoPane.AddSpacer((20, 20), pos=(4,0))
 
 		self.ipFileName = wx.StaticText(self, wx.ID_ANY, "")
@@ -476,12 +503,29 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeSource.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
-		self.sizerMain.Add(self.infoPane, pos=(2,5), span=(4,1))
+		self.sizerMain.Add(self.infoPane, pos=(3,5), span=(4,1))
 		self.sizerMain.AddSpacer((40, 20), pos=(0,6))
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def updateSlicerConfigString(self, text):
+		if len(text) > MAXCFGCHARS:
+			text = text[:MAXCFGCHARS]
+		self.tSlicerCfg.SetLabel(text)
+
+	def doChooseSlicer(self, evt):
+		self.settings.slicer = self.cbSlicer.GetValue()
+		self.settings.setModified()
+		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
+		if self.slicer is None:
+			self.logger.LogError("Unable to get slicer settings") 
+		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+		
+	def doSliceConfig(self, evt):
+		if self.slicer.configSlicer():
+			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		
 	def stlView(self, evt):
 		self.dlgView = StlViewer(self, "title")
@@ -511,13 +555,20 @@ class FilePrepare(wx.Panel):
 			self.dlgEdit.Destroy()	
 		return True
 	
-	def toPrinter(self, evt):
-		#name = self.ipFileName.GetLabel()
+	def setAllowPulls(self, flag):
+		self.allowPulls = flag
+		self.app.assertAllowPulls(flag)
+	
+	def pullGCode(self, printmon):
+		if not self.allowPulls:
+			return
 		self.disableButtons()
-		self.bToPrinter.Enable(False)
+		self.setAllowPulls(False)
 		self.exporting = True
+		self.exportTo = printmon
 		self.logger.LogMessage("Beginning forwarding to print monitor")
-		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
 		self.modelerThread = ModelerThread(self, self.gcode, 0, self.settings.acceleration)
 		self.modelerThread.Start()
 		
@@ -525,7 +576,7 @@ class FilePrepare(wx.Panel):
 		if self.sliceActive:
 			self.sliceThread.Stop()
 			self.bSlice.Enable(False)
-			self.bToPrinter.Enable(False)
+			self.setAllowPulls(False)
 			self.bOpen.Enable(False)
 			self.bMerge.Enable(False)
 			return
@@ -537,7 +588,7 @@ class FilePrepare(wx.Panel):
 			self, message="Choose an STL file",
 			defaultDir=self.settings.laststldirectory, 
 			defaultFile="",
-			wildcard=self.app.slicer.fileTypes(),
+			wildcard=self.slicer.fileTypes(),
 			style=wx.OPEN | wx.CHANGE_DIR
 			)
 		
@@ -555,18 +606,18 @@ class FilePrepare(wx.Panel):
 	def sliceFile(self, fn, tempFile = False):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
-		self.gcFile = self.app.slicer.buildSliceOutputFile(fn)
-		cmd = self.app.slicer.buildSliceCommand()
+		self.gcFile = self.slicer.buildSliceOutputFile(fn)
+		cmd = self.slicer.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.disableEditButtons()
-		#self.bSlice.Enable(False)
-		self.bToPrinter.Enable(False)
+		self.setAllowPulls(False)
 		self.setSliceMode(False)
 		self.sliceActive = True
-		self.app.updateFilePrepStatus(FPSTATUS_BUSY)
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -583,8 +634,9 @@ class FilePrepare(wx.Panel):
 			self.gcFile = None
 			self.setSliceMode()
 			self.enableButtons()
-			self.app.slicer.sliceComplete()
+			self.slicer.sliceComplete()
 			self.sliceActive = False
+			self.status = FPSTATUS_IDLE
 			self.app.updateFilePrepStatus(self.status)
 			
 		elif evt.state == SLICER_FINISHED:
@@ -598,7 +650,7 @@ class FilePrepare(wx.Panel):
 			self.setSliceMode()
 			self.sliceActive = False
 			self.enableButtons()
-			self.app.slicer.sliceComplete()
+			self.slicer.sliceComplete()
 			if os.path.exists(self.gcFile):
 				self.loadFile(self.gcFile)
 			else:
@@ -606,6 +658,8 @@ class FilePrepare(wx.Panel):
 				self.gcFile = None
 				self.bOpen.Enable(True)
 				self.bMerge.Enable(True)
+				self.status = FPSTATUS_IDLE
+				self.app.updateFilePrepStatus(self.status)
 			
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
@@ -642,11 +696,13 @@ class FilePrepare(wx.Panel):
 		self.enableButtons()
 
 	def loadFile(self, fn):
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
 		self.disableEditButtons()
-		self.bToPrinter.Enable(False)
+		self.setAllowPulls(False)
 		self.filename = fn
 		self.gcFile = fn
 		self.readerThread = ReaderThread(self, fn)
@@ -679,8 +735,6 @@ class FilePrepare(wx.Panel):
 			self.gcode = self.readerThread.getGCode()
 			self.gcodeLoaded = True
 			self.logger.LogMessage("G Code reading complete - building model")
-			self.app.updateFilePrepStatus(FPSTATUS_UNEQUAL)
-			self.status = FPSTATUS_UNEQUAL
 			self.setModified(False)		
 			self.buildModel()
 		
@@ -701,6 +755,8 @@ class FilePrepare(wx.Panel):
 			self.gcodeLoaded = False
 			self.model = None
 			self.enableButtons()
+			self.app.updateFilePrepStatus(FPSTATUS_IDLE)
+			self.status = FPSTATUS_IDLE
 		
 			if self.temporaryFile:
 				try:
@@ -772,20 +828,11 @@ class FilePrepare(wx.Panel):
 				else:
 					name = self.gcFile
 					
-				self.logger.LogMessage("Modeling complete - forwarding %s to print monitor" % name)
-				self.app.forwardToPrintMon(model, name=name)
+				self.logger.LogMessage("Modeling complete - forwarding %s to printer %s" % (name, self.exportTo.prtname))
+				self.exportTo.forwardModel(model, name=name)
+				self.exportTo = None
 				self.logger.LogMessage("Forwarding complete")
 				self.enableButtons()
-				
-				newstat = False
-				if self.status == FPSTATUS_UNEQUAL:
-					self.status = FPSTATUS_EQUAL
-					newstat = True
-				elif self.status == FPSTATUS_UNEQUAL_DIRTY:
-					self.status = FPSTATUS_EQUAL_DIRTY
-					newstat = True
-				if newstat:
-					self.app.updateFilePrepStatus(self.status)
 
 			else:
 				self.model = model
@@ -796,6 +843,10 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Total Filament Length: %s" % str(self.model.total_e))
 				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
 				self.enableButtons();
+				
+			self.app.updateFilePrepStatus(FPSTATUS_READY)
+			self.status = FPSTATUS_READY
+
 			
 		elif evt.state == MODELER_CANCELLED:
 			if evt.msg is not None:
@@ -804,12 +855,11 @@ class FilePrepare(wx.Panel):
 			self.enableButtons()
 			self.model = None
 				
+			self.app.updateFilePrepStatus(FPSTATUS_READY)
+			self.status = FPSTATUS_READY
+				
 		else:
 			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
-		
-	def setPrinterBusy(self, flag=True):
-		self.printerBusy = flag
-		self.enableButtons()
 		
 	def enableButtons(self):
 		self.bOpen.Enable(True)
@@ -820,7 +870,7 @@ class FilePrepare(wx.Panel):
 		self.bFilamentChange.Enable(self.gcodeLoaded)
 		self.bShift.Enable(self.gcodeLoaded)
 		self.bEdit.Enable(self.gcodeLoaded)
-		self.bToPrinter.Enable(self.gcodeLoaded and not self.printerBusy)
+		self.setAllowPulls(self.gcodeLoaded)
 		
 	def disableButtons(self):
 		self.bOpen.Enable(False)
@@ -831,7 +881,7 @@ class FilePrepare(wx.Panel):
 		self.bFilamentChange.Enable(False)
 		self.bShift.Enable(False)
 		self.bEdit.Enable(False)
-		self.bToPrinter.Enable(False)
+		self.setAllowPulls(False)
 		
 	def disableEditButtons(self):
 		self.bSave.Enable(False)
@@ -993,14 +1043,12 @@ class FilePrepare(wx.Panel):
 			fp.write(s+"\n")
 				
 		if v[2]:
-			# TODO: need to revisit this later - for now, assume tool 0
 			fp.write("G92 E%.3f\n" % self.model.layer_e_start[v[0]])
 		
 		for ln in self.gcode[sx:ex+1]:
 			fp.write(ln + "\n")
 		
 		if v[7]:
-			# TODO: need to revisit this later - for now, assume tool 0
 			fp.write("G92 E%.3f\n" % (self.model.layer_e_end[v[1]][0]+2))
 			fp.write("G1 E%.3f\n" % self.model.layer_e_end[v[1][0]])
 		
@@ -1160,15 +1208,12 @@ class FilePrepare(wx.Panel):
 		newstat = False
 		
 		if self.modified:
-			if self.status in [ FPSTATUS_UNEQUAL, FPSTATUS_EQUAL_DIRTY, FPSTATUS_EQUAL ]:
-				self.status = FPSTATUS_UNEQUAL_DIRTY
+			if self.status in [ FPSTATUS_READY  ]:
+				self.status = FPSTATUS_READY_DIRTY
 				newstat = True
 		else:
-			if self.status == FPSTATUS_UNEQUAL_DIRTY:
-				self.status = FPSTATUS_UNEQUAL
-				newstat = True
-			elif self.status == FPSTATUS_EQUAL_DIRTY:
-				self.status = FPSTATUS_EQUAL
+			if self.status == FPSTATUS_READY_DIRTY:
+				self.status = FPSTATUS_READY
 				newstat = True
 				
 		if newstat:

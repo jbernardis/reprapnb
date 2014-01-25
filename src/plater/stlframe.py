@@ -1,12 +1,5 @@
-'''
-Created on Aug 16, 2012
-
-@author: Jeff
-'''
-
 import wx
 import math
-
 
 SHIFT_MASK = 0x0001
 
@@ -456,6 +449,3 @@ class StlFrame(wx.Window):
 		dy = p2[1] - p1[1]
 		d = math.sqrt(dx*dx + dy*dy)
 		return d
-		
-
-

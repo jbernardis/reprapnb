@@ -1,9 +1,3 @@
-'''
-Created on Jan 27, 2013
-
-@author: Jeff
-'''
-
 import wx
 
 EXISTING = "existing"

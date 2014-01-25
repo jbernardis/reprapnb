@@ -1,9 +1,3 @@
-'''
-Created on Jul 8, 2013
-
-@author: Jeff
-'''
-
 import wx
 import os
 

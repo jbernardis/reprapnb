@@ -22,13 +22,12 @@ dispatch = { "XH": "G28 X0", "YH": "G28 Y0", "ZH": "G28 Z0", "AH": "G28",
 	"Z+1": "G1 Z0.1",  "Z+2": "G1 Z1", "Z+3": "G1 Z10",
 	"STOP": "M84"}
 
-BUTTONDIM = (64, 64)
-
 class MoveAxis(wx.Window): 
-	def __init__(self, parent, app):
+	def __init__(self, parent, app, reprap):
 		self.model = None
 		self.parent = parent
 		self.app = app
+		self.reprap = reprap
 		self.logger = self.app.logger
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
@@ -96,22 +95,22 @@ class MoveAxis(wx.Window):
 					speed = " F%.3f" % v
 				else:
 					speed = ""
-				self.app.reprap.send_now("G91")
-				self.app.reprap.send_now(cmd + speed)
-				self.app.reprap.send_now("G90")
+				self.reprap.send_now("G91")
+				self.reprap.send_now(cmd + speed)
+				self.reprap.send_now("G90")
 			else:
-				self.app.reprap.send_now(cmd)
+				self.reprap.send_now(cmd)
 		else:
 			self.logger.LogError("unknown label: (%s)" % label)
 			
 	def evtXYSpeedKillFocus(self, evt):
 		try:
-			v = float(self.tXYSpeed.GetValue())
+			float(self.tXYSpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for XY Speed: %s" % self.tXYSpeed.GetValue())
 			
 	def evtZSpeedKillFocus(self, evt):
 		try:
-			v = float(self.tZSpeed.GetValue())
+			float(self.tZSpeed.GetValue())
 		except:
 			self.logger.LogError("Invalid value for Z Speed: %s" % self.tZSpeed.GetValue())

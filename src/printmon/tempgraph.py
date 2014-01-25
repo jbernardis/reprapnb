@@ -1,8 +1,3 @@
-'''
-Created on Apr 10, 2013
-
-@author: Jeff
-'''
 import wx
 
 MAXX = 240

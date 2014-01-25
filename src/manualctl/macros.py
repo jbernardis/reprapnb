@@ -1,22 +1,17 @@
-'''
-Created on Jun 20, 2013
-
-@author: ejefber
-'''
 import os
 import wx
 
-BUTTONDIM = (48, 48)
 BASE_ID = 2000
 
 class MacroDialog(wx.Dialog):
-	def __init__(self, app, reprap):
-		self.app = app
+	def __init__(self, parent, reprap):
+		self.parent = parent
+		self.app = self.parent.app
 		self.reprap = reprap
 		self.logger = self.app.logger
 		self.settings = self.app.settings
 		self.path = os.path.join(self.settings.cmdfolder, "macros")
-		self.macroList = MacroList(self.settings)
+		self.macroList = MacroList(self.app.settings)
 		
 		pre = wx.PreDialog()
 		pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
@@ -42,7 +37,7 @@ class MacroDialog(wx.Dialog):
 		sizer.Fit(self)
 		
 	def onClose(self, evt):
-		self.app.onMacroExit()
+		self.parent.onMacroExit()
 		self.Destroy()
 		
 	def runMacro(self, evt):

@@ -1,8 +1,3 @@
-'''
-Created on Jun 20, 2013
-
-@author: ejefber
-'''
 import os
 import wx
 import wx.lib.newevent
@@ -84,9 +79,10 @@ class FwSettings:
 		return self.values[tag]
 	
 class Firmware:
-	def __init__(self, app):
+	def __init__(self, app, reprap):
 		self.app = app
-		self.logger = None
+		self.reprap = reprap
+		self.logger = app.logger
 		
 		self.dlgVisible = False
 		self.wDlg = None
@@ -100,17 +96,12 @@ class Firmware:
 		self.got301 = False
 		
 		self.readingFirmware = False
-		self.reprap = None
 		
 		self.flash = FwSettings()
 		self.eeprom = FwSettings()
 		
 		getFirmwareProfile(EEPROMFILE, self.eeprom)
 		
-	def config(self, logger, reprap):
-		self.logger = logger
-		self.reprap = reprap
-
 	def start(self):
 		self.got92 = False
 		self.got201 = False
@@ -510,7 +501,7 @@ class FirmwareDlg(wx.Dialog):
 		if ext == "":
 			path += ".fw"
 			
-		rc, msg = putFirmwareProfile(path, self.working)
+		msg = putFirmwareProfile(path, self.working)[1]
 		self.logger.LogMessage(msg)
 				
 	def onClose(self, event):

@@ -1,8 +1,3 @@
-'''
-Created on Apr 10, 2013
-
-@author: Jeff
-'''
 import wx, math
 
 MAXZOOM = 10
@@ -342,13 +337,6 @@ class GcFrame (wx.Window):
 		if p[5] == self.hilite:
 			w = w * 3
 			
-		if w > 10:
-			print "Width, Height: ", w, p[2]
-			print "Points F->T", prev[0], prev[1], p[0], p[1]
-			print "Move number: ", ln
-			print "change in extrusion amt: ", last_e, p[3]
-			print "calculated volume and distance",  evolume, dist
-
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])
 			(x2, y2) = self.transform(p[0], self.buildarea[1]-p[1])

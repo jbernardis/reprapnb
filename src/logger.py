@@ -1,15 +1,10 @@
-'''
-Created on Jul 3, 2013
-
-@author: Jeff
-'''
 import os
 import wx
 import time
 import string
 import toaster as TB
 
-BUTTONDIM = (48, 48)
+from settings import BUTTONDIM
 
 class Logger(wx.Panel):
 	def __init__(self, parent, app):
