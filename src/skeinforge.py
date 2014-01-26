@@ -156,46 +156,6 @@ class Skeinforge:
 		
 	def getConfigString(self):
 		return "(" + str(self.vprofile) + ")"
-		
-	def getSlicerParameters(self):
-		heTemps = [185]
-		bedTemp = 60
-		nExtruders = 1
-		bedSize = [200, 200]
-		if self.parent.settings['profile'] in self.profilemap.keys():
-			path = self.profilemap[self.parent.settings['profile']]
-			
-			fn = os.path.join(path, "chamber.csv");		
-			try:
-				l = list(open(fn))
-				for s in l:
-					if s.startswith("Bed Temperature (Celcius):"):
-						try:
-							sval = s.split('\t')[1]
-							bedTemp = float(sval)
-						except:
-							bedTemp = 60
-					
-			except:
-				print "Unable to open skeinforge chamber.csv file for profile %s reading: " % self.parent.settings['profile']
-				bedTemp = 60
-	
-			fn = os.path.join(path, "temperature.csv");
-			try:
-				l = list(open(fn))
-				for s in l:
-					if s.startswith("Object First Layer Perimeter Temperature (Celcius):"):
-						try:
-							sval = s.split('\t')[1]
-							heTemps[0] = float(sval)
-						except:
-							heTemps[0] = 185
-					
-			except:
-				print "Unable to open skeinforge temperature.csv file for profile %s reading: " % self.parent.settings['profile']
-				heTemps[0] = 185
-
-		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + "_export.gcode"

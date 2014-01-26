@@ -127,13 +127,6 @@ class SlicerSettings:
 
 		return self.type.configSlicer()
 		
-	def getSlicerParameters(self):
-		if self.type is None:
-			return []
-		
-		return self.type.getSlicerParameters()
-
-	
 	def getConfigString(self):
 		if self.type is None:
 			return None
@@ -157,6 +150,7 @@ class Settings:
 		self.usepopup = True
 		self.port = 8989
 		self.maxloglines = 5000
+		self.buildarea = [200, 200]
 		self.macroList = {}
 		self.macroOrder = []
 		
@@ -184,6 +178,13 @@ class Settings:
 					self.lastlogdirectory = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
+				elif opt == 'buildarea':
+					try:
+						exec("s=%s" % value)
+						self.buildarea = s
+					except:
+						print "invalid value in ini file for buildarea"
+						self.buildarea = (200, 200)
 				elif opt == 'maxloglines':
 					if value.lower() == "none":
 						self.maxloglines = None
@@ -292,6 +293,7 @@ class Settings:
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
+			self.cfg.set(self.section, "buildares", str(self.buildarea))
 							
 			for p in self.printersettings.keys():
 				sc = "printer." + p

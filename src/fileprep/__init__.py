@@ -212,7 +212,7 @@ class FilePrepare(wx.Panel):
 		if self.slicer is None:
 			print "Unable to get slicer settings"
 					
-		self.buildarea = self.slicer.getSlicerParameters()[0]
+		self.buildarea = app.settings.buildarea
 			
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(900, 250))
 		self.SetBackgroundColour("white")

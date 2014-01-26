@@ -355,59 +355,6 @@ class Slic3r:
 		
 	def getConfigString(self):
 		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament) + ")"
-		
-	def getSlicerParameters(self):
-		heTemps = []
-		bedTemp = None
-		fl = self.parent.settings['filamentfile']
-		for fn in fl:
-			if fn is not None:
-				try:
-					idata = list(open(fn))
-				except:
-					print "Unable to open Slic3r filament file %s" % fn
-					idata = []
-			
-				for i in idata:
-					a = checkTagInt(i, "first_layer_temperature = ")
-					if a is not None:
-						heTemps.append(a)
-					else:
-						a = checkTagInt(i, "first_layer_bed_temperature = ")
-						if a is not None:
-							bedTemp = a
-	
-		bedSize = None
-		nExtruders = None
-		f = self.parent.settings['printerfile']
-		if f is not None:
-			try:
-				idata = list(open(f))
-			except:
-				print "Unable to open Slic3r printer file %s" % f
-				idata = []
-			
-		for i in idata:
-			a = checkTagList(i, "bed_size = ")
-			if a is not None:
-				bedSize = a
-			else:
-				a = checkTagList(i, "retract_speed = ")
-				if a is not None:
-					nExtruders = len(a)
-		
-		if bedSize is None:
-			bedSize = [200, 200]
-			
-		if nExtruders is None or nExtruders < 1:
-			nExtruders = 1
-		
-		if len(heTemps) < nExtruders:
-			x = nExtruders-len(heTemps)
-			for i in range(x):
-				heTemps.append(185)
-		
-		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"

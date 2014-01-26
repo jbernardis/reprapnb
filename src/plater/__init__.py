@@ -64,11 +64,10 @@ class Plater(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
 		self.app = app
-		self.buildarea = [200, 200]
 		self.logger = self.app.logger
-		self.appsettings = app.settings
 		self.settings = app.settings.plater
 		self.setStatus(PLSTATUS_EMPTY)
+		self.buildarea = app.settings.buildarea
 		
 		self.dlgView = None
 		

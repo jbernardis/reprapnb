@@ -110,14 +110,14 @@ class ConnectionManager:
 		(pm, mc) = self.app.addPages(printer, cx.reprap)
 		cx.setNBPages(pm, mc)
 		
-	def reprapByPrinter(self, printer):
+	def connectionByPrinter(self, printer):
 		try:
 			idx = self.activePrinters.index(printer)
 		except:
 			self.logger.LogMessage("Unable to find connection with printer %s" % printer)
 			return None
 		
-		return self.connections[idx].reprap
+		return self.connections[idx]
 	
 	def getConnection(self, cx):
 		if cx < 0 or cx >= len(self.connections):
@@ -369,25 +369,39 @@ class ConnectionManagerPanel(wx.Panel):
 		return self.cm.getStatus()
 	
 	def doDisconnect(self, evt):
-		# TODO - not if we're printing
 		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())
 		try:
 			prtr = cxtext.split()[0]
 		except:
 			prtr = None
 		if prtr is not None:
-			if self.cm.disconnectByPrinter(prtr):
-				(printers, ports, connections) = self.cm.getLists()
-				self.lbPort.SetItems(ports)
-				self.lbPort.SetSelection(0)
-				self.lbPrinter.SetItems(printers)
-				self.lbPrinter.SetSelection(0)
-				if len(ports) > 0 and len(printers) > 0:
-					self.bConnect.Enable(True)
-				self.loadConnections(connections)
-				if len(connections) == 0:
-					self.bDisconnect.Enable(False)
-					self.bReset.Enable(False)
+			cx = self.cm.connectionByPrinter(prtr)
+			if cx is not None:
+				if cx.isPrinting():
+					if self.pgConnMgr.isAnyPrinting():
+						dlg = wx.MessageDialog(self, "Are you sure you want to disconnect while printing is active",
+											'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+			
+						rc = dlg.ShowModal()
+						dlg.Destroy()
+		
+						if rc != wx.ID_YES:
+							return
+			self.disconnectByPrinter(prtr)
+
+	def disconnectByPrinter(self, prtr):			
+		if self.cm.disconnectByPrinter(prtr):
+			(printers, ports, connections) = self.cm.getLists()
+			self.lbPort.SetItems(ports)
+			self.lbPort.SetSelection(0)
+			self.lbPrinter.SetItems(printers)
+			self.lbPrinter.SetSelection(0)
+			if len(ports) > 0 and len(printers) > 0:
+				self.bConnect.Enable(True)
+			self.loadConnections(connections)
+			if len(connections) == 0:
+				self.bDisconnect.Enable(False)
+				self.bReset.Enable(False)
 
 	def doConnect(self, evt):
 		port = 	self.lbPort.GetString(self.lbPort.GetSelection())

@@ -225,42 +225,6 @@ class Cura:
 		
 	def getConfigString(self):
 		return "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
-		
-	def getSlicerParameters(self):
-		heTemps = [185]
-		bedTemp = 60
-		nExtruders = 1
-		bedSize = [200, 200]
-		if self.prefs.has_option(PREFSECTION, 'extruder_amount'):
-			nExtruders = self.prefs.getint(PREFSECTION, 'extruder_amount')
-			
-		if self.parent.settings['printer'] in self.printermap.keys():
-			p = self.parent.settings['printer']
-			bedSize = self.printermap[p][1:3]
-
-		if self.parent.settings['profile'] in self.profilemap.keys():
-			fn = self.profilemap[self.parent.settings['profile']]
-					
-			try:
-				prof = ConfigParser.ConfigParser()
-				prof.optionxform = str
-				if prof.read(fn):
-					if prof.has_option(PREFSECTION, 'print_bed_temperature'):
-						bedTemp = prof.getfloat(PREFSECTION, 'print_bed_temperature')
-	
-					heTemps = []
-					for i in range(nExtruders):
-						key = 'print_temperature'
-						t = 185
-						if i > 0:
-							key += ("%d" % i+1)
-							if prof.has_option(PREFSECTION, key):
-								t = prof.getfloat(PREFSECTION, key)
-						heTemps.append(t)
-			except:
-				print "Unable to process cura profile file %s: " % fn
-	
-		return [bedSize, nExtruders, heTemps, bedTemp]
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"
