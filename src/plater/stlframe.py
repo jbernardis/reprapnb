@@ -419,6 +419,42 @@ class StlFrame(wx.Window):
 		self.redrawStl()
 		return rc
 			
+	def center(self):
+		maxx = maxy = -99999
+		minx = miny = 99999
+		
+		rc = True
+
+		objlist = []
+		for itm in self.stlItems:
+			if itm is None: continue
+			objlist.append(itm.getStl())
+			
+		saveSelection = self.selection
+							
+		for o in objlist:
+			itemId = o.getId()
+			if itemId is None: continue
+			
+			if o.hxCenter < minx: minx=o.hxCenter
+			if o.hxCenter > maxx: maxx=o.hxCenter
+			if o.hyCenter < miny: miny=o.hyCenter
+			if o.hyCenter > maxy: maxy=o.hyCenter
+				
+		dx = self.buildarea[0]/2-(maxx+minx)/2
+		dy = self.buildarea[1]/2-(maxy+miny)/2
+
+		for o in objlist:
+			itemId = o.getId()
+			if itemId is None: continue
+		
+			self.setSelection(itemId)
+			self.moveStl(dx, dy)
+
+		self.setSelection(saveSelection)
+		self.redrawStl()
+		return rc
+			
 	def getStls(self):
 		objlist = []
 		for itm in self.stlItems:

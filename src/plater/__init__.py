@@ -110,6 +110,18 @@ class Plater(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doArrange, self.bArrange)
 		self.bArrange.Enable(False)		
 
+		self.bArray = wx.BitmapButton(self, wx.ID_ANY, self.images.pngArray, size=BUTTONDIM)
+		self.bArray.SetToolTipString("Create an nxn array of selected object")
+		self.sizerBtn.Add(self.bArray)
+		self.Bind(wx.EVT_BUTTON, self.doArray, self.bArray)
+		self.bArray.Enable(False)		
+
+		self.bCenter = wx.BitmapButton(self, wx.ID_ANY, self.images.pngCenter, size=BUTTONDIM)
+		self.bCenter.SetToolTipString("Center all objects on the plate")
+		self.sizerBtn.Add(self.bCenter)
+		self.Bind(wx.EVT_BUTTON, self.doCenter, self.bCenter)
+		self.bCenter.Enable(False)		
+
 		self.sizerBtn.AddSpacer((20, 20))
 				
 		self.cbAutoArrange = wx.CheckBox(self, wx.ID_ANY, "Auto Arrange")
@@ -189,6 +201,7 @@ class Plater(wx.Panel):
 		
 		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
 		self.sizerBtn2.Add(self.bView)
+		self.bView.SetToolTipString("Launch the STL/AMF file viewer")
 		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
 
 		self.sizerMain.AddSpacer((20,20), pos=(5,4))		
@@ -207,6 +220,8 @@ class Plater(wx.Panel):
 		self.bExport.Enable(flag)
 		self.bExport2Prep.Enable(flag)
 		self.bArrange.Enable(flag)
+		self.bArray.Enable(flag)
+		self.bCenter.Enable(flag)
 		self.bClone.Enable(flag)
 		self.bRotate45CW.Enable(flag)
 		self.bRotate45CCW.Enable(flag)
@@ -383,6 +398,79 @@ class Plater(wx.Panel):
 			self.doArrange(None)
 			print "back form arrange"
 			
+	def doArray(self, evt):
+		stlObj = self.stlFrame.getSelectedStl()
+		if stlObj is None:
+			return
+		
+		if self.lbSelection is None:
+			return
+
+		dlg = wx.TextEntryDialog(
+				self, 'Enter number of rows (>0)',
+				'Number of Rows', '1')
+		if dlg.ShowModal() != wx.ID_OK:
+			dlg.Destroy()
+			return
+		
+		v = dlg.GetValue().strip()
+		dlg.Destroy()
+		try:
+			rows = int(v)
+		except:
+			rows = None
+
+		dlg = wx.TextEntryDialog(
+				self, 'Enter number of columns (>0)',
+				'Number of Columns', '1')
+		if dlg.ShowModal() != wx.ID_OK:
+			dlg.Destroy()
+			return
+		
+		v = dlg.GetValue().strip()
+		dlg.Destroy()
+		try:
+			cols = int(v)
+		except:
+			cols = None
+		
+		if rows is None or rows <= 0 or cols is None or cols <= 0:
+			dlg = wx.MessageDialog(self, 'Invalid value for number of rows/columns (must be >0)',
+					'Invalid value', wx.OK | wx.ICON_INFORMATION)
+			dlg.ShowModal()
+			dlg.Destroy()
+			return
+
+		saveSelection = self.lbSelection		
+		objCenter = (stlObj.hxCenter, stlObj.hycenter)
+		objSize = (stlObj.hxSize, stlObj.hySize)
+		margin = self.stlFrame.arrangeMargin
+		
+		self.setModified()
+		
+		fn = self.lbMap[self.lbSelection][0]
+		for r in range(rows):
+			for c in range(cols):
+				if r == 0 and c == 0:
+					continue
+				
+				dx = objCenter[0] + c * (objSize[0]+2*margin)
+				dy = objCenter[1] + r * (objSize[1]+2*margin)
+				
+				name = "OBJECT%03d" % self.objNumber
+				self.objNumber += 1
+				s = stlObj.clone(name=name)
+				self.stlFrame.addStl(s, highlight=True)
+				itemid = self.stlFrame.getSelection()
+				self.stlFrame.moveStl(dx, dy)
+
+				self.lbMap.append([fn, itemid])
+				self.lbModified.append(False)
+				self.lb.Append(fn)
+				
+		self.lbSelection = saveSelection
+		self.lb.SetSelection(self.lbSelection)
+			
 	def doClone(self, evt):
 		stlObj = self.stlFrame.getSelectedStl()
 		if stlObj is None:
@@ -547,7 +635,6 @@ class Plater(wx.Panel):
 		elif itmId is not None:
 			self.lbModified[itmId] = True
 		
-		
 	def doArrange(self, evt):
 		for i in range(len(self.lbModified)):
 			self.lbModified[i] = True
@@ -561,6 +648,13 @@ class Plater(wx.Panel):
 							   )
 		dlg.ShowModal()
 		dlg.Destroy()
+		
+	def doCenter(self, evt):
+		for i in range(len(self.lbModified)):
+			self.lbModified[i] = True
+		self.setModified()
+			
+		self.stlFrame.center()
 		
 	def stlView(self, evt):
 		self.dlgView = StlViewer(self, "title")

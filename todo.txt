@@ -1,5 +1,12 @@
 In Progress/Need Testing
-- plater hanging
+- plater hanging on large STL files
+new functions for plater: center, row/column matrix multiplier
+Need to test SD functionality
+neaten up disconnect
+need to test HTTP server
+
+
+
 
 Low Hanging
 
@@ -22,4 +29,5 @@ Pie in the sky
 
 
 
-neaten up disconnect
+
+
