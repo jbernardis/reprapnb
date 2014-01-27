@@ -99,6 +99,22 @@ class ConnectionManager:
 			cx += 1
 				
 		return stat
+	
+	def getTemps(self):
+		result = {}
+		result['nconnections'] = len(self.connections)
+
+		cx = 1			
+		for p in self.connections:
+			pt = {}
+			pt['printer'] = p.printer
+			pt['temps'] = p.prtmon.getTemps()
+
+			cid = "connection.%d" % cx				
+			result[cid] = pt
+			cx += 1
+			
+		return result
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)

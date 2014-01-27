@@ -442,7 +442,7 @@ class Plater(wx.Panel):
 			return
 
 		saveSelection = self.lbSelection		
-		objCenter = (stlObj.hxCenter, stlObj.hycenter)
+		objCenter = (stlObj.hxCenter, stlObj.hyCenter)
 		objSize = (stlObj.hxSize, stlObj.hySize)
 		margin = self.stlFrame.arrangeMargin
 		
@@ -462,11 +462,11 @@ class Plater(wx.Panel):
 				s = stlObj.clone(name=name)
 				self.stlFrame.addStl(s, highlight=True)
 				itemid = self.stlFrame.getSelection()
-				self.stlFrame.moveStl(dx, dy)
-
 				self.lbMap.append([fn, itemid])
 				self.lbModified.append(False)
 				self.lb.Append(fn)
+				
+				self.stlFrame.moveStl(dx, dy)
 				
 		self.lbSelection = saveSelection
 		self.lb.SetSelection(self.lbSelection)

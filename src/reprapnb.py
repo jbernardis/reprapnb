@@ -256,17 +256,7 @@ class MainFrame(wx.Frame):
 		return st
 		
 	def getTemps(self):
-		result = {}
-		for p in self.settings.printers:
-			pst = {}
-			if self.connected[p]:
-				pst['result'] = "Success"
-				pst['temps'] = self.pgPrtMon[p].getTemps()
-			else:
-				pst['result'] = "skipped - not connected"
-			result[p] = pst
-			
-		return result
+		return self.pgConnMgr.getTemps()
 	
 	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)
