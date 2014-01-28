@@ -29,6 +29,9 @@ CONNMGR_TAB_TEXT = "Connection Manager"
 MANCTL_TAB_TEXT = "Manual Control: %s"
 PRTMON_TAB_TEXT = "Print Monitor: %s"
 
+NBWIDTH = 1450
+NBHEIGHT = 930
+
 class MainFrame(wx.Frame):
 	def __init__(self):
 		self.timer = None
@@ -40,7 +43,7 @@ class MainFrame(wx.Frame):
 		self.pgManCtl = {}
 		self.pgPrtMon = {}
 		
-		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[1300, 930])
+		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[NBWIDTH, NBHEIGHT])
 		
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
@@ -71,7 +74,7 @@ class MainFrame(wx.Frame):
 
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		
-		self.nb = wx.Notebook(p, size=(1300, 900), style=wx.NB_TOP)
+		self.nb = wx.Notebook(p, size=(NBWIDTH, NBHEIGHT), style=wx.NB_TOP)
 		self.nb.AssignImageList(self.nbil)
 
 		self.logger = Logger(self.nb, self)
