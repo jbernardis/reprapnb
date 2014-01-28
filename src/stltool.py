@@ -146,21 +146,26 @@ class stl:
 		return self.id
 	
 	def setHull(self):
+		def unique_rows(a):
+			a = numpy.ascontiguousarray(a)		
+			unique_a = numpy.unique(a.view([('', a.dtype)]*a.shape[1]))
+			return unique_a.view(a.dtype).reshape((unique_a.shape[0], a.shape[1]))
+
 		self.projection = numpy.array([])
 		minz = 99999
 		for f in self.facets:
 			if f[1][0][2] < minz: minz = f[1][0][2]
 			if f[1][1][2] < minz: minz = f[1][1][2]
 			if f[1][2][2] < minz: minz = f[1][2][2]
-			if [f[1][0][0], f[1][0][1]] not in self.projection:
-				self.projection=numpy.concatenate((self.projection, [f[1][0][0], f[1][0][1]]))
-			if [f[1][1][0], f[1][1][1]] not in self.projection:
-				self.projection=numpy.concatenate((self.projection, [f[1][1][0], f[1][1][1]]))
-			if [f[1][2][0], f[1][2][1]] not in self.projection:
-				self.projection=numpy.concatenate((self.projection, [f[1][2][0], f[1][2][1]]))
+
+		self.projection = numpy.concatenate(
+				[[f[1][0][0], f[1][0][1],
+				  f[1][1][0], f[1][1][1],
+				  f[1][2][0], f[1][2][1]] for f in self.facets])
 
 		n = len(self.projection)			
 		self.projection = self.projection.reshape(n/2,2)
+		self.projection = unique_rows(self.projection)
 		h = self.qhull(self.projection)
 		self.adjustHull(h)
 		
