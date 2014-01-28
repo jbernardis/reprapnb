@@ -293,7 +293,7 @@ class Settings:
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
-			self.cfg.set(self.section, "buildares", str(self.buildarea))
+			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 							
 			for p in self.printersettings.keys():
 				sc = "printer." + p

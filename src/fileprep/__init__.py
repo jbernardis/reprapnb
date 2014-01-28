@@ -393,13 +393,12 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerLeft.Add(self.sizerOpts)
 		self.sizerMain.Add(self.sizerLeft)
-		self.sizerMain.AddSpacer((10, 10))
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
 		f = wx.Font(18,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		t.SetFont(f)
-		self.infoPane.AddSpacer((100, 30), pos=(0,0))
+		self.infoPane.AddSpacer((100, 80), pos=(0,0))
 		self.infoPane.Add(t, pos=(1,0), span=(1,2), flag=wx.ALIGN_CENTER)
 		
 		self.infoPane.AddSpacer((20, 20), pos=(2,0))
