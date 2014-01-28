@@ -220,11 +220,13 @@ class FilePrepare(wx.Panel):
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 		self.Bind(EVT_MODELER_UPDATE, self.modelerUpdate)
 
-		self.sizerMain = wx.GridBagSizer()
-		self.sizerMain.AddSpacer((20, 20), pos=(0,0))
+		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerMain.AddSpacer((20, 20))
+		
+		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
+		self.sizerLeft.AddSpacer((20, 20))
 		
 		self.sizerSlice = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerSlice.AddSpacer((20, 20))
 
 		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
 		self.sizerSlice.Add(self.bSlice)
@@ -270,14 +272,10 @@ class FilePrepare(wx.Panel):
 		self.updateSlicerConfigString(text)
 		self.sizerSlice.Add(self.tSlicerCfg, flag=wx.EXPAND | wx.ALL, border=10)
 		
-		self.sizerMain.Add(self.sizerSlice, pos=(1,1), span=(1,4))
-		self.sizerMain.AddSpacer((20,20), pos=(2,0))
-
-
-
+		self.sizerLeft.Add(self.sizerSlice)
+		self.sizerLeft.AddSpacer((10,10))
 		
 		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerBtns.AddSpacer((20, 20))
 		
 		self.bMerge = wx.BitmapButton(self, wx.ID_ANY, self.images.pngMerge, size=BUTTONDIM)
 		self.bMerge.SetToolTipString("Merge 2 or more STL files into an AMF file")
@@ -335,17 +333,15 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerLeft.Add(self.sizerBtns)
+		self.sizerLeft.AddSpacer((20,20))
 		
-		self.sizerMain.Add(self.sizerBtns, pos=(3,1), span=(1,4))
-		self.sizerMain.AddSpacer((20,20), pos=(4,0))
+		self.sizerGraph = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.gcf = GcFrame(self, self.model, self.settings, self.buildarea)
-		self.sizerMain.Add(self.gcf, pos=(5,1))
-		self.sizerMain.AddSpacer((20,20), pos=(5,0))
+		self.sizerGraph.Add(self.gcf)
+		self.sizerGraph.AddSpacer((10,10))
 		sz = self.buildarea[1] * self.settings.gcodescale
-		
-		self.sizerMain.AddSpacer((20, 20), pos=(5,2))
 
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
@@ -356,7 +352,7 @@ class FilePrepare(wx.Panel):
 		self.slideLayer.SetValue(1)
 		self.slideLayer.SetPageSize(1);
 		self.slideLayer.Disable()
-		self.sizerMain.Add(self.slideLayer, pos=(5,3), flag=wx.ALIGN_RIGHT)
+		self.sizerGraph.Add(self.slideLayer)
 
 		self.slideGCode = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 99999, size=(80, sz),
@@ -367,7 +363,10 @@ class FilePrepare(wx.Panel):
 		self.slideGCode.SetValue(1)
 		self.slideGCode.SetPageSize(1);
 		self.slideGCode.Disable()
-		self.sizerMain.Add(self.slideGCode, pos=(5,4))
+		self.sizerGraph.Add(self.slideGCode)
+		
+		self.sizerLeft.Add(self.sizerGraph)
+		self.sizerLeft.AddSpacer((10, 10))
 
 		self.sizerOpts = wx.BoxSizer(wx.HORIZONTAL)
 				
@@ -392,8 +391,9 @@ class FilePrepare(wx.Panel):
 		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
 		self.sizerOpts.Add(self.cbBuffDC)
 		
-		self.sizerMain.Add(self.sizerOpts, pos=(7, 1))
-		self.sizerMain.AddSpacer((20, 20), pos=(8,0))
+		self.sizerLeft.Add(self.sizerOpts)
+		self.sizerMain.Add(self.sizerLeft)
+		self.sizerMain.AddSpacer((10, 10))
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
@@ -503,8 +503,7 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeSource.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
-		self.sizerMain.Add(self.infoPane, pos=(3,5), span=(4,1))
-		self.sizerMain.AddSpacer((40, 20), pos=(0,6))
+		self.sizerMain.Add(self.infoPane)
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()

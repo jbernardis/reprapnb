@@ -383,6 +383,9 @@ class ConnectionManagerPanel(wx.Panel):
 			
 	def getStatus(self):
 		return self.cm.getStatus()
+			
+	def getTemps(self):
+		return self.cm.getTemps()
 	
 	def doDisconnect(self, evt):
 		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())

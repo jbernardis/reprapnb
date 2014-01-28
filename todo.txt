@@ -1,6 +1,5 @@
 In Progress/Need Testing
 - plater hanging on large STL files
-new functions for plater: center, row/column matrix multiplier
 Need to test SD functionality
 neaten up disconnect
 need to test HTTP server
@@ -24,8 +23,6 @@ Larger effort
 - integration with webcam
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
 
-Pie in the sky
-- drive two printers simultaneously
 
 
 
