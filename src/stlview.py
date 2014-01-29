@@ -11,7 +11,9 @@ InitialLightValue = 100
 def vec(*args):
 	return (GLfloat * len(args))(*args)
 
-colors = [vec(0.1, 0.6, 0.3, 1), vec(0.1, 0.6, 0.9, 1), vec(0.9, 0.6, 0.3, 1), vec(0.9, 0.6, 0.9, 1), vec(0.1, 0.8, 0.7, 1)]
+indexColor = 0
+
+colors = [(0.1, 0.6, 0.3, 1), (0.1, 0.6, 0.9, 1), (0.9, 0.6, 0.3, 1), (0.9, 0.6, 0.9, 1), (0.1, 0.8, 0.7, 1)]
 
 def color(index):
 	i = index % len(colors)
@@ -275,6 +277,30 @@ class MyCanvasBase(glcanvas.GLCanvas):
 		self.setZoom(zoom)
 		self.Refresh(False)
 
+class GLVolume:
+	def __init__(self, v, n, cx):
+		self.vertices = v
+		self.normals = n
+		self.color = cx
+		self.nvertices = len(v)
+
+class GLObject:
+	def __init__(self, stlobj):
+		global indexColor
+		self.volumes = []
+		for vol in stlobj.volumes:
+			v = []
+			n = []
+			for f in vol.facets:
+				v.extend([[f[1][0][0], f[1][0][1], f[1][0][2]],
+						  [f[1][1][0], f[1][1][1], f[1][1][2]],
+						  [f[1][2][0], f[1][2][1], f[1][2][2]]])
+				n.extend([[f[0][0], f[0][1], f[0][2]],
+						  [f[0][0], f[0][1], f[0][2]],
+						  [f[0][0], f[0][1], f[0][2]]])
+			self.volumes.append(GLVolume(v, n, indexColor))
+			indexColor += 1
+
 class STLCanvas(MyCanvasBase):
 	def __init__(self, parent, obj, drawGrid=True, wid=-1, buildarea=(200, 200, 100), pos=wx.DefaultPosition,
 				 size=(400, 400), style=0, mainwindow=None):
@@ -338,7 +364,7 @@ class STLCanvas(MyCanvasBase):
 		self.Refresh(False)
 
 	def addObject(self, o):
-		self.objectList.append(o)
+		self.objectList.append(GLObject(o))
 		self.selection = len(self.objectList)-1
 		self.Refresh(False)
 		
@@ -380,12 +406,10 @@ class STLCanvas(MyCanvasBase):
 		if self.drawGrid:
 			self.doDrawGrid()
 		
-		indexColor = 0
 		indexObject = 0
 		for o in self.objectList:
 			for v in o.volumes:
-				self.draw_object(v.facets, indexColor, indexObject)
-				indexColor += 1
+				self.draw_object_volume(v, indexObject)
 
 			indexObject += 1
 			
@@ -393,28 +417,20 @@ class STLCanvas(MyCanvasBase):
 		self.transx = self.transy = 0
 		self.SwapBuffers()
 		
-	def draw_object(self, facets, indexColor, indexObject):
-		c = color(indexColor)
+	def draw_object_volume(self, vol, indexObject):
+		if indexObject == self.selection and len(self.objectList) > 1:
+			c = (1.0, 1.0, 1.0, 1.0)
+		else:
+			c = color(vol.color)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
-	
-		glBegin(GL_TRIANGLES)
-		for f in facets:
-			glNormal3f(f[0][0], f[0][1], f[0][2])
-			for i in range(3):
-				glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
-		glEnd()
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointerf(vol.vertices)
 		
-		if len(self.objectList) > 1 and indexObject == self.selection:
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(1,1,1,1))
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointerf(vol.normals)
 		
-			glBegin(GL_TRIANGLES)
-			for f in facets:
-				glNormal3f(f[0][0], f[0][1], f[0][2])
-				for i in range(3):
-					glVertex3f(f[1][i][0], f[1][i][1], f[1][i][2])
-			glEnd()
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+		glDrawArrays(GL_TRIANGLES, 0, vol.nvertices)
 		
 	def doDrawGrid(self):
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
