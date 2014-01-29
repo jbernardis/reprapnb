@@ -509,8 +509,9 @@ class Plater(wx.Panel):
 			if rc != wx.ID_YES:
 				return
 
-		self.lb.Delete(self.lbSelection)
-		del(self.lbMap[self.lbSelection])
+		sel = self.lbSelection
+		self.lb.Delete(sel)
+		del(self.lbMap[sel])
 		self.stlFrame.delStl()
 		
 		if len(self.lbMap) == 0:
