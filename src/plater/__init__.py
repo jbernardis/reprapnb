@@ -16,6 +16,48 @@ import stltool
 from stlview import StlViewer
 from settings import BUTTONDIM, BUTTONDIMWIDE, PLSTATUS_EMPTY, PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY
 
+(ReaderEvent, EVT_READER_UPDATE) = wx.lib.newevent.NewEvent()
+READER_RUNNING = 1
+READER_FINISHED = 2
+
+class ReaderThread:
+	def __init__(self, win, name, fn):
+		self.win = win
+		self.fn = fn
+		self.name = name
+		self.running = False
+		self.cancelled = False
+		self.stlFile = None
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+	
+	def getStlFile(self):
+		return self.stlFile
+
+	def Run(self):
+		evt = ReaderEvent(msg = "Reading STL File...", state = READER_RUNNING)
+		wx.PostEvent(self.win, evt)
+		
+		self.stlFile = stltool.stl(cb=self.loadStlEvent, filename=self.fn, name=self.name, zZero=True)
+		
+		evt = ReaderEvent(msg = "completed", state = READER_FINISHED)
+		wx.PostEvent(self.win, evt)	
+		self.running = False
+		
+	def loadStlEvent(self, message):
+		evt = ReaderEvent(msg = message, state = READER_RUNNING)
+		wx.PostEvent(self.win, evt)
+		
+
 (WriterEvent, EVT_WRITER_UPDATE) = wx.lib.newevent.NewEvent()
 WRITER_RUNNING = 1
 WRITER_FINISHED = 2
@@ -209,6 +251,7 @@ class Plater(wx.Panel):
 		
 		self.SetSizer(self.sizerMain)
 		self.Bind(EVT_WRITER_UPDATE, self.writerUpdate)
+		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 		
 	def setStatus(self, s):
 		self.status = s
@@ -380,17 +423,34 @@ class Plater(wx.Panel):
 		name = "OBJECT%03d" % self.objNumber
 		self.objNumber += 1
 		print "Reading STL file"
-		stlFile = stltool.stl(filename=fn, name=name, zZero=True)
+		self.fn = fn
+		
+		self.readThread = ReaderThread(self, name, fn)
+		self.readThread.Start()
+	
+	def readerUpdate(self, evt):
+		if evt.state == READER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == READER_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+
+			self.continueLoadFile()
+		
+	def continueLoadFile(self, stlfile):
+		self.stlFile = self.readThread.getStlFile()
 		print "Back from read - adding to the frame"
-		self.stlFrame.addStl(stlFile, highlight=True)
+		self.stlFrame.addStl(self.stlFile, highlight=True)
 		print "back from add"
 		itemId = self.stlFrame.getSelection()
 		self.enableButtons(True)
 
-		self.lbMap.append([fn, itemId])
+		self.lbMap.append([self.fn, itemId])
 		self.lbModified.append(False)
 		self.lbSelection = len(self.lbMap)-1
-		self.lb.Append(fn)
+		self.lb.Append(self.fn)
 		self.lb.SetSelection(self.lbSelection)
 		
 		if self.settings.autoarrange:

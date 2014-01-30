@@ -1,17 +1,77 @@
-import os
+import os, thread
 import wx
+import wx.lib.newevent
 
 import stltool
 
+(MergeEvent, EVT_MERGE_UPDATE) = wx.lib.newevent.NewEvent()
+MERGE_RUNNING = 1
+MERGE_FINISHED = 2
+
+class MergeThread:
+	def __init__(self, win, fn, flist):
+		self.win = win
+		self.fn = fn
+		self.fileList = flist
+		self.running = False
+		self.cancelled = False
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+	
+	def getStlObj(self):
+		return self.stlObj
+
+	def Run(self):
+		evt = MergeEvent(msg = "Merging...", state = MERGE_RUNNING)
+		wx.PostEvent(self.win, evt)
+		
+		a = amf(cb=self.mergeStlEvent)
+		for s in self.fileList:
+			a.addStl(s)
+
+		evt = MergeEvent(msg = "Saving AMF output file " + self.fn, state = MERGE_RUNNING)
+		wx.PostEvent(self.win, evt)
+		try:
+			f=open(self.fn,"w")
+		except:
+			evt = MergeEvent(msg = "Unable to open output file " + self.fn, state = MERGE_FINISHED)
+			wx.PostEvent(self.win, evt)
+			return
+	
+		f.write(a.merge())
+		f.close()
+		
+		evt = MergeEvent(msg = "completed", state = MERGE_FINISHED)
+		wx.PostEvent(self.win, evt)	
+		self.running = False
+		
+	def mergeStlEvent(self, message):
+		evt = MergeEvent(msg = message, state = MERGE_RUNNING)
+		wx.PostEvent(self.win, evt)
+
 class volume:
-	def __init__(self, fn, startIdx, zzero, xoffset, yoffset):
+	def __init__(self, fn, startIdx, zzero, xoffset, yoffset, cb=None):
 		self.vertexMap = {}
 		self.vertexVal = []
 		self.vertexIdx = startIdx
 		self.triangles = []
 		self.name = fn
+		self.cb = cb
 		
-		self.stl = stltool.stl(filename=fn, zZero=zzero, xOffset=xoffset, yOffset=yoffset)
+		self.stl = stltool.stl(cb = cb, filename=fn, zZero=zzero, xOffset=xoffset, yOffset=yoffset)
+		if cb:
+			cb("Processing facets for AMF formatting...")
+			
+		fx = 0
 		for f in self.stl.facets:
 			triangle = [None, None, None]
 			for px in range(3):
@@ -24,6 +84,10 @@ class volume:
 				triangle[px] = self.vertexMap[key]
 	
 			self.triangles.append(triangle)
+			if cb:
+				fx += 1
+				if fx % 10000 == 0:
+					cb("Processed %d facets" % fx)
 			
 	def maxVertexIdx(self):
 		return self.vertexIdx
@@ -33,6 +97,7 @@ class volume:
 	
 	def getVertices(self):
 		result = ""
+		vx = 0
 		for v in self.vertexVal:
 			x, y, z = v.split(";")
 			result += "        <vertex>\n"
@@ -42,27 +107,41 @@ class volume:
 			result += "            <z>%s</z>\n" % z
 			result += "          </coordinates>\n"
 			result += "        </vertex>\n"	
+			if self.cb:
+				vx += 1
+				if vx % 10000 == 0:
+					self.cb("%d vertices processed" % vx)
 
+		if self.cb:
+			self.cb("%d total vertices in volume" % vx)
 		return result
 	
 	def getTriangles(self):
 		result = ""
+		tx = 0
 		for t in self.triangles:
 			result += "        <triangle>\n"
 			result += "          <v1>%s</v1>\n" % t[0]
 			result += "          <v2>%s</v2>\n" % t[1]
 			result += "          <v3>%s</v3>\n" % t[2]
 			result += "        </triangle>\n"
+			if self.cb:
+				tx += 1
+				if tx % 10000 == 0:
+					self.cb("%d triangles processed" % tx)
 		
+		if self.cb:
+			self.cb("%d total triangles in volume" % tx)
 		return result
 			
 class amf:
-	def __init__(self):
+	def __init__(self, cb=None):
 		self.volumes = []
 		self.vIdx = 0
+		self.cb = cb
 		
 	def addStl(self, fn, zZero=False, xOffset=0, yOffset=0):
-		v = volume(fn, self.vIdx, zZero, xOffset, yOffset)
+		v = volume(fn, self.vIdx, zZero, xOffset, yOffset, cb=self.cb)
 		self.vIdx = v.maxVertexIdx()
 		self.volumes.append(v)
 
@@ -74,7 +153,11 @@ class amf:
 		result += "  <metadata type=\"cad\">stlmerge.py</metadata>\n"
 		
 		vx = 0
+		if self.cb:
+			self.cb("Merging volumes...")
 		for v in self.volumes:
+			if self.cb:
+				self.cb("Volume %d" % (vx+1))
 			result += "  <material id=\"%d\">\n" % vx
 			vx += 1
 			result += "    <metadata type=\"Name\">%s</metadata>\n" % v.getName()
@@ -83,12 +166,16 @@ class amf:
 		result += "  <object id=\"0\">\n"
 		result += "    <mesh>\n"
 		result += "      <vertices>\n"
-		
+
+		if self.cb:
+			self.cb("Merging vertices...")		
 		for v in self.volumes:
 			result += v.getVertices()
 			
 		result += "      </vertices>\n"
 		
+		if self.cb:
+			self.cb("Merging triangles...")		
 		vx = 0
 		for v in self.volumes:
 			result += "      <volume materialid=\"%d\">\n" % vx
@@ -99,6 +186,8 @@ class amf:
 		result += "    </mesh>\n"
 		result += "  </object>\n"
 		result += "</amf>"
+		if self.cb:
+			self.cb("Merge completed")
 		return result
 
 
@@ -173,6 +262,7 @@ class StlMergeDlg(wx.Dialog):
 
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
+		self.Bind(EVT_MERGE_UPDATE, self.mergeUpdate)
 		
 	def onAddStl(self, event):
 		dlg = wx.FileDialog(
@@ -241,21 +331,21 @@ class StlMergeDlg(wx.Dialog):
 
 		self.logger.LogMessage("Beginning merge")
 				
-		a = amf()
-		for s in self.fileList:
-			self.logger.LogMessage("Loading " + s)
-			a.addStl(s)
-
-		self.logger.LogMessage("Saving AMF output file " + amfFn)
-		try:
-			f=open(amfFn,"w")
-		except:
-			self.logger.LogMessage("Unable to open output file %s" % amfFn)
-			return
+		self.mergeThread = MergeThread(self, amfFn, self.fileList)
+		self.mergeThread.Start()
 	
-		f.write(a.merge())
-		f.close()
-		
+	def mergeUpdate(self, evt):
+		if evt.state == MERGE_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == MERGE_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+
+			self.continueMerge()
+
+	def continueMerge(self):		
 		dlg = wx.MessageDialog(self, "Merge Completed",
 					'Merged', wx.OK | wx.ICON_INFORMATION)
 			

@@ -103,15 +103,32 @@ class amfVol:
 		self.facets = facets
 
 class amf:
-	def __init__(self, filename=None):	
+	def __init__(self, cb=None, filename=None):	
 		self.volfacets=[]
 		self.volumes = []
+		
+		self.cb = cb
+		self.fcnt = 0
+		self.vcnt = 0
 	
-		AmfXml(filename, self.addFacet, self.endVolume)
+		if filename is not None:
+			AmfXml(filename, self.addFacet, self.endVolume)
+		
+		if self.cb:
+			self.cb("Finished reading AMF file: %d volumes, %d total facets" % (self.vcnt, self.fcnt))
 		
 	def addFacet(self, f):
 		self.volfacets.append(genfacet(f))
+		if self.cb:
+			self.fcnt += 1
+			if self.fcnt % 10000 == 0:
+				self.cb("%d facets read" % self.fcnt)
 		
 	def endVolume(self):
 		self.volumes.append(amfVol(self.volfacets))
+		if self.cb:
+			n = len(self.volfacets)
+			self.vcnt += 1
+			self.cb("Completed volume %d: %d facets" %  (self.vcnt, n))
 		self.volfacets = []
+		

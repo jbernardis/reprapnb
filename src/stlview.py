@@ -1,10 +1,58 @@
-import os
+import os, thread
 import wx
+import wx.lib.newevent
 from stltool import stl
 from amftool import amf
 from settings import BUTTONDIM
 from wx import glcanvas
 from OpenGL.GL import *
+
+FT_STL = 1
+FT_AMF = 2
+
+(ReaderEvent, EVT_READER_UPDATE) = wx.lib.newevent.NewEvent()
+READER_RUNNING = 1
+READER_FINISHED = 2
+
+class ReaderThread:
+	def __init__(self, win, fn, ftype):
+		self.win = win
+		self.fn = fn
+		self.ftype = ftype
+		self.running = False
+		self.cancelled = False
+		self.stlObj = None
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+	
+	def getStlObj(self):
+		return self.stlObj
+
+	def Run(self):
+		evt = ReaderEvent(msg = "Reading STL/AMF File...", state = READER_RUNNING)
+		wx.PostEvent(self.win, evt)
+		
+		if self.ftype == FT_STL:
+			self.stlObj = stl(cb=self.loadStlEvent, filename=self.fn)
+		elif self.ftype == FT_AMF:
+			self.stlObj = amf(cb=self.loadStlEvent,filename=self.fn)
+		
+		evt = ReaderEvent(msg = "completed", state = READER_FINISHED)
+		wx.PostEvent(self.win, evt)	
+		self.running = False
+		
+	def loadStlEvent(self, message):
+		evt = ReaderEvent(msg = message, state = READER_RUNNING)
+		wx.PostEvent(self.win, evt)
 
 InitialLightValue = 100
 
@@ -99,6 +147,7 @@ class StlViewer(wx.Dialog):
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onWheel)
 		self.SetAutoLayout(True)
 		self.SetSizer(box)
+		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 
 	def onSliderChange(self, evt):
 		l = evt.EventObject.GetValue()
@@ -119,29 +168,47 @@ class StlViewer(wx.Dialog):
 			)
 		
 		if dlg.ShowModal() == wx.ID_OK:
-			path = dlg.GetPath()
-			fn, ext = os.path.splitext(path)
+			self.stlPath = dlg.GetPath()
+			fn, ext = os.path.splitext(self.stlPath)
 			ext = ext.lower()
 			ext2 = os.path.splitext(fn)[1].lower()
-			if ext == ".stl":
-				s = stl(filename=path)
-			elif (ext == ".xml" and ext2 == ".amf") or ext == ".amf":
-				s = amf(filename=path)
-			else:
-				s = None
 				
-			if s:
-				self.settings.laststldirectory = os.path.dirname(path)
-				self.settings.setModified()
-				self.fileList.append(path)
-				self.lb.Append(path)
-				self.selection = len(self.fileList)-1
-				self.lb.SetSelection(self.selection)
-				self.canvas.addObject(s)
-				self.bDel.Enable(True)
+			if ext == ".stl":
+				fileType = FT_STL
+			elif (ext == ".xml" and ext2 == ".amf") or ext == ".amf":
+				fileType = FT_AMF
+			else:
+				fileType = None
+				
+			if fileType:
+				self.readThread = ReaderThread(self, self.stlPath, fileType)
+				self.readThread.Start()
 				
 		dlg.Destroy()
 		
+	
+	def readerUpdate(self, evt):
+		if evt.state == READER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+				
+		elif evt.state == READER_FINISHED:
+			if evt.msg is not None:
+				self.logger.LogMessage(evt.msg)
+
+			self.continueAddStl()
+
+	def continueAddStl(self):	
+		self.stlObj = self.readThread.getStlObj()	
+		self.settings.laststldirectory = os.path.dirname(self.stlPath)
+		self.settings.setModified()
+		self.fileList.append(self.stlPath)
+		self.lb.Append(self.stlPath)
+		self.selection = len(self.fileList)-1
+		self.lb.SetSelection(self.selection)
+		self.canvas.addObject(self.stlObj)
+		self.bDel.Enable(True)
+				
 	def onDelStl(self, evt):
 		if self.selection is None:
 			return

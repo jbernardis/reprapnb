@@ -1,4 +1,4 @@
-import sys, struct, math, numpy
+import sys, struct, math, numpy, thread
 
 def cross(v1,v2):
 	return [v1[1]*v2[2]-v1[2]*v2[1],v1[2]*v2[0]-v1[0]*v2[2],v1[0]*v2[1]-v1[1]*v2[0]]
@@ -77,7 +77,7 @@ def emitstl(filename,facets=[],objname="stltool_export",binary=False):
 	return True
 		
 class stl:
-	def __init__(self, filename=None, name=None, zZero=False, xOffset=0, yOffset=0):
+	def __init__(self, cb=None, filename=None, name=None, zZero=False, xOffset=0, yOffset=0):
 		self.facet=[[0,0,0],[[0,0,0],[0,0,0],[0,0,0]]]
 		self.facets=[]
 		self.volumes=[self]
@@ -98,20 +98,27 @@ class stl:
 		self.scalefactor = 1
 		self.id = None
 		self.filename = filename
+
 		if filename is not None:
+			if cb:
+				cb("Reading of %s Starting" % filename)
 			try:
 				self.f=list(open(filename))
 			except:
-				print "Error opening file %s" % filename
+				if cb:
+					cb("Error opening STL file")
 				return
 			
 			if not self.f[0].startswith("solid"):
-				print "Not an ascii stl solid - attempting to parse as binary"
+				if cb:
+					cb("Not an ascii stl solid - attempting to parse as binary")
 				try:
 					f=open(filename,"rb")
 				except:
-					print "Error opening file %s" % filename
+					if cb:
+						cb("Error opening STL file")
 					return
+	
 				buf=f.read(84)
 				while(len(buf)<84):
 					newdata=f.read(84-len(buf))
@@ -127,6 +134,10 @@ class stl:
 						if not len(newdata):
 							break
 						buf+=newdata
+	
+					if (i % 100000) == 0 and cb:
+						cb("%d facets read" % i)
+					
 					fd=list(facetformat.unpack(buf))
 					self.facet=[fd[:3],[fd[3:6],fd[6:9],fd[9:12]]]
 					self.facets+=[self.facet]
@@ -134,10 +145,21 @@ class stl:
 					self.facetsminz+=[(min(map(lambda x:x[2], facet[1])),facet)]
 					self.facetsmaxz+=[(max(map(lambda x:x[2], facet[1])),facet)]
 				f.close()
+				if cb:
+					cb("Binary read completed: %d facets" % facetcount[0])
 			else:
+				ctr = 0
 				for i in self.f:
 					self.parseline(i)
-			self.setHull()
+					ctr += 1
+					if (ctr % 10000) == 0 and cb:
+						cb("%d text lines read" % ctr)
+				if cb:
+					cb("Text Read Completed")
+				
+			self.setHull(cb)
+			if cb:
+				cb("STL load completed")
 			
 	def setId(self, sid):
 		self.id = sid
@@ -145,23 +167,36 @@ class stl:
 	def getId(self):
 		return self.id
 	
-	def setHull(self):
+	def setHull(self, cb=None):
 		def unique_rows(a):
 			a = numpy.ascontiguousarray(a)		
 			unique_a = numpy.unique(a.view([('', a.dtype)]*a.shape[1]))
 			return unique_a.view(a.dtype).reshape((unique_a.shape[0], a.shape[1]))
+		
+		if cb:
+			cb("Calculating Hull")
 
 		self.projection = numpy.array([])
 		minz = 99999
+		fx = 0
 		for f in self.facets:
 			if f[1][0][2] < minz: minz = f[1][0][2]
 			if f[1][1][2] < minz: minz = f[1][1][2]
 			if f[1][2][2] < minz: minz = f[1][2][2]
+			fx += 1
+			if (fx % 10000 == 0) and cb:
+				cb("Processed %d facets" % fx)
+				
+		if cb:
+			cb("Processed %d total facets" % fx)
 
 		self.projection = numpy.concatenate(
 				[[f[1][0][0], f[1][0][1],
 				  f[1][1][0], f[1][1][1],
 				  f[1][2][0], f[1][2][1]] for f in self.facets])
+		
+		if cb:
+			cb("Done Projecting")
 
 		n = len(self.projection)			
 		self.projection = self.projection.reshape(n/2,2)
@@ -171,6 +206,8 @@ class stl:
 		
 		modFacets = False
 		if self.zZero and minz != 0:
+			if cb:
+				cb("Dropping object to z=0 plane")
 			for i in range(len(self.facets)):
 				for j in range(3):
 					self.facets[i][1][j][2] -= minz
@@ -178,6 +215,8 @@ class stl:
 			self.zZero = False
 			
 		if self.xOffset + self.yOffset != 0:
+			if cb:
+				cb("Translating object (%d, %d)" % (self.xOffset, self.yOffset))
 			for i in range(len(self.facets)):
 				for j in range(3):
 					self.facets[i][1][j][0] += self.xOffset
@@ -186,12 +225,17 @@ class stl:
 			self.xOffset = 0
 			self.yOffset = 0
 
-		if modFacets:					
+		if modFacets:
+			if cb:
+				cb("Adjusting facets")					
 			self.facetsminz=[]
 			self.facetsmaxz=[]
 			for facet in self.facets:
 				self.facetsminz+=[(min(map(lambda x:x[2], facet[1])),facet)]
 				self.facetsmaxz+=[(max(map(lambda x:x[2], facet[1])),facet)]
+		
+		if cb:
+			cb("Hull calculation done")
 
 	def adjustHull(self, d):
 		self.hull = d
@@ -310,7 +354,7 @@ class stl:
 		self.translatex = 0
 		self.translatey = 0	
 		self.scalefactor = 1	
-		self.setHull()
+		self.setHull(None)
 		
 	def translate(self,v=[0,0,0]):
 		matrix=[
@@ -368,7 +412,6 @@ class stl:
 		for facet in s.facets:
 			s.facetsminz+=[(min(map(lambda x:x[2], facet[1])),facet)]
 			s.facetsmaxz+=[(max(map(lambda x:x[2], facet[1])),facet)]
-		s.setHull()
 		return s
 		
 		
@@ -386,9 +429,16 @@ class stl:
 		else:
 			s.name = name
 			
-		self.facetsminz = [f for f in s.facetsminz]
-		self.facetsmaxz = [f for f in s.facetsmaxz]
-		s.setHull()
+		s.facetsminz = [f for f in self.facetsminz]
+		s.facetsmaxz = [f for f in self.facetsmaxz]
+		
+		s.hull = [h for h in self.hull]   #                <==
+		s.hxCenter = self.hxCenter
+		s.hyCenter = self.hyCenter
+		s.hxSize = self.hxSize
+		s.hySize = self.hySize
+		s.hArea = self.hArea             #                 <==
+
 		return s
 		
 	def export(self,f=sys.stdout):
