@@ -62,6 +62,7 @@ def vec(*args):
 indexColor = 0
 
 colors = [(0.1, 0.6, 0.3, 1), (0.1, 0.6, 0.9, 1), (0.9, 0.6, 0.3, 1), (0.9, 0.6, 0.9, 1), (0.1, 0.8, 0.7, 1)]
+white = (1.0, 1.0, 1.0, 1.0)
 
 def color(index):
 	i = index % len(colors)
@@ -346,28 +347,24 @@ class MyCanvasBase(glcanvas.GLCanvas):
 		self.Refresh(False)
 
 class GLVolume:
-	def __init__(self, v, n, cx):
+	def __init__(self, v, n, c):
 		self.vertices = v
 		self.normals = n
-		self.color = cx
+		self.colors = c
 		self.nvertices = len(v)
 
 class GLObject:
-	def __init__(self, stlobj):
-		global indexColor
+	def __init__(self, stlobj, cx):
 		self.volumes = []
+		self.origColor = color(cx)
+		self.cStart = 0
+		self.nColors = 0
 		for vol in stlobj.volumes:
-			v = []
-			n = []
-			for f in vol.facets:
-				v.extend([[f[1][0][0], f[1][0][1], f[1][0][2]],
-						  [f[1][1][0], f[1][1][1], f[1][1][2]],
-						  [f[1][2][0], f[1][2][1], f[1][2][2]]])
-				n.extend([[f[0][0], f[0][1], f[0][2]],
-						  [f[0][0], f[0][1], f[0][2]],
-						  [f[0][0], f[0][1], f[0][2]]])
-			self.volumes.append(GLVolume(v, n, indexColor))
-			indexColor += 1
+			v = [i for f in vol.facets for i in f[1]]
+			n = [f[0] for f in vol.facets for i in range(3)]
+			c = [color(cx)] * 3 * len(vol.facets)
+			self.nColors += len(c)
+			self.volumes.append(GLVolume(v, n, c))
 
 class STLCanvas(MyCanvasBase):
 	def __init__(self, parent, obj, drawGrid=True, wid=-1, buildarea=(200, 200, 100), pos=wx.DefaultPosition,
@@ -377,7 +374,7 @@ class STLCanvas(MyCanvasBase):
 		self.objectList = []
 		if obj:
 			self.objectList.append(obj)
-			self.selection = 0
+			self.setSelection(0)
 		else:
 			self.selection = None
 			
@@ -405,8 +402,15 @@ class STLCanvas(MyCanvasBase):
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vec(0, 0.1, 0, 0.9))
 		self.setLightPosition(InitialLightValue)
-		self.setZoom(1.0)
 		
+		self.setArrays()
+		self.setZoom(1.0)
+
+	def setDrawGrid(self, flag):
+		self.drawGrid = flag
+		self.setArrays()
+		self.Refresh(True)
+	
 	def setLightPosition(self, val):
 		self.light0Pos[0] = val-100
 		self.light1Pos[0] = 100-val
@@ -426,31 +430,110 @@ class STLCanvas(MyCanvasBase):
 		glLoadIdentity()
 		glFrustum(-0.5*zoom, 0.5*zoom, -0.5*zoom, 0.5*zoom, 1.0, 1000.0)
 		glTranslatef(00.0, 0.0, -250)
-		
-	def setDrawGrid(self, flag):
-		self.drawGrid = flag
-		self.Refresh(False)
 
 	def addObject(self, o):
-		self.objectList.append(GLObject(o))
-		self.selection = len(self.objectList)-1
+		self.objectList.append(GLObject(o, self.indexColor))
+		self.indexColor += 1
+		self.setArrays()
+		self.setSelection(len(self.objectList)-1)
 		self.Refresh(False)
+		
+	def setArrays(self):
+		self.glVertices = []
+		self.glNormals = []
+		self.glColors = []
+
+		# objects
+		objx = 0
+		for o in self.objectList:
+			o.cStart = len(self.glColors)
+			for v in o.volumes:
+				self.glVertices.extend(v.vertices)
+				self.glNormals.extend(v.normals)
+				if objx == self.selection and len(self.objectList) > 1:
+					self.glColors.extend([white] * len(v.colors))
+				else:
+					self.glColors.extend(v.colors)
+			objx += 1
+
+		# grid
+		lw = 0.25	
+		if self.drawGrid:	
+			rows = 10
+			cols = 10
+			for i in xrange(-rows, rows + 1):
+				if i % 5 == 0:
+					c = [0.6, 0.6, 0.6, 1]
+				else:
+					c = [0.2, 0.2, 0.2, 1]
+				self.glVertices.extend([[10 * -cols, 10 * i-lw, 0], [10*cols, 10*i-lw, 0], [10*cols, 10*i+lw, 0]])
+				self.glVertices.extend([[10 * -cols, 10 * i+lw, 0], [10*-cols, 10*i-lw, 0], [10*cols, 10*i+lw, 0]])
+				self.glVertices.extend([[10 * -cols, 10 * i-lw, 0], [10*cols, 10*i+lw, 0], [10*cols, 10*i-lw, 0]])
+				self.glVertices.extend([[10 * -cols, 10 * i+lw, 0], [10*cols, 10*i+lw, 0], [10*-cols, 10*i-lw, 0]])
+				self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1]])
+				self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1]])
+				self.glColors.extend([c,c,c,c,c,c,c,c,c,c,c,c])
+			for i in xrange(-cols, cols + 1):
+				if i % 5 == 0:
+					c = [0.6, 0.6, 0.6, 1]
+				else:
+					c = [0.2, 0.2, 0.2, 1]
+				self.glVertices.extend([[10 * i-lw, 10 * -rows, 0], [10 * i+lw, 10 * rows, 0], [10 * i-lw, 10 * rows, 0]])
+				self.glVertices.extend([[10 * i+lw, 10 * -rows, 0], [10 * i+lw, 10 * rows, 0], [10 * i-lw, 10 * -rows, 0]])
+				self.glVertices.extend([[10 * i-lw, 10 * -rows, 0], [10 * i-lw, 10 * rows, 0], [10 * i+lw, 10 * rows, 0]])
+				self.glVertices.extend([[10 * i+lw, 10 * -rows, 0], [10 * i-lw, 10 * -rows, 0], [10 * i+lw, 10 * rows, 0]])
+				self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1]])
+				self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1]])
+				self.glColors.extend([c,c,c,c,c,c,c,c,c,c,c,c])
+					
+			self.glColors.extend([[1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0]])
+			self.glVertices.extend([[2,2,0], [-2,2,0], [-2,-2,0]])
+			self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1]])
+			self.glColors.extend([[1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0]])
+			self.glVertices.extend([[2,-2,0], [2,2,0], [-2,-2,0]])
+			self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1]])
+			self.glColors.extend([[1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0]])
+			self.glVertices.extend([[2,2,0], [-2,-2,0], [-2,2,0]])
+			self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1]])
+			self.glColors.extend([[1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0]])
+			self.glVertices.extend([[2,-2,0], [-2,-2,0], [2,2,0]])
+			self.glNormals.extend([[0,0,1],[0,0,1],[0,0,1]])
+
+		self.nvertices = len(self.glVertices)
+		
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointerf(self.glVertices)
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointerf(self.glNormals)
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointerf(self.glColors)
 		
 	def delSelectedStl(self):
 		del self.objectList[self.selection]
+		self.setArrays()
 		if len(self.objectList) == 0:
 			self.selection = None
 		else:
 			if self.selection >= len(self.objectList):
-				self.selection = len(self.objectList)-1
+				self.setSelection(len(self.objectList)-1)
+			elif len(self.objectList) > 1:
+				self.setObjectColor(white)
 		self.Refresh(False)
 		
 	def setSelection(self, sel):
+		if self.selection >=0 and self.selection <len(self.objectList):
+			self.setObjectColor(self.objectList[self.selection].origColor)
 		self.selection = sel
+		if len(self.objectList) > 1:
+			self.setObjectColor(white)
 		self.Refresh(False)
+		
+	def setObjectColor(self, c):
+		o = self.objectList[self.selection]
+		self.glColors[o.cStart:o.cStart+o.nColors] = [c] * o.nColors
+		glColorPointerf(self.glColors)
 
 	def OnDraw(self):
-		# clear color and depth buffers
 		glMatrixMode(GL_MODELVIEW)
 		if self.resetView:
 			glLoadIdentity()
@@ -471,64 +554,12 @@ class STLCanvas(MyCanvasBase):
 		glRotatef(self.anglex * xScale, 0.0, 1.0, 0.0);
 		glTranslatef(self.transx, self.transy, 0.0)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		if self.drawGrid:
-			self.doDrawGrid()
-		
-		indexObject = 0
-		for o in self.objectList:
-			for v in o.volumes:
-				self.draw_object_volume(v, indexObject)
 
-			indexObject += 1
+		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+		glEnable(GL_COLOR_MATERIAL);
+		glDrawArrays(GL_TRIANGLES, 0, self.nvertices)
 			
 		self.anglex = self.angley = 0
 		self.transx = self.transy = 0
 		self.SwapBuffers()
 		
-	def draw_object_volume(self, vol, indexObject):
-		if indexObject == self.selection and len(self.objectList) > 1:
-			c = (1.0, 1.0, 1.0, 1.0)
-		else:
-			c = color(vol.color)
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c)
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointerf(vol.vertices)
-		
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointerf(vol.normals)
-		
-		glDrawArrays(GL_TRIANGLES, 0, vol.nvertices)
-		
-	def doDrawGrid(self):
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
-		glBegin(GL_LINES)
-		glNormal3f(0, 0, 1)
-		rows = 10
-		cols = 10
-		for i in xrange(-rows, rows + 1):
-			if i % 5 == 0:
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.6, 0.6, 0.6, 1))
-			else:
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
-			glVertex3f(10 * -cols, 10 * i, 0)
-			glVertex3f(10 * cols, 10 * i, 0)
-		for i in xrange(-cols, cols + 1):
-			if i % 5 == 0:
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.6, 0.6, 0.6, 1))
-			else:
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(0.2, 0.2, 0.2, 1))
-			glVertex3f(10 * i, 10 * -rows, 0)
-			glVertex3f(10 * i, 10 * rows, 0)
-		glEnd()
-		
-		glBegin(GL_TRIANGLES)
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, vec(1, 0, 0, 1))
-		glNormal3f(0, 0, 1)
-		glVertex3f(2, 2, 0)
-		glVertex3f(-2, 2, 0)
-		glVertex3f(-2, -2, 0)
-		glVertex3f(2, -2, 0)
-		glVertex3f(2, 2, 0)
-		glVertex3f(-2, -2, 0)
-		glEnd()
