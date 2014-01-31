@@ -68,8 +68,9 @@ def color(index):
 	return colors[i]
 	
 class StlViewer(wx.Dialog):
-	def __init__(self, parent, title, ysize=800, buildarea=(200, 200, 100)):
+	def __init__(self, parent, ysize=800, buildarea=(200, 200, 100)):
 		self.parent = parent
+		self.logger = self.parent.logger
 		self.settings = self.parent.settings
 		self.fileList = []
 		self.stlList = []

@@ -439,7 +439,7 @@ class Plater(wx.Panel):
 
 			self.continueLoadFile()
 		
-	def continueLoadFile(self, stlfile):
+	def continueLoadFile(self):
 		self.stlFile = self.readThread.getStlFile()
 		print "Back from read - adding to the frame"
 		self.stlFrame.addStl(self.stlFile, highlight=True)
@@ -502,7 +502,6 @@ class Plater(wx.Panel):
 			return
 
 		saveSelection = self.lbSelection		
-		objCenter = (stlObj.hxCenter, stlObj.hyCenter)
 		objSize = (stlObj.hxSize, stlObj.hySize)
 		margin = self.stlFrame.arrangeMargin
 		
@@ -514,8 +513,8 @@ class Plater(wx.Panel):
 				if r == 0 and c == 0:
 					continue
 				
-				dx = objCenter[0] + c * (objSize[0]+2*margin)
-				dy = objCenter[1] + r * (objSize[1]+2*margin)
+				dx = c * (objSize[0]+2*margin)
+				dy = r * (objSize[1]+2*margin)
 				
 				name = "OBJECT%03d" % self.objNumber
 				self.objNumber += 1
@@ -718,7 +717,7 @@ class Plater(wx.Panel):
 		self.stlFrame.center()
 		
 	def stlView(self, evt):
-		self.dlgView = StlViewer(self, "title")
+		self.dlgView = StlViewer(self)
 		self.dlgView.CenterOnScreen()
 		self.dlgView.Show()
 		

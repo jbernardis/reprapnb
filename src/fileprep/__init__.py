@@ -526,7 +526,7 @@ class FilePrepare(wx.Panel):
 			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		
 	def stlView(self, evt):
-		self.dlgView = StlViewer(self, "title")
+		self.dlgView = StlViewer(self)
 		self.dlgView.CenterOnScreen()
 		self.dlgView.Show()
 		

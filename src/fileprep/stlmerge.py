@@ -95,7 +95,7 @@ class volume:
 	def getName(self):
 		return self.name
 	
-	def getVertices(self):
+	def getVertices(self, volx):
 		result = ""
 		vx = 0
 		for v in self.vertexVal:
@@ -113,10 +113,10 @@ class volume:
 					self.cb("%d vertices processed" % vx)
 
 		if self.cb:
-			self.cb("%d total vertices in volume" % vx)
+			self.cb("%d total vertices in volume %d" % (vx, volx))
 		return result
 	
-	def getTriangles(self):
+	def getTriangles(self, vx):
 		result = ""
 		tx = 0
 		for t in self.triangles:
@@ -131,7 +131,7 @@ class volume:
 					self.cb("%d triangles processed" % tx)
 		
 		if self.cb:
-			self.cb("%d total triangles in volume" % tx)
+			self.cb("%d total triangles in volume %d" % (tx, vx))
 		return result
 			
 class amf:
@@ -167,10 +167,12 @@ class amf:
 		result += "    <mesh>\n"
 		result += "      <vertices>\n"
 
+		vx = 0
 		if self.cb:
 			self.cb("Merging vertices...")		
 		for v in self.volumes:
-			result += v.getVertices()
+			vx += 1
+			result += v.getVertices(vx)
 			
 		result += "      </vertices>\n"
 		
@@ -179,7 +181,7 @@ class amf:
 		vx = 0
 		for v in self.volumes:
 			result += "      <volume materialid=\"%d\">\n" % vx
-			result += v.getTriangles()
+			result += v.getTriangles(vx+1)
 			result += "      </volume>\n"
 			vx += 1
 
