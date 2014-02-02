@@ -680,18 +680,17 @@ class RepRap:
 	def disconnect(self):
 		if(self.printer):
 			self.printer.close()
-		if self.listener and self.listener.isRunning:
+		if self.listener and not self.listener.isKilled:
 			self.listener.kill()
-			
-		if self.sender and self.sender.isRunning:
+		if self.sender and self.sender.isKilled:
 			self.sender.kill()
 	
 	def checkDisconnection(self):
 		if self.listener is None or self.sender is None:
 			return True
-				
 		if not self.listener.isKilled() or not self.sender.isKilled():
 			return False
+		
 		self.listener = None
 		self.sender = None
 		self.printer = None

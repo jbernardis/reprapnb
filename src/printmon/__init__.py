@@ -456,17 +456,17 @@ class PrintMonitor(wx.Panel):
 			
 		elif evt.event == PRINT_ERROR:
 			self.logger.LogError(evt.msg)
-			self.paused = False
-			self.setStatus(PMSTATUS_NOT_READY)
-			self.printing = False
-			self.reprap.printComplete()
-			self.setPrintMode(PRINT_MODE_PRINT)
-			self.setPauseMode(PAUSE_MODE_PAUSE)
-			self.bPrint.Enable(True)
-			self.bPause.Enable(True)
-			self.bSDPrintFrom.Enable(True)
-			self.bSDPrintTo.Enable(True)
-			self.bSDDelete.Enable(True)
+# 			self.paused = False
+# 			self.setStatus(PMSTATUS_NOT_READY)
+# 			self.printing = False
+# 			self.reprap.printComplete()
+# 			self.setPrintMode(PRINT_MODE_PRINT)
+# 			self.setPauseMode(PAUSE_MODE_PAUSE)
+# 			self.bPrint.Enable(True)
+# 			self.bPause.Enable(True)
+# 			self.bSDPrintFrom.Enable(True)
+# 			self.bSDPrintTo.Enable(True)
+# 			self.bSDDelete.Enable(True)
 			self.app.doPrinterError(self.prtname)
 			
 		elif evt.event == PRINT_MESSAGE:

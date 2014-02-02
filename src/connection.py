@@ -1,5 +1,6 @@
 import wx
 import glob
+import time
 
 from settings import BUTTONDIM, RECEIVED_MSG 
 
@@ -34,7 +35,19 @@ class Connection:
 		
 	def close(self):
 		self.reprap.disconnect()
+		while not self.reprap.checkDisconnection():
+			time.sleep(0.1)
 		self.reprap = None
+		
+		self.parser = None
+		
+		if self.prtmon:
+			self.prtmon.Destroy()
+			self.prtmon = None
+			
+		if self.manctl:
+			self.manctl.Destroy()
+			self.manctl = None
 
 	def setNBPages(self, pm, mc):
 		self.prtmon = pm
@@ -154,12 +167,13 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
-		con.close()
 		self.printerList.append(printer)
 		self.printerList.sort()
 		self.portList.append(port)
 		self.portList.sort()
 		self.app.delPages(printer)
+
+		con.close()
 		return True
 		
 	def disconnectByPort(self, port):
@@ -175,24 +189,25 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
-		con.close()
 		self.printerList.append(printer)
 		self.printerList.sort()
 		self.portList.append(port)
 		self.portList.sort()
 		self.app.delPages(printer)
+
+		con.close()
 		return True
 	
 	def disconnectAll(self):
-		for c in self.connections:
-			c.close()
-		self.connections = []
 		for p in self.activePrinters:
 			self.app.delPages(p)
 		self.printerList.extend(self.activePrinters)
 		self.activePrinters = []
 		self.portList.extend(self.activePorts)
 		self.activePorts = []
+		for c in self.connections:
+			c.close()
+		self.connections = []
 	
 	def disconnectByRepRap(self, reprap):
 		port = reprap.getPort()
