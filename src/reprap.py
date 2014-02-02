@@ -77,7 +77,6 @@ class SendThread:
 		
 	def kill(self):
 		self.isRunning = False
-		self.printer = None
 		
 	def endWait(self):
 		self.okWait = False
@@ -146,6 +145,7 @@ class SendThread:
 				except Queue.Empty:
 					time.sleep(0.01)
 		self.endoflife = True
+		self.printer = None
 				
 	def processCmd(self, cmd, string, calcCS, setOK, PriQ, index=None):
 		if cmd == CMD_GCODE:
@@ -281,7 +281,6 @@ class ListenThread:
 		
 	def kill(self):
 		self.isRunning = False
-		self.printer = None
 		
 	def resetCounters(self):
 		self.resendRequests = 0
@@ -302,21 +301,7 @@ class ListenThread:
 				break
 			try:
 				line=self.printer.readline()
-			except SelectError, e:
-				if 'Bad file descriptor' in e.args[1]:
-					evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
-					wx.PostEvent(self.win, evt)
-					self.kill()
-					break
-				else:
-					raise
-				
-			except SerialException, e:
-				evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
-				wx.PostEvent(self.win, evt)
-				self.kill()
-				break
-			except OSError, e:
+			except:
 				evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to read from printer")
 				wx.PostEvent(self.win, evt)
 				self.kill()
@@ -359,6 +344,7 @@ class ListenThread:
 				wx.PostEvent(self.win, evt)
 
 		self.endoflife = True
+		self.printer = None
 
 class RepRapParser:
 	def __init__(self, app):
@@ -663,7 +649,7 @@ class RepRap:
 		if self.port is not None and self.baud is not None:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
-			self.printer = Serial(self.port, self.baud, timeout=5)
+			self.printer = Serial(self.port, self.baud, timeout=2)
 				
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
@@ -678,11 +664,9 @@ class RepRap:
 			return None
 
 	def disconnect(self):
-		if(self.printer):
-			self.printer.close()
 		if self.listener and not self.listener.isKilled:
 			self.listener.kill()
-		if self.sender and self.sender.isKilled:
+		if self.sender and not self.sender.isKilled:
 			self.sender.kill()
 	
 	def checkDisconnection(self):
@@ -691,6 +675,9 @@ class RepRap:
 		if not self.listener.isKilled() or not self.sender.isKilled():
 			return False
 		
+		if(self.printer):
+			self.printer.close()
+			
 		self.listener = None
 		self.sender = None
 		self.printer = None
