@@ -106,8 +106,13 @@ class MainFrame(wx.Frame):
 
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
-
+		self.nb.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.changePages)
 		self.timer.Start(MAINTIMER)
+		
+	def changePages(self, evt):
+		print "Page changed to ",  evt.GetSelection()
+		if evt.GetSelection == self.pxConnMgr:
+			self.pgConnMgr.refreshPorts()
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
@@ -135,7 +140,7 @@ class MainFrame(wx.Frame):
 		pc = self.nb.GetPageCount()
 		for i in range(pc):
 			if text == self.nb.GetPageText(i):
-				self.nb.DeletePage(i)
+				self.nb.RemovePage(i)
 				return
 		
 	def findPMPageByPrinter(self, prtname):
@@ -158,6 +163,7 @@ class MainFrame(wx.Frame):
 		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 		self.pgConnMgr.disconnectByPrinter(printer)
+		self.pgConnMgr.refreshPorts()
 			
 	def onLoggerPage(self):
 		return self.nb.GetSelection() == self.pxLogger

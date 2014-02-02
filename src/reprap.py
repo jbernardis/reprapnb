@@ -623,14 +623,6 @@ class RepRap:
 		self.restarting = False
 		self.restartData = None
 		
-	def bind(self, win, handler):
-		win.Bind(EVT_REPRAP_UPDATE, handler)
-		self.sender = SendThread(win, self.printer, self.priQ, self.mainQ)
-		self.sender.setHoldFan(self.holdFan)
-		self.sender.setCheckSum(True)
-		self.listener = ListenThread(win, self.printer, self.sender)
-		self.online = True
-		
 	def setHoldFan(self, flag):
 		self.holdFan = flag
 		if self.sender is not None:
@@ -650,7 +642,15 @@ class RepRap:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
 			self.printer = Serial(self.port, self.baud, timeout=2)
-				
+		
+	def bind(self, win, handler):
+		win.Bind(EVT_REPRAP_UPDATE, handler)
+		self.sender = SendThread(win, self.printer, self.priQ, self.mainQ)
+		self.sender.setHoldFan(self.holdFan)
+		self.sender.setCheckSum(True)
+		self.listener = ListenThread(win, self.printer, self.sender)
+		self.online = True
+
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
 		
@@ -664,15 +664,17 @@ class RepRap:
 			return None
 
 	def disconnect(self):
-		if self.listener and not self.listener.isKilled:
+		if self.listener and not self.listener.isKilled():
 			self.listener.kill()
-		if self.sender and not self.sender.isKilled:
+		if self.sender and not self.sender.isKilled():
 			self.sender.kill()
 	
 	def checkDisconnection(self):
-		if self.listener is None or self.sender is None:
+		if self.listener is None and self.sender is None:
 			return True
-		if not self.listener.isKilled() or not self.sender.isKilled():
+		if self.listener and not self.listener.isKilled():
+			return False
+		if self.sender and not self.sender.isKilled():
 			return False
 		
 		if(self.printer):

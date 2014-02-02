@@ -42,11 +42,9 @@ class Connection:
 		self.parser = None
 		
 		if self.prtmon:
-			self.prtmon.Destroy()
 			self.prtmon = None
 			
 		if self.manctl:
-			self.manctl.Destroy()
 			self.manctl = None
 
 	def setNBPages(self, pm, mc):
@@ -388,6 +386,9 @@ class ConnectionManagerPanel(wx.Panel):
 		return False
 
 	def doPort(self, evt):
+		self.refreshPorts()
+		
+	def refreshPorts(self):
 		ports = self.cm.getLists(True)[1]
 		self.lbPort.SetItems(ports)
 		if len(ports) >= 1:
