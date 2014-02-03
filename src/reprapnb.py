@@ -110,8 +110,7 @@ class MainFrame(wx.Frame):
 		self.timer.Start(MAINTIMER)
 		
 	def changePages(self, evt):
-		print "Page changed to ",  evt.GetSelection()
-		if evt.GetSelection == self.pxConnMgr:
+		if evt.GetSelection() == self.pxConnMgr:
 			self.pgConnMgr.refreshPorts()
 		
 	def addPages(self, printer, reprap):

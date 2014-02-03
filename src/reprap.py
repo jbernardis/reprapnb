@@ -1,6 +1,5 @@
-from serial import Serial, SerialException
+from serial import Serial
 import thread
-from select import error as SelectError
 import Queue
 import time
 import wx
@@ -11,7 +10,7 @@ TRACE = False
 
 (RepRapEvent, EVT_REPRAP_UPDATE) = wx.lib.newevent.NewEvent()
 (SDCardEvent, EVT_SD_CARD) = wx.lib.newevent.NewEvent()
-(PrtMonEvent, EVT_PRT_MON) = wx.lib.newevent.NewEvent() 
+(PrtMonEvent, EVT_PRINT_MONITOR) = wx.lib.newevent.NewEvent()
 
 from settings import (MAX_EXTRUDERS, SD_PRINT_COMPLETE, SD_PRINT_POSITION, SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST,
 		PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_RESUMED, PRINT_MESSAGE, QUEUE_DRAINED, RECEIVED_MSG, PRINT_ERROR,
@@ -371,7 +370,7 @@ class RepRapParser:
 		self.manctl = mc
 		self.firmware = mc.firmware
 		pm.Bind(EVT_SD_CARD, pm.sdcard.sdEvent)
-		pm.Bind(EVT_PRT_MON, pm.prtMonEvent)
+		pm.Bind(EVT_PRINT_MONITOR, pm.prtMonEvent)
 		
 	def parseMsg(self, msg):
 		if 'M92' in msg:
@@ -437,12 +436,12 @@ class RepRapParser:
 		
 		if "SD card ok" in msg:
 			evt = SDCardEvent(event = SD_CARD_OK)
-			wx.PostEvent(self.app, evt)
+			wx.PostEvent(self.printmon, evt)
 			return False
 		
 		if "SD init fail" in msg:
 			evt = SDCardEvent(event = SD_CARD_FAIL)
-			wx.PostEvent(self.app, evt)
+			wx.PostEvent(self.printmon, evt)
 			return False
 				
 		if "Begin file list" in msg:
@@ -453,7 +452,7 @@ class RepRapParser:
 		if "End file list" in msg:
 			self.insideListing = False
 			evt = SDCardEvent(event = SD_CARD_LIST, data=self.sdfiles)
-			wx.PostEvent(self.app, evt)
+			wx.PostEvent(self.printmon, evt)
 			return False
 
 		if self.insideListing:
@@ -467,7 +466,7 @@ class RepRapParser:
 			gpos = int(t[0])
 			gmax = int(t[1])
 			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
-			wx.PostEvent(self.app, evt)
+			wx.PostEvent(self.printmon, evt)
 			if self.app.M27pending:
 				self.app.M27pending = False
 				return True
@@ -476,7 +475,7 @@ class RepRapParser:
 			
 		if "Done printing file" in msg:
 			evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
-			wx.PostEvent(self.app, evt)
+			wx.PostEvent(self.printmon, evt)
 			return False
 
 		m = self.trpt1re.search(msg)
