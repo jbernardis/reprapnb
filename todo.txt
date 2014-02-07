@@ -1,8 +1,6 @@
 In Progress/Need Testing
-- plater hanging on large STL files
-Need to test SD functionality
-neaten up disconnect
-need to test HTTP server
+- Need to test SD functionality - print from, delete
+- need to test HTTP server - stop print
 
 
 
@@ -10,13 +8,11 @@ need to test HTTP server
 Low Hanging
 
 Medium
-- other places for separate thread - file saving from plater, amf merge, etc
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
-- plater hangs up on large file reads
 - got confused when cancelled from-SD print
 
 Larger effort

@@ -4,6 +4,8 @@ import shlex, subprocess
 
 from settings import BUTTONDIM, MAX_EXTRUDERS
 
+SAVE_SETTINGS_FILE = False
+
 BASE_ID = 500
 
 def loadProfiles(fnames, mergeKeys):
@@ -390,7 +392,7 @@ class Slic3r:
 		self.parent.settings['configfile'] = tfn.name
 	
 	def sliceComplete(self):
-		if self.tempFile is not None:
+		if self.tempFile is not None and not SAVE_SETTINGS_FILE:
 			os.unlink(self.tempFile)
 		self.tempFile = None
 		del self.parent.settings['configfile']

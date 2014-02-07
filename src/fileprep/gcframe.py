@@ -334,7 +334,7 @@ class GcFrame (wx.Window):
 				
 			w = w * self.zoom
 				
-		if p[5] == self.hilite:
+		if p[6] == self.hilite:
 			w = w * 3
 			
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
@@ -343,7 +343,7 @@ class GcFrame (wx.Window):
 
 			dc.SetPen(wx.Pen(c, w))
 			dc.DrawLine(x1, y1, x2, y2)
-			if p[5] == self.hilite:
+			if p[6] == self.hilite:
 				dc.SetPen(wx.Pen("white", 1))
 				dc.DrawLine(x1, y1, x2, y2)
 				

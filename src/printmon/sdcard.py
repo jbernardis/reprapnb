@@ -236,6 +236,9 @@ class SDCard:
 					target = fileList
 				else:
 					try:
+						ext = os.path.splitext(newFile)[1]
+						if ext == '':
+							newFile += ".g"
 						target = [newFile, os.path.join(fileList.dirPath(), newFile)]
 					except:
 						target = None
