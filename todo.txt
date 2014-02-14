@@ -1,6 +1,7 @@
 In Progress/Need Testing
 - Need to test SD functionality - print from, delete
 - need to test HTTP server - stop print
+- need to find out why printmon status goes to ready prematurely after forward model
 
 
 

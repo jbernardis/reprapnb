@@ -277,6 +277,7 @@ class PrintMonitor(wx.Panel):
 					self.sdprintingfrom = False
 					self.setPrintMode(PRINT_MODE_PRINT)
 					self.bPrint.Enable(self.hasFileLoaded())
+					self.bPull.Enable(True)
 					self.setPauseMode(PAUSE_MODE_PAUSE)
 					self.bPause.Enable(False)
 					self.bSDPrintFrom.Enable(True)
@@ -289,6 +290,7 @@ class PrintMonitor(wx.Panel):
 			return
 	
 	def setStatus(self, s):
+		print "printmon set status to ", s
 		self.status = s
 		self.app.updatePrintMonStatus(self.prtname, s)
 		
@@ -351,10 +353,12 @@ class PrintMonitor(wx.Panel):
 		self.paused = False
 		self.sdpaused = False
 		self.sdprintingfrom = False
+		print "printer reset status to ready"
 		self.setStatus(PMSTATUS_READY)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
-		self.bPrint.Enable(True)
+		self.bPrint.Enable(self.hasFileLoaded())
+		self.bPull.Enable(True)
 		self.bPause.Enable(False)
 		
 	def doSDPrintFrom(self, evt):
@@ -366,6 +370,7 @@ class PrintMonitor(wx.Panel):
 		self.sdprintingfrom = True
 		self.M27Timer.Start(M27Interval, True)
 		self.bPrint.Enable(False)
+		self.bPull.Enable(False)
 		self.bSDPrintFrom.Enable(False)
 		self.bSDPrintTo.Enable(False)
 		self.bSDDelete.Enable(False)
@@ -392,6 +397,7 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setMode(MODE_TO_SD)
 		self.infoPane.setStartTime(self.startTime)
 		self.bPrint.Enable(False)
+		self.bPull.Enable(False)
 		self.bPause.Enable(False)
 		
 	def setSDTargetFile(self, tfn):
@@ -404,11 +410,13 @@ class PrintMonitor(wx.Panel):
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
 			self.printing = True
+			print "reprapevent started/resumed status printing"
 			self.setStatus(PMSTATUS_PRINTING)
 			self.paused = False
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(False)
+			self.bPull.Enable(False)
 			self.bPause.Enable(True)
 			self.bSDPrintFrom.Enable(False)
 			self.bSDPrintTo.Enable(False)
@@ -416,12 +424,14 @@ class PrintMonitor(wx.Panel):
 			
 		elif evt.event == PRINT_STOPPED:
 			self.paused = True
+			print "reprapevent stopped status paused"
 			self.setStatus(PMSTATUS_PAUSED)
 			self.printing = False
 			self.reprap.printStopped()
 			self.setPrintMode(PRINT_MODE_RESTART)
 			self.setPauseMode(PAUSE_MODE_RESUME)
 			self.bPrint.Enable(True)
+			self.bPull.Enable(True)
 			self.bPause.Enable(True)
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
@@ -438,11 +448,13 @@ class PrintMonitor(wx.Panel):
 
 			self.printing = False
 			self.paused = False
+			print "reprapevent complete - status ready"
 			self.setStatus(PMSTATUS_READY)
 			self.reprap.printComplete()
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
+			self.bPull.Enable(True)
 			self.bPause.Enable(False)
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
@@ -463,6 +475,7 @@ class PrintMonitor(wx.Panel):
 # 			self.setPrintMode(PRINT_MODE_PRINT)
 # 			self.setPauseMode(PAUSE_MODE_PAUSE)
 # 			self.bPrint.Enable(True)
+# 			self.bPull.Enable(True)
 # 			self.bPause.Enable(True)
 # 			self.bSDPrintFrom.Enable(True)
 # 			self.bSDPrintTo.Enable(True)
@@ -510,6 +523,7 @@ class PrintMonitor(wx.Panel):
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.bPrint.Enable(False)
+			self.bPull.Enable(False)
 			self.sdprintingfrom = True
 			self.reprap.send_now("M24")
 			self.infoPane.setSDStartTime(time.time())
@@ -531,6 +545,7 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setMode(MODE_NORMAL)
 			self.infoPane.setStartTime(self.startTime)
 			self.bPrint.Enable(False)
+			self.bPull.Enable(False)
 			self.bPause.Enable(False)
 			self.setSDTargetFile(None)
 		
@@ -550,6 +565,7 @@ class PrintMonitor(wx.Panel):
 				self.setPauseMode(PAUSE_MODE_PAUSE)
 				self.setPrintMode(PRINT_MODE_PRINT)
 				self.bPrint.Enable(False)
+				self.bPull.Enable(False)
 				self.sdprintingfrom = True
 				self.M27Timer.Start(M27Interval, True)
 				self.sdpaused = False
@@ -560,6 +576,7 @@ class PrintMonitor(wx.Panel):
 			if self.paused:
 				self.bPause.Enable(False)
 				self.bPrint.Enable(False)
+				self.bPull.Enable(False)
 				self.reprap.resumePrint()
 			else:
 				self.stopPrintNormal()
@@ -588,7 +605,8 @@ class PrintMonitor(wx.Panel):
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPause.Enable(False)
 		self.setPrintMode(PRINT_MODE_PRINT)
-		self.bPrint.Enable(True)
+		self.bPrint.Enable(self.hasFileLoaded())
+		self.bPull.Enable(True)
 		self.bSDPrintFrom(True)
 		self.bSDPrintTo(True)
 		self.bSDDelete(True)
@@ -599,13 +617,15 @@ class PrintMonitor(wx.Panel):
 		self.reprap.send_now("M25")
 		self.setPauseMode(PAUSE_MODE_RESUME)
 		self.setPrintMode(PRINT_MODE_RESTART)
-		self.bPrint.Enable(True)
+		self.bPrint.Enable(self.hasFileLoaded())
+		self.bPull.Enable(True)
 		self.sdprintingfrom = False
 		self.sdpaused = True
 		
 	def stopPrintNormal(self):
 		self.bPause.Enable(False)
 		self.bPrint.Enable(False)
+		self.bPull.Enable(False)
 		self.reprap.pausePrint()
 		
 	def stopMotorsAndHeaters(self):
@@ -688,6 +708,7 @@ class PrintMonitor(wx.Panel):
 	def forwardModel(self, model, name=""):
 		self.setSDTargetFile(None)
 		
+		print "starting forward - status not ready"
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
@@ -726,6 +747,7 @@ class PrintMonitor(wx.Panel):
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPrint.Enable(self.hasFileLoaded())
+		self.bPull.Enable(True)
 		self.bPause.Enable(False)
 		self.bSDPrintFrom.Enable(True)
 		self.bSDPrintTo.Enable(self.hasFileLoaded())
@@ -734,11 +756,13 @@ class PrintMonitor(wx.Panel):
 		self.sdpaused = False
 		
 		self.bPull.Enable(True)
+		print "ending forward status ready"
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
 	def disconnect(self):
+		print "disconnect - status not ready"
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.targets = {}
 		self.temps = {}

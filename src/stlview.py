@@ -372,6 +372,7 @@ class STLCanvas(MyCanvasBase):
 		self.clientwidth = size[0]
 		self.drawGrid = drawGrid
 		self.objectList = []
+		self.indexColor = 0
 		if obj:
 			self.objectList.append(obj)
 			self.setSelection(0)
