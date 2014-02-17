@@ -72,7 +72,7 @@ class PrintMonitor(wx.Panel):
 		self.countGLines = None
 		self.syncPrint = True
 		self.holdFan = False
-		self.status = PMSTATUS_NOT_READY
+		self.setStatus(PMSTATUS_NOT_READY)
 				
 		self.sdcard = SDCard(self.app, self, self.reprap, self.logger)
 		
@@ -290,7 +290,6 @@ class PrintMonitor(wx.Panel):
 			return
 	
 	def setStatus(self, s):
-		print "printmon set status to ", s
 		self.status = s
 		self.app.updatePrintMonStatus(self.prtname, s)
 		
@@ -353,7 +352,6 @@ class PrintMonitor(wx.Panel):
 		self.paused = False
 		self.sdpaused = False
 		self.sdprintingfrom = False
-		print "printer reset status to ready"
 		self.setStatus(PMSTATUS_READY)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
@@ -410,7 +408,6 @@ class PrintMonitor(wx.Panel):
 	def reprapEvent(self, evt):
 		if evt.event in [ PRINT_STARTED, PRINT_RESUMED ]:
 			self.printing = True
-			print "reprapevent started/resumed status printing"
 			self.setStatus(PMSTATUS_PRINTING)
 			self.paused = False
 			self.setPrintMode(PRINT_MODE_PRINT)
@@ -424,7 +421,6 @@ class PrintMonitor(wx.Panel):
 			
 		elif evt.event == PRINT_STOPPED:
 			self.paused = True
-			print "reprapevent stopped status paused"
 			self.setStatus(PMSTATUS_PAUSED)
 			self.printing = False
 			self.reprap.printStopped()
@@ -448,7 +444,6 @@ class PrintMonitor(wx.Panel):
 
 			self.printing = False
 			self.paused = False
-			print "reprapevent complete - status ready"
 			self.setStatus(PMSTATUS_READY)
 			self.reprap.printComplete()
 			self.setPrintMode(PRINT_MODE_PRINT)
@@ -703,12 +698,12 @@ class PrintMonitor(wx.Panel):
 		self.gcf.redrawCurrentLayer()
 		
 	def doPull(self, evt):
+		self.setStatus(PMSTATUS_NOT_READY)
 		self.app.pullGCode(self)
 	
 	def forwardModel(self, model, name=""):
 		self.setSDTargetFile(None)
 		
-		print "starting forward - status not ready"
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
@@ -756,13 +751,11 @@ class PrintMonitor(wx.Panel):
 		self.sdpaused = False
 		
 		self.bPull.Enable(True)
-		print "ending forward status ready"
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
 	def disconnect(self):
-		print "disconnect - status not ready"
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.targets = {}
 		self.temps = {}
