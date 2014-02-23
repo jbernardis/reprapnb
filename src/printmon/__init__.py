@@ -232,7 +232,8 @@ class PrintMonitor(wx.Panel):
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer) 
 		self.secCounter = 0      
-		fn = "temps" + self.prtname + ".log" 
+		fn = os.path.join(self.app.settings.lastlogdirectory, "temps" + self.prtname + ".log")
+		self.logger.LogMessage("Log file %s opened for recording %s temperatures" % (fn, self.prtname))
 		self.fpLog = open(fn, "a")
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
@@ -670,6 +671,7 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
 
 	def onClose(self, evt):
+		self.logger.LogMessage("Log file for %s temperatures closed" % self.prtname)
 		self.fpLog.close()
 		return True
 		
@@ -759,19 +761,6 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
-	def disconnect(self):
-		self.setStatus(PMSTATUS_NOT_READY)
-		self.targets = {}
-		self.temps = {}
-		self.tempData = {}
-		for h in self.knownHeaters:
-			self.temps[h] = None
-			self.targets[h] = 0
-			self.tempData[h] = []
-
-		self.gTemp.setTemps(self.tempData)
-		self.gTemp.setTargets({})
-		
 	def setHETarget(self, tool, temp):
 		key = 'HE' + str(tool)
 		self.targets[key] = temp
@@ -805,6 +794,11 @@ class PrintMonitor(wx.Panel):
 				self.tempData[h] = self.tempData[h][l-MAXX:]
 		self.gTemp.setTemps(self.tempData)
 
+		if self.suspendM105:
+			strLog = time.strftime('%H:%M:%S', time.localtime(time.time())) + ": temperature retrieval suspended\n"
+			self.fpLog.write(strLog)
+			return
+		
 		self.secCounter += 1		
 		if self.secCounter >= 60:
 			self.secCounter = 0

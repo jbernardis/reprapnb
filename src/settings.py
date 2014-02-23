@@ -146,7 +146,7 @@ class Settings:
 		self.cmdfolder = folder
 		self.inifile = os.path.join(folder, INIFILE)
 		self.printers=[]
-		self.lastlogdirectory = "."
+		self.lastlogdirectory = folder
 		self.usepopup = True
 		self.port = 8989
 		self.maxloglines = 5000

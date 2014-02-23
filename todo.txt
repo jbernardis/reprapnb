@@ -1,8 +1,6 @@
 In Progress/Need Testing
 - Need to test SD functionality - print from, delete
 - need to test HTTP server - stop print
-plater - bug if I center, then matrix, then center, then export.  duplicated parts are moved back to origin and lose centering - NEED TO TEST
-log temps once per minute into log file/printer - NEED TO TEST
 
 
 

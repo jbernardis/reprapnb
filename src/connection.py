@@ -42,6 +42,7 @@ class Connection:
 		self.parser = None
 		
 		if self.prtmon:
+			self.prtmon.onClose(None)
 			self.prtmon = None
 			
 		if self.manctl:
