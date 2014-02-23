@@ -230,7 +230,10 @@ class PrintMonitor(wx.Panel):
 		self.SetSizer(self.sizerMain)
 
 		self.timer = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)        
+		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer) 
+		self.secCounter = 0      
+		fn = "temps" + self.prtname + ".log" 
+		self.fpLog = open(fn, "a")
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
 		
@@ -667,6 +670,7 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
 
 	def onClose(self, evt):
+		self.fpLog.close()
 		return True
 		
 	def viewZoomIn(self, evt):
@@ -800,6 +804,12 @@ class PrintMonitor(wx.Panel):
 			if l > MAXX: # 4 minutes data
 				self.tempData[h] = self.tempData[h][l-MAXX:]
 		self.gTemp.setTemps(self.tempData)
+
+		self.secCounter += 1		
+		if self.secCounter >= 60:
+			self.secCounter = 0
+			strLog = time.strftime('%H:%M:%S', time.localtime(time.time())) + ": " + repr(self.temps) + '\n'
+			self.fpLog.write(strLog)
 		
 	def enableButtons(self, flag=True):
 		if flag:

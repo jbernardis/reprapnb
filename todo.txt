@@ -1,7 +1,10 @@
 In Progress/Need Testing
 - Need to test SD functionality - print from, delete
 - need to test HTTP server - stop print
-- need to find out why printmon status goes to ready prematurely after forward model
+plater - bug if I center, then matrix, then center, then export.  duplicated parts are moved back to origin and lose centering - NEED TO TEST
+log temps once per minute into log file/printer - NEED TO TEST
+
+
 
 
 
@@ -15,6 +18,7 @@ Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - got confused when cancelled from-SD print
+- printmon- pause/restart -> import button was not disabled - NEED MORE INFO
 
 Larger effort
 - integration with webcam

@@ -437,7 +437,12 @@ class stl:
 		s.hyCenter = self.hyCenter
 		s.hxSize = self.hxSize
 		s.hySize = self.hySize
-		s.hArea = self.hArea             #                 <==
+		s.hArea = self.hArea
+		
+		s.rotation = self.rotation
+		s.translatex = self.translatex
+		s.translatey = self.translatey
+		s.scalefactor = self.scalefactor	
 
 		return s
 		
