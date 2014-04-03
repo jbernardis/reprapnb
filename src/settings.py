@@ -4,6 +4,7 @@ import os
 INIFILE = "reprap.ini"
 
 BUTTONDIM = (48, 48)
+BUTTONDIMLG = (64, 64)
 BUTTONDIMWIDE = (96, 48)
 
 MAX_EXTRUDERS = 2

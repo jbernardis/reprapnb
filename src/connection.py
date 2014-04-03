@@ -2,7 +2,7 @@ import wx
 import glob
 import time
 
-from settings import BUTTONDIM, RECEIVED_MSG 
+from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
@@ -301,7 +301,7 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		sz.AddSpacer((20, 20))
 
-		self.bConnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngConnect, size=BUTTONDIM)
+		self.bConnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngConnect, size=BUTTONDIMLG)
 		self.bConnect.SetToolTipString("Connect to the printer")
 		self.Bind(wx.EVT_BUTTON, self.doConnect, self.bConnect)
 		szRow.Add(self.bConnect)
@@ -324,7 +324,7 @@ class ConnectionManagerPanel(wx.Panel):
 		szBtns = wx.BoxSizer(wx.VERTICAL)
 		szBtns.AddSpacer((10, 10))
 
-		self.bDisconnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngDisconnect, size=BUTTONDIM)
+		self.bDisconnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngDisconnect, size=BUTTONDIMLG)
 		self.bDisconnect.SetToolTipString("Disconnect the printer")
 		szBtns.Add(self.bDisconnect, flag=wx.ALL, border=10)
 		self.bDisconnect.Enable(False)

@@ -235,6 +235,7 @@ class PrintMonitor(wx.Panel):
 		fn = os.path.join(self.app.settings.lastlogdirectory, "temps" + self.prtname + ".log")
 		self.logger.LogMessage("Log file %s opened for recording %s temperatures" % (fn, self.prtname))
 		self.fpLog = open(fn, "a")
+		self.lastLogDate = ""
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
 		
@@ -673,6 +674,7 @@ class PrintMonitor(wx.Panel):
 	def onClose(self, evt):
 		self.logger.LogMessage("Log file for %s temperatures closed" % self.prtname)
 		self.fpLog.close()
+		self.lastLogDate = ""
 		return True
 		
 	def viewZoomIn(self, evt):
@@ -795,15 +797,23 @@ class PrintMonitor(wx.Panel):
 		self.gTemp.setTemps(self.tempData)
 
 		if self.suspendM105:
-			strLog = time.strftime('%H:%M:%S', time.localtime(time.time())) + ": temperature retrieval suspended\n"
-			self.fpLog.write(strLog)
+			self.logTempMessage("temperature retrieval suspended\n")
 			return
 		
 		self.secCounter += 1		
 		if self.secCounter >= 60:
 			self.secCounter = 0
-			strLog = time.strftime('%H:%M:%S', time.localtime(time.time())) + ": " + repr(self.temps) + '\n'
-			self.fpLog.write(strLog)
+			self.logTempMessage(repr(self.temps) + '\n')
+			
+	def logTempMessage(self, msg):
+		t = time.localtime(time.time())
+		ymd = time.strftime('%y:%m:%d', t)
+		if ymd != self.lastLogDate:
+			self.fpLog.write("================================: " + ymd + '\n')
+
+		tm = time.strftime('%H:%M:%S', t)
+		self.fpLog.write(tm + ": " + msg)
+		self.fpLog.flush()
 		
 	def enableButtons(self, flag=True):
 		if flag:
