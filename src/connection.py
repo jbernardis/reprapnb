@@ -1,6 +1,7 @@
 import wx
 import glob
-import time
+import time 
+import pygame.camera
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 
@@ -221,6 +222,12 @@ class ConnectionManagerPanel(wx.Panel):
 		self.logger = self.app.logger
 		self.cm = ConnectionManager(self.app)
 		
+		pygame.init()
+		pygame.camera.init()
+		
+		self.camActive = False
+		self.Camera = None
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
@@ -299,14 +306,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szRow.Add(self.bPort)
 		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
 		
-		sz.AddSpacer((20, 20))
-
-		self.bConnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngConnect, size=BUTTONDIMLG)
-		self.bConnect.SetToolTipString("Connect to the printer")
-		self.Bind(wx.EVT_BUTTON, self.doConnect, self.bConnect)
-		szRow.Add(self.bConnect)
-		self.bConnect.Enable(len(ports) >= 1)
-
 		szRow.AddSpacer((20, 20))
 		szConnect.Add(szRow)
 
@@ -322,13 +321,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szDisconnect.Add(self.lbConnections, flag=wx.ALL, border=10)
 		
 		szBtns = wx.BoxSizer(wx.VERTICAL)
-		szBtns.AddSpacer((10, 10))
-
-		self.bDisconnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngDisconnect, size=BUTTONDIMLG)
-		self.bDisconnect.SetToolTipString("Disconnect the printer")
-		szBtns.Add(self.bDisconnect, flag=wx.ALL, border=10)
-		self.bDisconnect.Enable(False)
-		self.Bind(wx.EVT_BUTTON, self.doDisconnect, self.bDisconnect)
 		
 		szBtns.AddSpacer((20, 20))
 
@@ -344,21 +336,84 @@ class ConnectionManagerPanel(wx.Panel):
 		if len(ports) < 1:
 			self.bConnect.Enable(False)
 			
+		szButtons = wx.BoxSizer(wx.VERTICAL)
+			
+		szButtons.AddSpacer((10, 10))
+		
+		self.bConnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngConnect, size=BUTTONDIMLG)
+		self.bConnect.SetToolTipString("Connect to the printer")
+		self.Bind(wx.EVT_BUTTON, self.doConnect, self.bConnect)
+		szButtons.Add(self.bConnect)
+		self.bConnect.Enable(len(ports) >= 1)
+		szButtons.AddSpacer((10, 10))
+
+		self.bDisconnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngDisconnect, size=BUTTONDIMLG)
+		self.bDisconnect.SetToolTipString("Disconnect the printer")
+		szButtons.Add(self.bDisconnect, flag=wx.ALL, border=10)
+		self.bDisconnect.Enable(False)
+		self.Bind(wx.EVT_BUTTON, self.doDisconnect, self.bDisconnect)
+
 		szsbConnect.Add(szConnect)
 		szsbDisconnect.Add(szDisconnect)
-		self.sizer.AddSpacer((20, 20))
+
+		sboxCamera = wx.StaticBox(self, -1, "Camera:")
+		szsbCamera = wx.StaticBoxSizer(sboxCamera, wx.VERTICAL)
+		szCamera = wx.BoxSizer(wx.HORIZONTAL)
+		szCamera.AddSpacer((20, 20))
+
+		self.cbCamActive = wx.CheckBox(self, wx.ID_ANY, "Activate Camera")
+		self.cbCamActive.SetToolTipString("Activate/Deactivate the camera")
+		self.Bind(wx.EVT_CHECKBOX, self.checkCamActive, self.cbCamActive)
+		szCamera.Add(self.cbCamActive)
+		self.cbCamActive.SetValue(False)
+		self.camActive = False
+		
+		ports = self.getCamPorts()
+		self.lbCamPort = wx.ListBox(self, wx.ID_ANY, (-1, -1),  (270, 120), ports, wx.LB_SINGLE)
+		self.lbCamPort.SetFont(f)
+		self.lbCamPort.SetToolTipString("Choose the port to which to connect")
+		self.lbCamPort.SetSelection(0)
+		szCamera.Add(self.lbCamPort)
+		
+		if len(ports) <= 0:
+			self.cbCamActive.Enable(False)
+			self.camActive = False
+		else:
+			self.cbCamActive.Enable(True)
+
+		self.bCamPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
+		self.bCamPort.SetToolTipString("Refresh list of available camera ports")
+		szCamera.Add(self.bCamPort)
+		self.Bind(wx.EVT_BUTTON, self.doCamPort, self.bCamPort)
+
+		self.bSnapShot = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSnapShot, size=BUTTONDIM)
+		self.bSnapShot.SetToolTipString("Take a picture")
+		szCamera.Add(self.bSnapShot)
+		self.Bind(wx.EVT_BUTTON, self.doSnapShot, self.bSnapShot)
+		self.bSnapShot.Enable(False)
+		
+		szsbCamera.Add(szCamera)
 
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbConnect)
 		sz.AddSpacer((20, 20))
-		self.sizer.Add(sz)
-		self.sizer.AddSpacer((20, 20))
-		sz = wx.BoxSizer(wx.HORIZONTAL)
+		sz.Add(szButtons)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbDisconnect)
 		sz.AddSpacer((20, 20))
+		
+		self.sizer.AddSpacer((20, 20))
 		self.sizer.Add(sz)
+
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		sz.AddSpacer((20, 20))
+		sz.Add(szsbCamera)
+		sz.AddSpacer((20, 20))
+
+		self.sizer.AddSpacer((20, 20))
+		self.sizer.Add(sz)
+
 		self.sizer.AddSpacer((20, 20))
 		self.SetSizer(self.sizer)
 		
@@ -368,6 +423,63 @@ class ConnectionManagerPanel(wx.Panel):
 			self.lbConnections.Append("%s on %s" % (cx.printer, cx.port), cx)
 		if len(cxlist) > 0:
 			self.lbConnections.SetSelection(0)
+			
+	def doCamPort(self, evt):
+		self.refreshCamPorts()
+			
+	def refreshCamPorts(self):
+		ports = self.getCamPorts()
+		self.lbCamPort.SetItems(ports)
+		if len(ports) >= 1:
+			self.cbCamActive.Enable(True)
+			self.lbCamPort.SetSelection(0)
+		else:
+			self.cdCamActive.Enable(False)
+			self.camActive = False
+	
+	def getCamPorts(self):
+		pl = glob.glob('/dev/video*')
+		return pl
+	
+	def checkCamActive(self, evt):
+		print "check cam active clicked"
+		self.camActive = evt.IsChecked()
+		if self.camActive:
+			port = 	self.lbCamPort.GetString(self.lbCamPort.GetSelection())
+			try:
+				self.Camera = pygame.camera.Camera(port, (640,480))
+				self.bSnapShot.Enable(True)
+				self.lbCamPort.Enable(False)
+			except:
+				dlg = wx.MessageDialog(self, "Error INitializing Camera",
+									'Camera Error', wx.OK | wx.ICON_ERROR)
+	
+				rc = dlg.ShowModal()
+				dlg.Destroy()
+
+				self.Camera = None
+				self.cbCamActive.SetValue(False)
+				self.camActive = False
+				self.bSnapShot.Enable(False)
+				self.lbCamPort.Enable(True)
+		else:
+			self.bSnapShot.Enable(False)
+			self.lbCamPort.Enable(True)
+			self.Camera = None
+			
+	def doSnapShot(self, evt):
+		print "snapshot pressed"
+			
+	def snapShot(self):
+		if not self.camActive:
+			return None
+		
+		self.Camera.start()
+		image = self.Camera.get_image()
+		self.Camera.stop()
+		
+		return image
+		
 	
 	def tick(self):
 		cxlist = self.cm.getLists()[2]
