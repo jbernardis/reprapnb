@@ -440,10 +440,10 @@ class ConnectionManagerPanel(wx.Panel):
 				self.bSnapShot.Enable(True)
 				self.lbCamPort.Enable(False)
 			except:
-				dlg = wx.MessageDialog(self, "Error INitializing Camera",
+				dlg = wx.MessageDialog(self, "Error Initializing Camera",
 									'Camera Error', wx.OK | wx.ICON_ERROR)
 	
-				rc = dlg.ShowModal()
+				dlg.ShowModal()
 				dlg.Destroy()
 
 				self.Camera = None
@@ -457,7 +457,17 @@ class ConnectionManagerPanel(wx.Panel):
 			self.Camera = None
 			
 	def doSnapShot(self, evt):
-		print "snapshot pressed"
+		pic = self.snapShot()
+		if pic is None:
+			dlg = wx.MessageDialog(self, "Error Taking Picture",
+					'Camera Error', wx.OK | wx.ICON_ERROR)
+	
+			dlg.ShowModal()
+			dlg.Destroy()
+			return
+		
+		IMGCAP
+
 			
 	def snapShot(self):
 		if not self.camActive:

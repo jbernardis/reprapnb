@@ -88,6 +88,8 @@ class RepRapServer:
 			return True, self.stopPrint(query)
 		elif path == "/temps":
 			return True, self.getTemps(query)
+		elif path == "/picture":
+			return True, self.getPicture(query)
 		else:
 			return False, None
 		
@@ -99,6 +101,14 @@ class RepRapServer:
 	
 	def getTemps(self, q):
 		return {'temps': self.app.getTemps()}
+	
+	def getPicture(self, q):
+		pic = self.app.snapShot()
+		if pic is None:
+			return {'picture': 'false'}
+		else:
+			fn = "images/reprap/image.jpg"
+			return {'picture': 'true', 'file': fn}
 	
 	def close(self):
 		if self.port != 0:

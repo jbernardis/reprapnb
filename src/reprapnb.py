@@ -323,6 +323,9 @@ class MainFrame(wx.Frame):
 				return True
 
 		return False
+	
+	def snapShot(self):
+		return self.pgConnMgr.snapShot()
 
 class App(wx.App):
 	def OnInit(self):
