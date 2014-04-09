@@ -298,17 +298,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szConnect.Add(szRow)
 		szConnect.AddSpacer((20, 20))
 		
-		szRow = wx.BoxSizer(wx.HORIZONTAL)
-		szRow.AddSpacer((20, 20))
-
-		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
-		self.bPort.SetToolTipString("Refresh list of available ports")
-		szRow.Add(self.bPort)
-		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
-		
-		szRow.AddSpacer((20, 20))
-		szConnect.Add(szRow)
-
 		sboxDisconnect = wx.StaticBox(self, -1, "Active Connections:")
 		szsbDisconnect = wx.StaticBoxSizer(sboxDisconnect, wx.VERTICAL)
 		szDisconnect = wx.BoxSizer(wx.HORIZONTAL)
@@ -343,7 +332,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bConnect = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngConnect, size=BUTTONDIMLG)
 		self.bConnect.SetToolTipString("Connect to the printer")
 		self.Bind(wx.EVT_BUTTON, self.doConnect, self.bConnect)
-		szButtons.Add(self.bConnect)
+		szButtons.Add(self.bConnect, flag=wx.ALL, border=10)
 		self.bConnect.Enable(len(ports) >= 1)
 		szButtons.AddSpacer((10, 10))
 
@@ -381,11 +370,6 @@ class ConnectionManagerPanel(wx.Panel):
 		else:
 			self.cbCamActive.Enable(True)
 
-		self.bCamPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
-		self.bCamPort.SetToolTipString("Refresh list of available camera ports")
-		szCamera.Add(self.bCamPort)
-		self.Bind(wx.EVT_BUTTON, self.doCamPort, self.bCamPort)
-
 		self.bSnapShot = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSnapShot, size=BUTTONDIM)
 		self.bSnapShot.SetToolTipString("Take a picture")
 		szCamera.Add(self.bSnapShot)
@@ -409,9 +393,14 @@ class ConnectionManagerPanel(wx.Panel):
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbCamera)
-		sz.AddSpacer((20, 20))
+		sz.AddSpacer((200, 20))
+		
+		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
+		self.bPort.SetToolTipString("Refresh list of available ports")
+		sz.Add(self.bPort)
+		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
 
-		self.sizer.AddSpacer((20, 20))
+		self.sizer.AddSpacer((50, 50))
 		self.sizer.Add(sz)
 
 		self.sizer.AddSpacer((20, 20))
@@ -509,6 +498,8 @@ class ConnectionManagerPanel(wx.Panel):
 			self.lbPort.SetSelection(0)
 		else:
 			self.bConnect.Enable(False)
+			
+		self.refreshCamPorts()
 			
 	def getStatus(self):
 		return self.cm.getStatus()

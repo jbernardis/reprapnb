@@ -112,7 +112,6 @@ class MainFrame(wx.Frame):
 	def changePages(self, evt):
 		if evt.GetSelection() == self.pxConnMgr:
 			self.pgConnMgr.refreshPorts()
-			self.pgConnMgr.refreshCamPorts()
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)

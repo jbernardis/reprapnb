@@ -674,6 +674,8 @@ class PrintMonitor(wx.Panel):
 	def onClose(self, evt):
 		self.logger.LogMessage("Log file for %s temperatures closed" % self.prtname)
 		self.fpLog.close()
+		self.fpLog = None
+		self.timer.Stop()
 		self.lastLogDate = ""
 		return True
 		
@@ -806,6 +808,9 @@ class PrintMonitor(wx.Panel):
 			self.logTempMessage(repr(self.temps) + '\n')
 			
 	def logTempMessage(self, msg):
+		if self.fpLog is None:
+			return
+		
 		t = time.localtime(time.time())
 		ymd = time.strftime('%y:%m:%d', t)
 		if ymd != self.lastLogDate:
