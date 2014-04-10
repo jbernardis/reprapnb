@@ -672,9 +672,10 @@ class PrintMonitor(wx.Panel):
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
 
 	def onClose(self, evt):
-		self.logger.LogMessage("Log file for %s temperatures closed" % self.prtname)
-		self.fpLog.close()
-		self.fpLog = None
+		if self.fpLog is not None:
+			self.logger.LogMessage("Log file for %s temperatures closed" % self.prtname)
+			self.fpLog.close()
+			self.fpLog = None
 		self.timer.Stop()
 		self.lastLogDate = ""
 		return True
