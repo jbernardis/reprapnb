@@ -219,23 +219,17 @@ class SnapFrame(wx.Frame):
 		self.failed = False
 		wx.Frame.__init__(self, parent, wx.ID_ANY, "Snapshot", (-1, -1), (-1, -1), wx.DEFAULT_FRAME_STYLE)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		print "in snapframe: ", data.get_width(), data.get_height()
-
-		
 		
 		s = pygame.image.tostring(data, 'RGB')  # Convert the surface to an RGB string
 		img = wx.ImageFromData(data.get_width(), data.get_height(), s)  # Load this string into a wx image
 		bmp = wx.BitmapFromImage(img)  # Get the image in bitmap form
 		
 		wx.StaticBitmap(self, wx.ID_ANY, bmp, (-1, -1), (bmp.GetWidth(), bmp.GetHeight()))
-	
 		self.Fit()
 			
 	def onClose(self, evt):
 		self.Destroy()
 
-
-BSIZE = (140, 40)	
 class ConnectionManagerPanel(wx.Panel):
 	def __init__(self, parent, app):
 		self.parent = parent
@@ -375,7 +369,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.cbCamActive = wx.CheckBox(self, wx.ID_ANY, "Activate Camera")
 		self.cbCamActive.SetToolTipString("Activate/Deactivate the camera")
 		self.Bind(wx.EVT_CHECKBOX, self.checkCamActive, self.cbCamActive)
-		szCamera.Add(self.cbCamActive, 1, wx.LEFT + wx.RIGHT, 10)
+		szCamera.AddSpacer((10, 10))
+		szCamera.Add(self.cbCamActive)
 		self.cbCamActive.SetValue(False)
 		self.camActive = False
 		
@@ -384,7 +379,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbCamPort.SetFont(f)
 		self.lbCamPort.SetToolTipString("Choose the port to which to connect")
 		self.lbCamPort.SetSelection(0)
-		szCamera.Add(self.lbCamPort, 1, wx.LEFT + wx.RIGHT, 10)
+		szCamera.AddSpacer((10, 10))
+		szCamera.Add(self.lbCamPort)
 		
 		if len(ports) <= 0:
 			self.cbCamActive.Enable(False)
@@ -394,11 +390,15 @@ class ConnectionManagerPanel(wx.Panel):
 
 		self.bSnapShot = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSnapshot, size=BUTTONDIM)
 		self.bSnapShot.SetToolTipString("Take a picture")
-		szCamera.Add(self.bSnapShot, 1, wx.LEFT + wx.RIGHT, 10)
+		szCamera.AddSpacer((10, 10))
+		szCamera.Add(self.bSnapShot)
 		self.Bind(wx.EVT_BUTTON, self.doSnapShot, self.bSnapShot)
 		self.bSnapShot.Enable(False)
 		
+		szCamera.AddSpacer((10, 10))
+		szsbCamera.AddSpacer((10, 10))
 		szsbCamera.Add(szCamera)
+		szsbCamera.AddSpacer((10, 10))
 
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
@@ -415,11 +415,12 @@ class ConnectionManagerPanel(wx.Panel):
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbCamera)
-		sz.AddSpacer((400, 20))
+		sz.AddSpacer((600, 20))
 		
 		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
 		self.bPort.SetToolTipString("Refresh list of available ports")
-		sz.Add(self.bPort, 1, wx.TOP, 30)
+		sz.Add(self.bPort)
+		sz.Add(self.bPort, 1, wx.TOP, 60)
 		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
 
 		self.sizer.AddSpacer((50, 50))

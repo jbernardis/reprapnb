@@ -1,6 +1,7 @@
 In Progress/Need Testing
 - Need to test SD functionality - print from, delete
 - need to test HTTP server - stop print
+- test webcam with webserver
 
 
 
@@ -19,7 +20,6 @@ Need more info
 - printmon- pause/restart -> import button was not disabled - NEED MORE INFO
 
 Larger effort
-- integration with webcam
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
 
 
