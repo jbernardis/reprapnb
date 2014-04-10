@@ -2,6 +2,7 @@ import wx
 import glob
 import time 
 import pygame.camera
+import  cStringIO
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 
@@ -212,6 +213,23 @@ class ConnectionManager:
 	def disconnectByRepRap(self, reprap):
 		port = reprap.getPort()
 		return self.disconnectByPort(port)
+	
+class SnapFrame(wx.Frame):
+	def __init__(self, parent, data):
+		self.failed = False
+		wx.Frame.__init__(self, parent, wx.ID_ANY, "Snapshot", (-1, -1), (-1, -1), wx.DEFAULT_FRAME_STYLE)
+		self.Bind(wx.EVT_CLOSE, self.onClose)
+		stream = cStringIO.StringIO(data)
+
+		jpg = wx.BitmapFromImage( wx.ImageFromStream( stream ))
+
+		wx.StaticBitmap(self, wx.ID_ANY, jpg, (-1, -1), (jpg.GetWidth(), jpg.GetHeight()))
+	
+		self.Fit()
+			
+	def onClose(self, evt):
+		self.Destroy()
+
 
 BSIZE = (140, 40)	
 class ConnectionManagerPanel(wx.Panel):
@@ -466,8 +484,8 @@ class ConnectionManagerPanel(wx.Panel):
 			dlg.Destroy()
 			return
 		
-		IMGCAP
-
+		s = SnapFrame(self, pic)
+		s.Show()
 			
 	def snapShot(self):
 		if not self.camActive:

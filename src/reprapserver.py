@@ -1,9 +1,14 @@
+import os
+import time
 import cgi
 import select
 import socket
 from threading import Thread
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+import pygame
+
+webbase = "/var/www/images"
 
 def quote(s):
 	return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -107,7 +112,10 @@ class RepRapServer:
 		if pic is None:
 			return {'picture': 'false'}
 		else:
-			fn = "images/reprap/image.jpg"
+			fbn = "img%s.jpg" % time.strftime('%y-%m-%d-%H-%M-%S', time.localtime(time.time()))
+			fn = os.path.join("reprap", fbn)
+			path = os.path.join(webbase, fn)
+			pygame.image.save(pic, path)
 			return {'picture': 'true', 'file': fn}
 	
 	def close(self):
