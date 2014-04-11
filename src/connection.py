@@ -337,9 +337,6 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		szDisconnect.AddSpacer((10, 10))
 		szDisconnect.Add(szBtns)
-
-		if len(ports) < 1:
-			self.bConnect.Enable(False)
 			
 		szButtons = wx.BoxSizer(wx.VERTICAL)
 			
