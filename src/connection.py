@@ -2,7 +2,6 @@ import wx
 import glob
 import time 
 import pygame.camera
-import  cStringIO
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 
@@ -243,6 +242,7 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		self.camActive = False
 		self.Camera = None
+		self.CameraPort = None
 		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
@@ -337,7 +337,7 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		szDisconnect.AddSpacer((10, 10))
 		szDisconnect.Add(szBtns)
-			
+
 		szButtons = wx.BoxSizer(wx.VERTICAL)
 			
 		szButtons.AddSpacer((10, 10))
@@ -425,6 +425,7 @@ class ConnectionManagerPanel(wx.Panel):
 
 		self.sizer.AddSpacer((20, 20))
 		self.SetSizer(self.sizer)
+		self.lbCamPort.SetSelection(0)
 		
 	def loadConnections(self, cxlist):
 		self.lbConnections.Clear()
@@ -438,13 +439,35 @@ class ConnectionManagerPanel(wx.Panel):
 			
 	def refreshCamPorts(self):
 		ports = self.getCamPorts()
+		self.lbCamPort.Enable(True)
 		self.lbCamPort.SetItems(ports)
 		if len(ports) >= 1:
 			self.cbCamActive.Enable(True)
-			self.lbCamPort.SetSelection(0)
+			if self.CameraPort is not None:
+				if self.CameraPort in ports:
+					self.lbCamPort.SetSelection(ports.index(self.CameraPort))
+					self.cbCamActive.SetValue(True)
+					self.camActive = True
+					self.bSnapShot.Enable(True)
+				else:
+					self.lbCamPort.SetSelection(0)
+					self.cbCamActive.SetValue(False)
+					self.camActive = False
+					self.bSnapShot.Enable(False)
+					self.Camera = None
+					self.CameraPort = None
+			else:
+				self.cbCamActive.SetValue(False)
+				self.camActive = False
+				self.bSnapShot.Enable(False)
+				self.lbCamPort.SetSelection(0)
 		else:
-			self.cdCamActive.Enable(False)
+			self.lbCamPort.Enable(False)
+			self.cbCamActive.Enable(False)
+			self.bSnapShot.Enable(False)
 			self.camActive = False
+			self.Camera = None
+			self.CameraPort = None
 	
 	def getCamPorts(self):
 		pl = glob.glob('/dev/video*')
@@ -456,6 +479,7 @@ class ConnectionManagerPanel(wx.Panel):
 			port = 	self.lbCamPort.GetString(self.lbCamPort.GetSelection())
 			try:
 				self.Camera = pygame.camera.Camera(port, (640,480))
+				self.CameraPort = port[:]
 				self.bSnapShot.Enable(True)
 				self.lbCamPort.Enable(False)
 			except:
@@ -466,6 +490,7 @@ class ConnectionManagerPanel(wx.Panel):
 				dlg.Destroy()
 
 				self.Camera = None
+				self.CameraPort = None
 				self.cbCamActive.SetValue(False)
 				self.camActive = False
 				self.bSnapShot.Enable(False)
@@ -474,11 +499,12 @@ class ConnectionManagerPanel(wx.Panel):
 			self.bSnapShot.Enable(False)
 			self.lbCamPort.Enable(True)
 			self.Camera = None
+			self.CameraPort = None
 			
 	def doSnapShot(self, evt):
 		pic = self.snapShot()
 		if pic is None:
-			dlg = wx.MessageDialog(self, "Error Taking Picture",
+			dlg = wx.MessageDialog(self, "Error Taking Picture\nCamera Disconnected",
 					'Camera Error', wx.OK | wx.ICON_ERROR)
 	
 			dlg.ShowModal()
@@ -492,10 +518,18 @@ class ConnectionManagerPanel(wx.Panel):
 		if not self.camActive:
 			return None
 		
-		self.Camera.start()
-		image = self.Camera.get_image()
-		self.Camera.stop()
-		
+		try:
+			self.Camera.start()
+			image = self.Camera.get_image()
+			self.Camera.stop()
+		except:
+			self.camActive = False
+			self.Camera = None
+			self.CameraPort = None
+			self.cbCamActive.SetValue(False)
+			self.refreshCamPorts()
+			return None
+
 		return image
 		
 	
