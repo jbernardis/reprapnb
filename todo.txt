@@ -1,7 +1,7 @@
 In Progress/Need Testing
-- Need to test SD functionality - print from, delete
+- print from SD card does not show progress
+- print from SD card does not correctly end print - program still thinks it is printing
 - need to test HTTP server - stop print
-- test webcam with webserver
 
 
 

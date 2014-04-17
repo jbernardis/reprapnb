@@ -467,8 +467,8 @@ class RepRapParser:
 			gmax = int(t[1])
 			evt = PrtMonEvent(event=SD_PRINT_POSITION, pos=gpos, max=gmax)
 			wx.PostEvent(self.printmon, evt)
-			if self.app.M27pending:
-				self.app.M27pending = False
+			if self.printmon.M27pending:
+				self.printmon.M27pending = False
 				return True
 			else:
 				return False

@@ -44,6 +44,7 @@ class PrintMonitor(wx.Panel):
 		self.manctl = None
 
 		self.M105pending = False
+		self.M27pending = False
 		self.suspendM105 = False
 		self.cycle = 0
 		self.skipCycles = 5
@@ -278,20 +279,40 @@ class PrintMonitor(wx.Panel):
 				if evt.pos < evt.max:
 					self.infoPane.setSDPrintInfo(evt.pos, evt.max)
 					self.M27Timer.Start(M27Interval, True)
-				else:
-					self.sdprintingfrom = False
-					self.setPrintMode(PRINT_MODE_PRINT)
-					self.bPrint.Enable(self.hasFileLoaded())
-					self.bPull.Enable(True)
-					self.setPauseMode(PAUSE_MODE_PAUSE)
-					self.bPause.Enable(False)
-					self.bSDPrintFrom.Enable(True)
-					self.bSDPrintTo.Enable(self.hasFileLoaded())
-					self.bSDDelete.Enable(True)
-					self.infoPane.setSDPrintComplete()
+					print "starting M27 timer xx"
+
+# 				else:
+# 					self.sdprintingfrom = False
+# 					self.setPrintMode(PRINT_MODE_PRINT)
+# 					self.bPrint.Enable(self.hasFileLoaded())
+# 					self.bPull.Enable(self.app.currentPullStatus())
+# 					self.setPauseMode(PAUSE_MODE_PAUSE)
+# 					self.bPause.Enable(False)
+# 					self.bSDPrintFrom.Enable(True)
+# 					self.bSDPrintTo.Enable(self.hasFileLoaded())
+# 					self.bSDDelete.Enable(True)
+# 					self.infoPane.setSDPrintComplete()
 			return
 
 		if evt.event == SD_PRINT_COMPLETE:
+			self.endTime = time.time()
+			self.infoPane.setSDPrintComplete()
+			self.sdprintingfrom = False
+			self.printing = False
+			self.paused = False
+			self.setStatus(PMSTATUS_READY)
+			self.reprap.printComplete()
+			self.setPrintMode(PRINT_MODE_PRINT)
+			self.setPauseMode(PAUSE_MODE_PAUSE)
+			self.bPrint.Enable(self.hasFileLoaded())
+			self.bPull.Enable(self.app.currentPullStatus())
+			self.bPause.Enable(False)
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(self.hasFileLoaded())
+			self.bSDDelete.Enable(True)
+			self.logger.LogMessage("SD Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
+			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.sdStartTime))
+			self.updatePrintPosition(0)
 			return
 	
 	def setStatus(self, s):
@@ -361,16 +382,21 @@ class PrintMonitor(wx.Panel):
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPrint.Enable(self.hasFileLoaded())
-		self.bPull.Enable(True)
+		self.bPull.Enable(self.app.currentPullStatus())
 		self.bPause.Enable(False)
 		
 	def doSDPrintFrom(self, evt):
 		self.sdcard.startPrintFromSD()
+		self.M27Timer.Start(M27Interval, True)
+		self.sdStartTime = time.time()
+		self.infoPane.setSDStartTime(self.sdStartTime)
+		print "start M27 yy"
 		
 	def resumeSDPrintFrom(self, fn):
 		self.reprap.send_now("M23 " + fn[1].lower())
 		self.reprap.send_now("M24")
 		self.sdprintingfrom = True
+		print "starting M27 timer 1"
 		self.M27Timer.Start(M27Interval, True)
 		self.bPrint.Enable(False)
 		self.bPull.Enable(False)
@@ -381,7 +407,6 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(True)
 		self.sdpaused = False
 		self.infoPane.setMode(MODE_FROM_SD)
-		self.infoPane.setSDStartTime(time.time())
 		
 	def doSDPrintTo(self, evt):
 		self.sdcard.startPrintToSD()
@@ -432,7 +457,7 @@ class PrintMonitor(wx.Panel):
 			self.setPrintMode(PRINT_MODE_RESTART)
 			self.setPauseMode(PAUSE_MODE_RESUME)
 			self.bPrint.Enable(True)
-			self.bPull.Enable(True)
+			self.bPull.Enable(self.app.currentPullStatus())
 			self.bPause.Enable(True)
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
@@ -454,7 +479,7 @@ class PrintMonitor(wx.Panel):
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
 			self.bPrint.Enable(True)
-			self.bPull.Enable(True)
+			self.bPull.Enable(self.app.currentPullStatus())
 			self.bPause.Enable(False)
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
@@ -475,7 +500,7 @@ class PrintMonitor(wx.Panel):
 # 			self.setPrintMode(PRINT_MODE_PRINT)
 # 			self.setPauseMode(PAUSE_MODE_PAUSE)
 # 			self.bPrint.Enable(True)
-# 			self.bPull.Enable(True)
+# 			self.bPull.Enable(self.app.currentPullStatus())
 # 			self.bPause.Enable(True)
 # 			self.bSDPrintFrom.Enable(True)
 # 			self.bSDPrintTo.Enable(True)
@@ -498,8 +523,9 @@ class PrintMonitor(wx.Panel):
 		return self.startTime, self.endTime
 	
 	def onM27Timer(self, evt):
-		if not self.app.M27Pending:
-			self.app.M27Pending = True
+		print "in M27 timer"
+		if not self.M27pending:
+			self.M27pending = True
 			self.reprap.send_now("M27")
 
 	def setPrintMode(self, mode):
@@ -528,6 +554,7 @@ class PrintMonitor(wx.Panel):
 			self.reprap.send_now("M24")
 			self.infoPane.setSDStartTime(time.time())
 			self.M27Timer.Start(M27Interval, True)
+			print "starting M27 timer 2"
 		else:
 			self.printPos = 0
 			self.startTime = time.time()
@@ -568,6 +595,7 @@ class PrintMonitor(wx.Panel):
 				self.bPull.Enable(False)
 				self.sdprintingfrom = True
 				self.M27Timer.Start(M27Interval, True)
+				print "starting M27 timer 3"
 				self.sdpaused = False
 			else:
 				self.stopPrintFromSD()
@@ -606,7 +634,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.bPrint.Enable(self.hasFileLoaded())
-		self.bPull.Enable(True)
+		self.bPull.Enable(self.app.currentPullStatus())
 		self.bSDPrintFrom(True)
 		self.bSDPrintTo(True)
 		self.bSDDelete(True)
@@ -618,7 +646,7 @@ class PrintMonitor(wx.Panel):
 		self.setPauseMode(PAUSE_MODE_RESUME)
 		self.setPrintMode(PRINT_MODE_RESTART)
 		self.bPrint.Enable(self.hasFileLoaded())
-		self.bPull.Enable(True)
+		self.bPull.Enable(self.app.currentPullStatus())
 		self.sdprintingfrom = False
 		self.sdpaused = True
 		
@@ -753,7 +781,7 @@ class PrintMonitor(wx.Panel):
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setPauseMode(PAUSE_MODE_PAUSE)
 		self.bPrint.Enable(self.hasFileLoaded())
-		self.bPull.Enable(True)
+		self.bPull.Enable(self.app.currentPullStatus())
 		self.bPause.Enable(False)
 		self.bSDPrintFrom.Enable(True)
 		self.bSDPrintTo.Enable(self.hasFileLoaded())
@@ -761,7 +789,6 @@ class PrintMonitor(wx.Panel):
 		self.sdprintingfrom = False
 		self.sdpaused = False
 		
-		self.bPull.Enable(True)
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
