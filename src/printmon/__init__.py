@@ -300,11 +300,15 @@ class PrintMonitor(wx.Panel):
 			self.sdprintingfrom = False
 			self.printing = False
 			self.paused = False
-			self.setStatus(PMSTATUS_READY)
+			if self.hasFileLoaded():
+				self.setStatus(PMSTATUS_READY)
+				self.bPrint.Enable(True)
+			else:
+				self.setStatus(PMSTATUS_NOT_READY)
+				self.bPrint.Enable(False)
 			self.reprap.printComplete()
 			self.setPrintMode(PRINT_MODE_PRINT)
 			self.setPauseMode(PAUSE_MODE_PAUSE)
-			self.bPrint.Enable(self.hasFileLoaded())
 			self.bPull.Enable(self.app.currentPullStatus())
 			self.bPause.Enable(False)
 			self.bSDPrintFrom.Enable(True)
@@ -386,10 +390,18 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		
 	def doSDPrintFrom(self, evt):
+		self.updatePrintPosition(0)
+		self.model = None
+		self.printing = False
+		self.paused = False
+		self.sdpaused = False
+		self.sdprintingfrom = True
 		self.sdcard.startPrintFromSD()
 		self.M27Timer.Start(M27Interval, True)
 		self.sdStartTime = time.time()
 		self.infoPane.setSDStartTime(self.sdStartTime)
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.setStatus(PMSTATUS_PRINTING)
 		print "start M27 yy"
 		
 	def resumeSDPrintFrom(self, fn):
@@ -595,10 +607,12 @@ class PrintMonitor(wx.Panel):
 				self.bPull.Enable(False)
 				self.sdprintingfrom = True
 				self.M27Timer.Start(M27Interval, True)
+				self.setStatus(PMSTATUS_PRINTING)
 				print "starting M27 timer 3"
 				self.sdpaused = False
 			else:
 				self.stopPrintFromSD()
+				self.setStatus(PMSTATUS_PAUSED)
 
 		else:
 			if self.paused:
@@ -644,8 +658,9 @@ class PrintMonitor(wx.Panel):
 	def stopPrintFromSD(self):
 		self.reprap.send_now("M25")
 		self.setPauseMode(PAUSE_MODE_RESUME)
-		self.setPrintMode(PRINT_MODE_RESTART)
-		self.bPrint.Enable(self.hasFileLoaded())
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.bPrint.Enable(False)
+		self.bSDPrintFrom(True)
 		self.bPull.Enable(self.app.currentPullStatus())
 		self.sdprintingfrom = False
 		self.sdpaused = True
