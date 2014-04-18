@@ -215,12 +215,24 @@ class GcmFrame (wx.Window):
 			del dc
 			self.Refresh()
 			self.Update()
+			
+	def eraseGraph(self):
+		if self.settings.usebuffereddc:
+			dc = wx.BufferedDC(wx.ClientDC(self), self.buffer)
+		else:
+			dc = wx.ClientDC(self)
+			
+		self.clearGraph(dc)
 		
-	def drawGraph(self, dc, lyr):
+	def clearGraph(self, dc):
 		dc.SetBackground(wx.Brush("black"))
 		dc.Clear()
 		
 		self.drawGrid(dc)
+		
+		
+	def drawGraph(self, dc, lyr):
+		self.clearGraph(dc)
 		self.drawLayer(dc, lyr)
 
 	def drawGrid(self, dc):

@@ -390,22 +390,26 @@ class PrintMonitor(wx.Panel):
 		self.bPull.Enable(self.app.currentPullStatus())
 		self.bPause.Enable(False)
 		
-	def doSDPrintFrom(self, evt):
-		self.updatePrintPosition(0)
+	def clearModel(self):
+		self.gcf.eraseGraph()
+		self.slideLayer.Enable(False)
+		self.infoPane.clearFileInfo()
+		self.infoPane.clearLayerInfo()
 		self.model = None
+		
+	def doSDPrintFrom(self, evt):
 		self.printing = False
 		self.paused = False
 		self.sdpaused = False
 		self.sdprintingfrom = True
 		self.sdcard.startPrintFromSD()
-		self.M27Timer.Start(M27Interval, True)
 		self.sdStartTime = time.time()
 		self.infoPane.setSDStartTime(self.sdStartTime)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setStatus(PMSTATUS_PRINTING)
-		print "start M27 yy"
 		
 	def resumeSDPrintFrom(self, fn):
+		self.clearModel()
 		self.reprap.send_now("M23 " + fn[1].lower())
 		self.reprap.send_now("M24")
 		self.sdprintingfrom = True

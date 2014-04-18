@@ -170,6 +170,9 @@ class InfoPane (wx.Window):
 			self.setValue(t, "")
 		
 		
+	def clearFileInfo(self):
+		self.setValue("filename", "")
+		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
 		self.setValue("filename", filename)
 		self.filename = filename
@@ -186,6 +189,16 @@ class InfoPane (wx.Window):
 			
 	def setSDTargetFile(self, fn):
 		self.sdTargetFile = fn
+		
+	def clearLayerInfo(self):
+		self.setValue("layer", "")
+		self.setValue("minmaxxy", "")
+		for i in range(MAX_EXTRUDERS):
+			tag = "filament%d" % i
+			self.setValue(tag, "")
+		
+		self.setValue("gclines", "")
+		self.setValue("layertime", "")
 	
 	def setLayerInfo(self, layernbr, z, minxy, maxxy, filament, prevfilament, ltime, gclines):
 		self.gclines = gclines
