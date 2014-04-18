@@ -247,7 +247,8 @@ class PrintMonitor(wx.Panel):
 		self.manctl = mc;
 
 	def assertAllowPulls(self, flag):
-		self.bPull.Enable(flag)
+		if not self.sdprintingfrom:
+			self.bPull.Enable(flag)
 
 	def tick(self):
 		if self.skipCycles >= 0:
@@ -536,7 +537,7 @@ class PrintMonitor(wx.Panel):
 	
 	def onM27Timer(self, evt):
 		print "in M27 timer"
-		if not self.M27pending:
+		if not self.M27pending and not self.sdpaused:
 			self.M27pending = True
 			self.reprap.send_now("M27")
 
@@ -649,9 +650,9 @@ class PrintMonitor(wx.Panel):
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.bPrint.Enable(self.hasFileLoaded())
 		self.bPull.Enable(self.app.currentPullStatus())
-		self.bSDPrintFrom(True)
-		self.bSDPrintTo(True)
-		self.bSDDelete(True)
+		self.bSDPrintFrom.Enable(True)
+		self.bSDPrintTo.Enable(True)
+		self.bSDDelete.Enable(True)
 		self.setSDTargetFile(None)
 		self.suspendTempProbe(False)
 		
@@ -660,7 +661,7 @@ class PrintMonitor(wx.Panel):
 		self.setPauseMode(PAUSE_MODE_RESUME)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.bPrint.Enable(False)
-		self.bSDPrintFrom(True)
+		self.bSDPrintFrom.Enable(True)
 		self.bPull.Enable(self.app.currentPullStatus())
 		self.sdprintingfrom = False
 		self.sdpaused = True
