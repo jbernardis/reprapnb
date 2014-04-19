@@ -254,7 +254,7 @@ class Plater(wx.Panel):
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 		
 	def updateSlicerProfile(self, text):
-		self.bExport2Prep.SetToolTipString("Export the plate for slicing (%s)" % text)
+		self.bExport2Prep.SetToolTipString("Export the plate for slicing %s" % text)
 		
 	def setStatus(self, s):
 		self.status = s

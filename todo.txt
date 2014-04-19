@@ -1,6 +1,5 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-- show current slicing profile in plater in tooltip for "forward to slicer" button
 
 
 
@@ -18,6 +17,9 @@ Need more info
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
+
+Uncertain:
+- have links inside program to bring up tools - openscad, meshlab, netfabb, etc
 
 
 
