@@ -110,8 +110,11 @@ class MainFrame(wx.Frame):
 		self.timer.Start(MAINTIMER)
 		
 	def changePages(self, evt):
-		if evt.GetSelection() == self.pxConnMgr:
+		sel = evt.GetSelection()
+		if sel == self.pxConnMgr:
 			self.pgConnMgr.refreshPorts()
+		elif sel == self.pxPlater:
+			self.pgPlater.updateSlicerProfile(self.pgFilePrep.getSlicerConfigString())
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)

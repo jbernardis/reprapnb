@@ -1,7 +1,6 @@
 In Progress/Need Testing
-- print from SD card does not show progress
-- print from SD card does not correctly end print - program still thinks it is printing
 - need to test HTTP server - stop print
+- show current slicing profile in plater in tooltip for "forward to slicer" button
 
 
 
@@ -16,8 +15,6 @@ Medium
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
-- got confused when cancelled from-SD print
-- printmon- pause/restart -> import button was not disabled - NEED MORE INFO
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc

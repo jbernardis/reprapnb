@@ -173,6 +173,9 @@ class InfoPane (wx.Window):
 	def clearFileInfo(self):
 		self.setValue("filename", "")
 		
+	def showFileInfo(self):
+		self.setValue("filename", self.filename)
+		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
 		self.setValue("filename", filename)
 		self.filename = filename

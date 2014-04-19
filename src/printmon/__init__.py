@@ -561,6 +561,7 @@ class PrintMonitor(wx.Panel):
 			self.countGLines = len(self.model)
 			self.infoPane.setMode(MODE_NORMAL)
 			self.infoPane.setStartTime(self.startTime)
+			self.infoPane.showFileInfo()
 			self.bPrint.Enable(False)
 			self.bPull.Enable(False)
 			self.bPause.Enable(False)

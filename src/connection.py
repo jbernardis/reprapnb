@@ -354,6 +354,12 @@ class ConnectionManagerPanel(wx.Panel):
 		szButtons.Add(self.bDisconnect, flag=wx.ALL, border=10)
 		self.bDisconnect.Enable(False)
 		self.Bind(wx.EVT_BUTTON, self.doDisconnect, self.bDisconnect)
+		
+		szButtons.AddSpacer((20, 20))
+		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIMLG)
+		self.bPort.SetToolTipString("Refresh list of available ports")
+		szButtons.Add(self.bPort, flag=wx.ALL, border=10)
+		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
 
 		szsbConnect.Add(szConnect)
 		szsbDisconnect.Add(szDisconnect)
@@ -412,14 +418,7 @@ class ConnectionManagerPanel(wx.Panel):
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbCamera)
-		sz.AddSpacer((600, 20))
 		
-		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIM)
-		self.bPort.SetToolTipString("Refresh list of available ports")
-		sz.Add(self.bPort)
-		sz.Add(self.bPort, 1, wx.TOP, 60)
-		self.Bind(wx.EVT_BUTTON, self.doPort, self.bPort)
-
 		self.sizer.AddSpacer((50, 50))
 		self.sizer.Add(sz)
 

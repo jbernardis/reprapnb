@@ -508,6 +508,9 @@ class FilePrepare(wx.Panel):
 		self.Layout()
 		self.Fit()
 		
+	def getSlicerConfigString(self):
+		return self.slicer.type.getConfigString()
+		
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:
 			text = text[:MAXCFGCHARS]

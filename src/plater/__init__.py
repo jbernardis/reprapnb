@@ -234,7 +234,7 @@ class Plater(wx.Panel):
 		self.bExport.Enable(False)
 		
 		self.bExport2Prep = wx.BitmapButton(self, wx.ID_ANY, self.images.pngExport2prep, size=BUTTONDIMWIDE)
-		self.bExport2Prep.SetToolTipString("Export the plate to the file preparation tab")
+		self.bExport2Prep.SetToolTipString("Export the plate for slicing")
 		self.sizerBtn2.Add(self.bExport2Prep)
 		self.Bind(wx.EVT_BUTTON, self.doExport2Prep, self.bExport2Prep)
 		self.bExport2Prep.Enable(False)
@@ -252,6 +252,9 @@ class Plater(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Bind(EVT_WRITER_UPDATE, self.writerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
+		
+	def updateSlicerProfile(self, text):
+		self.bExport2Prep.SetToolTipString("Export the plate for slicing (%s)" % text)
 		
 	def setStatus(self, s):
 		self.status = s
