@@ -6,7 +6,19 @@ ZOOMDELTA = 0.1
 dk_Gray = wx.Colour(79, 79, 79)
 lt_Gray = wx.Colour(138, 138, 138)
 
-drawnColors = ["red", "orange", "yellow"]
+dcm = [
+		[ [255, 0, 0], [135, 0, 0] ],     # red family - for tool 0
+		[ [253, 111, 17], [72, 36, 15] ], # orange family - for tool 1
+		[ [253, 245, 30], [54, 54, 27] ]  # yellow family - for tool 2
+	]
+
+def drawnColor(tool, distance):
+	if distance > 100: 
+		return [dcm[tool][0][i] - dcm[tool][1][i] for i in range(3)]
+	else:	
+		return [dcm[tool][0][i] - distance * dcm[tool][1][i] / 100 for i in range(3)]
+
+
 undrawnColors = ["blue", "green", "cyan"]
 
 class GcmFrame (wx.Window):
@@ -320,7 +332,7 @@ class GcmFrame (wx.Window):
 				c = "white"
 
 		elif p[6] <= self.printPosition:
-			c = drawnColors[t]
+			c = drawnColor(t, self.printPosition - p[6])
 		else:
 			c = undrawnColors[t]
 					
