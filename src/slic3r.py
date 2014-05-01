@@ -366,8 +366,7 @@ class Slic3r:
 			dProfile.update(loadProfiles(self.parent.settings['filamentfile'], 
 					['extrusion_multiplier', 'filament_diameter', 'first_layer_temperature', 'temperature']))
 		if 'layer_height' in dProfile.keys() and 'filament_diameter' in dProfile.keys():
-			print "Slic3r get dimensions returns ", dProfile['layer_height'], dProfile['filament_diameter']					
-			return dProfile['layer_height'], dProfile['filament_diameter']
+			return dProfile['layer_height'], [float(x) for x in dProfile['filament_diameter'].split(',')]
 		else:
 			print "Unable to find dimension information in slicer profile files"
 			return None, None

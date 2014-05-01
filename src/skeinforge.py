@@ -158,7 +158,7 @@ class Skeinforge:
 		return "(" + str(self.vprofile) + ")"
 	
 	def getDimensionInfo(self):
-		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), "extrusion", str(self.vprofile))
+		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
 		try:
 			l = list(open(os.path.join(dr, "carve.csv")))
 			for s in l:
@@ -171,7 +171,6 @@ class Skeinforge:
 					fd = float(s[23:].strip())
 					break
 				
-			print "Skeinforge get dimensions returns ", lh, [fd]					
 			return lh, [fd]
 				
 		except:

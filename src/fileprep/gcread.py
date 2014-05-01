@@ -128,7 +128,7 @@ class Layer:
 		self.layernumber = ln
 		self.startlx = lx
 		self.lh = None
-		self.fd = None
+		self.frad = None
 		
 	def setDimensionInfo(self, lh, fd):
 		self.lh = lh
@@ -165,7 +165,7 @@ class Layer:
 				vol = ce * self.frad[tool]
 			else:
 				vol = (ce - self.currente) * self.frad[tool]
-			if dist != 0:
+			if dist != 0.0:
 				lw = vol/(dist * lh)
 			
 		cspeed = speed
@@ -343,6 +343,7 @@ class GCode(object):
 						self.currentheight = ln.z
 
 					lyr = Layer(cx, cy, self.currentheight, ce, self.currenttool, cf, prev=olyr, ln=lnbr, lx=lx)
+					lyr.setDimensionInfo(self.lh, self.fd)
 					self.layers.append(lyr)
 					self.layerlines.append([layerstartx, lx-1])
 					layerstartx = lx

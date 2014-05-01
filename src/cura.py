@@ -229,7 +229,7 @@ class Cura:
 	def getDimensionInfo(self):
 		try:
 			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
-			fn = os.path.join(d, str(self.vprofile))
+			fn = os.path.join(d, str(self.vprofile) + ".ini")
 			l = list(open(fn))
 			d0 = None
 			d1 = None
@@ -239,19 +239,19 @@ class Cura:
 				if s.startswith("layer_height ="):
 					lh = float(s[14:].strip())
 				elif s.startswith("filament_diameter ="):
-					dx = int(s[19:].strip())
+					dx = float(s[19:].strip())
 					if dx != 0:
 						d0 = dx
 				elif s.startswith("filament_diameter2 ="):
-					dx = int(s[20:].strip())
+					dx = float(s[20:].strip())
 					if dx != 0:
 						d1 = dx
 				elif s.startswith("filament_diameter3 ="):
-					dx = int(s[20:].strip())
+					dx = float(s[20:].strip())
 					if dx != 0:
 						d2 = dx
 				elif s.startswith("filament_diameter4 ="):
-					dx = int(s[20:].strip())
+					dx = float(s[20:].strip())
 					if dx != 0:
 						d3 = dx
 						
@@ -265,7 +265,6 @@ class Cura:
 						if d3:
 							fd.append(d3)
 	
-			print "Cura get dimensions returns ", lh, fd						
 			return lh, fd
 		
 		except:
