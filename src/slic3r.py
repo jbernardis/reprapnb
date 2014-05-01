@@ -358,6 +358,20 @@ class Slic3r:
 	def getConfigString(self):
 		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament) + ")"
 	
+	def getDimensionInfo(self):
+		dProfile = {}
+		if 'printfile' in self.parent.settings.keys():
+			dProfile.update(loadProfiles([self.parent.settings['printfile']], []))
+		if 'filamentfile' in self.parent.settings.keys():
+			dProfile.update(loadProfiles(self.parent.settings['filamentfile'], 
+					['extrusion_multiplier', 'filament_diameter', 'first_layer_temperature', 'temperature']))
+		if 'layer_height' in dProfile.keys() and 'filament_diameter' in dProfile.keys():
+			print "Slic3r get dimensions returns ", dProfile['layer_height'], dProfile['filament_diameter']					
+			return dProfile['layer_height'], dProfile['filament_diameter']
+		else:
+			print "Unable to find dimension information in slicer profile files"
+			return None, None
+	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"
 		

@@ -157,6 +157,27 @@ class Skeinforge:
 	def getConfigString(self):
 		return "(" + str(self.vprofile) + ")"
 	
+	def getDimensionInfo(self):
+		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), "extrusion", str(self.vprofile))
+		try:
+			l = list(open(os.path.join(dr, "carve.csv")))
+			for s in l:
+				if s.startswith("Layer Height (mm):"):
+					lh = float(s[18:].strip())
+					break
+			l = list(open(os.path.join(dr, "dimension.csv")))
+			for s in l:
+				if s.startswith("Filament Diameter (mm):"):
+					fd = float(s[23:].strip())
+					break
+				
+			print "Skeinforge get dimensions returns ", lh, [fd]					
+			return lh, [fd]
+				
+		except:
+			print "Unable to open skeinforge profile file for reading: " + dr
+			return None, None
+	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + "_export.gcode"
 		

@@ -1,12 +1,12 @@
 import math
 import re
 
+filrad = 1.5
+lh = 0.2
+
 from settings import MAX_EXTRUDERS
 
 gcRegex = re.compile("[-]?\d+[.]?\d*")
-
-def hypot3d(X1, Y1, Z1, X2=0.0, Y2=0.0, Z2=0.0): 
-	return math.hypot(X2-X1, math.hypot(Y2-Y1, Z2-Z1))
 
 class Line(object):
 	def __init__(self,l):
@@ -127,6 +127,12 @@ class Layer:
 		self.moves = []
 		self.layernumber = ln
 		self.startlx = lx
+		self.lh = None
+		self.fd = None
+		
+	def setDimensionInfo(self, lh, fd):
+		self.lh = lh
+		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		
 	def addMove(self, x=None, y=None, z=None, e=None,  tool=0, speed=None, relative=False, relative_e=False, line=0):
 		if x is None:
@@ -151,12 +157,22 @@ class Layer:
 			cz = z
 			
 		ce = e
+		lw = 0.5
+		
+		if ce is not None:		
+			dist = math.fabs(math.hypot(self.currentx - cx, self.currenty - cy))
+			if relative:
+				vol = ce * self.frad[tool]
+			else:
+				vol = (ce - self.currente) * self.frad[tool]
+			if dist != 0:
+				lw = vol/(dist * lh)
 			
 		cspeed = speed
 		if speed is None or speed == 0.0:
 			cspeed = self.currentspeed
 			
-		self.moves.append([cx, cy, cz, ce, tool, cspeed, line, False])
+		self.moves.append([cx, cy, cz, ce, tool, cspeed, line, False, lw])
 		
 		self.currentx = cx
 		self.currenty = cy
@@ -174,7 +190,7 @@ class Layer:
 		
 	def getLayerStart(self):
 		self.mx = -1
-		return (self.startx, self.starty, self.startz, self.starte, self.currenttool, self.startspeed, self.startlx, False)
+		return (self.startx, self.starty, self.startz, self.starte, self.currenttool, self.startspeed, self.startlx, False, 0.5)
 	
 	def getNextMove(self):
 		self.mx += 1
@@ -217,11 +233,13 @@ class Layer:
 			self.currenttool = tool
 		
 		self.moves.append([self.currentx, self.currenty, self.currentz,
-			self.currente, self.currenttool, self.currentspeed, line, True])
+			self.currente, self.currenttool, self.currentspeed, line, True, 0.5])
 					
 
 class GCode(object):
-	def __init__(self, data, acceleration=1500):
+	def __init__(self, data, lh, fd, acceleration=1500):
+		self.lh = lh
+		self.fd = fd
 		self.acceleration = acceleration
 		self.lines = []
 		
@@ -260,6 +278,7 @@ class GCode(object):
 		self.layerlines = []
 		
 		lyr = Layer(ln = lnbr, lx=0, tool=0)
+		lyr.setDimensionInfo(self.lh, self.fd)
 		self.currentheight = 0.0
 		self.layers.append(lyr)
 		

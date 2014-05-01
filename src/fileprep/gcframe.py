@@ -291,7 +291,7 @@ class GcFrame (wx.Window):
 				last_e = p[3]
 			else:
 				tool = p[4]
-				self.drawLine(dc, prev, p, last_e, tool, nn, background=background)
+				self.drawLine(dc, prev, p, last_e, tool, nn, p[8], background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -301,7 +301,7 @@ class GcFrame (wx.Window):
 			p = layer.getNextMove()
 			nn += 1
 
-	def drawLine(self, dc, prev, p, last_e, tool, ln, background=False):				
+	def drawLine(self, dc, prev, p, last_e, tool, ln, lw, background=False):				
 		if background and (p[3] is None):
 			return
 
@@ -311,28 +311,17 @@ class GcFrame (wx.Window):
 			
 		if background:
 			c = "gray"
-			w = 1.0
 			
 		elif p[3] is None or p[3] == 0:
 			if not self.settings.showmoves:
 				return
 			
 			c = "white"	
-			w = 1.0
 
 		else:
-			edist = p[3] - last_e
-			evolume = edist * 1.5 * 1.5 * 3.14159
-			dist = triangulate(prev, p)
-				
 			c = toolColor[t]
 
-			if dist == 0:
-				w = 1.0
-			else:				
-				w = evolume/dist * 10
-				
-			w = w * self.zoom
+		w = lw * self.zoom * self.scale
 				
 		if p[6] == self.hilite:
 			w = w * 3
@@ -347,11 +336,10 @@ class GcFrame (wx.Window):
 				dc.SetPen(wx.Pen("white", 1))
 				dc.DrawLine(x1, y1, x2, y2)
 				
-		if p[3] is not None and p[3] < prev[3]:
+		if p[3] is not None and p[3] < prev[3]: # retraction
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
 			dc.SetPen(wx.Pen("white", w))
 			dc.DrawLine(x1, y1, x1, y1)
-					
 
 	def transform(self, ptx, pty):
 		x = (ptx - self.offsetx + self.shiftX)*self.zoom*self.scale

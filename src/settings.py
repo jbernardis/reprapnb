@@ -133,6 +133,12 @@ class SlicerSettings:
 			return None
 		
 		return self.type.getConfigString()
+		
+	def getDimensionInfo(self):
+		if self.type is None:
+			return None
+		
+		return self.type.getDimensionInfo()
 	
 class PrinterSettings:
 	def __init__(self, name):

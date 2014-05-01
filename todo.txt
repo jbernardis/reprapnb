@@ -1,5 +1,6 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
+- need to test new logic for linw widths and retrieval of slicer dimension information
 
 
 
@@ -17,6 +18,7 @@ Need more info
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
+- allow override of certain slicing parameters from within host - layer height, support on/off, temperatures, etc
 
 Uncertain:
 - have links inside program to bring up tools - openscad, meshlab, netfabb, etc

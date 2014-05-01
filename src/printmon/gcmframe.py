@@ -321,7 +321,7 @@ class GcmFrame (wx.Window):
 				last_e = p[3]
 			else:
 				tool = p[4]
-				self.drawLine(dc, prev, p, last_e, tool, background=background)
+				self.drawLine(dc, prev, p, last_e, tool, p[8], background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -330,7 +330,7 @@ class GcmFrame (wx.Window):
 				
 			p = layer.getNextMove()
 
-	def drawLine(self, dc, prev, p, last_e, tool, background=False):				
+	def drawLine(self, dc, prev, p, last_e, tool, lw, background=False):				
 		if background and (p[3] is None):
 			return
 
@@ -354,7 +354,7 @@ class GcmFrame (wx.Window):
 		if background:
 			c = "dimgray"
 			
-		w = self.zoom
+		w = lw * self.zoom * self.scale
 
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])

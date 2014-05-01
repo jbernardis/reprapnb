@@ -226,6 +226,52 @@ class Cura:
 	def getConfigString(self):
 		return "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
 	
+	def getDimensionInfo(self):
+		try:
+			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
+			fn = os.path.join(d, str(self.vprofile))
+			l = list(open(fn))
+			d0 = None
+			d1 = None
+			d2 = None
+			d3 = None
+			for s in l:
+				if s.startswith("layer_height ="):
+					lh = float(s[14:].strip())
+				elif s.startswith("filament_diameter ="):
+					dx = int(s[19:].strip())
+					if dx != 0:
+						d0 = dx
+				elif s.startswith("filament_diameter2 ="):
+					dx = int(s[20:].strip())
+					if dx != 0:
+						d1 = dx
+				elif s.startswith("filament_diameter3 ="):
+					dx = int(s[20:].strip())
+					if dx != 0:
+						d2 = dx
+				elif s.startswith("filament_diameter4 ="):
+					dx = int(s[20:].strip())
+					if dx != 0:
+						d3 = dx
+						
+			fd = []
+			if d0:
+				fd.append(d0)
+				if d1:
+					fd.append(d1)
+					if d2:
+						fd.append(d2)
+						if d3:
+							fd.append(d3)
+	
+			print "Cura get dimensions returns ", lh, fd						
+			return lh, fd
+		
+		except:
+			print "Unable to open/parse cura profile file ", fn
+			return None, None
+	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"
 		

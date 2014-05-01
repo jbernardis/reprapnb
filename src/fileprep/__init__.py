@@ -149,10 +149,12 @@ MODELER_FINISHED = 2
 MODELER_CANCELLED = 3
 
 class ModelerThread:
-	def __init__(self, win, gcode, layer, acceleration):
+	def __init__(self, win, gcode, layer, lh, fd, acceleration):
 		self.win = win
 		self.gcode = gcode
 		self.layer = layer
+		self.lh = lh
+		self.fd = fd
 		self.acceleration = acceleration
 		self.running = False
 		self.cancelled = False
@@ -178,7 +180,7 @@ class ModelerThread:
 	def Run(self):
 		evt = ModelerEvent(msg = "Processing...", state = MODELER_RUNNING)
 		wx.PostEvent(self.win, evt)
-		self.model = GCode(self.gcode, self.acceleration)
+		self.model = GCode(self.gcode, self.lh, self.fd, self.acceleration)
 		evt = ModelerEvent(msg = None, state = MODELER_FINISHED)
 		wx.PostEvent(self.win, evt)	
 		self.running = False
@@ -198,6 +200,9 @@ class FilePrepare(wx.Panel):
 		self.dlgEdit = None
 		self.dlgMerge = None
 		self.dlgView = None
+		
+		self.lh = None
+		self.fd = None
 		
 		self.allowPulls = False
 
@@ -265,6 +270,7 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doSliceConfig, self.bSliceCfg)
 	
 		text = self.slicer.type.getConfigString()
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		w, h = dc.GetTextExtent("X" * MAXCFGCHARS)
 		w = int(0.75 * w)
 		self.tSlicerCfg = wx.StaticText(self, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
@@ -523,10 +529,12 @@ class FilePrepare(wx.Panel):
 		if self.slicer is None:
 			self.logger.LogError("Unable to get slicer settings") 
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():
 			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+			self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		
 	def stlView(self, evt):
 		self.dlgView = StlViewer(self)
@@ -570,7 +578,7 @@ class FilePrepare(wx.Panel):
 		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status)
-		self.modelerThread = ModelerThread(self, self.gcode, 0, self.settings.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, self.fd, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
@@ -772,7 +780,7 @@ class FilePrepare(wx.Panel):
 
 	def buildModel(self, layer=0):
 		self.exporting = False
-		self.modelerThread = ModelerThread(self, self.gcode, layer, self.settings.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, layer, self.lh, self.fd, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def getModelData(self, layer=0):
