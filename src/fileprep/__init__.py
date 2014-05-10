@@ -14,6 +14,7 @@ from stlmerge import StlMergeDlg
 from images import Images
 from tools import formatElapsed 
 from stlview import StlViewer
+from override import Override
 
 from reprap import MAX_EXTRUDERS
 
@@ -230,6 +231,8 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
 		self.sizerLeft.AddSpacer((20, 20))
+		self.sizerRight = wx.BoxSizer(wx.VERTICAL)
+		self.sizerRight.AddSpacer((20, 20))
 		
 		self.sizerSlice = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -506,7 +509,12 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeSource.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
-		self.sizerMain.Add(self.infoPane)
+		self.sizerRight.Add(self.infoPane)
+		
+		self.override = Override(self)
+		self.sizerRight.Add(self.override)
+		
+		self.sizerMain.Add(self.sizerRight)
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()
@@ -614,7 +622,7 @@ class FilePrepare(wx.Panel):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
-		ovr = {'layerheight': '0.25'}
+		ovr = self.override.getOverrides()
 		self.slicer.setOverrides(ovr)
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		cmd = self.slicer.buildSliceCommand()
