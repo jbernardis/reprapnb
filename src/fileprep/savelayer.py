@@ -96,7 +96,7 @@ class SaveLayerDlg(wx.Dialog):
 		lyr = self.model.firstLayer()
 		while lyr is not None:
 			lx += 1
-			l.append("%4d: %9.3f" % (lx, lyr.getLayerHeight()))
+			l.append("%4d: %9.3f" % (lx, lyr.getLayerZ()))
 			lyr = self.model.nextLayer()
 			
 		return l

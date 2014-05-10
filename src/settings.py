@@ -3,6 +3,8 @@ import os
 
 INIFILE = "reprap.ini"
 
+SAVE_SETTINGS_FILE = False
+
 BUTTONDIM = (48, 48)
 BUTTONDIMLG = (128, 64)
 BUTTONDIMWIDE = (96, 48)
@@ -106,11 +108,11 @@ class SlicerSettings:
 		
 		return self.type.buildSliceOutputFile(fn)
 	
-	def buildSliceCommand(self):
+	def buildSliceCommand(self, overrides):
 		if self.type is None:
 			return None
 		
-		return self.type.buildSliceCommand()
+		return self.type.buildSliceCommand(overrides)
 	
 	def sliceComplete(self):
 		if self.type is not None:

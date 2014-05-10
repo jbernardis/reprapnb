@@ -116,8 +116,9 @@ class Line(object):
 		return "G1" in self.raw or "G0" in self.raw
 
 class Layer:
-	def __init__(self, x=0, y=0, z=0, e=0, tool=0, speed=0, prev=None, ln=0, lx=0):
+	def __init__(self, model, x=0, y=0, z=0, e=0, tool=0, speed=0, prev=None, ln=0, lx=0):
 		self.prevLayer = prev
+		self.model = model
 		self.currentx = self.startx = x
 		self.currenty = self.starty = y
 		self.currentz = self.startz = z
@@ -127,12 +128,6 @@ class Layer:
 		self.moves = []
 		self.layernumber = ln
 		self.startlx = lx
-		self.lh = None
-		self.frad = None
-		
-	def setDimensionInfo(self, lh, fd):
-		self.lh = lh
-		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		
 	def addMove(self, x=None, y=None, z=None, e=None,  tool=0, speed=None, relative=False, relative_e=False, line=0):
 		if x is None:
@@ -162,11 +157,11 @@ class Layer:
 		if ce is not None:		
 			dist = math.fabs(math.hypot(self.currentx - cx, self.currenty - cy))
 			if relative:
-				vol = ce * self.frad[tool]
+				vol = ce * self.model.getFilamentRad(tool)
 			else:
-				vol = (ce - self.currente) * self.frad[tool]
+				vol = (ce - self.currente) * self.model.getFilamentRad(tool)
 			if dist != 0.0:
-				lw = vol/(dist * lh)
+				lw = vol/(dist * self.model.getLayerHeight())
 			
 		cspeed = speed
 		if speed is None or speed == 0.0:
@@ -182,7 +177,7 @@ class Layer:
 		self.currenttool = tool
 		self.currentspeed = cspeed
 		
-	def getLayerHeight(self):
+	def getLayerZ(self):
 		return self.startz
 	
 	def getLayerNumber(self):
@@ -239,7 +234,7 @@ class Layer:
 class GCode(object):
 	def __init__(self, data, lh, fd, acceleration=1500):
 		self.lh = lh
-		self.fd = fd
+		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		self.acceleration = acceleration
 		self.lines = []
 		
@@ -247,6 +242,12 @@ class GCode(object):
 			self.lines.append(Line(i))
 			
 		self.process()
+		
+	def getLayerHeight(self):
+		return self.lh
+	
+	def getFilamentRad(self, tool):
+		return self.frad[tool]
 		
 	def __iter__(self):
 		self.__lx__ = 0
@@ -277,8 +278,7 @@ class GCode(object):
 		self.layers = []
 		self.layerlines = []
 		
-		lyr = Layer(ln = lnbr, lx=0, tool=0)
-		lyr.setDimensionInfo(self.lh, self.fd)
+		lyr = Layer(self, ln = lnbr, lx=0, tool=0)
 		self.currentheight = 0.0
 		self.layers.append(lyr)
 		
@@ -342,8 +342,7 @@ class GCode(object):
 					else:
 						self.currentheight = ln.z
 
-					lyr = Layer(cx, cy, self.currentheight, ce, self.currenttool, cf, prev=olyr, ln=lnbr, lx=lx)
-					lyr.setDimensionInfo(self.lh, self.fd)
+					lyr = Layer(self, cx, cy, self.currentheight, ce, self.currenttool, cf, prev=olyr, ln=lnbr, lx=lx)
 					self.layers.append(lyr)
 					self.layerlines.append([layerstartx, lx-1])
 					layerstartx = lx
@@ -725,7 +724,7 @@ class GCode(object):
 				
 		self.layer_time.append(self.duration-layerbeginduration)
 		
-	def getLayerHeight(self, lx):
+	def getLayerZ(self, lx):
 		if lx < 0 or lx >= len(self.layer_e):
 			return None
 		

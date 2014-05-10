@@ -616,7 +616,8 @@ class FilePrepare(wx.Panel):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
-		cmd = self.slicer.buildSliceCommand()
+		ovr = {'layerheight': 0.25}
+		cmd = self.slicer.buildSliceCommand(ovr)
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
 		self.bOpen.Enable(False)

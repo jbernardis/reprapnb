@@ -1,9 +1,10 @@
 import os
 import wx
+import tempfile
 import shlex, subprocess
 import ConfigParser
 
-from settings import BUTTONDIM
+from settings import BUTTONDIM, SAVE_SETTINGS_FILE
 
 CBSIZE = 200
 PREFSECTION = 'preference'
@@ -141,6 +142,7 @@ class Cura:
 	def __init__(self, app, parent):
 		self.app = app
 		self.parent = parent
+		self.tempFile = None
 		
 	def fileTypes(self):
 		return "STL (*.stl)|*.stl;*.STL|" \
@@ -274,13 +276,34 @@ class Cura:
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"
 		
-	def buildSliceCommand(self):
+	def buildSliceCommand(self, overrides):
 		s = self.parent.settings['command']
-		self.parent.settings['configfile'] = self.profilemap[self.parent.settings['profile']]
+		
+		if len(overrides.keys()) > 0:
+			tfn = tempfile.NamedTemporaryFile(delete=False)
+			fn = self.profilemap[self.parent.settings['profile']]
+			l = list(open(fn))
+			for s in l:
+				if s.startswith("layer_height = "):
+					if 'layerheight' in overrides.keys():
+						ns = "layer height = " + str(overrides['layerheight'])
+					else:
+						ns = s.rstrip()
+				tfn.write(ns + "\n")
+			
+			tfn.close()
+			self.tempFile = tfn.name
+			self.parent.settings['configfile'] = tfn.name
+		else:
+			self.parent.settings['configfile'] = self.profilemap[self.parent.settings['profile']]
+			
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
 	def sliceComplete(self):
-		pass
+		if self.tempFile is not None and not SAVE_SETTINGS_FILE:
+			os.unlink(self.tempFile)
+		self.tempFile = None
+		del self.parent.settings['configfile']
 			
 	def getProfileOptions(self):
 		self.profilemap = {}

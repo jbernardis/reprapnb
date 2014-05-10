@@ -6,6 +6,37 @@ from settings import BUTTONDIM
 
 CBSIZE = 200
 
+def modifyCSV(fn, ovr):
+	try:
+		os.unlink(fn + ".save")
+	except:
+		pass
+	
+	os.rename(fn, fn + ".save")
+	
+	fpCsv = list(open(fn + ".save"))
+	fpNew = open(fn, "w")
+	
+	for s in fpCsv:
+		if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
+			ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
+		else:
+			ns = s.rstrip()
+			
+		fpNew.write(ns + "\n")
+		
+	fpNew.close()
+	
+	
+def restoreCSV(fn):
+	if os.path.exists(fn + ".save"):
+		try:
+			os.unlink(fn)
+		except:
+			pass
+		
+		os.rename(fn + ".save", fn)
+
 class SkeinforgeCfgDialog(wx.Dialog):
 	def __init__(self, slicer):
 		self.slicer = slicer
@@ -113,6 +144,8 @@ class Skeinforge:
 	def __init__(self, app, parent):
 		self.app = app
 		self.parent = parent
+		self.proFiles = ["carve.csv"]
+
 		
 	def fileTypes(self):
 		return "STL (*.stl)|*.stl;*.STL"
@@ -180,12 +213,22 @@ class Skeinforge:
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + "_export.gcode"
 		
-	def buildSliceCommand(self):
+	def buildSliceCommand(self, overrides):
 		s = self.parent.settings['command']
+		self.doOverride = False
+		if len(overrides.keys() > 0):
+			self.doOverride = True
+			dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
+			for f in self.proFiles:
+				modifyCSV(os.path.join(dr, f), overrides)
+			
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
 	def sliceComplete(self):
-		pass
+		if self.doOverride:
+			dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
+			for f in self.proFiles:
+				restoreCSV(os.path.join(dr, f))
 	
 	def loadProfile(self):
 		profile = None
