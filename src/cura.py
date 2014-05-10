@@ -142,6 +142,7 @@ class Cura:
 	def __init__(self, app, parent):
 		self.app = app
 		self.parent = parent
+		self.overrides = {}
 		self.tempFile = None
 		
 	def fileTypes(self):
@@ -275,28 +276,34 @@ class Cura:
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"
+	
+	def setOverrides(self, ovr):
+		self.overrides = ovr.copy()
 		
-	def buildSliceCommand(self, overrides):
+	def buildSliceCommand(self):
 		s = self.parent.settings['command']
 		
-		if len(overrides.keys()) > 0:
-			tfn = tempfile.NamedTemporaryFile(delete=False)
+		if len(self.overrides.keys()) > 0:
+			tfn = tempfile.NamedTemporaryFile(delete=False, suffix=".ini")
 			fn = self.profilemap[self.parent.settings['profile']]
-			l = list(open(fn))
-			for s in l:
-				if s.startswith("layer_height = "):
-					if 'layerheight' in overrides.keys():
-						ns = "layer height = " + str(overrides['layerheight'])
+			ll = list(open(fn))
+			for l in ll:
+				if l.startswith("layer_height = "):
+					if 'layerheight' in self.overrides.keys():
+						nl = "layer_height = " + str(self.overrides['layerheight']) + "\n"
 					else:
-						ns = s.rstrip()
-				tfn.write(ns + "\n")
+						nl = l.rstrip() + "\n"
+				else:
+					nl = l
+
+				tfn.write(nl)
 			
 			tfn.close()
 			self.tempFile = tfn.name
 			self.parent.settings['configfile'] = tfn.name
 		else:
 			self.parent.settings['configfile'] = self.profilemap[self.parent.settings['profile']]
-			
+
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
 	def sliceComplete(self):

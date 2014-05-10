@@ -108,11 +108,17 @@ class SlicerSettings:
 		
 		return self.type.buildSliceOutputFile(fn)
 	
-	def buildSliceCommand(self, overrides):
+	def setOverrides(self, overrides):
 		if self.type is None:
 			return None
 		
-		return self.type.buildSliceCommand(overrides)
+		return self.type.setOverrides(overrides)
+	
+	def buildSliceCommand(self):
+		if self.type is None:
+			return None
+		
+		return self.type.buildSliceCommand()
 	
 	def sliceComplete(self):
 		if self.type is not None:

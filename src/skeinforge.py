@@ -144,6 +144,7 @@ class Skeinforge:
 	def __init__(self, app, parent):
 		self.app = app
 		self.parent = parent
+		self.overrides = {}
 		self.proFiles = ["carve.csv"]
 
 		
@@ -212,15 +213,18 @@ class Skeinforge:
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + "_export.gcode"
+
+	def setOverrides(self, ovr):
+		self.overrides = ovr.copy()
 		
-	def buildSliceCommand(self, overrides):
+	def buildSliceCommand(self):
 		s = self.parent.settings['command']
 		self.doOverride = False
-		if len(overrides.keys() > 0):
+		if len(self.overrides.keys()) > 0:
 			self.doOverride = True
 			dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
 			for f in self.proFiles:
-				modifyCSV(os.path.join(dr, f), overrides)
+				modifyCSV(os.path.join(dr, f), self.overrides)
 			
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
 	
