@@ -293,6 +293,22 @@ class Cura:
 						nl = "layer_height = " + str(self.overrides['layerheight']) + "\n"
 					else:
 						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("print_bed_temperature = "):
+					if 'bedtemperature' in self.overrides.keys():
+						nl = "print_bed_temperature = " + str(self.overrides['bedtemperature']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("skirt_line_count = "):
+					if 'skirt' in self.overrides.keys():
+						skv = 0
+						if self.overrides['skirt'] == 'True':
+							skv = 1
+						nl = "skirt_line_count = " + skv + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
 				else:
 					nl = l
 

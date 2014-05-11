@@ -6,6 +6,9 @@ from settings import BUTTONDIM
 
 CBSIZE = 200
 
+
+proFiles = ["carve.csv", "skirt.csv", "chamber.csv"]
+
 def modifyCSV(fn, ovr):
 	try:
 		os.unlink(fn + ".save")
@@ -20,6 +23,12 @@ def modifyCSV(fn, ovr):
 	for s in fpCsv:
 		if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
 			ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
+		elif s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
+			ns = "Activate Skirt\t"+str(ovr['skirt'])
+		elif s.startswith("Bed Temperature (Celcius):") and 'layer1bedtemperature' in ovr.keys():
+			ns = "Bed Temperature (Celcius):\t"+str(ovr['layer1bedtemperature'])
+		elif s.startswith("Bed Temperature End (Celcius):") and 'bedtemperature' in ovr.keys():
+			ns = "Bed Temperature End (Celcius):\t"+str(ovr['bedtemperature'])
 		else:
 			ns = s.rstrip()
 			
@@ -145,7 +154,6 @@ class Skeinforge:
 		self.app = app
 		self.parent = parent
 		self.overrides = {}
-		self.proFiles = ["carve.csv"]
 
 		
 	def fileTypes(self):
@@ -223,7 +231,7 @@ class Skeinforge:
 		if len(self.overrides.keys()) > 0:
 			self.doOverride = True
 			dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
-			for f in self.proFiles:
+			for f in proFiles:
 				modifyCSV(os.path.join(dr, f), self.overrides)
 			
 		return os.path.expandvars(os.path.expanduser(self.app.replace(s)))
@@ -231,7 +239,7 @@ class Skeinforge:
 	def sliceComplete(self):
 		if self.doOverride:
 			dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
-			for f in self.proFiles:
+			for f in proFiles:
 				restoreCSV(os.path.join(dr, f))
 	
 	def loadProfile(self):
