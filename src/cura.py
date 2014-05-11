@@ -305,7 +305,7 @@ class Cura:
 						skv = 0
 						if self.overrides['skirt'] == 'True':
 							skv = 1
-						nl = "skirt_line_count = " + skv + "\n"
+						nl = "skirt_line_count = %d\n" % skv
 					else:
 						nl = l.rstrip() + "\n"
 						

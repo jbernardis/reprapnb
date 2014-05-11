@@ -510,6 +510,7 @@ class FilePrepare(wx.Panel):
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
 		self.sizerRight.Add(self.infoPane)
+		self.sizerRight.AddSpacer((10, 10))
 		
 		self.override = Override(self)
 		self.sizerRight.Add(self.override)
