@@ -306,15 +306,18 @@ class Cura:
 					else:
 						nl = l.rstrip() + "\n"
 						
-				elif l.startswith("print_bed_temperature"):
+				elif l.startswith("print_temperature"):
 					if tempOver:
 						try:
-							ix = int(l[21]) - 1
-							prefix = l[:25]
+							ix = int(l[17]) - 1
+							prefix = l[:21]
 						except:
 							ix = 0
-							prefix = l[:24]
-						nl = prefix + temps[ix] + "\n"
+							prefix = l[:20]
+						if ix < len(temps):
+							nl = prefix + temps[ix] + "\n"
+						else:
+							nl = l.rstrip() + "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
