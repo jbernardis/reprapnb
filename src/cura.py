@@ -287,6 +287,12 @@ class Cura:
 			tfn = tempfile.NamedTemporaryFile(delete=False, suffix=".ini")
 			fn = self.profilemap[self.parent.settings['profile']]
 			ll = list(open(fn))
+	
+			tempOver = False		
+			if 'temperature' in self.overrides.keys():
+				tempOver = True
+				temps = self.overrides['temperature'].split(',')
+				
 			for l in ll:
 				if l.startswith("layer_height = "):
 					if 'layerheight' in self.overrides.keys():
@@ -297,6 +303,18 @@ class Cura:
 				elif l.startswith("print_bed_temperature = "):
 					if 'bedtemperature' in self.overrides.keys():
 						nl = "print_bed_temperature = " + str(self.overrides['bedtemperature']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("print_bed_temperature"):
+					if tempOver:
+						try:
+							ix = int(l[21]) - 1
+							prefix = l[:25]
+						except:
+							ix = 0
+							prefix = l[:24]
+						nl = prefix + temps[ix] + "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						

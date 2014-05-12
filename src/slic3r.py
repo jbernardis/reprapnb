@@ -404,10 +404,17 @@ class Slic3r:
 		for k in self.overrides.keys():
 			if k == 'layerheight':
 				dProfile['layer_height'] = self.overrides[k]
+				
 			elif k == 'bedtemperature':
 				dProfile['bed_temperature'] = self.overrides[k]
 			elif k == 'layer1bedtemperature':
 				dProfile['first_layer_bed_temperature'] = self.overrides[k]
+				
+			elif k == 'temperature':
+				dProfile['temperature'] = self.overrides[k]
+			elif k == 'layer1temperature':
+				dProfile['first_layer_temperature'] = self.overrides[k]
+				
 			elif k == 'skirt':
 				if self.overrides[k] == "True":
 					dProfile['skirts'] = '2'

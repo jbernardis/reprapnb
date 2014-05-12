@@ -7,7 +7,7 @@ from settings import BUTTONDIM
 CBSIZE = 200
 
 
-proFiles = ["carve.csv", "skirt.csv", "chamber.csv"]
+proFiles = ["carve.csv", "skirt.csv", "chamber.csv", "temperature.csv"]
 
 def modifyCSV(fn, ovr):
 	try:
@@ -23,12 +23,21 @@ def modifyCSV(fn, ovr):
 	for s in fpCsv:
 		if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
 			ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
-		elif s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
-			ns = "Activate Skirt\t"+str(ovr['skirt'])
+			
 		elif s.startswith("Bed Temperature (Celcius):") and 'layer1bedtemperature' in ovr.keys():
 			ns = "Bed Temperature (Celcius):\t"+str(ovr['layer1bedtemperature'])
 		elif s.startswith("Bed Temperature End (Celcius):") and 'bedtemperature' in ovr.keys():
 			ns = "Bed Temperature End (Celcius):\t"+str(ovr['bedtemperature'])
+			
+		elif s.startswith("Object Next Layers Temperature (Celcius):") and 'temperature' in ovr.keys():
+			ns = "Object Next Layers Temperature (Celcius):\t"+str(ovr['temperature']).split(',')[0]
+		elif s.startswith("Object First Layer Infill Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
+			ns = "Object First Layer Infill Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+		elif s.startswith("Object First Layer Perimeter Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
+			ns = "Object First Layer Perimeter Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+			
+		elif s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
+			ns = "Activate Skirt\t"+str(ovr['skirt'])
 		else:
 			ns = s.rstrip()
 			
