@@ -57,6 +57,30 @@ class Override(wx.Panel):
 		bgrid.Add(self.teOvTmp, pos=(ln,3))
 		
 		ln += 1
+		self.cbOvPrSpd = wx.CheckBox(self, wx.ID_ANY, "Print Speed")
+		self.Bind(wx.EVT_CHECKBOX, self.checkOvPrSpd, self.cbOvPrSpd)
+		bgrid.Add(self.cbOvPrSpd, pos=(ln, 1))
+		self.teOvPrSpd = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
+		self.teOvPrSpd.Enable(False)
+		bgrid.Add(self.teOvPrSpd, pos=(ln,3))
+		
+		ln += 1
+		self.cbOvTrSpd = wx.CheckBox(self, wx.ID_ANY, "Travel Speed")
+		self.Bind(wx.EVT_CHECKBOX, self.checkTrSpd, self.cbOvTrSpd)
+		bgrid.Add(self.cbOvTrSpd, pos=(ln, 1))
+		self.teOvTrSpd = wx.TextCtrl(self, wx.ID_ANY, "120", style=wx.TE_RIGHT)
+		self.teOvTrSpd.Enable(False)
+		bgrid.Add(self.teOvTrSpd, pos=(ln,3))
+		
+		ln += 1
+		self.cbOvPr1Spd = wx.CheckBox(self, wx.ID_ANY, "First Layer Speed")
+		self.Bind(wx.EVT_CHECKBOX, self.checkPr1Spd, self.cbOvPr1Spd)
+		bgrid.Add(self.cbOvPr1Spd, pos=(ln, 1))
+		self.teOvPr1Spd = wx.TextCtrl(self, wx.ID_ANY, "30", style=wx.TE_RIGHT)
+		self.teOvPr1Spd.Enable(False)
+		bgrid.Add(self.teOvPr1Spd, pos=(ln,3))
+		
+		ln += 1
 		self.cbOvSkt = wx.CheckBox(self, wx.ID_ANY, "Skirt")
 		self.Bind(wx.EVT_CHECKBOX, self.checkSkt, self.cbOvSkt)
 		bgrid.Add(self.cbOvSkt, pos=(ln, 1))
@@ -102,6 +126,24 @@ class Override(wx.Panel):
 		else:
 			self.teOvTmp.Enable(False)
 		
+	def checkPrSpd(self, evt):
+		if self.cbOvPrSpd.IsChecked():
+			self.teOvPrSpd.Enable(True)
+		else:
+			self.teOvPrSpd.Enable(False)
+		
+	def checkTrSpd(self, evt):
+		if self.cbOvTrSpd.IsChecked():
+			self.teOvTrSpd.Enable(True)
+		else:
+			self.teOvTrSpd.Enable(False)
+		
+	def checkPr1Spd(self, evt):
+		if self.cbOvPr1Spd.IsChecked():
+			self.teOvPr1Spd.Enable(True)
+		else:
+			self.teOvPr1Spd.Enable(False)
+		
 	def checkSkt(self, evt):
 		if self.cbOvSkt.IsChecked():
 			self.teOvSkt.Enable(True)
@@ -129,6 +171,18 @@ class Override(wx.Panel):
 		if self.cbOvTmp.IsChecked():
 			r['temperature'] = self.teOvTmp.GetValue()
 			self.logger.LogMessage("Overriding temperature to: %s" % r['temperature'])
+			
+		if self.cbOvPrSpd.IsChecked():
+			r['printspeed'] = self.teOvPrSpd.GetValue()
+			self.logger.LogMessage("Overriding print speed to: %s" % r['printspeed'])
+			
+		if self.cbOvTrSpd.IsChecked():
+			r['travelspeed'] = self.teOvTrSpr.GetValue()
+			self.logger.LogMessage("Overriding travel speed to: %s" % r['travelspeed'])
+			
+		if self.cbOvPr1Spd.IsChecked():
+			r['print1speed'] = self.teOvPr1Spd.GetValue()
+			self.logger.LogMessage("Overriding first layer print speed to: %s" % r['print1speed'])
 			
 		if self.cbOvSkt.IsChecked():
 			if self.teOvSkt.IsChecked():

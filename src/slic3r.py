@@ -410,6 +410,15 @@ class Slic3r:
 			elif k == 'layer1bedtemperature':
 				dProfile['first_layer_bed_temperature'] = self.overrides[k]
 				
+			elif k == 'printspeed':
+				dProfile['perimeter_speed'] = self.overrides[k]
+				dProfile['infill_speed'] = self.overrides[k]
+				dProfile['solid_infill_speed'] = self.overrides[k]
+			elif k == 'print1speed':
+				dProfile['first_layer_speed'] = self.overrides[k]
+			elif k == 'travelspeed':
+				dProfile['travel_speed'] = self.overrides[k]
+				
 			elif k == 'temperature':
 				dProfile['temperature'] = self.overrides[k]
 			elif k == 'layer1temperature':

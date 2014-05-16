@@ -330,6 +330,24 @@ class Cura:
 					else:
 						nl = l.rstrip() + "\n"
 						
+				elif l.startswith("print_speed = "):
+					if 'printspeed' in self.overrides.keys():
+						nl = "print_speed = " + str(self.overrides['printspeed']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("travel_speed = "):
+					if 'travelspeed' in self.overrides.keys():
+						nl = "travel_speed = " + str(self.overrides['travelspeed']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("bottom_layer_speed = "):
+					if 'print1speed' in self.overrides.keys():
+						nl = "bottom_layer_speed = " + str(self.overrides['print1speed']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
 				else:
 					nl = l
 

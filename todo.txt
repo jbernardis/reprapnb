@@ -18,13 +18,87 @@ Need more info
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
-- fix print sync to allow me to browse file without first having to uncheck - sync switched layers only if the current dislayed layer is the one just being finished up
+- fix print sync to allow me to browse file without first having to uncheck - sync switched layers only if the current displayed layer is the one just being finished up
+- will need a button to take us to the print position
 
 Uncertain:
 - have links inside program to bring up tools - openscad, meshlab, netfabb, etc
 
 
 
+NOtes for remaining override fields:
+
+Support on/off
+
+Cura:
+	support = None (other values?)
+
+Slic3r:
+	print: support_material = 0 (other values?)
+
+SKF:
+	raft: ????
+
+
+
+Raft/Brim:
+
+Cura:
+	platform_adhesion = None (other values)
+
+Slic3r:
+	print: brim_width = n
+	print: raft_layers = n
+
+SKF:
+	raft: Base Layers (integer):	n
+	raft: Interface Layers (integer):	n
+	skirt: Brim Width:	n
+
+
+
+Infill %
+
+Cura:
+	fill_density = 40
+	extrusion width?????
+
+Slic3r:
+	print: fill_density = 0.4
+	print: extrusion_width = 0
+
+SKF:
+	inset: Infill Width over Thickness (ratio):	2.8
+	carve: Edge Width over Height (ratio):	2.8
+	fill: Infill Solidity (ratio):	0.4
+
+
+
+Speeds:
+
+Cura:
+	print_speed = 50
+	travel_speed = 150.0
+	bottom_layer_speed = 20
+	infill_speed = 0.0
+
+Slic3r:
+	print: external_perimeter_speed = 70%
+	first_layer_speed = 60%
+	infill_speed = 60
+	perimeter_speed = 30
+	solid_infill_speed = 60
+	travel_speed = 130
+
+SKF:	speed: Feed Rate (mm/s):	60.0
+	Flow Rate Setting (float):	60.0
+	Object First Layer Feed Rate Infill Multiplier (ratio):	0.6
+	Object First Layer Feed Rate Perimeter Multiplier (ratio):	0.6
+	Object First Layer Flow Rate Infill Multiplier (ratio):	0.6
+	Object First Layer Flow Rate Perimeter Multiplier (ratio):	0.6
+	Perimeter Feed Rate Multiplier (ratio):	0.8
+	Perimeter Flow Rate Multiplier (ratio):	0.8
+	Travel Feed Rate (mm/s):	130.0
 
 
 

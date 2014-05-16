@@ -7,7 +7,10 @@ from settings import BUTTONDIM
 CBSIZE = 200
 
 
-proFiles = ["carve.csv", "skirt.csv", "chamber.csv", "temperature.csv"]
+proFiles = ["carve.csv", "skirt.csv", "chamber.csv", "temperature.csv", "speed.csv"]
+
+def intersection(a, b):
+	return len([val for val in a if val in b]) != 0
 
 def modifyCSV(fn, ovr):
 	try:
@@ -15,35 +18,102 @@ def modifyCSV(fn, ovr):
 	except:
 		pass
 	
-	os.rename(fn, fn + ".save")
+	bfn = os.path.basename(fn)
 	
-	fpCsv = list(open(fn + ".save"))
-	fpNew = open(fn, "w")
-	
-	for s in fpCsv:
-		if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
-			ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
-			
-		elif s.startswith("Bed Temperature (Celcius):") and 'layer1bedtemperature' in ovr.keys():
-			ns = "Bed Temperature (Celcius):\t"+str(ovr['layer1bedtemperature'])
-		elif s.startswith("Bed Temperature End (Celcius):") and 'bedtemperature' in ovr.keys():
-			ns = "Bed Temperature End (Celcius):\t"+str(ovr['bedtemperature'])
-			
-		elif s.startswith("Object Next Layers Temperature (Celcius):") and 'temperature' in ovr.keys():
-			ns = "Object Next Layers Temperature (Celcius):\t"+str(ovr['temperature']).split(',')[0]
-		elif s.startswith("Object First Layer Infill Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
-			ns = "Object First Layer Infill Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
-		elif s.startswith("Object First Layer Perimeter Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
-			ns = "Object First Layer Perimeter Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
-			
-		elif s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
-			ns = "Activate Skirt\t"+str(ovr['skirt'])
-		else:
-			ns = s.rstrip()
-			
-		fpNew.write(ns + "\n")
+	if bfn == "carve.csv" and 'layerheight' in ovr.keys():
+		os.rename(fn, fn + ".save")
+		fpCsv = list(open(fn + ".save"))
+		fpNew = open(fn, "w")
+		for s in fpCsv:
+			if s.startswith("Layer Height (mm):"):
+				ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
+			else:
+				ns = s.rstrip()
+			fpNew.write(ns + "\n")
 		
-	fpNew.close()
+		fpNew.close()
+			
+	elif bfn == "chamber.csv" and intersection(['layer1bedtemperature', 'bedtemperature'], ovr.keys()):
+		os.rename(fn, fn + ".save")
+		fpCsv = list(open(fn + ".save"))
+		fpNew = open(fn, "w")
+		for s in fpCsv:
+			if s.startswith("Bed Temperature (Celcius):") and 'layer1bedtemperature' in ovr.keys():
+				ns = "Bed Temperature (Celcius):\t"+str(ovr['layer1bedtemperature'])
+				
+			elif s.startswith("Bed Temperature End (Celcius):") and 'bedtemperature' in ovr.keys():
+				ns = "Bed Temperature End (Celcius):\t"+str(ovr['bedtemperature'])
+			else:
+				ns = s.rstrip()
+			fpNew.write(ns + "\n")
+		
+		fpNew.close()
+
+	elif bfn == "temperature.csv" and intersection(['layer1temperature', 'temperature'], ovr.keys()):			
+		os.rename(fn, fn + ".save")
+		fpCsv = list(open(fn + ".save"))
+		fpNew = open(fn, "w")
+		for s in fpCsv:
+			if s.startswith("Object Next Layers Temperature (Celcius):") and 'temperature' in ovr.keys():
+				ns = "Object Next Layers Temperature (Celcius):\t"+str(ovr['temperature']).split(',')[0]
+				
+			elif s.startswith("Object First Layer Infill Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
+				ns = "Object First Layer Infill Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+			elif s.startswith("Object First Layer Perimeter Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
+				ns = "Object First Layer Perimeter Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+			else:
+				ns = s.rstrip()
+			fpNew.write(ns + "\n")
+		
+		fpNew.close()
+	
+	elif bfn == "speed.csv" and intersection(['printspeed', 'travelspeed', 'print1speed'], ovr.keys()):		
+		os.rename(fn, fn + ".save")
+		if 'print1speed' in ovr.keys:
+			p1 = ovr['print1speed'].strip()
+			if p1.endswith('%'):
+				try:
+					p1 = str(float(p1[:-1])/100.0)
+				except:
+					p1 = "1.0"
+		fpCsv = list(open(fn + ".save"))
+		fpNew = open(fn, "w")
+		for s in fpCsv:
+			if s.startswith("Feed Rate (mm/s):") and 'printspeed' in ovr.keys():
+				ns = "Feed Rate (mm/s):\t"+str(ovr['printspeed'])
+			elif s.startswith("Flow Rate Setting (float):") and 'printspeed' in ovr.keys():
+				ns = "Flow Rate Setting (float):\t"+str(ovr['printspeed'])
+				
+			elif s.startswith("Travel Feed Rate (mm/s):") and 'travelspeed' in ovr.keys():
+				ns = "Travel Feed Rate (mm/s):\t"+str(ovr['travel1speed'])
+				
+			elif s.startswith("Object First Layer Feed Rate Infill Multiplier (ratio):") and 'print1speed' in ovr.keys():
+				ns = "Object First Layer Feed Rate Infill Multiplier (ratio):\t"+p1
+			elif s.startswith("Object First Layer Feed Rate Perimeter Multiplier (ratio):") and 'print1speed' in ovr.keys():
+				ns = "Object First Layer Feed Rate Perimeter Multiplier (ratio):\t"+p1
+			elif s.startswith("Object First Layer Flow Rate Infill Multiplier (ratio):") and 'print1speed' in ovr.keys():
+				ns = "Object First Layer Flow Rate Infill Multiplier (ratio):\t"+p1
+			elif s.startswith("Object First Layer Flow Rate Perimeter Multiplier (ratio):") and 'print1speed' in ovr.keys():
+				ns = "Object First Layer Flow Rate Perimeter Multiplier (ratio):\t"+p1
+			else:
+				ns = s.rstrip()
+			fpNew.write(ns + "\n")
+		
+		fpNew.close()
+			
+	elif bfn == "skirt.csv" and 'skirt' in ovr.keys():		
+		os.rename(fn, fn + ".save")
+		fpCsv = list(open(fn + ".save"))
+		fpNew = open(fn, "w")
+		for s in fpCsv:
+			if s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
+				ns = "Activate Skirt\t"+str(ovr['skirt'])
+			else:
+				ns = s.rstrip()
+			
+			fpNew.write(ns + "\n")
+		
+		fpNew.close()
 	
 	
 def restoreCSV(fn):
