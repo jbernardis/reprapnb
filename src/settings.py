@@ -108,6 +108,12 @@ class SlicerSettings:
 		
 		return self.type.buildSliceOutputFile(fn)
 	
+	def setLogger(self, logger):
+		if self.type is None:
+			return None
+		
+		return self.type.setLogger(logger)
+	
 	def setOverrides(self, overrides):
 		if self.type is None:
 			return None
@@ -141,6 +147,9 @@ class SlicerSettings:
 			return None
 		
 		return self.type.getConfigString()
+	
+	def getSlicerName(self):
+		return self.name
 		
 	def getDimensionInfo(self):
 		if self.type is None:
@@ -442,6 +451,10 @@ class SettingsFilePrep:
 
 	def setModified(self):
 		self.modified = True
+		
+	def setLoggers(self, logger):
+		for s in self.slicersettings:
+			s.setLogger(logger)
 		
 	def checkModified(self):
 		for s in self.slicersettings:

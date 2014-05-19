@@ -144,6 +144,16 @@ class Cura:
 		self.parent = parent
 		self.overrides = {}
 		self.tempFile = None
+		self.logger = None
+
+	def setLogger(self, logger):
+		self.logger = logger
+		
+	def log(self, msg):
+		if self.logger:
+			self.logger.LogMessage(msg)
+		else:
+			print msg
 		
 	def fileTypes(self):
 		return "STL (*.stl)|*.stl;*.STL|" \
@@ -158,7 +168,7 @@ class Cura:
 		self.prefs.optionxform = str
 		self.prefFile = self.parent.settings['curapreferences']
 		if not self.prefs.read(self.prefFile):
-			print "Cura preferences file %s does not exist.  Using default values" % self.prefFile
+			self.log("Cura preferences file %s does not exist.  Using default values" % self.prefFile)
 		
 	def initialize(self, flag=False):
 		if flag:
@@ -221,7 +231,7 @@ class Cura:
 		try:		
 			cfp = open(self.prefFile, 'wb')
 		except:
-			print "Unable to open Cura preferences file %s for writing" % self.prefFile
+			self.log("Unable to open Cura preferences file %s for writing" % self.prefFile)
 			return
 		self.prefs.write(cfp)
 		cfp.close()
@@ -271,7 +281,7 @@ class Cura:
 			return lh, fd
 		
 		except:
-			print "Unable to open/parse cura profile file ", fn
+			self.log("Unable to open/parse cura profile file ", fn)
 			return None, None
 	
 	def buildSliceOutputFile(self, fn):
@@ -373,7 +383,7 @@ class Cura:
 			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
 			l = os.listdir(d)
 		except:
-			print "Unable to get listing from cura profile directory: " + self.parent.settings['profiledir']
+			self.log("Unable to get listing from cura profile directory: " + self.parent.settings['profiledir'])
 			return {}
 		r = {}
 		for f in sorted(l):

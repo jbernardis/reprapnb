@@ -217,6 +217,8 @@ class FilePrepare(wx.Panel):
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
 			print "Unable to get slicer settings"
+			
+		self.settings.setLoggers(self.logger)
 					
 		self.buildarea = app.settings.buildarea
 			
@@ -522,7 +524,7 @@ class FilePrepare(wx.Panel):
 		self.Fit()
 		
 	def getSlicerConfigString(self):
-		return self.slicer.type.getConfigString()
+		return self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
 		
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:

@@ -23,7 +23,8 @@ Larger effort
 
 Uncertain:
 - have links inside program to bring up tools - openscad, meshlab, netfabb, etc
-
+- look into Cura's low time estimates (traysnwalls - lip on tray is a good candidate object)
+- over-ride logic - protect better against csv files being deleted
 
 
 NOtes for remaining override fields:
@@ -73,32 +74,6 @@ SKF:
 	fill: Infill Solidity (ratio):	0.4
 
 
-
-Speeds:
-
-Cura:
-	print_speed = 50
-	travel_speed = 150.0
-	bottom_layer_speed = 20
-	infill_speed = 0.0
-
-Slic3r:
-	print: external_perimeter_speed = 70%
-	first_layer_speed = 60%
-	infill_speed = 60
-	perimeter_speed = 30
-	solid_infill_speed = 60
-	travel_speed = 130
-
-SKF:	speed: Feed Rate (mm/s):	60.0
-	Flow Rate Setting (float):	60.0
-	Object First Layer Feed Rate Infill Multiplier (ratio):	0.6
-	Object First Layer Feed Rate Perimeter Multiplier (ratio):	0.6
-	Object First Layer Flow Rate Infill Multiplier (ratio):	0.6
-	Object First Layer Flow Rate Perimeter Multiplier (ratio):	0.6
-	Perimeter Feed Rate Multiplier (ratio):	0.8
-	Perimeter Flow Rate Multiplier (ratio):	0.8
-	Travel Feed Rate (mm/s):	130.0
 
 
 

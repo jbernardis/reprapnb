@@ -256,7 +256,17 @@ class Slic3r:
 		self.app = app
 		self.parent = parent
 		self.overrides = {}
+		self.logger = None
+
+	def setLogger(self, logger):
+		self.logger = logger
 		
+	def log(self, msg):
+		if self.logger:
+			self.logger.LogMessage(msg)
+		else:
+			print msg
+
 	def fileTypes(self):
 		return "all (*stl, *amf.xml)|*.stl;*.STL;*.amf.xml;*.AMF.XML|" \
 			"STL (*.stl)|*.stl;*.STL|" \
@@ -370,7 +380,7 @@ class Slic3r:
 		if 'layer_height' in dProfile.keys() and 'filament_diameter' in dProfile.keys():
 			return float(dProfile['layer_height']), [float(x) for x in dProfile['filament_diameter'].split(',')]
 		else:
-			print "Unable to find dimension information in slicer profile files"
+			self.log("Unable to find dimension information in slicer profile files")
 			return None, None
 	
 	def buildSliceOutputFile(self, fn):
@@ -451,7 +461,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "print"))
 			l = os.listdir(pdir)
 		except:
-			print "Unable to get print profiles from slic3r profile directory: " + self.parent.settings['profiledir']
+			self.log("Unable to get print profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
 			return {}
 		r = {}
 		for f in sorted(l):
@@ -466,7 +476,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "filament"))
 			l = os.listdir(pdir)
 		except:
-			print "Unable to get filament profiles from slic3r profile directory: " + self.parent.settings['profiledir']
+			self.log("Unable to get filament profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
 			return {}
 		r = {}
 		for f in sorted(l):
@@ -482,7 +492,7 @@ class Slic3r:
 			pdir = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'] + os.path.sep + "printer"))
 			l = os.listdir(pdir)
 		except:
-			print "Unable to get printer profiles from slic3r profile directory: " + self.parent.settings['profiledir']
+			self.log("Unable to get printer profiles from slic3r profile directory: " + self.parent.settings['profiledir'])
 			return {}
 		
 		r = {}
@@ -495,7 +505,7 @@ class Slic3r:
 				try:
 					idata = list(open(fn))
 				except:
-					print "Unable to open printer settings file" % fn
+					self.log("Unable to open printer settings file" % fn)
 					idata = []
 			
 				for i in idata:
