@@ -69,7 +69,7 @@ def modifyCSV(fn, ovr):
 	
 	elif bfn == "speed.csv" and intersection(['printspeed', 'travelspeed', 'print1speed'], ovr.keys()):		
 		os.rename(fn, fn + ".save")
-		if 'print1speed' in ovr.keys:
+		if 'print1speed' in ovr.keys():
 			p1 = ovr['print1speed'].strip()
 			if p1.endswith('%'):
 				try:
@@ -85,7 +85,7 @@ def modifyCSV(fn, ovr):
 				ns = "Flow Rate Setting (float):\t"+str(ovr['printspeed'])
 				
 			elif s.startswith("Travel Feed Rate (mm/s):") and 'travelspeed' in ovr.keys():
-				ns = "Travel Feed Rate (mm/s):\t"+str(ovr['travel1speed'])
+				ns = "Travel Feed Rate (mm/s):\t"+str(ovr['travelspeed'])
 				
 			elif s.startswith("Object First Layer Feed Rate Infill Multiplier (ratio):") and 'print1speed' in ovr.keys():
 				ns = "Object First Layer Feed Rate Infill Multiplier (ratio):\t"+p1

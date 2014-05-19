@@ -58,7 +58,7 @@ class Override(wx.Panel):
 		
 		ln += 1
 		self.cbOvPrSpd = wx.CheckBox(self, wx.ID_ANY, "Print Speed")
-		self.Bind(wx.EVT_CHECKBOX, self.checkOvPrSpd, self.cbOvPrSpd)
+		self.Bind(wx.EVT_CHECKBOX, self.checkPrSpd, self.cbOvPrSpd)
 		bgrid.Add(self.cbOvPrSpd, pos=(ln, 1))
 		self.teOvPrSpd = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
 		self.teOvPrSpd.Enable(False)
@@ -177,7 +177,7 @@ class Override(wx.Panel):
 			self.logger.LogMessage("Overriding print speed to: %s" % r['printspeed'])
 			
 		if self.cbOvTrSpd.IsChecked():
-			r['travelspeed'] = self.teOvTrSpr.GetValue()
+			r['travelspeed'] = self.teOvTrSpd.GetValue()
 			self.logger.LogMessage("Overriding travel speed to: %s" % r['travelspeed'])
 			
 		if self.cbOvPr1Spd.IsChecked():
