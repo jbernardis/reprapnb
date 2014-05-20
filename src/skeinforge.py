@@ -124,15 +124,17 @@ def modifyCSV(fn, ovr, logger):
 						np1 = p1 / spd
 						logger("Recalculating First Layer speed value of %0.2f to be ratio of %0.2f times speed %0.2f mm/s" % (p1, np1, spd))
 						p1 = np1
+
+					sp1 = str(p1)
 						
 					if s.startswith("Object First Layer Feed Rate Infill Multiplier (ratio):"):
-						ns = "Object First Layer Feed Rate Infill Multiplier (ratio):\t"+p1
+						ns = "Object First Layer Feed Rate Infill Multiplier (ratio):\t"+sp1
 					elif s.startswith("Object First Layer Feed Rate Perimeter Multiplier (ratio):"):
-						ns = "Object First Layer Feed Rate Perimeter Multiplier (ratio):\t"+p1
+						ns = "Object First Layer Feed Rate Perimeter Multiplier (ratio):\t"+sp1
 					elif s.startswith("Object First Layer Flow Rate Infill Multiplier (ratio):"):
-						ns = "Object First Layer Flow Rate Infill Multiplier (ratio):\t"+p1
+						ns = "Object First Layer Flow Rate Infill Multiplier (ratio):\t"+sp1
 					elif s.startswith("Object First Layer Flow Rate Perimeter Multiplier (ratio):"):
-						ns = "Object First Layer Flow Rate Perimeter Multiplier (ratio):\t"+p1
+						ns = "Object First Layer Flow Rate Perimeter Multiplier (ratio):\t"+sp1
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
