@@ -24,6 +24,22 @@ class Override(wx.Panel):
 		self.teOvLH.Enable(False)
 		bgrid.Add(self.teOvLH, pos=(ln,3))
 		
+		ln = 1
+		self.cbOvExWid = wx.CheckBox(self, wx.ID_ANY, "Extrusion Width")
+		self.Bind(wx.EVT_CHECKBOX, self.checkEW, self.cbOvExWid)
+		bgrid.Add(self.cbOvExWid, pos=(ln, 1))
+		self.teOvExWid = wx.TextCtrl(self, wx.ID_ANY, "2.8", style=wx.TE_RIGHT)
+		self.teOvExWid.Enable(False)
+		bgrid.Add(self.teOvExWid, pos=(ln,3))
+		
+		ln = 1
+		self.cbOvInfill = wx.CheckBox(self, wx.ID_ANY, "Infill Density")
+		self.Bind(wx.EVT_CHECKBOX, self.checkInfill, self.cbOvInfill)
+		bgrid.Add(self.cbOvInfill, pos=(ln, 1))
+		self.teOvInfill = wx.TextCtrl(self, wx.ID_ANY, "0.4", style=wx.TE_RIGHT)
+		self.teOvInfill.Enable(False)
+		bgrid.Add(self.teOvInfill, pos=(ln,3))
+		
 		ln += 1
 		self.cbOvBedTmp1 = wx.CheckBox(self, wx.ID_ANY, "Bed Temperature First Layer")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBedTmp1, self.cbOvBedTmp1)
@@ -102,6 +118,18 @@ class Override(wx.Panel):
 		else:
 			self.teOvLH.Enable(False)
 		
+	def checkEW(self, evt):
+		if self.cbOvExWid.IsChecked():
+			self.teOvExWid.Enable(True)
+		else:
+			self.teOvExWid.Enable(False)
+		
+	def checkInfill(self, evt):
+		if self.cbOvInfill.IsChecked():
+			self.teOvInfill.Enable(True)
+		else:
+			self.teOvInfill.Enable(False)
+		
 	def checkBedTmp1(self, evt):
 		if self.cbOvBedTmp1.IsChecked():
 			self.teOvBedTmp1.Enable(True)
@@ -155,6 +183,14 @@ class Override(wx.Panel):
 		if self.cbOvLH.IsChecked():
 			r['layerheight'] = self.teOvLH.GetValue()
 			self.logger.LogMessage("Overriding layer height to: %s" % r['layerheight'])
+			
+		if self.cbOvExWid.IsChecked():
+			r['extrusionwidth'] = self.teOvExWid.GetValue()
+			self.logger.LogMessage("Overriding extrusion width to: %s" % r['extrusionwidth'])
+			
+		if self.cbOvInfill.IsChecked():
+			r['infilldensity'] = self.teOvInfill.GetValue()
+			self.logger.LogMessage("Overriding infill density to: %s" % r['infilldensity'])
 			
 		if self.cbOvBedTmp1.IsChecked():
 			r['layer1bedtemperature'] = self.teOvBedTmp1.GetValue()

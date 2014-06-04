@@ -415,6 +415,25 @@ class Slic3r:
 			if k == 'layerheight':
 				dProfile['layer_height'] = self.overrides[k]
 				
+			elif k == 'extrusionwidth':
+				v = self.overrides[k]
+				if not v.endswith("%"):
+					try:
+						fv = float(v)
+					except:
+						self.log("Unable to parse (%s) as a float - ignoring" % v)
+						v = None
+						
+					if v is not None:
+						if fv > 1:
+							v = "%f" % (fv/100)
+					
+				if v is not None:
+					dProfile['extrusion_width'] = v
+				
+			elif k == 'infilldensity':
+				dProfile['fill_density'] = self.overrides[k]
+				
 			elif k == 'bedtemperature':
 				dProfile['bed_temperature'] = self.overrides[k]
 			elif k == 'layer1bedtemperature':

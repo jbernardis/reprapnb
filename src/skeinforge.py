@@ -7,7 +7,7 @@ from settings import BUTTONDIM
 CBSIZE = 200
 
 
-proFiles = ["carve.csv", "skirt.csv", "chamber.csv", "temperature.csv", "speed.csv"]
+proFiles = ["carve.csv", "inset.csv", "fill.csv", "skirt.csv", "chamber.csv", "temperature.csv", "speed.csv"]
 
 def intersection(a, b):
 	return len([val for val in a if val in b]) != 0
@@ -20,7 +20,7 @@ def modifyCSV(fn, ovr, logger):
 	
 	bfn = os.path.basename(fn)
 	
-	if bfn == "carve.csv" and 'layerheight' in ovr.keys():
+	if bfn == "carve.csv" and intersection(['layerheight', 'extrusionwidth'],  ovr.keys()):
 		try:
 			os.rename(fn, fn + ".save")
 			fpCsv = list(open(fn + ".save"))
@@ -28,6 +28,8 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Layer Height (mm):"):
 					ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
+				elif s.startswith("Edge Width over Height (ratio):"):
+					ns = "Edge Width over Height (ratio):\t"+str(ovr['extrusionwidth'])
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -36,6 +38,40 @@ def modifyCSV(fn, ovr, logger):
 		except:
 			restoreCSV(fn)
 			logger("Unable to modify carve.csv")
+	
+	elif bfn == "inset.csv" and intersection(['extrusionwidth'],  ovr.keys()):
+		try:
+			os.rename(fn, fn + ".save")
+			fpCsv = list(open(fn + ".save"))
+			fpNew = open(fn, "w")
+			for s in fpCsv:
+				if s.startswith("Infill Width over Thickness (ratio):"):
+					ns = "Infill Width over Thickness (ratio):\t"+str(ovr['extrusionwidth'])
+				else:
+					ns = s.rstrip()
+				fpNew.write(ns + "\n")
+			
+			fpNew.close()
+		except:
+			restoreCSV(fn)
+			logger("Unable to modify inset.csv")
+	
+	elif bfn == "fill.csv" and intersection(['infilldensity'],  ovr.keys()):
+		try:
+			os.rename(fn, fn + ".save")
+			fpCsv = list(open(fn + ".save"))
+			fpNew = open(fn, "w")
+			for s in fpCsv:
+				if s.startswith("Infill Solidity (ratio):"):
+					ns = "Infill Solidity (ratio):\t"+str(ovr['infilldensity'])
+				else:
+					ns = s.rstrip()
+				fpNew.write(ns + "\n")
+			
+			fpNew.close()
+		except:
+			restoreCSV(fn)
+			logger("Unable to modify fill.csv")
 			
 	elif bfn == "chamber.csv" and intersection(['layer1bedtemperature', 'bedtemperature'], ovr.keys()):
 		try:

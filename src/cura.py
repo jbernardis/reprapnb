@@ -310,6 +310,34 @@ class Cura:
 					else:
 						nl = l.rstrip() + "\n"
 						
+				elif l.startswith("wall_thickness = "):
+					if 'extrusionwidth' in self.overrides.keys():
+						self.log("Using override value of %s for extrusion width as wall_thickness value" % self.overrides['extrusionwidth'])
+						nl = "wall_thickness = " + str(self.overrides['extrusionwidth']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("fill_density = "):
+					if 'infilldensity' in self.overrides.keys():
+						v = self.overrides['infilldensity']
+						if v.endswith("%"):
+							v = v[:-1]
+						else:
+							try:
+								fv = float(v)
+								if fv < 1.0:
+									v = "%f" % (fv*100.0)
+							except:
+								self.log("Unable to parse infill density override value %s as a float - ignoring" % v)
+								v = None
+								
+						if v is None:
+							nl = l.rstrip() + "\n"
+						else:
+							nl = "fill_density = " + v + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
 				elif l.startswith("print_bed_temperature = "):
 					if 'bedtemperature' in self.overrides.keys():
 						nl = "print_bed_temperature = " + str(self.overrides['bedtemperature']) + "\n"

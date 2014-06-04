@@ -1,6 +1,7 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-- allow override of certain slicing parameters from within host - HE temps needs testing - other fields???
+- allow override of certain slicing parameters from within host - other fields???
+- test override of infill and extrusion width
 
 
 
@@ -8,6 +9,7 @@ In Progress/Need Testing
 
 
 Low Hanging
+- add help tooltips to override fields
 
 Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
@@ -24,7 +26,6 @@ Larger effort
 Uncertain:
 - have links inside program to bring up tools - openscad, meshlab, netfabb, etc
 - look into Cura's low time estimates (traysnwalls - lip on tray is a good candidate object)
-- over-ride logic - protect better against csv files being deleted
 
 
 NOtes for remaining override fields:
@@ -57,21 +58,6 @@ SKF:
 	skirt: Brim Width:	n
 
 
-
-Infill %
-
-Cura:
-	fill_density = 40
-	extrusion width?????
-
-Slic3r:
-	print: fill_density = 0.4
-	print: extrusion_width = 0
-
-SKF:
-	inset: Infill Width over Thickness (ratio):	2.8
-	carve: Edge Width over Height (ratio):	2.8
-	fill: Infill Solidity (ratio):	0.4
 
 
 
