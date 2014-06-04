@@ -24,7 +24,7 @@ class Override(wx.Panel):
 		self.teOvLH.Enable(False)
 		bgrid.Add(self.teOvLH, pos=(ln,3))
 		
-		ln = 1
+		ln += 1
 		self.cbOvExWid = wx.CheckBox(self, wx.ID_ANY, "Extrusion Width")
 		self.Bind(wx.EVT_CHECKBOX, self.checkEW, self.cbOvExWid)
 		bgrid.Add(self.cbOvExWid, pos=(ln, 1))
@@ -32,7 +32,7 @@ class Override(wx.Panel):
 		self.teOvExWid.Enable(False)
 		bgrid.Add(self.teOvExWid, pos=(ln,3))
 		
-		ln = 1
+		ln += 1
 		self.cbOvInfill = wx.CheckBox(self, wx.ID_ANY, "Infill Density")
 		self.Bind(wx.EVT_CHECKBOX, self.checkInfill, self.cbOvInfill)
 		bgrid.Add(self.cbOvInfill, pos=(ln, 1))
