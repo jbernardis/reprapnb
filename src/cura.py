@@ -290,6 +290,23 @@ class Cura:
 	def setOverrides(self, ovr):
 		self.overrides = ovr.copy()
 		
+	def getOverrideHelpText(self):
+		ht = {}
+		ht["layerheight"] = "Used directly as cura's layer_height setting"
+		ht["extrusionwidth"] = "Used directly as cura's wall_thickness setting"
+		ht["infilldensity"] = "Used for cura's fill_density setting.  Values less that 1 are assumed as ratios and are scaled to a percentage"
+		ht["temperature"] = "Maps to cura's print_temperature fields.  This may be a comma separated list of values each corresponding to the appropriate setting"
+		ht["bedtemperature"] = "Used directly for cura's print_bed_temperature setting"
+		ht["layer1temperature"] = " Unused in cura"
+		ht["layer1bedtemperature"] = "Unused in cura"
+		ht["printspeed"] = "Used directly as cura's print_speed setting"
+		ht["print1speed"] = "Used directly as cura's bottom_layer_speed setting"
+		ht["travelspeed"] = "Used directly as cura's travel_speed setting"
+		ht["skirt"] = "Maps to cura's skirt_line_count setting.  Enable => 2, Disable => 0"
+		ht["support"] = "Maps to cura's support setting.  Enable => Everywhere, Disable => None"
+		
+		return ht
+		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']
 		
@@ -365,6 +382,15 @@ class Cura:
 						if self.overrides['skirt'] == 'True':
 							skv = 1
 						nl = "skirt_line_count = %d\n" % skv
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("support = "):
+					if 'skirt' in self.overrides.keys():
+						res = "None"
+						if self.overrides['support'] == 'True':
+							res = "Everywhere"
+						nl = "support = %s\n" % res
 					else:
 						nl = l.rstrip() + "\n"
 						

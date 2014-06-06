@@ -7,7 +7,7 @@ from settings import BUTTONDIM
 CBSIZE = 200
 
 
-proFiles = ["carve.csv", "inset.csv", "fill.csv", "skirt.csv", "chamber.csv", "temperature.csv", "speed.csv"]
+proFiles = ["carve.csv", "inset.csv", "fill.csv", "skirt.csv", "chamber.csv", "temperature.csv", "raft.csv", "speed.csv"]
 
 def intersection(a, b):
 	return len([val for val in a if val in b]) != 0
@@ -179,6 +179,32 @@ def modifyCSV(fn, ovr, logger):
 		except:
 			restoreCSV(fn)
 			logger("Unable to modify speed.csv")
+			
+	elif bfn == "raft.csv" and 'support' in ovr.keys():	
+		try:	
+			os.rename(fn, fn + ".save")
+			fpCsv = list(open(fn + ".save"))
+			fpNew = open(fn, "w")
+			for s in fpCsv:
+				if s.startswith("None\t") and 'support' in ovr.keys():
+					if ovr['support'] == "True":
+						ns = "None\tFalse"
+					else:
+						ns = "None\tTrue"
+				if s.startswith("Everywhere\t") and 'support' in ovr.keys():
+					if ovr['support'] == "True":
+						ns = "Everywhere\tTrue"
+					else:
+						ns = "Everywhere\tFalse"
+				else:
+					ns = s.rstrip()
+				
+				fpNew.write(ns + "\n")
+			
+			fpNew.close()
+		except:
+			restoreCSV(fn)
+			logger("Unable to modify raft.csv")
 			
 	elif bfn == "skirt.csv" and 'skirt' in ovr.keys():	
 		try:	
@@ -394,6 +420,22 @@ class Skeinforge:
 
 	def setOverrides(self, ovr):
 		self.overrides = ovr.copy()
+		
+	def getOverrideHelpText(self):
+		ht = {}
+		ht["layerheight"] = "Used directly as Layer Height (carve)"
+		ht["extrusionwidth"] = "Used directly as Edge Width over Height (carve) and Infill Width over Thickness (inset)"
+		ht["infilldensity"] = "Used directly as Infill Solidity (fill)"
+		ht["temperature"] = "Used directly as Object Next Layers Temperature (temperature)"
+		ht["bedtemperature"] = "Used directly as Bed Temperature End (chamber) - assumes change height settings"
+		ht["layer1temperature"] = "Used directly as Object First Layer Infill and Object First Layer Perimeter Temperatures (temperature)"
+		ht["layer1bedtemperature"] = "Used directly as Bed Temperature (chamber) - assumes change height settings"
+		ht["printspeed"] = "Used directly as boht Feed Rate and Flow Rate (speed)"
+		ht["print1speed"] = "Used for ALL Object First Layer Feed and Flow rates (speed).  Values > 2 are assumed to be explicit values and are recalculated as rations"
+		ht["travelspeed"] = "Used directly as Travel Feed Rate (speed)"
+		ht["skirt"] = "Used directly as Activate Skirt (skirt)"
+		ht["support"] = "Maps to Suport (raft).  Enabled => Everywhere = True, Disabled => None = True"
+		return ht
 		
 	def buildSliceCommand(self):
 		s = self.parent.settings['command']

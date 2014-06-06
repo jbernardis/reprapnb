@@ -522,6 +522,7 @@ class FilePrepare(wx.Panel):
 		self.sizerRight.AddSpacer((10, 10))
 		
 		self.override = Override(self)
+		self.override.setHelpText(self.slicer.type.getOverrideHelpText())
 		self.sizerRight.Add(self.override)
 		
 		self.sizerMain.Add(self.sizerRight)
@@ -546,6 +547,7 @@ class FilePrepare(wx.Panel):
 			self.logger.LogError("Unable to get slicer settings") 
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
+		self.override.setHelpText(self.slicer.type.getOverrideHelpText())
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():

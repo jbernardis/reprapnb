@@ -157,6 +157,12 @@ class SlicerSettings:
 		
 		return self.type.getDimensionInfo()
 	
+	def getOverrideHelpText(self):
+		if self.type is None:
+			return None
+		
+		return self.type.getOverrideHelpText()
+	
 class PrinterSettings:
 	def __init__(self, name):
 		self.name = name

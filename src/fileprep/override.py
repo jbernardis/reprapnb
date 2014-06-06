@@ -15,6 +15,8 @@ class Override(wx.Panel):
 		bgrid.AddSpacer((10, 10), pos=(0,0))
 		bgrid.AddSpacer((10, 10), pos=(0,2))
 		bgrid.AddSpacer((10, 10), pos=(0,4))
+		
+		self.controls = {}
 
 		ln = 1
 		self.cbOvLH = wx.CheckBox(self, wx.ID_ANY, "Layer Height")
@@ -22,6 +24,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvLH, pos=(ln, 1))
 		self.teOvLH = wx.TextCtrl(self, wx.ID_ANY, "0.2", style=wx.TE_RIGHT)
 		self.teOvLH.Enable(False)
+		self.controls["layerheight"] = self.teOvLh
 		bgrid.Add(self.teOvLH, pos=(ln,3))
 		
 		ln += 1
@@ -30,6 +33,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvExWid, pos=(ln, 1))
 		self.teOvExWid = wx.TextCtrl(self, wx.ID_ANY, "2.8", style=wx.TE_RIGHT)
 		self.teOvExWid.Enable(False)
+		self.controle["extrusionwidth"] = self.teOvExWid
 		bgrid.Add(self.teOvExWid, pos=(ln,3))
 		
 		ln += 1
@@ -38,6 +42,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvInfill, pos=(ln, 1))
 		self.teOvInfill = wx.TextCtrl(self, wx.ID_ANY, "0.4", style=wx.TE_RIGHT)
 		self.teOvInfill.Enable(False)
+		self.controls["infildensity"] = self.teOvInfill
 		bgrid.Add(self.teOvInfill, pos=(ln,3))
 		
 		ln += 1
@@ -46,6 +51,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvBedTmp1, pos=(ln, 1))
 		self.teOvBedTmp1 = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
 		self.teOvBedTmp1.Enable(False)
+		self.controls["layer1bedtemperature"] = self.teOvBedTmp1
 		bgrid.Add(self.teOvBedTmp1, pos=(ln,3))
 		
 		ln += 1
@@ -54,6 +60,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvBedTmp, pos=(ln, 1))
 		self.teOvBedTmp = wx.TextCtrl(self, wx.ID_ANY, "55", style=wx.TE_RIGHT)
 		self.teOvBedTmp.Enable(False)
+		self.controls["bedtemperature"] = self.teOvBedTmp
 		bgrid.Add(self.teOvBedTmp, pos=(ln,3))
 		
 		ln += 1
@@ -62,6 +69,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvTmp1, pos=(ln, 1))
 		self.teOvTmp1 = wx.TextCtrl(self, wx.ID_ANY, "185", style=wx.TE_RIGHT)
 		self.teOvTmp1.Enable(False)
+		self.controls["layer1temperature"] = self.teOvTmp1
 		bgrid.Add(self.teOvTmp1, pos=(ln,3))
 		
 		ln += 1
@@ -70,6 +78,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvTmp, pos=(ln, 1))
 		self.teOvTmp = wx.TextCtrl(self, wx.ID_ANY, "185", style=wx.TE_RIGHT)
 		self.teOvTmp.Enable(False)
+		self.controls["temperature"] = self.teOvTmp
 		bgrid.Add(self.teOvTmp, pos=(ln,3))
 		
 		ln += 1
@@ -78,6 +87,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvPrSpd, pos=(ln, 1))
 		self.teOvPrSpd = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
 		self.teOvPrSpd.Enable(False)
+		self.controls["printspeed"] = self.teOvPrSpd
 		bgrid.Add(self.teOvPrSpd, pos=(ln,3))
 		
 		ln += 1
@@ -86,6 +96,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvTrSpd, pos=(ln, 1))
 		self.teOvTrSpd = wx.TextCtrl(self, wx.ID_ANY, "120", style=wx.TE_RIGHT)
 		self.teOvTrSpd.Enable(False)
+		self.controls["travelspeed"] = self.teOvTrSpd
 		bgrid.Add(self.teOvTrSpd, pos=(ln,3))
 		
 		ln += 1
@@ -94,7 +105,17 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvPr1Spd, pos=(ln, 1))
 		self.teOvPr1Spd = wx.TextCtrl(self, wx.ID_ANY, "30", style=wx.TE_RIGHT)
 		self.teOvPr1Spd.Enable(False)
+		self.controls["print1speed"] = self.teOvPr1Spd
 		bgrid.Add(self.teOvPr1Spd, pos=(ln,3))
+		
+		ln += 1
+		self.cbOvSpt = wx.CheckBox(self, wx.ID_ANY, "Support")
+		self.Bind(wx.EVT_CHECKBOX, self.checkSpt, self.cbOvSpt)
+		bgrid.Add(self.cbOvSpt, pos=(ln, 1))
+		self.teOvSpt = wx.CheckBox(self, wx.ID_ANY, "Enabled")
+		self.teOvSpt.Enable(False)
+		self.controls["support"] = self.teOvSpt
+		bgrid.Add(self.teOvSpt, pos=(ln,3))
 		
 		ln += 1
 		self.cbOvSkt = wx.CheckBox(self, wx.ID_ANY, "Skirt")
@@ -102,6 +123,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvSkt, pos=(ln, 1))
 		self.teOvSkt = wx.CheckBox(self, wx.ID_ANY, "Enabled")
 		self.teOvSkt.Enable(False)
+		self.controls["skirt"] = self.teOvSkt
 		bgrid.Add(self.teOvSkt, pos=(ln,3))
 
 		ln += 1
@@ -111,6 +133,16 @@ class Override(wx.Panel):
 		border = wx.BoxSizer()
 		border.Add(bsizer, 1, wx.EXPAND|wx.ALL, 10)
 		self.SetSizer(border)  
+		
+	def setHelpText(self, ht):
+		if ht is None:
+			return
+		
+		for ck in self.controls.keys():
+			if ck in ht.keys():
+				self.controls[ck].SetToolTipString(ht[ck])
+			else:
+				self.controls[ck].SetToolTipString("")
 		
 	def checkLH(self, evt):
 		if self.cbOvLH.IsChecked():
@@ -178,6 +210,12 @@ class Override(wx.Panel):
 		else:
 			self.teOvSkt.Enable(False)
 		
+	def checkSpt(self, evt):
+		if self.cbOvSpt.IsChecked():
+			self.teOvSpt.Enable(True)
+		else:
+			self.teOvSpt.Enable(False)
+		
 	def getOverrides(self):
 		r = {}     
 		if self.cbOvLH.IsChecked():
@@ -226,5 +264,12 @@ class Override(wx.Panel):
 			else:
 				r['skirt'] = 'False'
 			self.logger.LogMessage("Overriding skirt enable to: %s" % r['skirt'])
+			
+		if self.cbOvSpt.IsChecked():
+			if self.teOvSpt.IsChecked():
+				r['support'] = 'True'
+			else:
+				r['support'] = 'False'
+			self.logger.LogMessage("Overriding support enable to: %s" % r['support'])
 
 		return r
