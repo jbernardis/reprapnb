@@ -33,6 +33,7 @@ class GcFrame (wx.Window):
 		self.highlightX = None
 		self.shiftX = 0
 		self.shiftY = 0
+		self.toolPathsOnly = self.settings.toolpathsonly
 		
 		sz = [x * self.scale for x in self.buildarea]
 		
@@ -206,6 +207,10 @@ class GcFrame (wx.Window):
 				self.offsety = self.buildarea[1]-self.buildarea[1]/self.zoom
 
 		self.redrawCurrentLayer()
+		
+	def setToolPathsOnly(self, flag):
+		self.toolPathsOnly = flag
+		self.redrawCurrentLayer()
 
 	def setGCode(self, l):
 		self.hilite = l
@@ -322,6 +327,8 @@ class GcFrame (wx.Window):
 			c = toolColor[t]
 
 		w = lw * self.zoom * self.scale
+		if self.toolPathsOnly:
+			w = 1
 				
 		if p[6] == self.hilite:
 			w = w * 3

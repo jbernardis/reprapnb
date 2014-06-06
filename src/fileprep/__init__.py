@@ -394,6 +394,13 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_CHECKBOX, self.checkMoves, self.cbMoves)
 		self.cbMoves.SetValue(self.settings.showmoves)
 		self.sizerOpts.Add(self.cbMoves)
+		self.sizerOpts.AddSpacer((20, 10))
+
+		self.cbToolOnly = wx.CheckBox(self, wx.ID_ANY, "Tool Path Only")
+		self.cbToolOnly.SetToolTipString("Show narrow lines indicating tool path")
+		self.Bind(wx.EVT_CHECKBOX, self.checkToolPathsOnly, self.cbToolOnly)
+		self.cbToolOnly.SetValue(self.settings.toolpathsonly)
+		self.sizerOpts.Add(self.cbToolOnly)
 		
 		self.sizerOpts.AddSpacer((20, 10))
 
@@ -1105,6 +1112,12 @@ class FilePrepare(wx.Panel):
 	def checkBuffDC(self, evt):
 		self.settings.usebuffereddc = evt.IsChecked()
 		self.settings.setModified()
+		self.gcf.redrawCurrentLayer()
+		
+	def checkToolPathsOnly(self, evt):
+		self.settings.toolpathsonly = evt.IsChecked()
+		self.settings.setModified()
+		self.gcf.setToolPathsOnly(self.settings.toolpathsonly)
 		self.gcf.redrawCurrentLayer()
 		
 	def checkPrevious(self, evt):

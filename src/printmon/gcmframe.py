@@ -54,6 +54,7 @@ class GcmFrame (wx.Window):
 		self.shiftX = 0
 		self.shiftY = 0
 		self.printPosition = 0
+		self.toolPathsOnly = self.settings.toolpathsonly
 		
 		sz = [x * self.scale for x in self.buildarea]
 		
@@ -229,6 +230,10 @@ class GcmFrame (wx.Window):
 			self.redrawCurrentLayer()
 		elif sync:
 			self.setLayer(l)
+			
+	def setToolPathsOnly(self, flag):
+		self.toolPathsOnly = flag
+		self.redrawCurrentLayer()
 		
 	def redrawCurrentLayer(self):
 		if self.settings.usebuffereddc:
@@ -355,6 +360,8 @@ class GcmFrame (wx.Window):
 			c = "dimgray"
 			
 		w = lw * self.zoom * self.scale
+		if self.toolPathsOnly:
+			w = 1
 
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])

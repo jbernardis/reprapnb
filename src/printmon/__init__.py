@@ -185,11 +185,12 @@ class PrintMonitor(wx.Panel):
 		self.sizerOpts.Add(self.cbMoves)
 		
 		self.sizerOpts.AddSpacer((10, 10))
-
-		self.cbBuffDC = wx.CheckBox(self, wx.ID_ANY, "Use Buffered DC")
-		self.Bind(wx.EVT_CHECKBOX, self.checkBuffDC, self.cbBuffDC)
-		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
-		self.sizerOpts.Add(self.cbBuffDC)
+		
+		self.cbToolOnly = wx.CheckBox(self, wx.ID_ANY, "Tool Path Only")
+		self.cbToolOnly.SetToolTipString("Show narrow lines indicating tool path")
+		self.Bind(wx.EVT_CHECKBOX, self.checkToolPathsOnly, self.cbToolOnly)
+		self.cbToolOnly.SetValue(self.settings.toolpathsonly)
+		self.sizerOpts.Add(self.cbToolOnly)
 		
 		self.sizerOpts.AddSpacer((10, 10))
 
@@ -202,7 +203,14 @@ class PrintMonitor(wx.Panel):
 		self.sizerLeft.Add(self.sizerOpts)
 
 		self.sizerOpts2 = wx.BoxSizer(wx.HORIZONTAL)
-				
+
+		self.cbBuffDC = wx.CheckBox(self, wx.ID_ANY, "Use Buffered DC")
+		self.Bind(wx.EVT_CHECKBOX, self.checkBuffDC, self.cbBuffDC)
+		self.cbBuffDC.SetValue(self.settings.usebuffereddc)
+		self.sizerOpts2.Add(self.cbBuffDC)
+		
+		self.sizerOpts2.AddSpacer((10, 10))
+		
 		self.cbHoldFan = wx.CheckBox(self, wx.ID_ANY, "Hold Fan Speed")
 		self.cbHoldFan.SetToolTipString("Maintain fan speed at its manual setting")
 		self.Bind(wx.EVT_CHECKBOX, self.checkHoldFan, self.cbHoldFan)
@@ -713,6 +721,12 @@ class PrintMonitor(wx.Panel):
 	def checkBuffDC(self, evt):
 		self.settings.usebuffereddc = evt.IsChecked()
 		self.settings.setModified()
+		self.gcf.redrawCurrentLayer()
+			
+	def checkToolPathsOnly(self, evt):
+		self.settings.toolpathsonly = evt.IsChecked()
+		self.settings.setModified()
+		self.gcf.setToolPathsOnly(self.settings.toolpathsonly)
 		self.gcf.redrawCurrentLayer()
 		
 	def checkHoldFan(self, evt):

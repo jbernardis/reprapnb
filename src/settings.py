@@ -360,6 +360,7 @@ class SettingsFilePrep:
 		self.usebuffereddc = True
 		self.acceleration = 1500
 		self.drawstlgrid = True
+		self.toolpathsonly = False
 		
 		if cfg is None:
 			self.modified = True
@@ -396,6 +397,9 @@ class SettingsFilePrep:
 						
 				elif opt == 'lastgcdirectory':
 					self.lastgcdirectory = value
+						
+				elif opt == 'toolpathsonly':
+					self.toolpathsonly = parseBoolean(value, False)
 						
 				elif opt == 'showprevious':
 					self.showprevious = parseBoolean(value, True)
@@ -479,6 +483,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
+			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
@@ -636,6 +641,7 @@ class SettingsPrintMon:
 		self.showprevious = True
 		self.showmoves = True
 		self.usebuffereddc = True
+		self.toolpathsonly = False
 		
 		if cfg is None:
 			self.modified = True
@@ -660,6 +666,10 @@ class SettingsPrintMon:
 						
 				elif opt == 'usebuffereddc':
 					self.usebuffereddc = parseBoolean(value, False)
+						
+				elif opt == 'toolpathsonly':
+					self.toolpathsonly = parseBoolean(value, False)
+					
 				else:
 					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
 		else:
@@ -683,3 +693,4 @@ class SettingsPrintMon:
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
+			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))

@@ -2,6 +2,7 @@ In Progress/Need Testing
 - need to test HTTP server - stop print
 - allow override of certain slicing parameters from within host - other fields???
 - test override of infill and extrusion width
+- tool paths only in fileprep and printmon
 
 
 
@@ -9,7 +10,7 @@ In Progress/Need Testing
 
 
 Low Hanging
-- add help tooltips to override fields
+- add help slicer-dependent tooltips to override fields
 
 Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
