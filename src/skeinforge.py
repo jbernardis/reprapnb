@@ -180,7 +180,7 @@ def modifyCSV(fn, ovr, logger):
 			restoreCSV(fn)
 			logger("Unable to modify speed.csv")
 			
-	elif bfn == "raft.csv" and 'support' in ovr.keys():	
+	elif bfn == "raft.csv" and intersection(['adhesion', 'support'], ovr.keys()):	
 		try:	
 			os.rename(fn, fn + ".save")
 			fpCsv = list(open(fn + ".save"))
@@ -191,11 +191,25 @@ def modifyCSV(fn, ovr, logger):
 						ns = "None\tFalse"
 					else:
 						ns = "None\tTrue"
+						
 				elif s.startswith("Everywhere\t") and 'support' in ovr.keys():
 					if ovr['support'] == "True":
 						ns = "Everywhere\tTrue"
 					else:
 						ns = "Everywhere\tFalse"
+						
+				elif s.startswith("Base Layers (integer):") and 'adhesion' in ovr.keys():
+					if ovr['adhesion'] == "Raft":
+						ns = "Base Layers (integer):\t1"
+					else:
+						ns = "Base Layers (integer):\t0"
+						
+				elif s.startswith("Interface Layers (integer):") and 'adhesion' in ovr.keys():
+					if ovr['adhesion'] == "Raft":
+						ns = "Interface Layers (integer):\t2"
+					else:
+						ns = "Interface Layers (integer):\t0"
+						
 				else:
 					ns = s.rstrip()
 				
@@ -206,14 +220,31 @@ def modifyCSV(fn, ovr, logger):
 			restoreCSV(fn)
 			logger("Unable to modify raft.csv")
 			
-	elif bfn == "skirt.csv" and 'skirt' in ovr.keys():	
+	elif bfn == "skirt.csv" and intersection(['skirt', 'adhesion'], ovr.keys()):	
 		try:	
 			os.rename(fn, fn + ".save")
 			fpCsv = list(open(fn + ".save"))
 			fpNew = open(fn, "w")
 			for s in fpCsv:
-				if s.startswith("Activate Skirt") and 'skirt' in ovr.keys():
-					ns = "Activate Skirt\t"+str(ovr['skirt'])
+				if s.startswith("Activate Skirt"):
+					if 'adhesion' in ovr.keys():
+						if ovr['adhesion'] == "Brim":
+							ns = "Activate Skirt\tTrue"
+						elif 'skirt' in ovr.keys():
+							ns = "Activate Skirt\t"+str(ovr['skirt'])
+						else:
+							ns = s.rstrip()
+					else:
+						ns = "Activate Skirt\t"+str(ovr['skirt'])
+
+				
+				elif s.startswith("Brim Width:") and 'adhesion' in ovr.keys():	
+					if ovr['adhesion'] == "Brim":
+						ns = "Brim Width:\t6"
+					else:
+						ns = "Brim Width:\t0"
+				
+				
 				else:
 					ns = s.rstrip()
 				
@@ -434,7 +465,9 @@ class Skeinforge:
 		ht["print1speed"] = "Used for ALL Object First Layer Feed and Flow rates (speed).  Values > 2 are assumed to be explicit values and are recalculated as rations"
 		ht["travelspeed"] = "Used directly as Travel Feed Rate (speed)"
 		ht["skirt"] = "Used directly as Activate Skirt (skirt)"
-		ht["support"] = "Maps to Suport (raft).  Enabled => Everywhere = True, Disabled => None = True"
+		ht["support"] = "Maps to Support (raft).  Enabled => Everywhere = True, Disabled => None = True"
+		ht["adhesion"] = "Maps to Brim Width (skirt) and Base Layers and Interface Layers (raft) to set either none, brim, or raft adhesion"
+		
 		return ht
 		
 	def buildSliceCommand(self):

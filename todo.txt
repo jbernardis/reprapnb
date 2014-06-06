@@ -1,8 +1,8 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
 - allow override of certain slicing parameters from within host - other fields???
-- test override of infill and extrusion width, support
-- add help slicer-dependent tooltips to override fields
+- test override of infill and extrusion width, adhesion
+- need to figure out why tool tips do not appear for checkboxes inside of static boxes
 
 
 
@@ -28,24 +28,6 @@ Uncertain:
 - look into Cura's low time estimates (traysnwalls - lip on tray is a good candidate object)
 
 
-NOtes for remaining override fields:
-
-adhesion type:
-	none
-		cura	None
-		slic3r  brim_width=0, raft_layers=0
-		skeinforge brim_width 0 (skirt.csv) base layers=0 interface layers = 0 (raft.csv)
-		
-	brim
-		cura	brim
-		slic3r	brim_width = n, raft_layers = 0
-		skeinforge: brim_width = n, base layers = 0 interface layers = 0
-		
-	raft
-		cura	raft
-		slic3r	brim_width = 0, raft_layers = n
-		skeinforge	nrim_width = 0, baselayers = 1, interface lyers = 2
-		
 
 
 

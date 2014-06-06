@@ -304,6 +304,7 @@ class Cura:
 		ht["travelspeed"] = "Used directly as cura's travel_speed setting"
 		ht["skirt"] = "Maps to cura's skirt_line_count setting.  Enable => 2, Disable => 0"
 		ht["support"] = "Maps to cura's support setting.  Enable => Everywhere, Disable => None"
+		ht["adhesion"] = "Used directly for cura's platform_adhesion setting.  None, Brim, or Raft"
 		
 		return ht
 		
@@ -409,6 +410,12 @@ class Cura:
 				elif l.startswith("bottom_layer_speed = "):
 					if 'print1speed' in self.overrides.keys():
 						nl = "bottom_layer_speed = " + str(self.overrides['print1speed']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("platform_adhesion = "):
+					if 'adhesion' in self.overrides.keys():
+						nl = "platform_adhesion = " + str(self.overrides['adhesion']) + "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						

@@ -127,12 +127,35 @@ class Override(wx.Panel):
 		bgrid.Add(self.teOvSkt, pos=(ln,3))
 
 		ln += 1
+		self.cbOvAdh = wx.CheckBox(self, wx.ID_ANY, "Adhesion")
+		self.Bind(wx.EVT_CHECKBOX, self.checkAdh, self.cbOvAdh)
+		bgrid.Add(self.cbOvAdh, pos=(ln, 1))
+		self.teOvAdh = self.adhesionList()
+		for a in self.rbAdhesion:
+			a.Enable(False)
+		self.controls["adhesion"] = self.rbAdhesion[0]
+		bgrid.Add(self.teOvAdh, pos=(ln,3))
+
+		ln += 1
 		bgrid.AddSpacer((10, 10), pos=(ln,0))
 
 		bsizer.Add(bgrid)
 		border = wx.BoxSizer()
 		border.Add(bsizer, 1, wx.EXPAND|wx.ALL, 10)
 		self.SetSizer(border)  
+		
+	def adhesionList(self):
+		labels = ["None", "Brim", "Raft"]
+		self.rbAdhesion = []
+		sz = wx.BoxSizer(wx.VERTICAL)
+		style = wx.RB_GROUP
+		for i in range(len(labels)):
+			r = wx.RadioButton(self, wx.ID_ANY, labels[i], style=style)
+			sz.Add(r)
+			self.rbStartPoints.append(r)
+			style = 0
+		return sz
+
 		
 	def setHelpText(self, ht):
 		if ht is None:
@@ -215,7 +238,22 @@ class Override(wx.Panel):
 			self.teOvSpt.Enable(True)
 		else:
 			self.teOvSpt.Enable(False)
+			
+	def checkAdh(self, evt):
+		if self.cbOvAdh.IsChecked():
+			flag = True
+		else:
+			flag = False
+			
+		for a in self.rbAdhesion:
+			a.Enable(flag)
 		
+	def getChosen(self, ids):
+		for i in ids:
+			if i.GetValue():
+				return i.GetLabel()
+		return None
+
 	def getOverrides(self):
 		r = {}     
 		if self.cbOvLH.IsChecked():
@@ -271,5 +309,9 @@ class Override(wx.Panel):
 			else:
 				r['support'] = 'False'
 			self.logger.LogMessage("Overriding support enable to: %s" % r['support'])
+			
+		if self.cbOvAdh.IsChecked():
+			r['adhesion'] = self.getChosen(self.rbAdhesion)
+
 
 		return r
