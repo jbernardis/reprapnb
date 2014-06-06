@@ -191,7 +191,7 @@ def modifyCSV(fn, ovr, logger):
 						ns = "None\tFalse"
 					else:
 						ns = "None\tTrue"
-				if s.startswith("Everywhere\t") and 'support' in ovr.keys():
+				elif s.startswith("Everywhere\t") and 'support' in ovr.keys():
 					if ovr['support'] == "True":
 						ns = "Everywhere\tTrue"
 					else:

@@ -294,7 +294,7 @@ class Cura:
 		ht = {}
 		ht["layerheight"] = "Used directly as cura's layer_height setting"
 		ht["extrusionwidth"] = "Used directly as cura's wall_thickness setting"
-		ht["infilldensity"] = "Used for cura's fill_density setting.  Values less that 1 are assumed as ratios and are scaled to a percentage"
+		ht["infilldensity"] = "Used for cura's fill_density setting.  Values less than 1 are assumed as ratios and are scaled to a percentage"
 		ht["temperature"] = "Maps to cura's print_temperature fields.  This may be a comma separated list of values each corresponding to the appropriate setting"
 		ht["bedtemperature"] = "Used directly for cura's print_bed_temperature setting"
 		ht["layer1temperature"] = " Unused in cura"
@@ -386,7 +386,7 @@ class Cura:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("support = "):
-					if 'skirt' in self.overrides.keys():
+					if 'support' in self.overrides.keys():
 						res = "None"
 						if self.overrides['support'] == 'True':
 							res = "Everywhere"

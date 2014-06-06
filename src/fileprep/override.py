@@ -24,7 +24,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvLH, pos=(ln, 1))
 		self.teOvLH = wx.TextCtrl(self, wx.ID_ANY, "0.2", style=wx.TE_RIGHT)
 		self.teOvLH.Enable(False)
-		self.controls["layerheight"] = self.teOvLh
+		self.controls["layerheight"] = self.teOvLH
 		bgrid.Add(self.teOvLH, pos=(ln,3))
 		
 		ln += 1
@@ -33,7 +33,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvExWid, pos=(ln, 1))
 		self.teOvExWid = wx.TextCtrl(self, wx.ID_ANY, "2.8", style=wx.TE_RIGHT)
 		self.teOvExWid.Enable(False)
-		self.controle["extrusionwidth"] = self.teOvExWid
+		self.controls["extrusionwidth"] = self.teOvExWid
 		bgrid.Add(self.teOvExWid, pos=(ln,3))
 		
 		ln += 1
@@ -42,7 +42,7 @@ class Override(wx.Panel):
 		bgrid.Add(self.cbOvInfill, pos=(ln, 1))
 		self.teOvInfill = wx.TextCtrl(self, wx.ID_ANY, "0.4", style=wx.TE_RIGHT)
 		self.teOvInfill.Enable(False)
-		self.controls["infildensity"] = self.teOvInfill
+		self.controls["infilldensity"] = self.teOvInfill
 		bgrid.Add(self.teOvInfill, pos=(ln,3))
 		
 		ln += 1
