@@ -1,7 +1,7 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
 - allow override of certain slicing parameters from within host - other fields???
-- test override of infill and extrusion width, adhesion
+- test override of infill and extrusion width
 - need to figure out why tool tips do not appear for checkboxes inside of static boxes
 
 
