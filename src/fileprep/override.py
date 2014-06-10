@@ -144,22 +144,6 @@ class Override(wx.Panel):
 		border.Add(bsizer, 1, wx.EXPAND|wx.ALL, 10)
 		self.SetSizer(border)  
 		
-<<<<<<< HEAD
-	def adhesionList(self):
-		labels = ["None", "Brim", "Raft"]
-		self.rbAdhesion = []
-		sz = wx.BoxSizer(wx.VERTICAL)
-		style = wx.RB_GROUP
-		for i in range(len(labels)):
-			r = wx.RadioButton(self, wx.ID_ANY, labels[i], style=style)
-			sz.Add(r)
-			self.rbAdhesion.append(r)
-			style = 0
-		return sz
-
-		
-=======
->>>>>>> 4fbb041838eb583bc22642b6950ba9b56348555d
 	def setHelpText(self, ht):
 		if ht is None:
 			return
