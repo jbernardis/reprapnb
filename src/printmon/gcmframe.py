@@ -13,26 +13,13 @@ def setColor(a,b):
 		res.append(x)
 	return res
 
-dcMat = [setColor([255,0,0], [135,0,0]), setColor([253,111,17], [72,36,15]), setColor([253,245,30], [54,54,27])]
+dcMat = [setColor([255,0,0], [135,0,0]), setColor([253,111,17], [119,55,15]), setColor([253,245,30], [117,113,28])]
 	
 def drawnColor(tool, distance):
 	d = distance
 	if d > 100:
 		d = 100
 	return dcMat[tool][d]
-
-# dcm = [
-# 		[ [255, 0, 0], [135, 0, 0] ],     # red family - for tool 0
-# 		[ [253, 111, 17], [72, 36, 15] ], # orange family - for tool 1
-# 		[ [253, 245, 30], [54, 54, 27] ]  # yellow family - for tool 2
-# 	]
-# 
-# def drawnColor(tool, distance):
-# 	if distance > 100: 
-# 		return [dcm[tool][0][i] - dcm[tool][1][i] for i in range(3)]
-# 	else:	
-# 		return [dcm[tool][0][i] - distance * dcm[tool][1][i] / 100 for i in range(3)]
-
 
 undrawnColors = ["blue", "green", "cyan"]
 
