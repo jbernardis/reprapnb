@@ -412,7 +412,7 @@ class Slic3r:
 		ht["travelspeed"] = "Used directly as slic3r's travel_speed setting"
 		ht["skirt"] = "Maps directly to slic3r's skirt setting.  Enable => 2, Disable => 0"
 		ht["support"] = "Maps directly to slic3r's support_material setting.  Enable => 1, Disable => 0"
-		ht["adhesion"] = "Chooses between no raft or brim, brim_width=6, and raft_layers=2"
+		ht["adhesion"] = "Chooses between no raft or brim, brim_width=3, and raft_layers=2"
 		
 		return ht
 	
@@ -481,7 +481,7 @@ class Slic3r:
 					
 			elif k == 'adhesion':
 				if self.overrides[k] == 'Brim':
-					dProfile['brim_width'] = '6'
+					dProfile['brim_width'] = '3'
 					dProfile['raft_layers'] = '0'
 				elif self.overrides[k] == 'Raft':
 					dProfile['brim_width'] = '0'

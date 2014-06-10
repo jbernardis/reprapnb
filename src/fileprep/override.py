@@ -152,7 +152,7 @@ class Override(wx.Panel):
 		for i in range(len(labels)):
 			r = wx.RadioButton(self, wx.ID_ANY, labels[i], style=style)
 			sz.Add(r)
-			self.rbStartPoints.append(r)
+			self.rbAdhesion.append(r)
 			style = 0
 		return sz
 
