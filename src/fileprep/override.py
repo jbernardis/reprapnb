@@ -130,7 +130,7 @@ class Override(wx.Panel):
 		self.cbOvAdh = wx.CheckBox(self, wx.ID_ANY, "Adhesion")
 		self.Bind(wx.EVT_CHECKBOX, self.checkAdh, self.cbOvAdh)
 		bgrid.Add(self.cbOvAdh, pos=(ln, 1))
-		self.teOvAdh = wx.ListBox(self, wx.ID_ANY, (-1, -1),  (270, 120), ["None", "Raft", "Brim"], wx.LB_SINGLE)
+		self.teOvAdh = wx.ComboBox(self, wx.ID_ANY, "", (-1, -1),  (120, -1), ["None", "Raft", "Brim"], wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.teOvAdh.SetSelection(0)
 		self.teOvAdh.Enable(False)
 		self.controls["adhesion"] = self.teOvAdh
@@ -289,6 +289,6 @@ class Override(wx.Panel):
 			self.logger.LogMessage("Overriding support enable to: %s" % r['support'])
 			
 		if self.cbOvAdh.IsChecked():
-			r['adhesion'] = self.teOvAdh.GetString(self.teOvAdh.GetSelection())
+			r['adhesion'] = self.teOvAdh.GetValue()
 
 		return r
