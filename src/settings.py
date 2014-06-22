@@ -183,6 +183,8 @@ class Settings:
 		self.buildarea = [200, 200]
 		self.macroList = {}
 		self.macroOrder = []
+		self.tools = {}
+		self.toolOrder = []
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -286,6 +288,21 @@ class Settings:
 				mkey = mkey.strip()
 				self.macroOrder.append(mkey)
 				self.macroList[mkey] = mfile.strip()
+				
+		self.section = "tools"	
+		group = ""
+		if self.cfg.has_section(self.section):
+			for opt, value in self.cfg.items(self.section):
+				p = value.split(",")
+				if len(p) == 3:
+					group = p[0]
+					self.tools[opt] = p
+					self.toolOrder.append(opt)
+				elif len(p) == 2:
+					self.tools[opt] = [group] + p
+					self.toolOrder.append(opt)
+				else:
+					self.showError("Invalid number of parameters for tool %s - skipping" % opt)
 
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")

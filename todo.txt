@@ -10,6 +10,7 @@ In Progress/Need Testing
 
 
 Low Hanging
+- fix closure of firmware window when clicking on text boxes
 
 Medium
 - meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
@@ -20,8 +21,6 @@ Need more info
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
-- fix print sync to allow me to browse file without first having to uncheck - sync switched layers only if the current displayed layer is the one just being finished up
-- will need a button to take us to the print position
 
 Uncertain:
 - have links inside program to bring up tools - openscad, meshlab, netfabb, etc

@@ -76,3 +76,14 @@ macro.1 = Fan On,fanon.gcode
 macro.2 = Park,park.gcode
 macro.3 = Agitate,agitate.gcode
 
+[tools]
+openscad=Design,OpenScad,/usr/lbin/openscad
+meshlab=MeshLab,/usr/lbin/meshlab
+inkscape=InkScape,/bin/inkscape
+gimp=GIMP,/usr/local/bin/gimb-2.8
+freecad=FreeCAD,/usr/bin/freecad
+slic3r=Slicers,Slic3r,/usr/local/bin/slic3r
+cura=Cura,/usr/bin/cura
+skeinforge=Skeinforge,/usr/bin/skeinforge
+
+

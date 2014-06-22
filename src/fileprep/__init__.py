@@ -15,6 +15,7 @@ from images import Images
 from tools import formatElapsed 
 from stlview import StlViewer
 from override import Override
+from toolbar import ToolBar
 
 from reprap import MAX_EXTRUDERS
 
@@ -213,6 +214,13 @@ class FilePrepare(wx.Panel):
 		self.gcFile = None
 		self.stlFile = None
 		self.images = Images(os.path.join(self.settings.cmdfolder, "images"))
+		self.tbimages = Images(os.path.join(self.settings.cmdfolder, "tbimages"))
+		
+		if len(self.app.settings.tools) > 0:
+			self.toolBar = ToolBar(self.app.settings, self.tbimages)
+		else:
+			print "No toolbar generated"
+			self.toolBar = None
 
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:
@@ -1134,9 +1142,11 @@ class FilePrepare(wx.Panel):
 		
 	def viewZoomIn(self, evt):
 		self.gcf.zoomIn()
+		self.toolBar.Show()
 		
 	def viewZoomOut(self, evt):
 		self.gcf.zoomOut()
+		self.toolBar.Hide()
 		
 	def onMouseGCode(self, evt):
 		l = self.slideGCode.GetValue()-1
