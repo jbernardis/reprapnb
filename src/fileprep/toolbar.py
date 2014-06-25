@@ -1,17 +1,15 @@
 import wx
 import os
 import time
-from images import Images
 
 class ToolBar(wx.Frame):
-	def __init__(self, settings):
+	def __init__(self, settings, images):
 		wx.Frame.__init__(self, None, title="Toolbar")
 		self.SetBackgroundColour("white")
 		self.buttonMap = {}
 		fsizer = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.settings = settings
-		images = Images(os.path.join(".", "tbimages"))
 		
 		cGroup = None
 		sizer = None

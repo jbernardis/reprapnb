@@ -3,6 +3,7 @@ import os
 
 class Images:
 	def __init__(self, idir):
+		self.nameMap = {}
 		try:
 			pdir = os.path.expandvars(idir)
 			l = os.listdir(pdir)
@@ -20,3 +21,10 @@ class Images:
 				png.SetMask(mask)
 	
 				setattr(self, 'png'+b.capitalize(), png)
+				self.nameMap[b] = png
+				
+	def getByName(self, name):
+		if name in self.nameMap.keys():
+			return self.nameMap[name]
+		else:
+			return None
