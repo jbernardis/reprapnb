@@ -217,7 +217,7 @@ class FilePrepare(wx.Panel):
 		self.tbimages = Images(os.path.join(self.settings.cmdfolder, "tbimages"))
 		
 		if len(self.app.settings.tools) > 0:
-			self.toolBar = ToolBar(self.app.settings, self.tbimages)
+			self.toolBar = ToolBar(self.app, self.app.settings, self.tbimages)
 		else:
 			print "No toolbar generated"
 			self.toolBar = None
@@ -351,6 +351,13 @@ class FilePrepare(wx.Panel):
 		self.bZoomOut.SetToolTipString("Zoom the view out")
 		self.sizerBtns.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
+		
+		self.sizerBtns.AddSpacer((20, 20))
+	
+		self.bToolbox = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToolbox, size=BUTTONDIM)
+		self.bToolbox.SetToolTipString("Open/Show the toolbox")
+		self.sizerBtns.Add(self.bToolbox)
+		self.Bind(wx.EVT_BUTTON, self.showToolBox, self.bToolbox)
 		
 		self.sizerLeft.Add(self.sizerBtns)
 		self.sizerLeft.AddSpacer((20,20))
@@ -1142,11 +1149,15 @@ class FilePrepare(wx.Panel):
 		
 	def viewZoomIn(self, evt):
 		self.gcf.zoomIn()
-		self.toolBar.Show()
 		
 	def viewZoomOut(self, evt):
 		self.gcf.zoomOut()
-		self.toolBar.Hide()
+		
+	def showToolBox(self, evt):	
+		if self.toolbar.IsShown():
+			self.toolbar.SetFocus()
+		else:
+			self.toolBar.Show()
 		
 	def onMouseGCode(self, evt):
 		l = self.slideGCode.GetValue()-1
