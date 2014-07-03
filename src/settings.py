@@ -289,10 +289,10 @@ class Settings:
 				self.macroOrder.append(mkey)
 				self.macroList[mkey] = mfile.strip()
 				
-		self.section = "tools"	
+		section = "tools"	
 		group = ""
-		if self.cfg.has_section(self.section):
-			for opt, value in self.cfg.items(self.section):
+		if self.cfg.has_section(section):
+			for opt, value in self.cfg.items(section):
 				p = value.split(",")
 				if len(p) == 3:
 					group = p[0]
