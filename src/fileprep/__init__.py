@@ -589,6 +589,8 @@ class FilePrepare(wx.Panel):
 		if self.checkModified():
 			return False
 
+		if self.toolBar:
+			self.toolBar.Destroy()
 		if self.dlgView:
 			self.dlgView.Destroy()
 		if self.dlgMerge:
@@ -1154,8 +1156,8 @@ class FilePrepare(wx.Panel):
 		self.gcf.zoomOut()
 		
 	def showToolBox(self, evt):	
-		if self.toolbar.IsShown():
-			self.toolbar.SetFocus()
+		if self.toolBar.IsShown():
+			self.toolBar.SetFocus()
 		else:
 			self.toolBar.Show()
 		
