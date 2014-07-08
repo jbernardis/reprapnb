@@ -1,6 +1,5 @@
 import wx
 import os
-import time
 import shlex, subprocess
 
 class ToolBar(wx.Frame):
@@ -9,6 +8,8 @@ class ToolBar(wx.Frame):
 		self.SetBackgroundColour("white")
 		self.buttonMap = {}
 		fsizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.Bind(wx.EVT_CLOSE, self.hideToolBar)
 		
 		self.settings = settings
 		self.app = app
@@ -45,6 +46,9 @@ class ToolBar(wx.Frame):
 
 		self.SetSizer(fsizer)
 		self.Fit()
+		
+	def hideToolBar(self, evt):
+		self.Hide()
 	
 	def bTool(self, evt):
 		b = evt.GetEventObject()
@@ -52,12 +56,12 @@ class ToolBar(wx.Frame):
 			if b == self.buttonMap[t]:
 				s = self.settings.tools[t][2]
 				cmd = os.path.expandvars(os.path.expanduser(self.app.replace(s)))
-				self.logger.LogMessage("Attempting to execute: %s" % cmd)
+				self.logger.LogMessage("Executing: %s" % cmd)
 
 				args = shlex.split(str(cmd))
 				try:
 					subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 				except:
-					self.logger.LogError("Exception occurred trying to spawn slicer")
+					self.logger.LogError("Exception occurred trying to spawn tool process")
 					return
 
