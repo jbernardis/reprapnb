@@ -1157,7 +1157,7 @@ class FilePrepare(wx.Panel):
 		
 	def showToolBox(self, evt):	
 		if self.toolBar.IsShown():
-			self.toolBar.SetFocus()
+			self.toolBar.Raise()
 		else:
 			self.toolBar.Show()
 		
