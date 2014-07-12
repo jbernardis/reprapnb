@@ -1,7 +1,5 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-- allow override of certain slicing parameters from within host - other fields???
-- test override of infill and extrusion width
 - need to figure out why tool tips do not appear for checkboxes inside of static boxes
 
 
@@ -23,8 +21,6 @@ Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
 
 Uncertain:
-- have links inside program to bring up tools - openscad, meshlab, netfabb, etc
-- look into Cura's low time estimates (traysnwalls - lip on tray is a good candidate object)
 
 
 

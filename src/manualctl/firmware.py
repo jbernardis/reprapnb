@@ -219,7 +219,6 @@ class TextBox(wx.PyWindow):
 		
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
-		self.Bind(wx.EVT_LEFT_UP, self.OnCloseParent)
 		
 	def setText(self, text):
 		self.text = str(text)
@@ -237,11 +236,6 @@ class TextBox(wx.PyWindow):
 
 	def OnSize(self, evt):
 		self.Refresh()
-
-	def OnCloseParent(self, evt):
-		p = wx.GetTopLevelParent(self)
-		if p:
-			p.Close()			
 
 	def DoGetBestSize(self):
 		return self.bestsize
