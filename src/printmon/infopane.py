@@ -1,6 +1,7 @@
 import wx
 import time
 import math
+import os
 
 from tools import formatElapsed
 from settings import MAX_EXTRUDERS
@@ -177,8 +178,13 @@ class InfoPane (wx.Window):
 		self.setValue("filename", self.filename)
 		
 	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
-		self.setValue("filename", filename)
-		self.filename = filename
+		if len(filename) > 60:
+			lfn = os.path.basename(filename)
+		else:
+			lfn = filename
+
+		self.setValue("filename", lfn)
+		self.filename = lfn
 		self.duration = duration
 		self.gcount = gcount
 		self.layers = layers

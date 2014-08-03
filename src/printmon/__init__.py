@@ -255,7 +255,7 @@ class PrintMonitor(wx.Panel):
 		self.manctl = mc;
 
 	def assertAllowPulls(self, flag):
-		if not self.sdprintingfrom:
+		if not self.isPrinting():
 			self.bPull.Enable(flag)
 
 	def tick(self):

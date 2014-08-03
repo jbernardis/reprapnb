@@ -1281,7 +1281,10 @@ class FilePrepare(wx.Panel):
 		if self.temporaryFile:
 			fn = TEMPFILELABEL
 		else:
-			fn = self.gcFile
+			if len(self.gcFile) > 60:
+				fn = os.path.basename(self.gcFile)
+			else:
+				fn = self.gcFile
 			
 		if flag:
 			self.ipFileName.SetLabel("* " + fn)
