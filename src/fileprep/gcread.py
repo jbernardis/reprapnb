@@ -1,5 +1,8 @@
 import math
 import re
+import time
+
+YIELDTHRESHOLD = 100
 
 filrad = 1.5
 lh = 0.2
@@ -237,11 +240,18 @@ class GCode(object):
 		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		self.acceleration = acceleration
 		self.lines = []
+		self.yieldCounter = 0
 		
 		for i in data:
 			self.lines.append(Line(i))
 			
 		self.process()
+		
+	def checkYield(self):
+		self.yieldCounter += 1
+		if self.yieldCounter > YIELDTHRESHOLD:
+			self.yieldCounter = 0
+			time.sleep(0)
 		
 	def getLayerHeight(self):
 		return self.lh
@@ -288,6 +298,7 @@ class GCode(object):
 		relative = False
 		relative_e = False
 		for ln in self.lines:
+			self.checkYield()
 			lx += 1
 				
 			if ln.command() == "G91":
@@ -446,6 +457,7 @@ class GCode(object):
 		current_z = 0
 
 		for line in self.lines:
+			self.checkYield()
 			if line.command() == "G92":
 				if line.x is not None: current_x = line.x
 				if line.y is not None: current_y = line.y
@@ -540,6 +552,7 @@ class GCode(object):
 
 		lx = 0	
 		for line in self.lines:
+			self.checkYield()
 			lx += 1
 			if line.command() == "G92":
 				if line.e != None:
@@ -604,6 +617,7 @@ class GCode(object):
 		self.layer_time = []
 
 		for line in self.lines:
+			self.checkYield()
 			if "G90" in line.raw:
 				relative = False
 				relative_e = False
