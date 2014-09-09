@@ -7,7 +7,7 @@ from tools import formatElapsed
 from settings import MAX_EXTRUDERS
 
 filetags = { "filename" : "Name:" }
-layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "gclines": "G Code Lines:"}
+layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "timeuntil": "Time Until:", "gclines": "G Code Lines:"}
 printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
 
 MODE_NORMAL = 0
@@ -32,6 +32,7 @@ class InfoPane (wx.Window):
 		self.sdstartTime = None
 		self.sdTargetFile = None
 		self.newEta = None
+		self.printLayer = None
 		
 		self.filetagorder = ["filename"]
 		self.layertagorder = ["layer", "minmaxxy"]
@@ -41,7 +42,7 @@ class InfoPane (wx.Window):
 			if i != 0:
 				layertags[tag] = ""
 
-		self.layertagorder.extend(["gclines", "layertime"])
+		self.layertagorder.extend(["gclines", "layertime", "timeuntil"])
 		self.printtagorder = ["gcode", "eta", "eta2", "eta3"]
 			
 		wx.Window.__init__(self, parent, wx.ID_ANY, size=(400, -1), style=wx.SIMPLE_BORDER)		
@@ -195,6 +196,21 @@ class InfoPane (wx.Window):
 		for i in self.layertimes:
 			self.prevTimes.append(t)
 			t += i
+
+	def timeUntil(self, futureLayer):
+		if self.printLayer is None:
+			return 0
+
+		if self.printLayer >= (futureLayer-1):
+			return 0
+
+		tm = 0
+		cl = self.printLayer + 1
+		while (cl < futureLayer):
+			tm += self.layertimes[cl]
+			cl += 1
+
+		return tm
 			
 	def setSDTargetFile(self, fn):
 		self.sdTargetFile = fn
@@ -234,6 +250,12 @@ class InfoPane (wx.Window):
 			self.setValue("layertime", "%s" % formatElapsed(ltime))
 		else:
 			self.setValue("layertime", "%s/%s" % (formatElapsed(ltime), formatElapsed(self.duration)))
+			
+		t = self.timeUntil(layernbr)
+		if t == 0:
+			self.setValue("timeuntil", "")
+		else:
+			self.setValue("timeuntil", "%s" % formatElapsed(self.timeUntil(layernbr)))
 	
 	def setSDPrintInfo(self, position, maxposition):  # printing FROM SD card
 		self.sdposition = position
@@ -257,6 +279,7 @@ class InfoPane (wx.Window):
 		
 	def setPrintInfo(self, position, layer, gcodelines, layertime):
 		self.position = position
+		self.printLayer = layer
 		pct = "??"
 		if self.gcount != 0:
 			pct = "%.2f" % (float(self.position) / float(self.gcount) * 100.0)

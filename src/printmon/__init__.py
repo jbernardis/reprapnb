@@ -14,6 +14,8 @@ from sdcard import SDCard
 from tools import formatElapsed
 
 SCANTHRESHOLD = 100
+
+FILELIMIT = 100000
 	
 myRed = wx.Colour(254, 142, 82, 179) 
 myBlue = wx.Colour(51, 115, 254, 179)
@@ -240,16 +242,31 @@ class PrintMonitor(wx.Panel):
 
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, self.timer) 
-		self.secCounter = 0      
-		fn = os.path.join(self.app.settings.lastlogdirectory, "temps" + self.prtname + ".log")
-		self.logger.LogMessage("Log file %s opened for recording %s temperatures" % (fn, self.prtname))
-		self.fpLog = open(fn, "a")
-		self.lastLogDate = ""
+		self.secCounter = 0    
+		self.openFpLog()
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
 		
 		self.infoPane.setMode(MODE_NORMAL)
 		self.setSDTargetFile(None)
+		
+	def openFpLog(self):
+		self.fnLog = os.path.join(self.app.settings.lastlogdirectory, "temps" + self.prtname + ".log")
+		self.logger.LogMessage("Log file %s opened for recording %s temperatures" % (self.fnLog, self.prtname))
+		self.fpLog = open(self.fnLog, "a")
+		self.lastLogDate = ""
+		
+	def newFpLogVersion(self):
+		try:
+			os.unlink(self.fnLog + ".old")
+			self.logger.LogMessage("Old temperature log file (%s.old) deleted" % self.fnLog)
+		except:
+			pass
+		
+		self.fpLog.close()
+		os.rename(self.fnLog, self.fnLog+".old")
+		self.logger.LogMessage("Archiving temperature log %s as %s.old" % (self.fnLog, self.fnLog))
+		self.openFpLog()
 		
 	def setManCtl(self, mc):
 		self.manctl = mc;
@@ -850,10 +867,15 @@ class PrintMonitor(wx.Panel):
 		ymd = time.strftime('%y:%m:%d', t)
 		if ymd != self.lastLogDate:
 			self.fpLog.write("================================: " + ymd + '\n')
+			self.lastLogDate = ymd
 
 		tm = time.strftime('%H:%M:%S', t)
 		self.fpLog.write(tm + ": " + msg)
 		self.fpLog.flush()
+		sz = self.fpLog.tell()
+		if sz > FILELIMIT:
+			self.newFpLogVersion():
+
 		
 	def enableButtons(self, flag=True):
 		if flag:
