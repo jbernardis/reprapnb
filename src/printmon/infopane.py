@@ -199,7 +199,7 @@ class InfoPane (wx.Window):
 
 	def timeUntil(self, futureLayer):
 		if self.printLayer is None:
-			return 0
+			self.printLayer = 0
 
 		if self.printLayer >= (futureLayer-1):
 			return 0
