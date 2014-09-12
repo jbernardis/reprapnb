@@ -193,12 +193,14 @@ class InfoPane (wx.Window):
 		self.layertimes = [i for i in layertimes]
 		t = 0
 		self.prevTimes = []
-		self.printLayer = 0
 		for i in self.layertimes:
 			self.prevTimes.append(t)
 			t += i
 
 	def timeUntil(self, futureLayer):
+		if self.printLayer is None:
+			self.printLayer = 0
+
 		if self.printLayer >= (futureLayer-1):
 			return 0
 
