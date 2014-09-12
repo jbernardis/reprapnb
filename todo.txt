@@ -1,12 +1,11 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-- need to figure out why tool tips do not appear for checkboxes inside of static boxes
 limit size of temperature logging files
+estimate when a later layer will start
 
 
 
 send email when print job finishes
-estimate when a later layer will start
 
 
 

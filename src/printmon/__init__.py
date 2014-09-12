@@ -874,7 +874,7 @@ class PrintMonitor(wx.Panel):
 		self.fpLog.flush()
 		sz = self.fpLog.tell()
 		if sz > FILELIMIT:
-			self.newFpLogVersion():
+			self.newFpLogVersion()
 
 		
 	def enableButtons(self, flag=True):
