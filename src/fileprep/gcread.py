@@ -256,6 +256,9 @@ class GCode(object):
 	def getLayerHeight(self):
 		return self.lh
 	
+	def getTemps(self):
+		return (self.bedTemp, self.heTemps)
+	
 	def getFilamentRad(self, tool):
 		return self.frad[tool]
 		
@@ -287,6 +290,8 @@ class GCode(object):
 		self.currenttool = 0
 		self.layers = []
 		self.layerlines = []
+		self.bedTemp = None
+		self.heTemps = [None] * MAX_EXTRUDERS
 		
 		lyr = Layer(self, ln = lnbr, lx=0, tool=0)
 		self.currentheight = 0.0
@@ -313,6 +318,14 @@ class GCode(object):
 				relative_e = True
 			elif ln.command() == "G92":
 				lyr.resetAxis(ln.x, ln.y, ln.z, ln.e, lx)
+			elif ln.command() == "M140" or ln.command() == "M190":
+				if self.bedTemp is None:
+					if "S" in ln.raw:
+						self.bedTemp = ln._get_float("S")
+			elif ln.command() == "M104" or ln.command() == "M109":
+				if self.heTemps[self.currenttool] is None:
+					if "S" in ln.raw:
+						self.heTemps[self.currenttool] = ln._get_float("S")
 			elif ln.command().startswith("T"):
 				try:
 					t = int(ln.command()[1:])
@@ -532,17 +545,11 @@ class GCode(object):
 		self.height = zmax-zmin
 		
 	def filament_length(self):
-		self.total_e = []
-		cur_e = []
-		segment_e = []
-		segment_start_e = []
-		layer_e = []
-		for i in range(MAX_EXTRUDERS):
-			self.total_e.append(0)
-			cur_e.append(0)
-			segment_e.append(0)
-			segment_start_e.append(0)
-			layer_e.append(0)
+		self.total_e = [0] * MAX_EXTRUDERS
+		cur_e = [0] * MAX_EXTRUDERS
+		segment_e = [0] * MAX_EXTRUDERS
+		segment_start_e = [0] * MAX_EXTRUDERS
+		layer_e = [0] * MAX_EXTRUDERS
 
 		cur_z = 0
 		self.layer_e = []

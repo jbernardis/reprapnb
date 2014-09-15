@@ -9,6 +9,7 @@ from gcframe import GcFrame
 from savelayer import SaveLayerDlg
 from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
+from modtemps import ModifyTempsDlg
 from editgcode import EditGCodeDlg
 from stlmerge import StlMergeDlg
 from images import Images
@@ -28,6 +29,7 @@ GCODELINETEXT = "Current G Code Line: (%d)"
 
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
+reS = re.compile("(.*[sS])([0-9\.]+)(.*)")
 
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
@@ -334,6 +336,12 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.shiftModel, self.bShift)
 		self.bShift.Enable(False)
 		
+		self.bTempProf = wx.BitmapButton(self, wx.ID_ANY, self.images.pngModtemp, size=BUTTONDIM)
+		self.bTempProf.SetToolTipString("Modify Temperatures")
+		self.sizerBtns.Add(self.bTempProf)
+		self.Bind(wx.EVT_BUTTON, self.modifyTemps, self.bTempProf)
+		self.bTempProf.Enable(False)
+		
 		self.bEdit = wx.BitmapButton(self, wx.ID_ANY, self.images.pngEdit, size=BUTTONDIM)
 		self.bEdit.SetToolTipString("Edit the G Code")
 		self.sizerBtns.Add(self.bEdit)
@@ -431,7 +439,7 @@ class FilePrepare(wx.Panel):
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
 		f = wx.Font(18,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		t.SetFont(f)
-		self.infoPane.AddSpacer((100, 20), pos=(0,0))
+		self.infoPane.AddSpacer((100, 10), pos=(0,0))
 		self.infoPane.Add(t, pos=(1,0), span=(1,2), flag=wx.ALIGN_CENTER)
 		
 		self.infoPane.AddSpacer((20, 10), pos=(2,0))
@@ -445,7 +453,7 @@ class FilePrepare(wx.Panel):
 		self.ipFileName.SetFont(ipfont)
 		self.infoPane.Add(self.ipFileName, pos=(3,0), span=(1,2), flag=wx.ALIGN_LEFT)
 		
-		self.infoPane.AddSpacer((40, 20), pos=(4,0))
+		self.infoPane.AddSpacer((40, 10), pos=(4,0))
 		
 		text = "Layer Number: "
 		w, h = dc.GetTextExtent(text)
@@ -502,6 +510,17 @@ class FilePrepare(wx.Panel):
 			ln += 1
 			self.ipFilament.append(w)
 		
+		text = "Temp Profile: "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+		t.SetFont(ipfont)
+		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
+		
+		self.ipTempProf = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipTempProf.SetFont(ipfont)
+		self.infoPane.Add(self.ipTempProf, pos=(ln,1), flag=wx.ALIGN_LEFT)
+		
+		ln += 1
 		text = "G Code Line from/to: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
@@ -534,7 +553,7 @@ class FilePrepare(wx.Panel):
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
 		self.sizerRight.Add(self.infoPane)
-		self.sizerRight.AddSpacer((10, 10))
+		self.sizerRight.AddSpacer((5,5))
 		
 		self.override = Override(self)
 		self.override.setHelpText(self.slicer.type.getOverrideHelpText())
@@ -916,6 +935,7 @@ class FilePrepare(wx.Panel):
 		self.bSaveLayer.Enable(self.gcodeLoaded)
 		self.bFilamentChange.Enable(self.gcodeLoaded)
 		self.bShift.Enable(self.gcodeLoaded)
+		self.bTempProf.Enable(self.gcodeLoaded)
 		self.bEdit.Enable(self.gcodeLoaded)
 		self.setAllowPulls(self.gcodeLoaded)
 		
@@ -927,6 +947,7 @@ class FilePrepare(wx.Panel):
 		self.bSaveLayer.Enable(False)
 		self.bFilamentChange.Enable(False)
 		self.bShift.Enable(False)
+		self.bTempProf.Enable(False)
 		self.bEdit.Enable(False)
 		self.setAllowPulls(False)
 		
@@ -935,6 +956,7 @@ class FilePrepare(wx.Panel):
 		self.bSaveLayer.Enable(False)
 		self.bFilamentChange.Enable(False)
 		self.bShift.Enable(False)
+		self.bTempProf.Enable(False)
 		self.bEdit.Enable(False)
 
 	def editGCode(self, event):
@@ -980,6 +1002,7 @@ class FilePrepare(wx.Panel):
 		self.gcf.setShift(sx, sy)
 
 	def applyShift(self):
+		self.logger.LogMessage("Applying axis shift in G Code")
 		for i in range(len(self.gcode)):
 			l = self.gcode[i]
 			l = self.applyAxisShift(l, 'x', self.shiftX)
@@ -1010,6 +1033,54 @@ class FilePrepare(wx.Panel):
 		
 		value = float(m.group(2)) + float(shift)
 		return "%s%s%s" % (m.group(1), str(value), m.group(3))
+	
+	def modifyTemps(self, event):
+		dlg = ModifyTempsDlg(self)
+		dlg.CenterOnScreen()
+		val = dlg.ShowModal()
+
+		if val == wx.ID_OK:
+			modTemps = dlg.getResult()
+			self.applyTempChange(modTemps)
+
+		dlg.Destroy()
+
+	def applyTempChange(self, temps):
+		self.logger.LogMessage("Modifying temperature in G Code")
+		self.currentTool = 0
+		for i in range(len(self.gcode)):
+			l = self.applySingleTempChange(self.gcode[i], temps)
+			self.gcode[i] = l
+
+		l = self.gcf.getCurrentLayer()
+		self.buildModel(layer=l)
+		self.setModified(True)
+
+	def applySingleTempChange(self, s, temps):
+		if "m104" in s.lower() or "m109" in s.lower():
+			m = reS.match(s)
+			difference = temps[1][self.currentTool]
+		elif "m140" in s.lower() or "m190" in s.lower():
+			m = reS.match(s)
+			difference = temps[0]
+		elif s.startswith("T"):
+			try:
+				t = int(s[1:])
+			except:
+				t = None
+
+			if t is not None:
+				self.currentTool = t
+			return s
+		else:
+			return s
+
+		if m is None or m.lastindex != 3:
+			return s
+
+		value = float(m.group(2)) + float(difference)
+		return "%s%s%s" % (m.group(1), str(value), m.group(3))
+
 
 
 	def fileSave(self, event):
@@ -1261,6 +1332,19 @@ class FilePrepare(wx.Panel):
 		lt = time.strftime('%H:%M:%S', time.gmtime(self.layerInfo[5]))
 		tt = time.strftime('%H:%M:%S', time.gmtime(self.model.duration))
 		self.ipPrintTime.SetLabel("%s/%s" % (lt, tt))
+		
+		(bed, hes) = self.model.getTemps()
+		if bed is None:
+			tp = "B:??"
+		else:
+			tp = "B:%.3f" % bed
+		for i in range(MAX_EXTRUDERS):
+			if hes[i] is None:
+				tp += "T%d:??" % i
+			else:
+				tp += "T%d:%.3f" % (i, hes[i])
+				
+		self.ipTempProf.SetLabel(tp)
 		
 	def setModified(self, flag=True):
 		self.modified = flag
