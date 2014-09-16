@@ -910,8 +910,11 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Estimated duration: %s" % formatElapsed(self.model.duration))
 				self.enableButtons();
 				
-			self.app.updateFilePrepStatus(FPSTATUS_READY)
-			self.status = FPSTATUS_READY
+			if self.modified:
+				self.status = FPSTATUS_READY_DIRTY
+			else:
+				self.status = FPSTATUS_READY
+			self.app.updateFilePrepStatus(self.status)
 
 			
 		elif evt.state == MODELER_CANCELLED:
@@ -921,8 +924,8 @@ class FilePrepare(wx.Panel):
 			self.enableButtons()
 			self.model = None
 				
-			self.app.updateFilePrepStatus(FPSTATUS_READY)
-			self.status = FPSTATUS_READY
+			self.status = FPSTATUS_IDLE
+			self.app.updateFilePrepStatus(self.status)
 				
 		else:
 			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
@@ -1002,6 +1005,8 @@ class FilePrepare(wx.Panel):
 		self.gcf.setShift(sx, sy)
 
 	def applyShift(self):
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
 		self.logger.LogMessage("Applying axis shift in G Code")
 		for i in range(len(self.gcode)):
 			l = self.gcode[i]
@@ -1011,9 +1016,9 @@ class FilePrepare(wx.Panel):
 
 		self.shiftX = 0
 		self.shiftY = 0
+		self.setModified(True)
 		l = self.gcf.getCurrentLayer()
 		self.buildModel(layer=l)
-		self.setModified(True)
 
 	def applyAxisShift(self, s, axis, shift):
 		if "m117" in s or "M117" in s:
@@ -1046,15 +1051,17 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy()
 
 	def applyTempChange(self, temps):
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
 		self.logger.LogMessage("Modifying temperature in G Code")
 		self.currentTool = 0
 		for i in range(len(self.gcode)):
 			l = self.applySingleTempChange(self.gcode[i], temps)
 			self.gcode[i] = l
 
+		self.setModified(True)
 		l = self.gcf.getCurrentLayer()
 		self.buildModel(layer=l)
-		self.setModified(True)
 
 	def applySingleTempChange(self, s, temps):
 		if "m104" in s.lower() or "m109" in s.lower():
@@ -1078,7 +1085,11 @@ class FilePrepare(wx.Panel):
 		if m is None or m.lastindex != 3:
 			return s
 
-		value = float(m.group(2)) + float(difference)
+		value = float(m.group(2))
+		if value == 0.0:
+			return s
+
+		value += float(difference)
 		return "%s%s%s" % (m.group(1), str(value), m.group(3))
 
 
@@ -1324,7 +1335,7 @@ class FilePrepare(wx.Panel):
 
 		
 		for i in range(MAX_EXTRUDERS):
-			s = "T%d: %.3f/%.3f" % (i, self.layerInfo[3][i], self.model.total_e[i])
+			s = "T%d: %.1f3%.3f" % (i, self.layerInfo[3][i], self.model.total_e[i])
 			self.ipFilament[i].SetLabel(s)
 			
 		self.ipGCLines.SetLabel("%4d/%4d" % (self.layerInfo[4][0]+1, self.layerInfo[4][1]+1))
@@ -1337,12 +1348,12 @@ class FilePrepare(wx.Panel):
 		if bed is None:
 			tp = "B:??"
 		else:
-			tp = "B:%.3f" % bed
+			tp = "B:%.1f" % bed
 		for i in range(MAX_EXTRUDERS):
 			if hes[i] is None:
-				tp += "T%d:??" % i
+				tp += " / T%d:??" % i
 			else:
-				tp += "T%d:%.3f" % (i, hes[i])
+				tp += " / T%d:%.1f" % (i, hes[i])
 				
 		self.ipTempProf.SetLabel(tp)
 		
