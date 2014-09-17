@@ -56,25 +56,31 @@ class ModifyTempsDlg(wx.Dialog):
 		self.he0Temp.SetFont(ipfont)
 		slidesizer.Add(self.he0Temp, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 40)
 		
-		self.modHE1 = wx.Slider(
-			self, wx.ID_ANY, 0, MINHE, MAXHE, size=(150, -1),
-			style = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.modHE1.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinHE1)
-		self.modHE1.Bind(wx.EVT_MOUSEWHEEL, self.onMouseHE1)
-		self.modHE1.SetPageSize(1);
-
-		b = wx.StaticBox(self, wx.ID_ANY, "Hot End 1 Delta")
-		sbox = wx.StaticBoxSizer(b, wx.VERTICAL)
-		sbox.Add(self.modHE1, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5)
-		slidesizer.Add(sbox, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5)
-
-		self.he1Temp = wx.StaticText(self, wx.ID_ANY, "");
-		self.he1Temp.SetFont(ipfont)
-		slidesizer.Add(self.he1Temp, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 40)
+		if not self.hotends[1] is None:
+			self.modHE1 = wx.Slider(
+				self, wx.ID_ANY, 0, MINHE, MAXHE, size=(150, -1),
+				style = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
+			self.modHE1.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinHE1)
+			self.modHE1.Bind(wx.EVT_MOUSEWHEEL, self.onMouseHE1)
+			self.modHE1.SetPageSize(1);
+	
+			b = wx.StaticBox(self, wx.ID_ANY, "Hot End 1 Delta")
+			sbox = wx.StaticBoxSizer(b, wx.VERTICAL)
+			sbox.Add(self.modHE1, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5)
+			slidesizer.Add(sbox, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5)
+	
+			self.he1Temp = wx.StaticText(self, wx.ID_ANY, "");
+			self.he1Temp.SetFont(ipfont)
+			slidesizer.Add(self.he1Temp, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 40)
 
 		btn = wx.Button(self, wx.ID_ANY, "PLA->ABS")
 		btn.SetHelpText("Change from PLA profile to ABS")
 		self.Bind(wx.EVT_BUTTON, self.profilePLA2ABS, btn)
+		profbtnsizer.Add(btn);
+
+		btn = wx.Button(self, wx.ID_ANY, "ABS->PLA")
+		btn.SetHelpText("Change from ABS profile to PLA")
+		self.Bind(wx.EVT_BUTTON, self.profileABS2PLA, btn)
 		profbtnsizer.Add(btn);
 		
 		btn = wx.Button(self, wx.ID_OK)
@@ -101,10 +107,17 @@ class ModifyTempsDlg(wx.Dialog):
 		self.heDelta = [40, 40]
 		self.showTemps()
 
+	def profileABS2PLA(self, evt):
+		self.bedDelta = -50
+		self.heDelta = [-40, -40]
+		self.showTemps()
+
 	def showTemps(self):
+		changes = False
 		if self.bed is None:
 			s = "?? / ??"
 		else:
+			changes = True
 			s = "%.1f / %.1f" % (self.bed, self.bed+self.bedDelta)
 		self.bedTemp.SetLabel(s)
 		self.modBed.SetValue(self.bedDelta)
@@ -112,16 +125,23 @@ class ModifyTempsDlg(wx.Dialog):
 		if self.hotends[0] is None:
 			s = "?? / ??"
 		else:
+			changes = True
 			s = "%.1f / %.1f" % (self.hotends[0], self.hotends[0]+self.heDelta[0])
 		self.he0Temp.SetLabel(s)
 		self.modHE0.SetValue(self.heDelta[0])
 
-		if self.hotends[1] is None:
-			s = "?? / ??"
-		else:
+		if not self.hotends[1] is None:
+			changes = True
 			s = "%.1f / %.1f" % (self.hotends[1], self.hotends[1]+self.heDelta[1])
-		self.he1Temp.SetLabel(s)
-		self.modHE1.SetValue(self.heDelta[1])
+			self.he1Temp.SetLabel(s)
+			self.modHE1.SetValue(self.heDelta[1])
+
+		if changes:
+			self.btnOK.Enable(True)
+			self.btnCancel.SetLabel("Cancel")
+		else:
+			self.btnOK.Enable(False)
+			self.btnCancel.SetLabel("Close")
 		
 	def onSpinBed(self, evt):
 		self.bedDelta = evt.EventObject.GetValue()

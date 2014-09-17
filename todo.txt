@@ -2,12 +2,10 @@ In Progress/Need Testing
 - need to test HTTP server - stop print
 limit size of temperature logging files
 estimate when a later layer will start
-ability to change temps
 
 
 
 send email when print job finishes
-in fileprep - change temps - show current temps at startup, and what they'd change to if OKd - shortcut buttons: from PLA -> ABS eg
 in fileprep - ability to change speeds
 
 

@@ -10,6 +10,7 @@ from savelayer import SaveLayerDlg
 from filamentchange import FilamentChangeDlg
 from shiftmodel import ShiftModelDlg
 from modtemps import ModifyTempsDlg
+from modspeed import ModifySpeedDlg
 from editgcode import EditGCodeDlg
 from stlmerge import StlMergeDlg
 from images import Images
@@ -30,6 +31,8 @@ GCODELINETEXT = "Current G Code Line: (%d)"
 reX = re.compile("(.*[xX])([0-9\.]+)(.*)")
 reY = re.compile("(.*[yY])([0-9\.]+)(.*)")
 reS = re.compile("(.*[sS])([0-9\.]+)(.*)")
+reF = re.compile("(.*[fF])([0-9\.]+)(.*)")
+reE = re.compile("(.*[eE])([0-9\.]+)(.*)")
 
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
@@ -341,6 +344,12 @@ class FilePrepare(wx.Panel):
 		self.sizerBtns.Add(self.bTempProf)
 		self.Bind(wx.EVT_BUTTON, self.modifyTemps, self.bTempProf)
 		self.bTempProf.Enable(False)
+		
+		self.bSpeedProf = wx.BitmapButton(self, wx.ID_ANY, self.images.pngModspeed, size=BUTTONDIM)
+		self.bSpeedProf.SetToolTipString("Modify print speeds")
+		self.sizerBtns.Add(self.bSpeedProf)
+		self.Bind(wx.EVT_BUTTON, self.modifySpeeds, self.bSpeedProf)
+		self.bSpeedProf.Enable(False)
 		
 		self.bEdit = wx.BitmapButton(self, wx.ID_ANY, self.images.pngEdit, size=BUTTONDIM)
 		self.bEdit.SetToolTipString("Edit the G Code")
@@ -939,6 +948,7 @@ class FilePrepare(wx.Panel):
 		self.bFilamentChange.Enable(self.gcodeLoaded)
 		self.bShift.Enable(self.gcodeLoaded)
 		self.bTempProf.Enable(self.gcodeLoaded)
+		self.bSpeedProf.Enable(self.gcodeLoaded)
 		self.bEdit.Enable(self.gcodeLoaded)
 		self.setAllowPulls(self.gcodeLoaded)
 		
@@ -951,6 +961,7 @@ class FilePrepare(wx.Panel):
 		self.bFilamentChange.Enable(False)
 		self.bShift.Enable(False)
 		self.bTempProf.Enable(False)
+		self.bSpeedProf.Enable(False)
 		self.bEdit.Enable(False)
 		self.setAllowPulls(False)
 		
@@ -960,6 +971,7 @@ class FilePrepare(wx.Panel):
 		self.bFilamentChange.Enable(False)
 		self.bShift.Enable(False)
 		self.bTempProf.Enable(False)
+		self.bSpeedProf.Enable(False)
 		self.bEdit.Enable(False)
 
 	def editGCode(self, event):
@@ -1092,7 +1104,46 @@ class FilePrepare(wx.Panel):
 		value += float(difference)
 		return "%s%s%s" % (m.group(1), str(value), m.group(3))
 
+	def modifySpeeds(self, event):
+		dlg = ModifySpeedDlg(self)
+		dlg.CenterOnScreen()
+		val = dlg.ShowModal()
 
+		if val == wx.ID_OK:
+			modSpeeds = dlg.getResult()
+			self.applySpeedChange(modSpeeds)
+
+		dlg.Destroy()
+
+	def applySpeedChange(self, speeds):
+		self.status = FPSTATUS_BUSY
+		self.app.updateFilePrepStatus(self.status)
+		self.logger.LogMessage("Modifying speeds in G Code")
+		self.currentTool = 0
+		for i in range(len(self.gcode)):
+			l = self.applySingleSpeedChange(self.gcode[i], speeds)
+			self.gcode[i] = l
+
+		self.setModified(True)
+		l = self.gcf.getCurrentLayer()
+		self.buildModel(layer=l)
+
+	def applySingleSpeed(self, s, speeds):
+		if "m117" in s or "M117" in s:
+			return s
+
+		m = reF.match(s)
+		if m is None or m.lastindex != 3:
+			return s
+
+		e = reE.match(s)
+		if e is None: #no extrusion - must  be a move
+			factor = speeds[1]
+		else:
+			factor = speeds[0]
+
+		value = float(m.group(2)) * float(factor)
+		return "%s%s%s" % (m.group(1), str(value), m.group(3))
 
 	def fileSave(self, event):
 		dlg = wx.FileDialog(
