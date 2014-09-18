@@ -52,7 +52,6 @@ class ModifySpeedDlg(wx.Dialog):
 		btnsizer.Realize()
 
 		sizer.Add(slidesizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
-		sizer.Add(profbtnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		self.SetSizer(sizer)

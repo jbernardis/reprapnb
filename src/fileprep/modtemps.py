@@ -83,14 +83,16 @@ class ModifyTempsDlg(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.profileABS2PLA, btn)
 		profbtnsizer.Add(btn);
 		
-		btn = wx.Button(self, wx.ID_OK)
-		btn.SetHelpText("Save the changes")
-		btn.SetDefault()
-		btnsizer.AddButton(btn)
+		self.btnOK = wx.Button(self, wx.ID_OK)
+		self.btnOK.SetHelpText("Save the changes")
+		self.btnOK.SetDefault()
+		btnsizer.AddButton(self.btnOK)
+		self.btnOK.Enable(False)
 
-		btn = wx.Button(self, wx.ID_CANCEL)
-		btn.SetHelpText("Exit without saving")
-		btnsizer.AddButton(btn)
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL)
+		self.btnCancel.SetHelpText("Exit without saving")
+		self.btnCancel.SetLabel("Close")
+		btnsizer.AddButton(self.btnCancel)
 		btnsizer.Realize()
 
 		self.showTemps()
@@ -117,7 +119,8 @@ class ModifyTempsDlg(wx.Dialog):
 		if self.bed is None:
 			s = "?? / ??"
 		else:
-			changes = True
+			if self.bedDelta != 0:
+				changes = True
 			s = "%.1f / %.1f" % (self.bed, self.bed+self.bedDelta)
 		self.bedTemp.SetLabel(s)
 		self.modBed.SetValue(self.bedDelta)
@@ -125,13 +128,15 @@ class ModifyTempsDlg(wx.Dialog):
 		if self.hotends[0] is None:
 			s = "?? / ??"
 		else:
-			changes = True
+			if self.heDelta[0] != 0:
+				changes = True
 			s = "%.1f / %.1f" % (self.hotends[0], self.hotends[0]+self.heDelta[0])
 		self.he0Temp.SetLabel(s)
 		self.modHE0.SetValue(self.heDelta[0])
 
 		if not self.hotends[1] is None:
-			changes = True
+			if self.heDelta[1] != 0:
+				changes = True
 			s = "%.1f / %.1f" % (self.hotends[1], self.hotends[1]+self.heDelta[1])
 			self.he1Temp.SetLabel(s)
 			self.modHE1.SetValue(self.heDelta[1])
