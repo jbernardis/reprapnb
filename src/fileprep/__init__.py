@@ -1386,7 +1386,7 @@ class FilePrepare(wx.Panel):
 
 		
 		for i in range(MAX_EXTRUDERS):
-			s = "T%d: %.1f3%.3f" % (i, self.layerInfo[3][i], self.model.total_e[i])
+			s = "T%d: %.3f/%.3f" % (i, self.layerInfo[3][i], self.model.total_e[i])
 			self.ipFilament[i].SetLabel(s)
 			
 		self.ipGCLines.SetLabel("%4d/%4d" % (self.layerInfo[4][0]+1, self.layerInfo[4][1]+1))

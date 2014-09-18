@@ -1,12 +1,11 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
 limit size of temperature logging files
-estimate when a later layer will start
+test speed change
 
 
 
 send email when print job finishes
-in fileprep - ability to change speeds
 
 
 
