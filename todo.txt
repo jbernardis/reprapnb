@@ -1,6 +1,5 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-limit size of temperature logging files
 test speed change
 
 

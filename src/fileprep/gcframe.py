@@ -30,6 +30,8 @@ class GcFrame (wx.Window):
 		self.model = None
 		self.currentlayer = None
 		self.currentlx = 0
+		self.drawGCFirst = None
+		self.drawGCLast = None
 		self.highlightX = None
 		self.shiftX = 0
 		self.shiftY = 0
@@ -95,19 +97,6 @@ class GcFrame (wx.Window):
 		if evt.ShiftDown(): # scroll through lines
 			if self.model is not None:
 				if evt.GetWheelRotation() < 0:
-					if self.hilite < self.lastGLine:
-						self.hilite += 1
-						self.parent.setGCode(self.hilite)
-						self.redrawCurrentLayer()
-				else:
-					if self.hilite > self.firstGLine:
-						self.hilite -= 1
-						self.parent.setGCode(self.hilite)
-						self.redrawCurrentLayer()
-						
-		elif evt.ControlDown(): # scroll through layers
-			if self.model is not None:
-				if evt.GetWheelRotation() < 0:
 					if self.currentlx < self.layercount-1:
 						lx = self.currentlx + 1
 						self.parent.setLayer(lx)
@@ -146,9 +135,10 @@ class GcFrame (wx.Window):
 		if self.layerInfo is None:
 			return
 
-		self.hilite = self.layerInfo[4][0]
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
+		self.drawGCFirst = self.layerInfo[4][0]
+		self.drawGCLast = self.layerInfo[4][-1]
 
 		self.zoom = zoom
 		if zoom == 1:
@@ -170,9 +160,10 @@ class GcFrame (wx.Window):
 		if self.layerInfo is None:
 			return
 
-		self.hilite = self.layerInfo[4][0]
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
+		self.drawGCFirst = self.layerInfo[4][0]
+		self.drawGCLast = self.layerInfo[4][-1]
 		
 		self.currentlayer = self.model.getLayer(lyr)
 		self.currentlx = lyr
@@ -212,8 +203,9 @@ class GcFrame (wx.Window):
 		self.toolPathsOnly = flag
 		self.redrawCurrentLayer()
 
-	def setGCode(self, l):
-		self.hilite = l
+	def setGCode(self, newFirst, newLast):
+		self.drawGCFirst = newFirst
+		self.drawGCLast = newLast
 		self.redrawCurrentLayer()
 		
 	def redrawCurrentLayer(self):
@@ -296,7 +288,8 @@ class GcFrame (wx.Window):
 				last_e = p[3]
 			else:
 				tool = p[4]
-				self.drawLine(dc, prev, p, last_e, tool, nn, p[8], background=background)
+				if background or (p[6] >= self.drawGCFirst and p[6] <= self.drawGCLast):
+					self.drawLine(dc, prev, p, last_e, tool, nn, p[8], background=background)
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -329,9 +322,6 @@ class GcFrame (wx.Window):
 		w = lw * self.zoom * self.scale
 		if self.toolPathsOnly:
 			w = 1
-				
-		if p[6] == self.hilite:
-			w = w * 3
 			
 		if (prev[0] != p[0]) or (prev[1] != p[1]):
 			(x1, y1) = self.transform(prev[0], self.buildarea[1]-prev[1])
@@ -339,9 +329,6 @@ class GcFrame (wx.Window):
 
 			dc.SetPen(wx.Pen(c, w))
 			dc.DrawLine(x1, y1, x2, y2)
-			if p[6] == self.hilite:
-				dc.SetPen(wx.Pen("white", 1))
-				dc.DrawLine(x1, y1, x2, y2)
 				
 		if p[3] is not None and p[3] < prev[3]: # retraction
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
