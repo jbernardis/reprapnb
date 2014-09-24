@@ -389,7 +389,7 @@ class FilePrepare(wx.Panel):
 		sz = self.buildarea[1] * self.settings.gcodescale
 
 		self.slideLayer = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
+			self, wx.ID_ANY, 1, 1, 9999, size=(50, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
 		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
@@ -400,7 +400,7 @@ class FilePrepare(wx.Panel):
 		self.sizerGraph.Add(self.slideLayer)
 
 		self.slideGCFirst = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(80, sz),
+			self, wx.ID_ANY, 1, 1, 99999, size=(60, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideGCFirst.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCFirst)
 		self.slideGCFirst.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCFirst)
@@ -411,7 +411,7 @@ class FilePrepare(wx.Panel):
 		self.sizerGraph.Add(self.slideGCFirst)
 
 		self.slideGCLast = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(80, sz),
+			self, wx.ID_ANY, 1, 1, 99999, size=(60, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideGCLast.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCLast)
 		self.slideGCLast.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCLast)
@@ -1324,7 +1324,8 @@ class FilePrepare(wx.Panel):
 			l -= 1
 		if l >= self.firstGLine and l < self.lastGLine:
 			self.setGCode(l, None)
-			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+
+		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 		
 	def onMouseGCLast(self, evt):
 		l = self.slideGCLast.GetValue()-1
@@ -1334,36 +1335,50 @@ class FilePrepare(wx.Panel):
 			l -= 1
 		if l > self.firstGLine and l <= self.lastGLine:
 			self.setGCode(None, l)
-			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+
+		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 
 	def onSpinGCFirst(self, evt):
 		l = evt.EventObject.GetValue()-1
-		if l >= self.firstGLine and l < self.lastGLine:
-			self.setGCode(l, None)
-			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+		if l < self.firstGLine:
+			l = self.firstGLine
+		elif l >= self.lastGLine:
+			l = self.lastGLine - 1
+
+		self.setGCode(l, None)
+
+		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 
 	def onSpinGCLast(self, evt):
 		l = evt.EventObject.GetValue()-1
-		if l > self.firstGLine and l <= self.lastGLine:
-			self.setGCode(None, l)
-			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+		if l <= self.firstGLine:
+			l = self.firstGLine + 1
+		elif l > self.lastGLine:
+			l = self.lastGLine
+
+		self.setGCode(None, l)
+
+		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 		
 	def setGCode(self, newFirst, newLast):
-		if newFirst >= self.firstGLine and newFirst < self.lastGLine:
-			self.currentGCLine = newFirst
-			self.drawGCFirst = newFirst
-			self.ipGCodeSource.SetLabel(self.model.lines[newFirst].orig)
-			self.ipGCodeLine.SetLabel(GCODELINETEXT % (newFirst+1))
-			self.slideGCFirst.SetValue(newFirst+1)
-			if newFirst >= self.drawGCLast:
-				self.drawGCLast = newFirst + 1
-				self.slideGCLast.SetValue(self.drawGCLast + 1)
+		if not newFirst is None:
+			if newFirst >= self.firstGLine and newFirst < self.lastGLine:
+				self.currentGCLine = newFirst
+				self.drawGCFirst = newFirst
+				self.ipGCodeSource.SetLabel(self.model.lines[newFirst].orig)
+				self.ipGCodeLine.SetLabel(GCODELINETEXT % (newFirst+1))
+				self.slideGCFirst.SetValue(newFirst+1)
+				if newFirst >= self.drawGCLast:
+					self.drawGCLast = newFirst + 1
+					self.slideGCLast.SetValue(self.drawGCLast + 1)
 
-		if newLast > self.firstGLine and newLast <= self.lastGLine:
-			self.slideGCLast.SetValue(newLast+1)
-			if newLast <= self.drawGCFirst:
-				self.drawGCFirst = newLast - 1
-				self.slideGCFirst.SetValue(self.drawGCFirst + 1)
+		if not newLast is None:
+			if newLast > self.firstGLine and newLast <= self.lastGLine:
+				self.slideGCLast.SetValue(newLast+1)
+				self.drawGCLast = newLast
+				if newLast <= self.drawGCFirst:
+					self.drawGCFirst = newLast - 1
+					self.slideGCFirst.SetValue(self.drawGCFirst + 1)
 		
 		if newFirst is None and newLast is None:
 			self.ipGCodeSource.SetLabel("")
@@ -1395,6 +1410,8 @@ class FilePrepare(wx.Panel):
 			self.currentGCLine = self.layerInfo[4][0]
 			self.firstGLine = self.layerInfo[4][0]
 			self.lastGLine = self.layerInfo[4][-1]
+			self.drawGCFirst = self.layerInfo[4][0]
+			self.drawGCLast = self.layerInfo[4][-1]
 		
 			if self.firstGLine >= self.lastGLine:
 				self.slideGCFirst.SetRange(self.firstGLine+1, self.firstGLine+2)
