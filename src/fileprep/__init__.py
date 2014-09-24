@@ -577,15 +577,28 @@ class FilePrepare(wx.Panel):
 
 		self.sizerRight.Add(self.infoPane)
 		self.sizerRight.AddSpacer((5,5))
+
+		ovsizer = wx.BoxSizer(wx.HORIZONTAL);
+		ovsizer.AddSpacer((20, 20))
 		
 		self.bOverride = wx.BitmapButton(self, wx.ID_ANY, self.images.pngOverride, size=BUTTONDIM)
 		self.bOverride.SetToolTipString("Override slicer settings")
-		self.sizerRight.Add(self.bOverride)
+		ovsizer.Add(self.bOverride, 0, wx.TOP, 40)
 		self.Bind(wx.EVT_BUTTON, self.doOverride, self.bOverride)
+		ovsizer.AddSpacer((20, 20))
 		
-		self.teOverride = wx.TextCtrl(self, -1, "", size=(300, 90), style=wx.TE_MULTILINE|wx.TE_READONLY)
-		self.sizerRight.Add(self.teOverride, 0, wx.ALL, 5)
+		ovlistsizer = wx.BoxSizer(wx.VERTICAL)
+		ovlistsizer.AddSpacer((10, 10))
+
+		t = wx.StaticText(self, wx.ID_ANY, "Overrides Selected:")
+		ovlistsizer.Add(t, 0, wx.ALL, 5)
+
+		self.teOverride = wx.TextCtrl(self, -1, "", size=(300, 180), style=wx.TE_MULTILINE|wx.TE_READONLY)
+		ovlistsizer.Add(self.teOverride, 0, wx.ALL, 5)
 		
+		ovsizer.Add(ovlistsizer)
+		self.sizerRight.AddSpacer((10, 10))
+		self.sizerRight.Add(ovsizer)
 		self.displayOverrides(self.getOverrideSummary(self.overrideValues))
 	
 		self.sizerMain.Add(self.sizerRight)
