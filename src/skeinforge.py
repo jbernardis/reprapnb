@@ -26,9 +26,9 @@ def modifyCSV(fn, ovr, logger):
 			fpCsv = list(open(fn + ".save"))
 			fpNew = open(fn, "w")
 			for s in fpCsv:
-				if s.startswith("Layer Height (mm):"):
+				if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
 					ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
-				elif s.startswith("Edge Width over Height (ratio):"):
+				elif s.startswith("Edge Width over Height (ratio):") and 'extrusionwidth' in ovr.keys():
 					ns = "Edge Width over Height (ratio):\t"+str(ovr['extrusionwidth'])
 				else:
 					ns = s.rstrip()

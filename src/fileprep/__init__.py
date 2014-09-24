@@ -583,10 +583,10 @@ class FilePrepare(wx.Panel):
 		self.sizerRight.Add(self.bOverride)
 		self.Bind(wx.EVT_BUTTON, self.doOverride, self.bOverride)
 		
-		self.teOverride = wx.TextCtrl(self.frame, -1, "", size=(300, 90), style=wx.TE_MULTILINE|wx.TE_READONLY)
+		self.teOverride = wx.TextCtrl(self, -1, "", size=(300, 90), style=wx.TE_MULTILINE|wx.TE_READONLY)
 		self.sizerRight.Add(self.teOverride, 0, wx.ALL, 5)
 		
-		self.displayOverrides(self.getOverrideSummary(self.values))
+		self.displayOverrides(self.getOverrideSummary(self.overrideValues))
 	
 		self.sizerMain.Add(self.sizerRight)
 		
@@ -625,7 +625,7 @@ class FilePrepare(wx.Panel):
 	def logOverrides(self, ovVals):
 		for k in ovKeyOrder:
 			if k in ovVals.keys():
-				self.logger.LogMessage("Overriding %s = %s" % (ovUserKeyMap[k], self.values[k]))
+				self.logger.LogMessage("Overriding %s = %s" % (ovUserKeyMap[k], self.overrideValues[k]))
 		
 	def getSlicerConfigString(self):
 		return self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
