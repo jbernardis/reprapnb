@@ -1,15 +1,32 @@
 import wx
 
-class Override(wx.Panel):
-	def __init__(self, parent):
-		self.parent = parent
-		self.logger = parent.logger
-		wx.Panel.__init__(self, parent, -1)
-		self.SetBackgroundColour("white")
+ovKeyOrder = ['layerheight', 'extrusionwidth', 'infilldensity',
+			'layer1bedtemperature', 'bedtemperature', 'layer1temperature', 'temperature',
+			'printspeed', 'travelspeed', 'print1speed',
+			'support', 'skirt', 'adhesion']
 
-		box = wx.StaticBox(self, -1, "Slicer Overrides:")
-		box.SetBackgroundColour("white")
-		bsizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+ovUserKeyMap = {'layerheight': "Layer Height",
+			'extrusionwidth' : "Extrusion Width",
+			'infilldensity' : "Infill Density",
+			'layer1bedtemperature' : "Layer 1 Bed Temperature",
+			'bedtemperature' : "Bed Temperature",
+			'layer1temperature' : "Layer 1 Extrusion Temperature",
+			'temperature' : "Extrusion Temperature",
+			'printspeed' : "Normal Print Speed",
+			'travelspeed' : "Travel Speed",
+			'print1speed' : "Print Speed for Layer 1",
+			'support' : "Support",
+			'skirt' : "Skirt",
+			'adhesion' : "Adhesion Method"}
+
+
+class Override(wx.Dialog):
+	def __init__(self, parent, values, helptext):
+		self.parent = parent
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Slicer Overrides", size=(800, 804))
+		self.SetBackgroundColour("white")
+		
+		dsizer = wx.BoxSizer(wx.VERTICAL)
 
 		bgrid = wx.GridBagSizer()
 		bgrid.AddSpacer((10, 10), pos=(0,0))
@@ -19,130 +36,244 @@ class Override(wx.Panel):
 		self.controls = {}
 
 		ln = 1
+		value = "0.2"
+		key = "layerheight"
 		self.cbOvLH = wx.CheckBox(self, wx.ID_ANY, "Layer Height")
 		self.Bind(wx.EVT_CHECKBOX, self.checkLH, self.cbOvLH)
 		bgrid.Add(self.cbOvLH, pos=(ln, 1))
-		self.teOvLH = wx.TextCtrl(self, wx.ID_ANY, "0.2", style=wx.TE_RIGHT)
+		self.teOvLH = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvLH.Enable(False)
-		self.controls["layerheight"] = self.teOvLH
+		self.controls[key] = self.teOvLH
+		if key in values.keys():
+			self.teOvLH.SetValue(values[key])
+			self.teOvLH.Enable(True)
+			self.cbOvLH.SetValue(True)
+			
 		bgrid.Add(self.teOvLH, pos=(ln,3))
 		
+		h = self.teOvLH.GetSize()[1]
+		
 		ln += 1
+		value = "2.8"
+		key = "extrusionwidth"
 		self.cbOvExWid = wx.CheckBox(self, wx.ID_ANY, "Extrusion Width")
 		self.Bind(wx.EVT_CHECKBOX, self.checkEW, self.cbOvExWid)
 		bgrid.Add(self.cbOvExWid, pos=(ln, 1))
-		self.teOvExWid = wx.TextCtrl(self, wx.ID_ANY, "2.8", style=wx.TE_RIGHT)
+		self.teOvExWid = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvExWid.Enable(False)
-		self.controls["extrusionwidth"] = self.teOvExWid
+		self.controls[key] = self.teOvExWid
+		if key in values.keys():
+			self.teOvExWid.SetValue(values[key])
+			self.teOvExWid.Enable(True)
+			self.cbOvExWid.SetValue(True)
+			
 		bgrid.Add(self.teOvExWid, pos=(ln,3))
 		
 		ln += 1
+		value = "0.4"
+		key = "infilldensity"
 		self.cbOvInfill = wx.CheckBox(self, wx.ID_ANY, "Infill Density")
 		self.Bind(wx.EVT_CHECKBOX, self.checkInfill, self.cbOvInfill)
 		bgrid.Add(self.cbOvInfill, pos=(ln, 1))
-		self.teOvInfill = wx.TextCtrl(self, wx.ID_ANY, "0.4", style=wx.TE_RIGHT)
+		self.teOvInfill = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvInfill.Enable(False)
-		self.controls["infilldensity"] = self.teOvInfill
+		self.controls[key] = self.teOvInfill
+		if key in values.keys():
+			self.teOvInfill.SetValue(values[key])
+			self.teOvInfill.Enable(True)
+			self.cbOvInfill.SetValue(True)
+
 		bgrid.Add(self.teOvInfill, pos=(ln,3))
 		
 		ln += 1
+		value = "60"
+		key = "layer1bedtemperature"
 		self.cbOvBedTmp1 = wx.CheckBox(self, wx.ID_ANY, "Bed Temperature First Layer")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBedTmp1, self.cbOvBedTmp1)
 		bgrid.Add(self.cbOvBedTmp1, pos=(ln, 1))
-		self.teOvBedTmp1 = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
+		self.teOvBedTmp1 = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvBedTmp1.Enable(False)
-		self.controls["layer1bedtemperature"] = self.teOvBedTmp1
+		self.controls[key] = self.teOvBedTmp1
+		if key in values.keys():
+			self.teOvBedTmp1.SetValue(values[key])
+			self.teOvBedTmp1.Enable(True)
+			self.cbOvBedTmp1.SetValue(True)
+
 		bgrid.Add(self.teOvBedTmp1, pos=(ln,3))
 		
 		ln += 1
+		value = "55"
+		key = "bedtemperature"
 		self.cbOvBedTmp = wx.CheckBox(self, wx.ID_ANY, "Bed Temperature")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBedTmp, self.cbOvBedTmp)
 		bgrid.Add(self.cbOvBedTmp, pos=(ln, 1))
-		self.teOvBedTmp = wx.TextCtrl(self, wx.ID_ANY, "55", style=wx.TE_RIGHT)
+		self.teOvBedTmp = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvBedTmp.Enable(False)
-		self.controls["bedtemperature"] = self.teOvBedTmp
+		self.controls[key] = self.teOvBedTmp
+		if key in values.keys():
+			self.teOvBedTmp.SetValue(values[key])
+			self.teOvBedTmp.Enable(True)
+			self.cbOvBedTmp.SetValue(True)
+
 		bgrid.Add(self.teOvBedTmp, pos=(ln,3))
 		
 		ln += 1
+		value = "185"
+		key = "layer1temperature"
 		self.cbOvTmp1 = wx.CheckBox(self, wx.ID_ANY, "Temperature(s) First Layer")
 		self.Bind(wx.EVT_CHECKBOX, self.checkTmp1, self.cbOvTmp1)
 		bgrid.Add(self.cbOvTmp1, pos=(ln, 1))
-		self.teOvTmp1 = wx.TextCtrl(self, wx.ID_ANY, "185", style=wx.TE_RIGHT)
+		self.teOvTmp1 = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvTmp1.Enable(False)
-		self.controls["layer1temperature"] = self.teOvTmp1
+		self.controls[key] = self.teOvTmp1
+		if key in values.keys():
+			self.teOvTmp1.SetValue(values[key])
+			self.teOvTmp1.Enable(True)
+			self.cbOvTmp1.SetValue(True)
+
 		bgrid.Add(self.teOvTmp1, pos=(ln,3))
 		
 		ln += 1
+		value = "185"
+		key = "temperature"
 		self.cbOvTmp = wx.CheckBox(self, wx.ID_ANY, "Temperature(s)")
 		self.Bind(wx.EVT_CHECKBOX, self.checkTmp, self.cbOvTmp)
 		bgrid.Add(self.cbOvTmp, pos=(ln, 1))
-		self.teOvTmp = wx.TextCtrl(self, wx.ID_ANY, "185", style=wx.TE_RIGHT)
+		self.teOvTmp = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvTmp.Enable(False)
-		self.controls["temperature"] = self.teOvTmp
+		self.controls[key] = self.teOvTmp
+		if key in values.keys():
+			self.teOvTmp.SetValue(values[key])
+			self.teOvTmp.Enable(True)
+			self.cbOvTmp.SetValue(True)
+
 		bgrid.Add(self.teOvTmp, pos=(ln,3))
 		
 		ln += 1
+		value = "60"
+		key = "printspeed"
 		self.cbOvPrSpd = wx.CheckBox(self, wx.ID_ANY, "Print Speed")
 		self.Bind(wx.EVT_CHECKBOX, self.checkPrSpd, self.cbOvPrSpd)
 		bgrid.Add(self.cbOvPrSpd, pos=(ln, 1))
-		self.teOvPrSpd = wx.TextCtrl(self, wx.ID_ANY, "60", style=wx.TE_RIGHT)
+		self.teOvPrSpd = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvPrSpd.Enable(False)
-		self.controls["printspeed"] = self.teOvPrSpd
+		self.controls[key] = self.teOvPrSpd
+		if key in values.keys():
+			self.teOvPrSpd.SetValue(values[key])
+			self.teOvPrSpd.Enable(True)
+			self.cbOvPrSpd.SetValue(True)
+
 		bgrid.Add(self.teOvPrSpd, pos=(ln,3))
 		
 		ln += 1
+		value = "120"
+		key = "travelspeed"
 		self.cbOvTrSpd = wx.CheckBox(self, wx.ID_ANY, "Travel Speed")
 		self.Bind(wx.EVT_CHECKBOX, self.checkTrSpd, self.cbOvTrSpd)
 		bgrid.Add(self.cbOvTrSpd, pos=(ln, 1))
-		self.teOvTrSpd = wx.TextCtrl(self, wx.ID_ANY, "120", style=wx.TE_RIGHT)
+		self.teOvTrSpd = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvTrSpd.Enable(False)
-		self.controls["travelspeed"] = self.teOvTrSpd
+		self.controls[key] = self.teOvTrSpd
+		if key in values.keys():
+			self.teOvTrSpd.SetValue(values[key])
+			self.teOvTrSpd.Enable(True)
+			self.cbOvTrSpd.SetValue(True)
+
 		bgrid.Add(self.teOvTrSpd, pos=(ln,3))
 		
 		ln += 1
+		value = "30"
+		key = "print1speed"
 		self.cbOvPr1Spd = wx.CheckBox(self, wx.ID_ANY, "First Layer Speed")
 		self.Bind(wx.EVT_CHECKBOX, self.checkPr1Spd, self.cbOvPr1Spd)
 		bgrid.Add(self.cbOvPr1Spd, pos=(ln, 1))
-		self.teOvPr1Spd = wx.TextCtrl(self, wx.ID_ANY, "30", style=wx.TE_RIGHT)
+		self.teOvPr1Spd = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
 		self.teOvPr1Spd.Enable(False)
-		self.controls["print1speed"] = self.teOvPr1Spd
+		self.controls[key] = self.teOvPr1Spd
+		if key in values.keys():
+			self.teOvPr1Spd.SetValue(values[key])
+			self.teOvPr1Spd.Enable(True)
+			self.cbOvPr1Spd.SetValue(True)
+
 		bgrid.Add(self.teOvPr1Spd, pos=(ln,3))
 		
 		ln += 1
+		value = "False"
+		key = "support"
 		self.cbOvSpt = wx.CheckBox(self, wx.ID_ANY, "Support")
 		self.Bind(wx.EVT_CHECKBOX, self.checkSpt, self.cbOvSpt)
 		bgrid.Add(self.cbOvSpt, pos=(ln, 1))
-		self.teOvSpt = wx.CheckBox(self, wx.ID_ANY, "Enabled")
+		self.teOvSpt = wx.CheckBox(self, wx.ID_ANY, "Enabled", size=(-1, h))
+		self.teOvSpt.SetValue(False)
 		self.teOvSpt.Enable(False)
-		self.controls["support"] = self.teOvSpt
+		self.controls[key] = self.teOvSpt
+		if key in values.keys():
+			self.teOvSpt.SetValue(values[key] == "True")
+			self.teOvSpt.Enable(True)
+			self.cbOvSpt.SetValue(True)
+			
 		bgrid.Add(self.teOvSpt, pos=(ln,3))
 		
 		ln += 1
+		value = "False"
+		key = "skirt"
 		self.cbOvSkt = wx.CheckBox(self, wx.ID_ANY, "Skirt")
 		self.Bind(wx.EVT_CHECKBOX, self.checkSkt, self.cbOvSkt)
 		bgrid.Add(self.cbOvSkt, pos=(ln, 1))
-		self.teOvSkt = wx.CheckBox(self, wx.ID_ANY, "Enabled")
+		self.teOvSkt = wx.CheckBox(self, wx.ID_ANY, "Enabled", size=(-1, h))
+		self.teOvSkt.SetValue(False)
 		self.teOvSkt.Enable(False)
-		self.controls["skirt"] = self.teOvSkt
+		self.controls[key] = self.teOvSkt
+		if key in values.keys():
+			self.teOvSkt.SetValue(values[key] == "True")
+			self.teOvSkt.Enable(True)
+			self.cbOvSkt.SetValue(True)
+			
 		bgrid.Add(self.teOvSkt, pos=(ln,3))
 
 		ln += 1
+		value = "None"
+		key = "adhesion"
 		self.cbOvAdh = wx.CheckBox(self, wx.ID_ANY, "Adhesion")
 		self.Bind(wx.EVT_CHECKBOX, self.checkAdh, self.cbOvAdh)
 		bgrid.Add(self.cbOvAdh, pos=(ln, 1))
 		self.teOvAdh = wx.ComboBox(self, wx.ID_ANY, "", (-1, -1),  (120, -1), ["None", "Raft", "Brim"], wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.teOvAdh.SetSelection(0)
 		self.teOvAdh.Enable(False)
-		self.controls["adhesion"] = self.teOvAdh
+		self.controls[key] = self.teOvAdh
+		if key in values.keys():
+			if values[key] == "Raft":
+				self.teOvAdh.SetSelection(1)
+			elif values[key] == "Brim":
+				self.teOvAdh.SetSelection(2)
+			else:
+				self.teOvAdh.SetSelection(0)
+			self.teOvAdh.Enable(True)
+			self.cbOvAdh.SetValue(True)
+
 		bgrid.Add(self.teOvAdh, pos=(ln,3))
 
 		ln += 1
-		bgrid.AddSpacer((10, 10), pos=(ln,0))
+		dsizer.Add(bgrid)
+		
+		btnsizer = wx.StdDialogButtonSizer()
+		
+		btn = wx.Button(self, wx.ID_OK)
+		btn.SetHelpText("Save the changes")
+		btn.SetDefault()
+		btnsizer.AddButton(btn)
 
-		bsizer.Add(bgrid)
-		border = wx.BoxSizer()
-		border.Add(bsizer, 1, wx.EXPAND|wx.ALL, 10)
-		self.SetSizer(border)  
+		btn = wx.Button(self, wx.ID_CANCEL)
+		btn.SetHelpText("Exit without saving")
+		btnsizer.AddButton(btn)
+		btnsizer.Realize()
+		
+		dsizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+
+		self.setHelpText(helptext)
+
+		self.SetSizer(dsizer)  
+		dsizer.Fit(self)
 		
 	def setHelpText(self, ht):
 		if ht is None:
@@ -236,57 +367,45 @@ class Override(wx.Panel):
 		r = {}     
 		if self.cbOvLH.IsChecked():
 			r['layerheight'] = self.teOvLH.GetValue()
-			self.logger.LogMessage("Overriding layer height to: %s" % r['layerheight'])
 			
 		if self.cbOvExWid.IsChecked():
 			r['extrusionwidth'] = self.teOvExWid.GetValue()
-			self.logger.LogMessage("Overriding extrusion width to: %s" % r['extrusionwidth'])
 			
 		if self.cbOvInfill.IsChecked():
 			r['infilldensity'] = self.teOvInfill.GetValue()
-			self.logger.LogMessage("Overriding infill density to: %s" % r['infilldensity'])
 			
 		if self.cbOvBedTmp1.IsChecked():
 			r['layer1bedtemperature'] = self.teOvBedTmp1.GetValue()
-			self.logger.LogMessage("Overriding layer 1 bed temperature to: %s" % r['layer1bedtemperature'])
 			
 		if self.cbOvBedTmp.IsChecked():
 			r['bedtemperature'] = self.teOvBedTmp.GetValue()
-			self.logger.LogMessage("Overriding bed temperature to: %s" % r['bedtemperature'])
 			
 		if self.cbOvTmp1.IsChecked():
 			r['layer1temperature'] = self.teOvTmp1.GetValue()
-			self.logger.LogMessage("Overriding layer 1 temperature to: %s" % r['layer1temperature'])
 			
 		if self.cbOvTmp.IsChecked():
 			r['temperature'] = self.teOvTmp.GetValue()
-			self.logger.LogMessage("Overriding temperature to: %s" % r['temperature'])
 			
 		if self.cbOvPrSpd.IsChecked():
 			r['printspeed'] = self.teOvPrSpd.GetValue()
-			self.logger.LogMessage("Overriding print speed to: %s" % r['printspeed'])
 			
 		if self.cbOvTrSpd.IsChecked():
 			r['travelspeed'] = self.teOvTrSpd.GetValue()
-			self.logger.LogMessage("Overriding travel speed to: %s" % r['travelspeed'])
 			
 		if self.cbOvPr1Spd.IsChecked():
 			r['print1speed'] = self.teOvPr1Spd.GetValue()
-			self.logger.LogMessage("Overriding first layer print speed to: %s" % r['print1speed'])
 			
 		if self.cbOvSkt.IsChecked():
 			if self.teOvSkt.IsChecked():
 				r['skirt'] = 'True'
 			else:
 				r['skirt'] = 'False'
-			self.logger.LogMessage("Overriding skirt enable to: %s" % r['skirt'])
 			
 		if self.cbOvSpt.IsChecked():
 			if self.teOvSpt.IsChecked():
 				r['support'] = 'True'
 			else:
 				r['support'] = 'False'
-			self.logger.LogMessage("Overriding support enable to: %s" % r['support'])
 			
 		if self.cbOvAdh.IsChecked():
 			r['adhesion'] = self.teOvAdh.GetValue()

@@ -16,7 +16,7 @@ from stlmerge import StlMergeDlg
 from images import Images
 from tools import formatElapsed 
 from stlview import StlViewer
-from override import Override
+from override import Override, ovUserKeyMap, ovKeyOrder
 from toolbar import ToolBar
 
 from reprap import MAX_EXTRUDERS
@@ -209,6 +209,7 @@ class FilePrepare(wx.Panel):
 		self.dlgView = None
 		self.drawGCFirst = None;
 		self.drawGCLast = None;
+		self.overrideValues = {}
 		
 		self.lh = None
 		self.fd = None
@@ -577,15 +578,54 @@ class FilePrepare(wx.Panel):
 		self.sizerRight.Add(self.infoPane)
 		self.sizerRight.AddSpacer((5,5))
 		
-		self.override = Override(self)
-		self.override.setHelpText(self.slicer.type.getOverrideHelpText())
-		self.sizerRight.Add(self.override)
+		self.bOverride = wx.BitmapButton(self, wx.ID_ANY, self.images.pngOverride, size=BUTTONDIM)
+		self.bOverride.SetToolTipString("Override slicer settings")
+		self.sizerRight.Add(self.bOverride)
+		self.Bind(wx.EVT_BUTTON, self.doOverride, self.bOverride)
 		
+		self.teOverride = wx.TextCtrl(self.frame, -1, "", size=(300, 90), style=wx.TE_MULTILINE|wx.TE_READONLY)
+		self.sizerRight.Add(self.teOverride, 0, wx.ALL, 5)
+		
+		self.displayOverrides(self.getOverrideSummary(self.values))
+	
 		self.sizerMain.Add(self.sizerRight)
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def doOverride(self, evt):
+		dlg = Override(self, self.overrideValues, self.slicer.type.getOverrideHelpText())
+		dlg.CenterOnScreen()
+		if dlg.ShowModal() == wx.ID_OK:
+			self.overrideValues = dlg.getOverrides()
+			self.displayOverrides(self.getOverrideSummary(self.overrideValues))
+			
+		dlg.Destroy()
+
+	def getOverrideSummary(self, ovVals):
+		result = []
+		for k in ovKeyOrder:
+			if k in ovVals.keys():
+				result.append("%s = %s" % (ovUserKeyMap[k], ovVals[k]))
+				
+		return result
+	
+	def displayOverrides(self, ovSummary):
+		self.teOverride.Clear()
+		if len(ovSummary) == 0:
+			self.teOverride.AppendText("None")
+			return
+		
+		c = ""
+		for l in ovSummary:
+			self.teOverride.AppendText(c+l)
+			c = '\n'
+	
+	def logOverrides(self, ovVals):
+		for k in ovKeyOrder:
+			if k in ovVals.keys():
+				self.logger.LogMessage("Overriding %s = %s" % (ovUserKeyMap[k], self.values[k]))
 		
 	def getSlicerConfigString(self):
 		return self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
@@ -603,7 +643,6 @@ class FilePrepare(wx.Panel):
 			self.logger.LogError("Unable to get slicer settings") 
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
-		self.override.setHelpText(self.slicer.type.getOverrideHelpText())
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():
@@ -692,8 +731,8 @@ class FilePrepare(wx.Panel):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
-		ovr = self.override.getOverrides()
-		self.slicer.setOverrides(ovr)
+		self.logOverrides(self.overrideValues)
+		self.slicer.setOverrides(self.overrideValues)
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		cmd = self.slicer.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
