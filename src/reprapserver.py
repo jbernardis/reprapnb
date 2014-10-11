@@ -113,10 +113,11 @@ class RepRapServer:
 			s = {'taken': 'false'}
 		else:
 			fbn = "img%s.jpg" % time.strftime('%y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-			fn = os.path.join("reprap", fbn)
-			path = os.path.join(webbase, fn)
+			fulldir = os.path.join(webbase, "reprap")
+			os.makedirs(fulldir)
+			path = os.path.join(fulldir, fbn)
 			pygame.image.save(pic, path)
-			s =  {'taken': 'true', 'file': fn}
+			s =  {'taken': 'true', 'file': path[len(webbase)+len(os.sep):]}
 		return {'picture': s}
 	
 	def close(self):
