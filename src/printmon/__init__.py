@@ -814,7 +814,7 @@ class PrintMonitor(wx.Panel):
 		self.sdpaused = False
 		
 		self.setStatus(PMSTATUS_READY)
-		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.total_e, self.model.layer_time)
+		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
 	def setHETarget(self, tool, temp):

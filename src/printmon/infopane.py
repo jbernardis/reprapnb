@@ -178,7 +178,7 @@ class InfoPane (wx.Window):
 	def showFileInfo(self):
 		self.setValue("filename", self.filename)
 		
-	def setFileInfo(self, filename, duration, gcount, layers, filament, layertimes):
+	def setFileInfo(self, filename, duration, gcount, layers, zmax, filament, layertimes):
 		if len(filename) > 60:
 			lfn = os.path.basename(filename)
 		else:
@@ -189,6 +189,7 @@ class InfoPane (wx.Window):
 		self.duration = duration
 		self.gcount = gcount
 		self.layers = layers
+		self.zmax = zmax
 		self.filament = filament
 		self.layertimes = [i for i in layertimes]
 		t = 0
@@ -232,7 +233,7 @@ class InfoPane (wx.Window):
 		if self.layers == 0:
 			self.setValue("layer", "%d (z=%.3f)" % (layernbr+1, z))
 		else:
-			self.setValue("layer", "%d/%d (z=%.3f)" % (layernbr+1, self.layers, z))
+			self.setValue("layer", "%d/%d (z=%.3f/%.3f)" % (layernbr+1, self.layers, z, self.zmax))
 			
 		if minxy[0] > maxxy[0] or minxy[1] >maxxy[1]:
 			self.setValue("minmaxxy", "")
