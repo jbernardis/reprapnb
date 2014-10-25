@@ -5,6 +5,16 @@ In Progress/Need Testing
 
 send email when print job finishes
 
+add a queue of jobs to print
+
+@pause lift=xmm      - reimplement to be just like pause button
+@pause layer=x lift=xmm
+@pause height=xmm lift=xmm
+@runmacro
+@runmacro layer=x layers=n
+@runmacro height=x layers=n
+
+
 
 
 

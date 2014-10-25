@@ -13,7 +13,7 @@ TRACE = False
 (PrtMonEvent, EVT_PRINT_MONITOR) = wx.lib.newevent.NewEvent()
 
 from settings import (MAX_EXTRUDERS, SD_PRINT_COMPLETE, SD_PRINT_POSITION, SD_CARD_OK, SD_CARD_FAIL, SD_CARD_LIST,
-		PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_RESUMED, PRINT_MESSAGE, QUEUE_DRAINED, RECEIVED_MSG, PRINT_ERROR,
+		PRINT_COMPLETE, PRINT_STOPPED, PRINT_AUTOSTOPPED, PRINT_STARTED, PRINT_RESUMED, PRINT_MESSAGE, QUEUE_DRAINED, RECEIVED_MSG, PRINT_ERROR,
 		CMD_GCODE, CMD_STARTPRINT, CMD_STOPPRINT, CMD_DRAINQUEUE, CMD_ENDOFPRINT, CMD_RESUMEPRINT)
 
 CACHE_SIZE = 50
@@ -149,13 +149,16 @@ class SendThread:
 	def processCmd(self, cmd, string, calcCS, setOK, PriQ, index=None):
 		if cmd == CMD_GCODE:
 			if string.startswith('@'):
-				self.metaCommand(string)
-			else:  
+				cl = self.metaCommand(string)
+			else: 
+				cl = [string]
+				
+			for st in cl: 
 				if calcCS:
 					if index is not None:
 						self.printIndex = index
 					try:
-						verb = string.split()[0]
+						verb = st.split()[0]
 					except:
 						verb = ""
 					
@@ -163,21 +166,21 @@ class SendThread:
 						return
 					
 					if self.checksum:
-						prefix = "N" + str(self.sequence) + " " + string
-						string = prefix + "*" + str(self._checksum(prefix))
+						prefix = "N" + str(self.sequence) + " " + st
+						st = prefix + "*" + str(self._checksum(prefix))
 						if verb != "M110":
-							self.sentCache.addMsg(self.sequence, string)
+							self.sentCache.addMsg(self.sequence, st)
 						self.sequence += 1
 					
 				if setOK: self.okWait = True
 				if TRACE:
-					print "==>", self.okWait, string
+					print "==>", self.okWait, st
 					
-				evt = RepRapEvent(event = PRINT_MESSAGE, msg = string, primary=PriQ)
+				evt = RepRapEvent(event = PRINT_MESSAGE, msg = st, primary=PriQ)
 				wx.PostEvent(self.win, evt)
 					
 				try:
-					self.printer.write(str(string+"\n"))
+					self.printer.write(str(st+"\n"))
 				except:
 					evt = RepRapEvent(event = PRINT_ERROR, msg="Unable to write to printer")
 					wx.PostEvent(self.win, evt)
@@ -243,28 +246,41 @@ class SendThread:
 	
 	def metaCommand(self, cmd):
 		print "Meta command: ", cmd
-		l = cmd.split(" +")
+		l = cmd.split()
 		nl = len(l)
 		
 		if nl < 1:
 			print "no terms"
-			return
+			return []
 		
 		nl -= 1
 		verb = l[0]
+		l = l[1:]
+		
+		values = {}
+		
+		for term in l:
+			try:
+				name, val = term.split("=")
+				values[name.lower()] = val
+			except:
+				pass
 		
 		if verb.lower() == "@pause":
-			if nl < 1:
-				duration = 1
+			print "Pausing via metacommand"
+			self.isPrinting = False
+			self.sentCache.reinit()
+			self.resendFrom = None
+			evt = RepRapEvent(event = PRINT_AUTOSTOPPED)
+			wx.PostEvent(self.win, evt)
+			
+			if 'lift' in values.keys():
+				print "lifting by ", values['lift']
+				return [ "G91", "G1 Z%s F500" % values['lift'], "G90" ]
 			else:
-				try:
-					duration = float(l[1])
-				except:
-					duration = 1
-			print "pausing for ", duration, " seconds"
-			time.sleep(duration)
-			
-			
+				return []
+		
+		return []
 
 class ListenThread:
 	def __init__(self, win, printer, sender):

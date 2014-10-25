@@ -39,14 +39,14 @@ class Toaster(wx.Frame):
 	def SetShowTime(self, t):
 		self.showTime = t
 		
-	def Append(self, v):
+	def Append(self, v, onLoggerPage = False):
 		self.lb.Append(v)
 		timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onTimer, timer)  
 		timer.Start(self.showTime, True) 
 
 		self.Timers.append(timer)
-		if len(self.Timers) == 1:
+		if len(self.Timers) >= 1 and not onLoggerPage:
 			self.Show()
 		
 	def onTimer(self, evt):

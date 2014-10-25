@@ -8,7 +8,7 @@ from tempgraph import TempGraph, MAXX
 from infopane import InfoPane, MODE_NORMAL, MODE_TO_SD, MODE_FROM_SD
 from images import Images
 from settings import (TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED,
-					PRINT_COMPLETE, PRINT_STOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
+					PRINT_COMPLETE, PRINT_STOPPED, PRINT_AUTOSTOPPED, PRINT_STARTED, PRINT_MESSAGE, QUEUE_DRAINED,
 					PRINT_RESUMED, PRINT_ERROR, SD_PRINT_COMPLETE, SD_PRINT_POSITION)
 from sdcard import SDCard
 from tools import formatElapsed
@@ -478,7 +478,7 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintTo.Enable(False)
 			self.bSDDelete.Enable(False)
 			
-		elif evt.event == PRINT_STOPPED:
+		elif evt.event in [PRINT_STOPPED, PRINT_AUTOSTOPPED]:
 			self.paused = True
 			self.setStatus(PMSTATUS_PAUSED)
 			self.printing = False

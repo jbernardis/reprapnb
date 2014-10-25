@@ -127,10 +127,11 @@ class Logger(wx.Panel):
 
 	def LogMessage(self, text):
 		s = time.strftime('%H:%M:%S', time.localtime(time.time()))
+		onLoggerPage = self.app.onLoggerPage()
 		try:
 			msg = s+" - "+string.rstrip(text)
 			if self.settings.usepopup:
-				self.toaster.Append(msg)
+				self.toaster.Append(msg, onLoggerPage)
 				
 			self.t.AppendText(msg+"\n")
 			self.nLines += 1
@@ -140,7 +141,7 @@ class Logger(wx.Panel):
 		except:
 			print "Unable to add (%s) to log" % text
 			
-		if not self.app.onLoggerPage():
+		if not onLoggerPage:
 			self.hiLiteTabTimer.Start(3000, True)
 			self.app.hiLiteLogTab(True)
 
