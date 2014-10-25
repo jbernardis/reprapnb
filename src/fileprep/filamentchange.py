@@ -73,7 +73,7 @@ class FilamentChangeDlg(wx.Dialog):
 		return self.newGCode
 	
 	def updateDlg(self, *arg):	
-		hl = self.parent.hilite	
+		hl = self.parent.currentGCLine	
 		e = self.model.findEValue(hl-1)
 		z = self.layerInfo[0]
 

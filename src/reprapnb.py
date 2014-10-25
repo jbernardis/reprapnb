@@ -111,8 +111,13 @@ class MainFrame(wx.Frame):
 		
 	def changePages(self, evt):
 		sel = evt.GetSelection()
+		if sel != self.pxLogger:
+			self.logger.checkShowToaster()
+			
 		if sel == self.pxConnMgr:
 			self.pgConnMgr.refreshPorts()
+		elif sel == self.pxLogger:
+			self.logger.hideToaster()
 		elif sel == self.pxPlater:
 			self.pgPlater.updateSlicerProfile(self.pgFilePrep.getSlicerConfigString())
 		

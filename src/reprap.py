@@ -245,12 +245,10 @@ class SendThread:
 			wx.PostEvent(self.win, evt)
 	
 	def metaCommand(self, cmd):
-		print "Meta command: ", cmd
 		l = cmd.split()
 		nl = len(l)
 		
 		if nl < 1:
-			print "no terms"
 			return []
 		
 		nl -= 1
@@ -267,7 +265,6 @@ class SendThread:
 				pass
 		
 		if verb.lower() == "@pause":
-			print "Pausing via metacommand"
 			self.isPrinting = False
 			self.sentCache.reinit()
 			self.resendFrom = None
@@ -275,7 +272,6 @@ class SendThread:
 			wx.PostEvent(self.win, evt)
 			
 			if 'lift' in values.keys():
-				print "lifting by ", values['lift']
 				return [ "G91", "G1 Z%s F500" % values['lift'], "G90" ]
 			else:
 				return []
@@ -716,8 +712,18 @@ class RepRap:
 		self.listener.resetCounters()
 		self._sendCmd(CMD_STARTPRINT)
 		idx = -1
+		layerIdx = -1
+		endline = -1
 		for l in data:
 			idx += 1
+			if idx > endline:
+				layerIdx += 1
+				linfo = data.getLayerInfo(layerIdx)
+				z = linfo[0]
+				startline = linfo[[4][0]]
+				endline = linfo[[4][1]]
+				print "New Layer at line %d new s/e=(%d,%d) new z = %.3f, layernumber=%s" % (idx, startline, endline, z, layerIdx)
+				
 			if l.raw.rstrip() != "":
 				self._send(l.raw, index=idx)
 

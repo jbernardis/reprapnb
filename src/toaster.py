@@ -39,6 +39,10 @@ class Toaster(wx.Frame):
 	def SetShowTime(self, t):
 		self.showTime = t
 		
+	def checkShow(self):
+		if len(self.Timers) >= 1:
+			self.Show()
+		
 	def Append(self, v, onLoggerPage = False):
 		self.lb.Append(v)
 		timer = wx.Timer(self)

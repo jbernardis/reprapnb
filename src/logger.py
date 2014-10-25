@@ -85,6 +85,12 @@ class Logger(wx.Panel):
 		self.settings.usepopup = evt.IsChecked()
 		self.settings.setModified()
 		
+	def hideToaster(self):
+		self.toaster.Hide()
+		
+	def checkShowToaster(self):
+		self.toaster.checkShow()
+		
 	def checkLogCmds(self, evt):
 		self.logCommands = evt.IsChecked()
 		
