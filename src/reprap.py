@@ -71,6 +71,8 @@ class SendThread:
 		self.checksum = True
 		self.resendFrom = None
 		self.resends = 0
+		self.pendingPauseLayers = []
+		self.pendingPauseHeights = []
 		self.sentCache = MsgCache(CACHE_SIZE)
 		thread.start_new_thread(self.Run, ())
 		
@@ -265,19 +267,81 @@ class SendThread:
 				pass
 		
 		if verb.lower() == "@pause":
-			self.isPrinting = False
-			self.sentCache.reinit()
-			self.resendFrom = None
-			evt = RepRapEvent(event = PRINT_AUTOSTOPPED)
-			wx.PostEvent(self.win, evt)
-			
-			if 'lift' in values.keys():
-				return [ "G91", "G1 Z%s F500" % values['lift'], "G90" ]
-			else:
+			if 'layer' in values.keys():
+				try:
+					x = int(values['layer'])
+					lift = None
+					if 'lift' in values.keys():
+						lift = float(values['lift'])
+					self.pendingPauseLayers.append((x, lift))
+
+				except:
+					pass
 				return []
+			elif 'height' in values.keys():
+				print "pending pause on height"
+				try:
+					x = float(values['height'])
+					lift = None
+					if 'lift' in values.keys():
+						lift = float(values['lift'])
+					self.pendingPauseHeights.append((x, lift))
+				except:
+					print "error processing command"
+					pass
+				return []
+			else:
+				self.isPrinting = False
+				self.sentCache.reinit()
+				self.resendFrom = None
+				evt = RepRapEvent(event = PRINT_AUTOSTOPPED, message="pause meta command")
+				wx.PostEvent(self.win, evt)
+				
+				if 'lift' in values.keys():
+					return [ "G91", "G1 Z%s F500" % values['lift'], "G90" ]
+				else:
+					return []
 			
 		elif verb.lower() == "@layerchange":
 			print "Layer change to height = %s layer number = %s" % (values['height'], values['layer'])
+			try:
+				thisLayer = int(values['layer'])
+			except:
+				thisLayer = -1
+			for i in range(len(self.pendingPauseLayers)):
+				ln, lift = self.pendingPauseLayers[i]
+				if ln == thisLayer:
+					self.isPrinting = False
+					self.sentCache.reinit()
+					self.resendFrom = None
+					evt = RepRapEvent(event = PRINT_AUTOSTOPPED, message="matching layer number")
+					wx.PostEvent(self.win, evt)
+					del self.pendingPauseLayers[i]
+					if lift is not None:
+						return [ "G91", "G1 Z%.3f F500" % lift, "G90" ]
+					else:
+						return []
+
+			try:
+				thisHeight = float(values['height'])
+			except:
+				thisHeight = -1
+			for i in range(len(self.pendingPauseHeights)):
+				hgt, lift = self.pendingPauseHeights[i]
+				print "compare ", thisHeight, " to ", hgt
+				if thisHeight >= hgt:
+					print "Matching pending pause for height"
+					self.isPrinting = False
+					self.sentCache.reinit()
+					self.resendFrom = None
+					evt = RepRapEvent(event = PRINT_AUTOSTOPPED, message="height exceeded")
+					wx.PostEvent(self.win, evt)
+					del self.pendingPauseHeights[i]
+					if lift is not None:
+						return [ "G91", "G1 Z%.3f F500" % lift, "G90" ]
+					else:
+						return []
+			return []
 		
 		return []
 
@@ -717,16 +781,17 @@ class RepRap:
 		idx = -1
 		layerIdx = -1
 		endline = -1
+		self._send("@layerchange layer=0 height=0.0")
 		for l in data:
 			idx += 1
 			if idx > endline:
 				layerIdx += 1
 				linfo = data.getLayerInfo(layerIdx)
 				z = linfo[0]
-				startline = linfo[[4][0]]
-				endline = linfo[[4][1]]
+				startline = linfo[4][0]
+				endline = linfo[4][1]
 				print "New Layer at line %d new s/e=(%d,%d) new z = %.3f, layernumber=%s" % (idx, startline, endline, z, layerIdx)
-				self._send("@layerchange layer=%d height=%.3f" % (layerIdx, z))
+				self._send("@layerchange layer=%d height=%.3f" % (layerIdx+1, z))
 				
 			if l.raw.rstrip() != "":
 				self._send(l.raw, index=idx)
