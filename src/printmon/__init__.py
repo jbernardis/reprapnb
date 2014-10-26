@@ -491,6 +491,9 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintFrom.Enable(True)
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
+			if evt.event == PRINT_AUTOSTOPPED:
+				self.logger.LogError(evt.msg)
+				
 			
 		elif evt.event == PRINT_COMPLETE:
 			
@@ -525,7 +528,9 @@ class PrintMonitor(wx.Panel):
 			self.app.doPrinterError(self.prtname)
 			
 		elif evt.event == PRINT_MESSAGE:
-			if evt.primary:
+			if evt.immediate:
+				self.logger.LogMessage(evt.msg)
+			elif evt.primary:
 				self.logger.LogCMessage(evt.msg)
 			else:
 				self.logger.LogGMessage(evt.msg)
@@ -686,7 +691,9 @@ class PrintMonitor(wx.Panel):
 		if self.printing:
 			if pos != self.printPos:
 				self.printPos = pos
-				self.gcf.setPrintPosition(self.printPos, self.syncPrint)
+				newLayer = self.gcf.setPrintPosition(self.printPos, self.syncPrint)
+				if newLayer and not self.syncPrint:
+					self.infoPane.updateUntilTime()
 				
 			l = self.model.findLayerByLine(pos)
 			gcl = None
@@ -716,6 +723,8 @@ class PrintMonitor(wx.Panel):
 			self.slideLayer.SetValue(l+1)
 			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
+			if self.reprap.checkPendingPause(l):
+				print "PendingPause on this layer"
 
 	def onClose(self, evt):
 		if self.fpLog is not None:

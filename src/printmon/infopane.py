@@ -252,11 +252,15 @@ class InfoPane (wx.Window):
 		else:
 			self.setValue("layertime", "%s/%s" % (formatElapsed(ltime), formatElapsed(self.duration)))
 			
-		t = self.timeUntil(layernbr)
+		self.updateUntilTime()
+			
+			
+	def updateUntilTime(self):
+		t = self.timeUntil(self.layernbr)
 		if t == 0:
 			self.setValue("timeuntil", "")
 		else:
-			self.setValue("timeuntil", "%s" % formatElapsed(self.timeUntil(layernbr)))
+			self.setValue("timeuntil", "%s" % formatElapsed(self.timeUntil(self.layernbr)))
 	
 	def setSDPrintInfo(self, position, maxposition):  # printing FROM SD card
 		self.sdposition = position

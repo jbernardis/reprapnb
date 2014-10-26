@@ -207,16 +207,20 @@ class GcmFrame (wx.Window):
 	
 	def setPrintPosition(self, p, sync=True):
 		if self.model is None:
-			return
+			return False
 		l = self.model.findLayerByLine(p)
 		if l is None:
-			return
+			return False
 
 		self.printPosition = p
 		if l == self.currentlx:
 			self.redrawCurrentLayer()
+			return False
 		elif sync:
 			self.setLayer(l)
+			return True
+		else:
+			return True
 			
 	def setToolPathsOnly(self, flag):
 		self.toolPathsOnly = flag
