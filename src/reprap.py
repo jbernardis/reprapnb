@@ -275,6 +275,9 @@ class SendThread:
 				return [ "G91", "G1 Z%s F500" % values['lift'], "G90" ]
 			else:
 				return []
+			
+		elif verb.lower() == "@layerchange":
+			print "Layer change to height = %s layer number = %s" % (values['height'], values['layer'])
 		
 		return []
 
@@ -723,6 +726,7 @@ class RepRap:
 				startline = linfo[[4][0]]
 				endline = linfo[[4][1]]
 				print "New Layer at line %d new s/e=(%d,%d) new z = %.3f, layernumber=%s" % (idx, startline, endline, z, layerIdx)
+				self._send("@layerchange layer=%d height=%.3f" % (layerIdx, z))
 				
 			if l.raw.rstrip() != "":
 				self._send(l.raw, index=idx)
