@@ -492,7 +492,7 @@ class PrintMonitor(wx.Panel):
 			self.bSDPrintTo.Enable(True)
 			self.bSDDelete.Enable(True)
 			if evt.event == PRINT_AUTOSTOPPED:
-				self.logger.LogError(evt.msg)
+				self.logger.LogMessage(evt.msg)
 				
 			
 		elif evt.event == PRINT_COMPLETE:
@@ -723,7 +723,7 @@ class PrintMonitor(wx.Panel):
 			self.slideLayer.SetValue(l+1)
 			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
-			if self.reprap.checkPendingPause(l):
+			if self.reprap.checkPendingPause(l+1):
 				print "PendingPause on this layer"
 
 	def onClose(self, evt):

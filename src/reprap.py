@@ -82,6 +82,9 @@ class SendThread:
 				return True
 			
 		return False
+	
+	def clearPendingPauses(self):
+		self.pendingPauseLayers = []
 		
 	def kill(self):
 		self.isRunning = False
@@ -710,6 +713,10 @@ class RepRap:
 		
 		return self.sender.checkPendingPause(layer)
 
+	def clearPendingPauses(self):
+		if self.sender is not None:
+			self.sender.clearPendingPauses()
+
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
 		
@@ -803,6 +810,7 @@ class RepRap:
 		
 	def clearPrint(self):
 		self._sendCmd(CMD_DRAINQUEUE)
+		self.clearPendingPauses()
 		
 	def reprapEvent(self, evt):
 		if evt.event == QUEUE_DRAINED:

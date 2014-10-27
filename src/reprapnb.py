@@ -38,6 +38,7 @@ class MainFrame(wx.Frame):
 		self.logger = None
 		
 		self.allowPulls = False
+		self.shuttingDown = False
 		
 		self.pgPrinters = {}
 		self.pgManCtl = {}
@@ -110,6 +111,9 @@ class MainFrame(wx.Frame):
 		self.timer.Start(MAINTIMER)
 		
 	def changePages(self, evt):
+		if self.shuttingDown:
+			return
+		
 		sel = evt.GetSelection()
 		if sel != self.pxLogger:
 			self.logger.checkShowToaster()
@@ -316,6 +320,7 @@ class MainFrame(wx.Frame):
 		if self.logger is not None:
 			self.logger.close()
 				
+		self.shuttingDown = True
 		self.settings.cleanUp()	
 		self.Destroy()
 		
