@@ -1,6 +1,5 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-@pause layer=x lift=xmm
 
 
 
@@ -11,12 +10,8 @@ add a queue of jobs to print
 @runmacro
 @runmacro layer=x layers=n
 
-*****clear pending pauses when model is imported
-?????check pending pause is off by 1 layer.  Pause was on layer 13, check said it was on 14
-*****paused message was displayed as an error
-*****exception on shutdown when toaster is destroyed
 
-
+add logic to model to keep track of pending pauses, and use this in printmon instead of asking reprap.
 
 Low Hanging
 - fix closure of firmware window when clicking on text boxes

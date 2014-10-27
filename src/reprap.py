@@ -75,14 +75,6 @@ class SendThread:
 		self.sentCache = MsgCache(CACHE_SIZE)
 		thread.start_new_thread(self.Run, ())
 		
-	def checkPendingPause(self, layer):
-		for i in range(len(self.pendingPauseLayers)):
-			ln = self.pendingPauseLayers[i][0]
-			if ln == layer:
-				return True
-			
-		return False
-	
 	def clearPendingPauses(self):
 		self.pendingPauseLayers = []
 		
@@ -292,7 +284,7 @@ class SendThread:
 				self.isPrinting = False
 				self.sentCache.reinit()
 				self.resendFrom = None
-				evt = RepRapEvent(event = PRINT_AUTOSTOPPED, msg="pause meta command")
+				evt = RepRapEvent(event = PRINT_AUTOSTOPPED, msg="Autopause request")
 				wx.PostEvent(self.win, evt)
 				
 				if 'lift' in values.keys():
@@ -301,7 +293,6 @@ class SendThread:
 					return []
 			
 		elif verb.lower() == "@layerchange":
-			print "Layer change layer number = %s" % values['layer']
 			try:
 				thisLayer = int(values['layer'])
 			except:
@@ -312,7 +303,7 @@ class SendThread:
 					self.isPrinting = False
 					self.sentCache.reinit()
 					self.resendFrom = None
-					evt = RepRapEvent(event = PRINT_AUTOSTOPPED, msg="matching layer number")
+					evt = RepRapEvent(event = PRINT_AUTOSTOPPED, msg="Autopause: reached matching layer number")
 					wx.PostEvent(self.win, evt)
 					del self.pendingPauseLayers[i]
 					if lift is not None:
@@ -707,12 +698,6 @@ class RepRap:
 		self.listener = ListenThread(win, self.printer, self.sender)
 		self.online = True
 		
-	def checkPendingPause(self, layer):
-		if self.sender is None:
-			return False
-		
-		return self.sender.checkPendingPause(layer)
-
 	def clearPendingPauses(self):
 		if self.sender is not None:
 			self.sender.clearPendingPauses()
@@ -778,7 +763,6 @@ class RepRap:
 				z = linfo[0]
 				startline = linfo[4][0]
 				endline = linfo[4][1]
-				print "New Layer at line %d new s/e=(%d,%d) new z = %.3f, layernumber=%s" % (idx, startline, endline, z, layerIdx)
 				self._send("@layerchange layer=%d" % (layerIdx+1))
 				
 			if l.raw.rstrip() != "":

@@ -240,12 +240,55 @@ class GCode(object):
 		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		self.acceleration = acceleration
 		self.lines = []
+		self.pendingPauseLayers = []
 		self.yieldCounter = 0
 		
 		for i in data:
 			self.lines.append(Line(i))
+			if i.startswith('@'):
+				self.metaCommand(i)
 			
 		self.process()
+			
+	def metaCommand(self, cmd):
+		l = cmd.split()
+		nl = len(l)
+		
+		if nl < 1:
+			return
+		
+		nl -= 1
+		verb = l[0]
+		l = l[1:]
+		
+		values = {}
+		
+		for term in l:
+			try:
+				name, val = term.split("=")
+				values[name.lower()] = val
+			except:
+				pass
+		
+		if verb.lower() == "@pause":
+			if 'layer' in values.keys():
+				try:
+					x = int(values['layer'])
+					lift = None
+					if 'lift' in values.keys():
+						lift = float(values['lift'])
+					self.pendingPauseLayers.append((x, lift))
+
+				except:
+					pass
+				
+	def checkPendingPause(self, layer):
+		for i in range(len(self.pendingPauseLayers)):
+			ln = self.pendingPauseLayers[i][0]
+			if ln == layer:
+				return True
+			
+		return False
 		
 	def checkYield(self):
 		self.yieldCounter += 1

@@ -723,7 +723,7 @@ class PrintMonitor(wx.Panel):
 			self.slideLayer.SetValue(l+1)
 			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
-			if self.reprap.checkPendingPause(l+1):
+			if self.model.checkPendingPause(l+1):
 				print "PendingPause on this layer"
 
 	def onClose(self, evt):
