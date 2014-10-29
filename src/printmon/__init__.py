@@ -724,7 +724,12 @@ class PrintMonitor(wx.Panel):
 			(zh, xymin, xymax, filament, glines, time, filstart) = self.model.getLayerInfo(l)
 			self.infoPane.setLayerInfo(l, zh, xymin, xymax, filament, filstart, time, glines)
 			if self.model.checkPendingPause(l+1):
-				print "PendingPause on this layer"
+				# TODO Pending Pause at start of this layer
+				pass
+			ct = self.model.checkImmediatePause(l+1)
+			if ct != 0:
+				# TODO ct Immediate Pauses on this layer
+				pass
 
 	def onClose(self, evt):
 		if self.fpLog is not None:

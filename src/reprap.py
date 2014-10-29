@@ -2,7 +2,6 @@ from serial import Serial
 import thread
 import Queue
 import time
-import wx
 import re
 import wx.lib.newevent
 
@@ -667,6 +666,7 @@ class RepRap:
 		self.online = False
 		self.printing = False
 		self.holdFan = False
+		self.forceGCode = False
 		self.restarting = False
 		self.restartData = None
 		
@@ -760,8 +760,6 @@ class RepRap:
 			if idx > endline:
 				layerIdx += 1
 				linfo = data.getLayerInfo(layerIdx)
-				z = linfo[0]
-				startline = linfo[4][0]
 				endline = linfo[4][1]
 				self._send("@layerchange layer=%d" % (layerIdx+1))
 				
@@ -822,8 +820,12 @@ class RepRap:
 			self.app.logger.LogWarning("Printer is off-line")
 			return False
 		elif self.printing and verb not in allow_while_printing:
-			self.app.logger.LogWarning("Command not allowed while printing")
-			return False
+			if self.forceGCode:
+				self.app.logger.LogWarning("Command (%s) forced" % cmd)
+				return self._send(cmd, priority=True)
+			else:
+				self.app.logger.LogWarning("Command not allowed while printing")
+				return False
 		else:
 			return self._send(cmd, priority=True)
 				

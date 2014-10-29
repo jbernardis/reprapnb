@@ -1490,6 +1490,15 @@ class FilePrepare(wx.Panel):
 			
 			self.showLayerInfo(l)
 			
+			if self.model.checkPendingPause(l+1):
+				# TODO Pending Pause at start of this layer
+				pass
+			ct = self.model.checkImmediatePause(l+1)
+			if ct != 0:
+				# TODO ct Immediate Pauses on this layer
+				pass
+
+			
 			self.ipGCodeSource.SetLabel(self.model.lines[self.currentGCLine].orig)
 			self.ipGCodeLine.SetLabel(GCODELINETEXT % (self.currentGCLine+1))
 			

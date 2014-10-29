@@ -97,7 +97,7 @@ class FilamentChangeDlg(wx.Dialog):
 			restoreZ = True
 			
 		self.newGCode.append("M117 Change Filament")
-		self.newGCode.append("M1")
+		self.newGCode.append("@pause")
 			
 		fX = self.cbHomeX.GetValue()
 		fY = self.cbHomeY.GetValue()

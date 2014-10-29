@@ -241,16 +241,15 @@ class GCode(object):
 		self.acceleration = acceleration
 		self.lines = []
 		self.pendingPauseLayers = []
+		self.immediatePauseLayers = []
 		self.yieldCounter = 0
 		
 		for i in data:
 			self.lines.append(Line(i))
-			if i.startswith('@'):
-				self.metaCommand(i)
 			
 		self.process()
 			
-	def metaCommand(self, cmd):
+	def metaCommand(self, cmd, lnlayer):
 		l = cmd.split()
 		nl = len(l)
 		
@@ -282,6 +281,10 @@ class GCode(object):
 				except:
 					pass
 				
+			else:
+				self.immediatePauseLayers.append(lnlayer)
+
+				
 	def checkPendingPause(self, layer):
 		for i in range(len(self.pendingPauseLayers)):
 			ln = self.pendingPauseLayers[i][0]
@@ -289,6 +292,14 @@ class GCode(object):
 				return True
 			
 		return False
+		
+	def checkImmediatePause(self, layer):
+		ct = 0
+		for ln in self.immediatePauseLayers:
+			if ln == layer:
+				ct += 1
+			
+		return ct
 		
 	def checkYield(self):
 		self.yieldCounter += 1
@@ -330,6 +341,8 @@ class GCode(object):
 		
 	def process(self):			
 		lnbr = 0
+		self.pendingPauseLayers = []
+		self.immediatePauseLayers = []
 		self.currenttool = 0
 		self.layers = []
 		self.layerlines = []
@@ -348,8 +361,10 @@ class GCode(object):
 		for ln in self.lines:
 			self.checkYield()
 			lx += 1
-				
-			if ln.command() == "G91":
+			
+			if ln.raw.startswith('@'):
+				self.metaCommand(ln.raw, lnbr+1)
+			elif ln.command() == "G91":
 				relative = True
 				relative_e = True
 			elif ln.command() == "G90":
