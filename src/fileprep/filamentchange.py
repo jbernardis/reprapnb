@@ -8,6 +8,8 @@ class FilamentChangeDlg(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Add Filament Change")
 		
+		self.contextLines = 5;
+		
 		self.model = self.parent.model
 		self.layerInfo = self.parent.layerInfo
 		self.newGCode = []
@@ -130,10 +132,15 @@ class FilamentChangeDlg(wx.Dialog):
 		self.text.Clear()
 		bg = self.text.GetBackgroundColour()
 		
-		if hl != 0:
-			self.text.AppendText(self.model.lines[hl-1].orig+"\n")
-		else:
-			self.text.AppendText("<beginning of file>\n")
+		for dl in range(self.contextLines):
+			l = hl - self.contextLines + dl
+			if l < -1:
+				pass
+			elif l == -1:
+				self.text.AppendText("<beginning of file>\n")
+			else:
+				self.text.AppendText(self.model.lines[hl-1].orig+"\n")
+				
 		v = self.text.GetInsertionPoint()
 		self.text.SetStyle(0, v, wx.TextAttr("red", bg))
 			
@@ -141,6 +148,15 @@ class FilamentChangeDlg(wx.Dialog):
 			self.text.AppendText(g+"\n")
 			
 		v = self.text.GetInsertionPoint()
-		self.text.AppendText(self.model.lines[hl].orig+"\n")
+
+		nlines = len(self.model.lines)		
+		for dl in range(self.contextLines):
+			if hl+dl == nlines:
+				self.text.appendText("<end of file>\n")
+			elif hl+dl > nlines:
+				pass
+			else:
+				self.text.AppendText(self.model.lines[hl+dl].orig+"\n")
+			
 		self.text.SetStyle(v, self.text.GetInsertionPoint(), wx.TextAttr("red", bg))
 		
