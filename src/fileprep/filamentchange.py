@@ -8,8 +8,6 @@ class FilamentChangeDlg(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Add Filament Change")
 		
-		self.contextLines = 5;
-		
 		self.model = self.parent.model
 		self.layerInfo = self.parent.layerInfo
 		self.newGCode = []
@@ -39,10 +37,17 @@ class FilamentChangeDlg(wx.Dialog):
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbHomeZ)
 		self.cbResetE = wx.CheckBox(self, wx.ID_ANY, "E Axis Reset")
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbResetE)
+		
+		scText = wx.StaticText(self, wx.ID_ANY, "Lines of Context")
+		self.scContext = wx.SpinCtrl(self, wx.ID_ANY, "")
+		self.scContext.SetRange(1, 10)
+		self.scContext.SetValue(5)
+		self.Bind(wx.EVT_SPINCTRL, self.updateDlg, self.scContext)
+
 		sbox.AddMany([self.cbRetr, (10, 10), self.amtRetr, (20, 20),
 					self.cbZLift, (10, 10), self.amtZLift, (20, 20),
 					self.cbHomeX, (10, 10), self.cbHomeY, (10, 10), self.cbHomeZ, (20, 20),
-					self.cbResetE])
+					self.cbResetE, (20, 20), scText, self.scContext])
 		
 		box.Add(sbox, 0, wx.GROW|wx.ALIGN_TOP)
 		
@@ -80,6 +85,11 @@ class FilamentChangeDlg(wx.Dialog):
 		z = self.layerInfo[0]
 
 		self.newGCode = []
+		
+		try:
+			contextLines = int(self.scContext.GetValue())
+		except:
+			contextLines = 1
 		
 		try:
 			retr = float(self.amtRetr.GetValue())
@@ -132,14 +142,14 @@ class FilamentChangeDlg(wx.Dialog):
 		self.text.Clear()
 		bg = self.text.GetBackgroundColour()
 		
-		for dl in range(self.contextLines):
-			l = hl - self.contextLines + dl
+		for dl in range(contextLines):
+			l = hl - contextLines + dl
 			if l < -1:
 				pass
 			elif l == -1:
 				self.text.AppendText("<beginning of file>\n")
 			else:
-				self.text.AppendText(self.model.lines[hl-1].orig+"\n")
+				self.text.AppendText(self.model.lines[l].orig+"\n")
 				
 		v = self.text.GetInsertionPoint()
 		self.text.SetStyle(0, v, wx.TextAttr("red", bg))
@@ -150,7 +160,7 @@ class FilamentChangeDlg(wx.Dialog):
 		v = self.text.GetInsertionPoint()
 
 		nlines = len(self.model.lines)		
-		for dl in range(self.contextLines):
+		for dl in range(contextLines):
 			if hl+dl == nlines:
 				self.text.appendText("<end of file>\n")
 			elif hl+dl > nlines:

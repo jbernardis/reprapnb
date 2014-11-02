@@ -277,12 +277,19 @@ class GcFrame (wx.Window):
 
 		p = layer.getLayerStart()
 		last_e = p[3]
+		layerNumber = layer.getLayerNumber();
+		pendingPause = self.model.checkPendingPause(layerNumber)
+		pauseLines = self.model.checkImmediatePause(layerNumber)
+		
 		if last_e is None:
 			last_e = 0
 		nn = 0
 		while p:
 			if prev == [None, None, None, None]:
 				prev = [p[0], p[1], p[2], p[3]]
+				if pendingPause:
+					self.drawPauseMarker(prev)
+					
 			elif p[7]: # axis reset
 				prev = [p[0], p[1], p[2], p[3]]
 				last_e = p[3]
@@ -290,6 +297,9 @@ class GcFrame (wx.Window):
 				tool = p[4]
 				if background or (p[6] >= self.drawGCFirst and p[6] <= self.drawGCLast):
 					self.drawLine(dc, prev, p, last_e, tool, nn, p[8], background=background)
+					if p[6]-1 in pauseLines:
+						self.drawPauseMarker(prev)
+					# TODO: if p[6]-1 is in list of immediate pauses, draw a marker here
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -298,6 +308,10 @@ class GcFrame (wx.Window):
 				
 			p = layer.getNextMove()
 			nn += 1
+			
+	def drawPauseMarker(self, p):
+		(x, y) = self.transform(p[0], self.buildarea[1]-p[1])
+		print "draw pause marker at ", x, y
 
 	def drawLine(self, dc, prev, p, last_e, tool, ln, lw, background=False):				
 		if background and (p[3] is None):

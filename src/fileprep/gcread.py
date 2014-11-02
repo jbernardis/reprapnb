@@ -249,7 +249,7 @@ class GCode(object):
 			
 		self.process()
 			
-	def metaCommand(self, cmd, lnlayer):
+	def metaCommand(self, cmd, layernbr, linenbr):
 		l = cmd.split()
 		nl = len(l)
 		
@@ -276,13 +276,13 @@ class GCode(object):
 					lift = None
 					if 'lift' in values.keys():
 						lift = float(values['lift'])
-					self.pendingPauseLayers.append((x, lift))
+					self.pendingPauseLayers.append((x-1, lift))
 
 				except:
 					pass
 				
 			else:
-				self.immediatePauseLayers.append(lnlayer)
+				self.immediatePauseLayers.append((layernbr, linenbr))
 
 				
 	def checkPendingPause(self, layer):
@@ -294,12 +294,12 @@ class GCode(object):
 		return False
 		
 	def checkImmediatePause(self, layer):
-		ct = 0
-		for ln in self.immediatePauseLayers:
+		rv = []
+		for ln, lx in self.immediatePauseLayers:
 			if ln == layer:
-				ct += 1
+				rv.append(lx)
 			
-		return ct
+		return rv
 		
 	def checkYield(self):
 		self.yieldCounter += 1
@@ -363,7 +363,7 @@ class GCode(object):
 			lx += 1
 			
 			if ln.raw.startswith('@'):
-				self.metaCommand(ln.raw, lnbr+1)
+				self.metaCommand(ln.raw, lnbr+1, lx)
 			elif ln.command() == "G91":
 				relative = True
 				relative_e = True

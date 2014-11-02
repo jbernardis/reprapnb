@@ -274,7 +274,7 @@ class SendThread:
 					lift = None
 					if 'lift' in values.keys():
 						lift = float(values['lift'])
-					self.pendingPauseLayers.append((x, lift))
+					self.pendingPauseLayers.append((x-1, lift))
 
 				except:
 					pass
@@ -293,7 +293,7 @@ class SendThread:
 			
 		elif verb.lower() == "@layerchange":
 			try:
-				thisLayer = int(values['layer'])
+				thisLayer = int(values['layer']) - 1
 			except:
 				thisLayer = -1
 			for i in range(len(self.pendingPauseLayers)):

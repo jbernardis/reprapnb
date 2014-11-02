@@ -726,8 +726,8 @@ class PrintMonitor(wx.Panel):
 			if self.model.checkPendingPause(l+1):
 				# TODO Pending Pause at start of this layer
 				pass
-			ct = self.model.checkImmediatePause(l+1)
-			if ct != 0:
+			plines = self.model.checkImmediatePause(l+1)
+			if len(plines) > 0:
 				# TODO ct Immediate Pauses on this layer
 				pass
 
