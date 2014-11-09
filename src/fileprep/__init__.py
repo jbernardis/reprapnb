@@ -463,8 +463,35 @@ class FilePrepare(wx.Panel):
 		self.sizerQueues.AddSpacer((20,20))
 		
 		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
-		self.bSliceQ.SetToolTipString("Batch slicing")
+		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
 		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
+		self.sizerQueues.Add(self.bSliceQ)
+		
+		qlen = len(self.settings.stlqueue)
+		self.bSliceStart = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStartbatch, size=BUTTONDIM)
+		self.bSliceStart.SetToolTipString("Begin batch slicing")
+		self.Bind(wx.EVT_BUTTON, self.doBeginSlice, self.bSliceStart)
+		self.sizerQueues.Add(self.bSliceStart)
+		if qlen == 0:
+			self.bSliceStart.Enable(False)
+		else:
+			self.bSliceStart.Enable(True)
+
+		szt = wx.BoxSizer(wx.VERTICAL)			
+		self.tSliceQLen = wx.StaticText(self, wx.ID_ANY, "")
+		szt.Add(self.tSliceQLen)
+		self.setSliceQLen(qlen)
+		
+		
+		self.cbAddBatch = wx.CheckBox(self, wx.ID_ANY, "Add G Code files to G Code Queue")
+		self.cbAddBatch.SetToolTipString("Add the files created by batch slicing to the G Code Queue")
+		self.Bind(wx.EVT_CHECKBOX, self.checkAddBatch, self.cbAddBatch)
+		self.cbAddBatch.SetValue(self.settings.batchaddgcode)
+		self.sizerQueues.Add(self.cbAddBatch)
+
+		
+		
+		self.sizerQueues.Add(szt)
 		
 		self.sizerRight.Add(self.sizerQueues)
 		
@@ -618,14 +645,33 @@ class FilePrepare(wx.Panel):
 		self.Fit()
 		
 	def doBatchSlice(self, evt):
-		dlg = SliceQueue(self, self.settings, self.images)
+		stllist = self.settings.stlqueue[:]
+		dlg = SliceQueue(self, stllist, self.settings, self.images)
 		if dlg.ShowModal() == wx.ID_OK:
-			gcq, fl= dlg.getSliceQueue()
-			for f in fl:
-				print "File: ", f
-			print gcq
+			self.settings.stlqueue = dlg.getSliceQueue()
+			self.settings.setModified()
+			self.setSliceQLen(len(self.settings.stlqueue))
 				
 		dlg.Destroy();
+		
+	def setSliceQLen(self, qlen):
+		self.tSliceQLen.SetLabel("%d files in queue" % qlen)
+		if qlen == 0:
+			self.bSliceStart.Enable(False)
+		else:
+			self.bSliceStart.Enable(True)
+				
+	def checkAddBatch(self, evt):
+		self.settings.batchaddgcode = evt.IsChecked()
+		self.settings.setModified()
+		
+	def doBeginSlice(self, evt):
+		print "Beginning batch slice, save G Code = ", self.settings.batchaddgcode
+		for fn in self.settings.stlqueue:
+			print "  " + fn
+			
+		self.settings.stlqueue = []
+		self.setSliceQLen(0)
 		
 	def doOverride(self, evt):
 		dlg = Override(self, self.overrideValues, self.slicer.type.getOverrideHelpText())

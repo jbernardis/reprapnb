@@ -386,6 +386,7 @@ class SettingsFilePrep:
 		self.drawstlgrid = True
 		self.toolpathsonly = False
 		self.batchaddgcode = True
+		self.stlqueue = []
 		
 		if cfg is None:
 			self.modified = True
@@ -440,6 +441,14 @@ class SettingsFilePrep:
 						
 				elif opt == 'batchaddgcode':
 					self.batchaddgcode = parseBoolean(value, False)
+						
+				elif opt == 'stlqueue':
+					if value == '':
+						self.stlqueue = []
+					else:
+						s = value.split(',')
+						self.stlqueue = [x.strip() for x in s]
+
 				else:
 					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section, opt))
 		else:
@@ -513,6 +522,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
 			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
 			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
+			self.cfg.set(self.section, "stlqueue", ",".join(self.stlqueue))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]

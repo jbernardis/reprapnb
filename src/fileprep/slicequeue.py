@@ -10,13 +10,14 @@ wildcard = "STL files (*.stl)|*.stl|"  "All files (*.*)|*.*"
 VISIBLEQUEUESIZE = 15
 
 class SliceQueue(wx.Dialog):
-	def __init__(self, parent, settings, images):
+	def __init__(self, parent, stllist, settings, images):
 		self.parent = parent
 		self.settings = settings
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Slicing Queue", size=(800, 804))
 		self.SetBackgroundColour("white")
 		
 		dsizer = wx.BoxSizer(wx.VERTICAL)
+		dsizer.AddSpacer((10, 10))
 		
 		self.images = images
 		
@@ -27,7 +28,7 @@ class SliceQueue(wx.Dialog):
 
 		lbsizer = wx.BoxSizer(wx.HORIZONTAL)
 		lbsizer.AddSpacer((10, 10))
-		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(300, fontHeight*VISIBLEQUEUESIZE+5), choices=[], style=wx.LB_EXTENDED)
+		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(300, fontHeight*VISIBLEQUEUESIZE+5), choices=stllist, style=wx.LB_EXTENDED)
 		self.Bind(wx.EVT_LISTBOX, self.doQueueSelect, self.lbQueue)
 		lbsizer.Add(self.lbQueue);
 		lbsizer.AddSpacer((10, 10))
@@ -68,24 +69,16 @@ class SliceQueue(wx.Dialog):
 		
 		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		
-		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
-		self.bSlice.SetToolTipString("Start Slicer")
+		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngOk, size=BUTTONDIM)
+		self.bSlice.SetToolTipString("Save changes to queue")
 		btnsizer.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.doSlice, self.bSlice)
 		self.bSlice.Enable(False)
 		
-		btnsizer.AddSpacer((5,5))
-		
-		self.cbGCodeQueue = wx.CheckBox(self, wx.ID_ANY, "Add G Code file to G Code Queue")
-		self.cbGCodeQueue.SetToolTipString("Automatically add each G Code file to the G Code Queue")
-		self.cbGCodeQueue.SetValue(self.settings.batchaddgcode)
-		self.Bind(wx.EVT_CHECKBOX, self.checkGCodeQueue, self.cbGCodeQueue)
-		btnsizer.Add(self.cbGCodeQueue, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-		
 		btnsizer.AddSpacer((20, 20))
 
 		self.bCancel = wx.BitmapButton(self, wx.ID_ANY, self.images.pngCancel, size=BUTTONDIM)
-		self.bCancel.SetToolTipString("Exit without slicing")
+		self.bCancel.SetToolTipString("Exit without saving")
 		btnsizer.Add(self.bCancel)
 		self.Bind(wx.EVT_BUTTON, self.doCancel, self.bCancel)
 		
@@ -174,15 +167,11 @@ class SliceQueue(wx.Dialog):
 				else:
 					self.bDown.Enable(True)
 					
-	def checkGCodeQueue(self, evt):
-		self.settings.batchaddgcode = evt.IsChecked()
-		self.settings.setModified()
-					
 	def doSlice(self, evt):
 		self.EndModal(wx.ID_OK)
 		
 	def getSliceQueue(self):
-		return self.cbGCodeQueue.GetValue(), self.lbQueue.GetItems()
+		return self.lbQueue.GetItems()
 		
 	def doCancel(self, evt):
 		self.EndModal(wx.ID_CANCEL)
