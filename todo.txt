@@ -5,6 +5,7 @@ In Progress/Need Testing
 
 send email when print job finishes
 
+batch slicing
 add a queue of jobs to print
 
 @runmacro

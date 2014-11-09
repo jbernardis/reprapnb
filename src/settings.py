@@ -385,6 +385,7 @@ class SettingsFilePrep:
 		self.acceleration = 1500
 		self.drawstlgrid = True
 		self.toolpathsonly = False
+		self.batchaddgcode = True
 		
 		if cfg is None:
 			self.modified = True
@@ -436,6 +437,9 @@ class SettingsFilePrep:
 						
 				elif opt == 'usebuffereddc':
 					self.usebuffereddc = parseBoolean(value, False)
+						
+				elif opt == 'batchaddgcode':
+					self.batchaddgcode = parseBoolean(value, False)
 				else:
 					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section, opt))
 		else:
@@ -508,6 +512,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "usebuffereddc", str(self.usebuffereddc))
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
 			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
+			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]

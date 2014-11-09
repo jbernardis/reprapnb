@@ -363,7 +363,7 @@ class GCode(object):
 			lx += 1
 			
 			if ln.raw.startswith('@'):
-				self.metaCommand(ln.raw, lnbr+1, lx)
+				self.metaCommand(ln.raw, lnbr, lx)
 			elif ln.command() == "G91":
 				relative = True
 				relative_e = True

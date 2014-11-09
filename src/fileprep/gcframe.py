@@ -280,6 +280,7 @@ class GcFrame (wx.Window):
 		layerNumber = layer.getLayerNumber();
 		pendingPause = self.model.checkPendingPause(layerNumber)
 		pauseLines = self.model.checkImmediatePause(layerNumber)
+		markers = []
 		
 		if last_e is None:
 			last_e = 0
@@ -287,8 +288,8 @@ class GcFrame (wx.Window):
 		while p:
 			if prev == [None, None, None, None]:
 				prev = [p[0], p[1], p[2], p[3]]
-				if pendingPause:
-					self.drawPauseMarker(prev)
+				if pendingPause and (p[6] >= self.drawGCFirst and p[6] <= self.drawGCLast):
+					markers.append((prev[0], prev[1], True))
 					
 			elif p[7]: # axis reset
 				prev = [p[0], p[1], p[2], p[3]]
@@ -298,8 +299,7 @@ class GcFrame (wx.Window):
 				if background or (p[6] >= self.drawGCFirst and p[6] <= self.drawGCLast):
 					self.drawLine(dc, prev, p, last_e, tool, nn, p[8], background=background)
 					if p[6]-1 in pauseLines:
-						self.drawPauseMarker(prev)
-					# TODO: if p[6]-1 is in list of immediate pauses, draw a marker here
+						markers.append((prev[0], prev[1], False))
 					
 				prev = [p[0], p[1], p[2], p[3]]
 			
@@ -308,10 +308,16 @@ class GcFrame (wx.Window):
 				
 			p = layer.getNextMove()
 			nn += 1
-			
-	def drawPauseMarker(self, p):
-		(x, y) = self.transform(p[0], self.buildarea[1]-p[1])
-		print "draw pause marker at ", x, y
+
+		for px, py, pendingFlag in markers:
+			(xc, yc) = self.transform(px, self.buildarea[1]-py)
+			(xt, yt) = self.transform(px-0.354, self.buildarea[1]-(py-0.354))
+			(xb, yb) = self.transform(px+0.354, self.buildarea[1]-(py+0.354))
+			dc.SetPen(wx.Pen("white", 2))
+			dc.DrawLine(xc, yt, xc, yb)
+			dc.DrawLine(xt, yc, xb, yc)
+			dc.DrawLine(xt, yt, xb, yb)
+			dc.DrawLine(xt, yb, xb, yt)
 
 	def drawLine(self, dc, prev, p, last_e, tool, ln, lw, background=False):				
 		if background and (p[3] is None):

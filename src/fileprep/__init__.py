@@ -17,11 +17,12 @@ from images import Images
 from tools import formatElapsed 
 from stlview import StlViewer
 from override import Override, ovUserKeyMap, ovKeyOrder
+from slicequeue import SliceQueue
 from toolbar import ToolBar
 
 from reprap import MAX_EXTRUDERS
 
-from settings import TEMPFILELABEL, BUTTONDIM, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY
+from settings import TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY
 
 
 wildcard = "G Code (*.gcode)|*.gcode"
@@ -458,6 +459,15 @@ class FilePrepare(wx.Panel):
 		self.sizerLeft.Add(self.sizerOpts)
 		self.sizerMain.Add(self.sizerLeft)
 		
+		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerQueues.AddSpacer((20,20))
+		
+		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
+		self.bSliceQ.SetToolTipString("Batch slicing")
+		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
+		
+		self.sizerRight.Add(self.sizerQueues)
+		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
 		f = wx.Font(18,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
@@ -606,6 +616,16 @@ class FilePrepare(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def doBatchSlice(self, evt):
+		dlg = SliceQueue(self, self.settings, self.images)
+		if dlg.ShowModal() == wx.ID_OK:
+			gcq, fl= dlg.getSliceQueue()
+			for f in fl:
+				print "File: ", f
+			print gcq
+				
+		dlg.Destroy();
 		
 	def doOverride(self, evt):
 		dlg = Override(self, self.overrideValues, self.slicer.type.getOverrideHelpText())
