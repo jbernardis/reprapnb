@@ -460,18 +460,20 @@ class FilePrepare(wx.Panel):
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerQueues.AddSpacer((20,20))
+		#self.sizerQueues.AddSpacer((20,20))
 		
 		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
 		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
 		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
 		self.sizerQueues.Add(self.bSliceQ)
+		self.sizerQueues.AddSpacer((5, 5))
 		
 		qlen = len(self.settings.stlqueue)
 		self.bSliceStart = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStartbatch, size=BUTTONDIM)
 		self.bSliceStart.SetToolTipString("Begin batch slicing")
 		self.Bind(wx.EVT_BUTTON, self.doBeginSlice, self.bSliceStart)
 		self.sizerQueues.Add(self.bSliceStart)
+		self.sizerQueues.AddSpacer((10, 10))
 		if qlen == 0:
 			self.bSliceStart.Enable(False)
 		else:
@@ -482,18 +484,16 @@ class FilePrepare(wx.Panel):
 		szt.Add(self.tSliceQLen)
 		self.setSliceQLen(qlen)
 		
-		
-		self.cbAddBatch = wx.CheckBox(self, wx.ID_ANY, "Add G Code files to G Code Queue")
+		self.cbAddBatch = wx.CheckBox(self, wx.ID_ANY, "Add to G Code Queue")
 		self.cbAddBatch.SetToolTipString("Add the files created by batch slicing to the G Code Queue")
 		self.Bind(wx.EVT_CHECKBOX, self.checkAddBatch, self.cbAddBatch)
 		self.cbAddBatch.SetValue(self.settings.batchaddgcode)
-		self.sizerQueues.Add(self.cbAddBatch)
-
-		
+		szt.Add(self.cbAddBatch)
 		
 		self.sizerQueues.Add(szt)
 		
-		self.sizerRight.Add(self.sizerQueues)
+		self.sizerRight.Add(self.sizerQueues, 0, wx.LEFT, 1)
+		self.sizerRight.AddSpacer((20, 20))
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")

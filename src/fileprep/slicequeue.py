@@ -24,11 +24,12 @@ class SliceQueue(wx.Dialog):
 		f = wx.Font(12,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc = wx.ScreenDC()
 		dc.SetFont(f)
-		fontWidth, fontHeight = dc.GetTextExtent("Xy")
+		fontWidth, fontHeight = dc.GetTextExtent("X")
+		print "Font w,h = ", fontWidth, fontHeight
 
 		lbsizer = wx.BoxSizer(wx.HORIZONTAL)
 		lbsizer.AddSpacer((10, 10))
-		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(300, fontHeight*VISIBLEQUEUESIZE+5), choices=stllist, style=wx.LB_EXTENDED)
+		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(fontWidth * 90, fontHeight*VISIBLEQUEUESIZE+5), choices=stllist, style=wx.LB_EXTENDED)
 		self.Bind(wx.EVT_LISTBOX, self.doQueueSelect, self.lbQueue)
 		lbsizer.Add(self.lbQueue);
 		lbsizer.AddSpacer((10, 10))
@@ -112,9 +113,7 @@ class SliceQueue(wx.Dialog):
 		self.bDel.Enable(False)
 		self.bUp.Enable(False)
 		self.bDown.Enable(False)
-		
-		if self.lbQueue.GetCount() == 0:
-			self.bSlice.Enable(False)
+		self.bSlice.Enable(True)
 		
 	def doUp(self, evt):
 		ls = self.lbQueue.GetSelections()
@@ -125,8 +124,10 @@ class SliceQueue(wx.Dialog):
 		self.lbQueue.Delete(lx)
 		self.lbQueue.Insert(s, lx-1)
 		self.lbQueue.SetSelection(lx-1)
+		self.lbQueue.EnsureVisible(lx-1)
 		self.bUp.Enable((lx-1) != 0)
 		self.bDown.Enable(True)
+		self.bSlice.Enable(True)
 		
 	def doDown(self, evt):
 		ls = self.lbQueue.GetSelections()
@@ -137,12 +138,10 @@ class SliceQueue(wx.Dialog):
 		self.lbQueue.Delete(lx)
 		self.lbQueue.Insert(s, lx-1)
 		self.lbQueue.SetSelection(lx)
-		self.lbQueue.EnsureVisible(lx+1)
+		self.lbQueue.EnsureVisible(lx)
 		self.bUp.Enable(True)
 		self.bDown.Enable((lx+1) != self.lbQueue.GetCount())
-		minFirst = lx+1-VISIBLEQUEUESIZE
-		if minFirst >= 0:
-			self.lbQueue.SetFirstItem(minFirst)
+		self.bSlice.Enable(True)
 		
 	def doQueueSelect(self, evt):
 		ls = self.lbQueue.GetSelections()
