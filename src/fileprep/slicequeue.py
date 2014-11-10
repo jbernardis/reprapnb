@@ -112,7 +112,7 @@ class SliceQueue(wx.Dialog):
 					
 			if len(dups) > 0:
 				msg = "Duplicate files removed from queue:\n  " + ",\n  ".join(dups)
-				dlg = wx.MessageDialog(self, 'Duplicate files!', msg, wx.OK | wx.ICON_INFORMATION)
+				dlg = wx.MessageDialog(self, msg, 'Duplicate files!', wx.OK | wx.ICON_INFORMATION)
 				
 				dlg.ShowModal()
 				dlg.Destroy()

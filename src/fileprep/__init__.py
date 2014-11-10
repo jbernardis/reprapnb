@@ -135,6 +135,7 @@ class BatchSlicerThread:
 		
 			obuf = ''
 			evt = BatchSlicerEvent(stlfn = stlfn, state = BATCHSLICER_STARTFILE)
+			wx.PostEvent(self.win, evt)
 			while not self.cancelled:
 				o = p.stdout.read(1)
 				if o == '': break
@@ -713,16 +714,18 @@ class FilePrepare(wx.Panel):
 		if dlg.ShowModal() == wx.ID_OK:
 			self.settings.stlqueue = dlg.getSliceQueue()
 			self.settings.setModified()
-			self.setSliceQLen(len(self.settings.stlqueue))
+			n = len(self.settings.stlqueue)
+			self.setSliceQLen(n)
+			if n == 0:
+				self.bSliceStart.Enable(False)
+			else:
+				self.bSliceStart.Enable(True)
+
 				
 		dlg.Destroy();
 		
 	def setSliceQLen(self, qlen):
 		self.tSliceQLen.SetLabel("%d files in queue" % qlen)
-		if qlen == 0:
-			self.bSliceStart.Enable(False)
-		else:
-			self.bSliceStart.Enable(True)
 				
 	def checkAddBatch(self, evt):
 		self.settings.batchaddgcode = evt.IsChecked()
@@ -732,38 +735,32 @@ class FilePrepare(wx.Panel):
 		if self.settings.batchaddgcode:
 			s = ""
 		else:
-			s = " NOT "
-		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will" + s + "saved in the G Code queue")
+			s = "NOT "
+		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will" + s + "be saved in the G Code queue")
 		self.logOverrides(self.overrideValues)
 		self.slicer.setOverrides(self.overrideValues)
 		
 		saveStlFile = self.stlFile
 		saveGcFile = self.gcFile
+		self.stlFile = "%BATCHSTL%"
+		self.gcFile = "%BATCHGCODE%"
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
+		cmd = self.slicer.buildSliceCommand()
+
+		self.stlFile = saveStlFile
+		self.gcFile = saveGcFile
 		
 		joblist = []
 		
 		for fn in self.settings.stlqueue:
-			self.stlFile = fn
-			self.gcFile = self.slicer.buildSliceOutputFile(fn)
-			self.lh, self.fd = self.slicer.type.getDimensionInfo()
-			cmd = self.slicer.buildSliceCommand()
-
-			print "================"
-			print "STL File: " + self.stlFile
-			print "GCODE File: " + self.gcFile
-			print "Command string = (" + cmd + ")"
-			print ""
-			joblist.append([self.stlFile, self.gcFile, cmd])
+			gcfn = self.slicer.buildSliceOutputFile(fn)
+			c = cmd.replace("%BATCHSTL%", fn).replace("%BATCHGCODE%", gcfn)
+			joblist.append([fn, gcfn, c])
 			
 		self.batchSliceThread = BatchSlicerThread(self, joblist)
 			
-		self.stlFile = saveStlFile
-		self.gcFile = saveGcFile
-			
-		self.settings.stlqueue = []
-		self.setSliceQLen(0)
-		
 		self.bSliceStart.Enable(False)
+		self.bSlice.Enable(False)
 		self.bSliceQ.Enable(False)
 		self.batchSliceThread.Start()
 		
@@ -777,19 +774,23 @@ class FilePrepare(wx.Panel):
 			if len(self.settings.stlqueue) != 0:
 				self.bSliceStart.Enable(True)
 			self.bSliceQ.Enable(True)
+			self.bSlice.Enable(True)
 			
 		elif evt.state == BATCHSLICER_FINISHED:
+			self.logger.LogMessage("Batch Slicer: finished all files")
 			self.settings.stlqueue = []
 			self.setSliceQLen(0)
 			self.bSliceQ.Enable(True)
+			self.bSliceStart.Enable(False)
+			self.bSlice.Enable(True)
 		
 		elif evt.state == BATCHSLICER_STARTFILE:
-			self.logger.logMessage("Batch Slicer: starting file: " + evt.stlfn)
+			self.logger.LogMessage("Batch Slicer: starting file: " + evt.stlfn)
 		
 		elif evt.state == BATCHSLICER_ENDFILE:
-			self.logger.logMessage("Batch Slicer: finished file: " + evt.stlfn)
+			self.logger.LogMessage("Batch Slicer: finished file: " + evt.stlfn)
 			if self.settings.batchaddgcode:
-				self.logger.logMessage("Adding %s to G Code queue" % evt.gcfn)
+				self.logger.LogMessage("Adding %s to G Code queue" % evt.gcfn)
 				
 			try:
 				self.settings.stlqueue.remove(evt.stlfn)
