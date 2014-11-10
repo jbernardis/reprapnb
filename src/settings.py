@@ -387,6 +387,7 @@ class SettingsFilePrep:
 		self.toolpathsonly = False
 		self.batchaddgcode = True
 		self.stlqueue = []
+		self.gcodequeue = []
 		
 		if cfg is None:
 			self.modified = True
@@ -448,6 +449,13 @@ class SettingsFilePrep:
 					else:
 						s = value.split(',')
 						self.stlqueue = [x.strip() for x in s]
+						
+				elif opt == 'gcodequeue':
+					if value == '':
+						self.gcodequeue = []
+					else:
+						s = value.split(',')
+						self.gcodequeue = [x.strip() for x in s]
 
 				else:
 					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section, opt))
@@ -523,6 +531,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
 			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
 			self.cfg.set(self.section, "stlqueue", ",".join(self.stlqueue))
+			self.cfg.set(self.section, "gcodequeue", ",".join(self.gcodequeue))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]
