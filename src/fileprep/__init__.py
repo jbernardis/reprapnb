@@ -98,6 +98,68 @@ class SlicerThread:
 
 		self.running = False
 
+(BatchSlicerEvent, EVT_BATCHSLICER_UPDATE) = wx.lib.newevent.NewEvent()
+BATCHSLICER_RUNNING = 1
+BATCHSLICER_FINISHED = 3
+BATCHSLICER_CANCELLED = 4
+BATCHSLICER_STARTFILE = 5
+BATCHSLICER_ENDFILE = 6
+
+class BatchSlicerThread:
+	def __init__(self, win, jobs):
+		self.win = win
+		self.jobs = jobs
+		self.running = False
+		self.cancelled = False
+
+	def Start(self):
+		self.running = True
+		self.cancelled = False
+		thread.start_new_thread(self.Run, ())
+
+	def Stop(self):
+		self.cancelled = True
+
+	def IsRunning(self):
+		return self.running
+
+	def Run(self):
+		for stlfn, gcfn, cmd in self.jobs:
+			args = shlex.split(str(cmd))
+			try:
+				p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+			except:
+				evt = BatchSlicerEvent(msg = "Exception occurred trying to spawn slicer", state = BATCHSLICER_CANCELLED)
+				wx.PostEvent(self.win, evt)
+				return
+		
+			obuf = ''
+			evt = BatchSlicerEvent(stlfn = stlfn, state = BATCHSLICER_STARTFILE)
+			while not self.cancelled:
+				o = p.stdout.read(1)
+				if o == '': break
+				if o == '\r' or o == '\n':
+					evt = BatchSlicerEvent(msg = obuf, state = BATCHSLICER_RUNNING)
+					wx.PostEvent(self.win, evt)
+					obuf = ''
+				elif ord(o) < 32:
+					pass
+				else:
+					obuf += o
+				
+			if self.cancelled:
+				evt = BatchSlicerEvent(msg = None, state = BATCHSLICER_CANCELLED)
+				wx.PostEvent(self.win, evt)
+				p.kill()
+			else:
+				evt = BatchSlicerEvent(stlfn = stlfn, gcfn = gcfn, state = BATCHSLICER_ENDFILE)
+				wx.PostEvent(self.win, evt)
+			
+		evt = BatchSlicerEvent(state = BATCHSLICER_FINISHED)
+		p.wait()
+		wx.PostEvent(self.win, evt)
+
+		self.running = False
 
 (ReaderEvent, EVT_READER_UPDATE) = wx.lib.newevent.NewEvent()
 READER_RUNNING = 1
@@ -242,6 +304,7 @@ class FilePrepare(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(900, 250))
 		self.SetBackgroundColour("white")
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
+		self.Bind(EVT_BATCHSLICER_UPDATE, self.batchSlicerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 		self.Bind(EVT_MODELER_UPDATE, self.modelerUpdate)
 
@@ -666,12 +729,78 @@ class FilePrepare(wx.Panel):
 		self.settings.setModified()
 		
 	def doBeginSlice(self, evt):
-		print "Beginning batch slice, save G Code = ", self.settings.batchaddgcode
+		if self.settings.batchaddgcode:
+			s = ""
+		else:
+			s = " NOT "
+		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will" + s + "saved in the G Code queue")
+		self.logOverrides(self.overrideValues)
+		self.slicer.setOverrides(self.overrideValues)
+		
+		saveStlFile = self.stlFile
+		saveGcFile = self.gcFile
+		
+		joblist = []
+		
 		for fn in self.settings.stlqueue:
-			print "  " + fn
+			self.stlFile = fn
+			self.gcFile = self.slicer.buildSliceOutputFile(fn)
+			self.lh, self.fd = self.slicer.type.getDimensionInfo()
+			cmd = self.slicer.buildSliceCommand()
+
+			print "================"
+			print "STL File: " + self.stlFile
+			print "GCODE File: " + self.gcFile
+			print "Command string = (" + cmd + ")"
+			print ""
+			joblist.append([self.stlFile, self.gcFile, cmd])
+			
+		self.batchSliceThread = BatchSlicerThread(self, joblist)
+			
+		self.stlFile = saveStlFile
+		self.gcFile = saveGcFile
 			
 		self.settings.stlqueue = []
 		self.setSliceQLen(0)
+		
+		self.bSliceStart.Enable(False)
+		self.bSliceQ.Enable(False)
+		self.batchSliceThread.Start()
+		
+	def batchSlicerUpdate(self, evt):
+			
+		if evt.state == BATCHSLICER_RUNNING:
+			if evt.msg is not None:
+				self.logger.LogMessage("(s) - " + evt.msg)
+				
+		elif evt.state == BATCHSLICER_CANCELLED:
+			if len(self.settings.stlqueue) != 0:
+				self.bSliceStart.Enable(True)
+			self.bSliceQ.Enable(True)
+			
+		elif evt.state == BATCHSLICER_FINISHED:
+			self.settings.stlqueue = []
+			self.setSliceQLen(0)
+			self.bSliceQ.Enable(True)
+		
+		elif evt.state == BATCHSLICER_STARTFILE:
+			self.logger.logMessage("Batch Slicer: starting file: " + evt.stlfn)
+		
+		elif evt.state == BATCHSLICER_ENDFILE:
+			self.logger.logMessage("Batch Slicer: finished file: " + evt.stlfn)
+			if self.settings.batchaddgcode:
+				self.logger.logMessage("Adding %s to G Code queue" % evt.gcfn)
+				
+			try:
+				self.settings.stlqueue.remove(evt.stlfn)
+			except:
+				pass
+			
+			self.setSliceQLen(len(self.settings.stlqueue))
+			
+		else:
+			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
+
 		
 	def doOverride(self, evt):
 		dlg = Override(self, self.overrideValues, self.slicer.type.getOverrideHelpText())

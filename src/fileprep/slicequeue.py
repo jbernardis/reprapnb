@@ -25,8 +25,7 @@ class SliceQueue(wx.Dialog):
 		dc = wx.ScreenDC()
 		dc.SetFont(f)
 		fontWidth, fontHeight = dc.GetTextExtent("X")
-		print "Font w,h = ", fontWidth, fontHeight
-
+		
 		lbsizer = wx.BoxSizer(wx.HORIZONTAL)
 		lbsizer.AddSpacer((10, 10))
 		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(fontWidth * 90, fontHeight*VISIBLEQUEUESIZE+5), choices=stllist, style=wx.LB_EXTENDED)
@@ -102,8 +101,22 @@ class SliceQueue(wx.Dialog):
 				self.bSlice.Enable(True)
 				self.settings.laststldirectory = os.path.split(paths[0])[0]
 				self.settings.setModified()
+				
+			dups = []
+			startlist = self.lbQueue.GetItems()
 			for path in paths:
-				self.lbQueue.Append(path)
+				if path in startlist:
+					dups.append(path)
+				else:
+					self.lbQueue.Append(path)
+					
+			if len(dups) > 0:
+				msg = "Duplicate files removed from queue:\n  " + ",\n  ".join(dups)
+				dlg = wx.MessageDialog(self, 'Duplicate files!', msg, wx.OK | wx.ICON_INFORMATION)
+				
+				dlg.ShowModal()
+				dlg.Destroy()
+
 
 	def doDel(self, evt):
 		ls = self.lbQueue.GetSelections()
