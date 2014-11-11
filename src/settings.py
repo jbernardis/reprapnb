@@ -388,6 +388,8 @@ class SettingsFilePrep:
 		self.batchaddgcode = True
 		self.stlqueue = []
 		self.gcodequeue = []
+		self.showgcbasename = False
+		self.showstlbasename = False
 		
 		if cfg is None:
 			self.modified = True
@@ -442,6 +444,12 @@ class SettingsFilePrep:
 						
 				elif opt == 'batchaddgcode':
 					self.batchaddgcode = parseBoolean(value, False)
+						
+				elif opt == 'showstlbasename':
+					self.showstlbasename = parseBoolean(value, False)
+						
+				elif opt == 'showgcbasename':
+					self.showgcbasename = parseBoolean(value, False)
 						
 				elif opt == 'stlqueue':
 					if value == '':
@@ -532,6 +540,8 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
 			self.cfg.set(self.section, "stlqueue", ",".join(self.stlqueue))
 			self.cfg.set(self.section, "gcodequeue", ",".join(self.gcodequeue))
+			self.cfg.set(self.section, "showstlbasename", str(self.showstlbasename))
+			self.cfg.set(self.section, "showgcbasename", str(self.showgcbasename))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]

@@ -777,7 +777,10 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy();
 		
 	def setSliceQLen(self, qlen):
-		self.tSliceQLen.SetLabel("%d files in queue" % qlen)
+		s = "%d files in queue" % qlen
+		if qlen != 0:
+			s += ": (" + os.path.basename(self.settings.stlqueue[0]) + ")"
+		self.tSliceQLen.SetLabel(s)
 				
 	def checkAddBatch(self, evt):
 		self.settings.batchaddgcode = evt.IsChecked()
@@ -861,7 +864,10 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy();
 			
 	def setGCodeQLen(self, qlen):
-		self.tGCodeQLen.SetLabel("%d files in queue" % qlen)
+		s = "%d files in queue" % qlen
+		if qlen != 0:
+			s += ": (" + os.path.basename(self.settings.gcodequeue[0]) + ")"
+		self.tGCodeQLen.SetLabel(s)
 	
 	def doNextGCode(self, evt):
 		fn = self.settings.gcodequeue[0]

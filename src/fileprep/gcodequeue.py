@@ -1,7 +1,6 @@
 #!/bin/env python
 import os
 import wx
-from images import Images
 from settings import BUTTONDIM
 
 
@@ -10,11 +9,14 @@ wildcard = "G Code files (*.gcode)|*.gcode|"  "All files (*.*)|*.*"
 VISIBLEQUEUESIZE = 15
 
 class GCodeQueue(wx.Dialog):
-	def __init__(self, parent, stllist, settings, images):
+	def __init__(self, parent, gclist, settings, images):
 		self.parent = parent
 		self.settings = settings
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "G Code Queue", size=(800, 804))
 		self.SetBackgroundColour("white")
+		
+		self.gclist = gclist[:]
+		self.gcdisplay = [self.setDisplayName[x] for x in self.gclist]
 		
 		dsizer = wx.BoxSizer(wx.VERTICAL)
 		dsizer.AddSpacer((10, 10))
@@ -28,7 +30,7 @@ class GCodeQueue(wx.Dialog):
 		
 		lbsizer = wx.BoxSizer(wx.HORIZONTAL)
 		lbsizer.AddSpacer((10, 10))
-		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(fontWidth * 90, fontHeight*VISIBLEQUEUESIZE+5), choices=stllist, style=wx.LB_EXTENDED)
+		self.lbQueue = wx.ListBox(self, wx.ID_ANY, size=(fontWidth * 90, fontHeight*VISIBLEQUEUESIZE+5), choices=self.gcdisplay, style=wx.LB_EXTENDED)
 		self.Bind(wx.EVT_LISTBOX, self.doQueueSelect, self.lbQueue)
 		lbsizer.Add(self.lbQueue);
 		lbsizer.AddSpacer((10, 10))
@@ -82,10 +84,30 @@ class GCodeQueue(wx.Dialog):
 		btnsizer.Add(self.bCancel)
 		self.Bind(wx.EVT_BUTTON, self.doCancel, self.bCancel)
 		
+		btnsizer.AddSpacer((20, 20))
+		
+		self.cbBasename = wx.CheckBox(self, wx.ID_ANY, "Show basename only")
+		self.cbBasename.SetToolTipString("Show only the basename of files")
+		self.Bind(wx.EVT_CHECKBOX, self.checkBasename, self.cbBasename)
+		self.cbBasename.SetValue(self.settings.showgcbasename)
+		btnsizer.Add(self.cbBasename)
+		
 		dsizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		self.SetSizer(dsizer)  
 		dsizer.Fit(self)
+		
+	def setDisplayName(self, nm):
+		if self.settings.showgcbasename:
+			return os.path.basename(nm)
+		else:
+			return nm
+	
+	def checkBasename(self, evt):
+		self.settings.showgcbasename = evt.IsChecked()
+		self.settings.setModified()
+		self.gcdisplay = [self.setDisplayName[x] for x in self.gclist]
+		self.lbQueue.SetItems(self.gcdisplay)
 		
 	def doAdd(self, evt):
 		dlg = wx.FileDialog(
@@ -105,12 +127,12 @@ class GCodeQueue(wx.Dialog):
 					self.settings.setModified()
 				
 			dups = []
-			startlist = self.lbQueue.GetItems()
 			for path in paths:
-				if path in startlist:
+				if path in self.gclist:
 					dups.append(path)
 				else:
-					self.lbQueue.Append(path)
+					self.lbQueue.Append(self.setDisplayName(path))
+					self.gclist.append(path)
 					
 			if len(dups) > 0:
 				msg = "Duplicate files removed from queue:\n  " + ",\n  ".join(dups)
@@ -124,6 +146,7 @@ class GCodeQueue(wx.Dialog):
 		ls = self.lbQueue.GetSelections()
 		for l in ls[::-1]:
 			self.lbQueue.Delete(l)
+			del self.gclist[l]
 			
 		self.bDel.Enable(False)
 		self.bUp.Enable(False)
@@ -140,6 +163,11 @@ class GCodeQueue(wx.Dialog):
 		self.lbQueue.Insert(s, lx-1)
 		self.lbQueue.SetSelection(lx-1)
 		self.lbQueue.EnsureVisible(lx-1)
+		
+		sv = self.gclist[lx]
+		del self.gclist[lx]
+		self.gclist = self.gclist[:lx-1] + [sv] + self.gclist[lx-1:]
+		
 		self.bUp.Enable((lx-1) != 0)
 		self.bDown.Enable(True)
 		self.bSave.Enable(True)
@@ -152,6 +180,11 @@ class GCodeQueue(wx.Dialog):
 		s = self.lbQueue.GetString(lx)
 		self.lbQueue.Delete(lx)
 		self.lbQueue.Insert(s, lx-1)
+		
+		sv = self.gclist[lx]
+		del self.gclist[lx]
+		self.gclist = self.gclist[:lx+1] + [sv] + self.gclist[lx+1:]
+
 		self.lbQueue.SetSelection(lx)
 		self.lbQueue.EnsureVisible(lx)
 		self.bUp.Enable(True)
@@ -185,7 +218,7 @@ class GCodeQueue(wx.Dialog):
 		self.EndModal(wx.ID_OK)
 		
 	def getGCodeQueue(self):
-		return self.lbQueue.GetItems()
+		return self.gclist
 		
 	def doCancel(self, evt):
 		self.EndModal(wx.ID_CANCEL)
