@@ -115,14 +115,16 @@ class BatchSlicerThread:
 		self.jobs = jobs
 		self.running = False
 		self.cancelled = False
+		self.hardcancel = False
 
 	def Start(self):
 		self.running = True
 		self.cancelled = False
 		thread.start_new_thread(self.Run, ())
 
-	def Stop(self):
+	def Stop(self, hard=True):
 		self.cancelled = True
+		self.hardcancel = hard
 
 	def IsRunning(self):
 		return self.running
@@ -140,7 +142,7 @@ class BatchSlicerThread:
 			obuf = ''
 			evt = BatchSlicerEvent(stlfn = stlfn, state = BATCHSLICER_STARTFILE)
 			wx.PostEvent(self.win, evt)
-			while not self.cancelled:
+			while not self.hardcancel:
 				o = p.stdout.read(1)
 				if o == '': break
 				if o == '\r' or o == '\n':
@@ -152,17 +154,21 @@ class BatchSlicerThread:
 				else:
 					obuf += o
 				
+			if not self.hardcancel:
+				evt = BatchSlicerEvent(stlfn = stlfn, gcfn = gcfn, state = BATCHSLICER_ENDFILE)
+				wx.PostEvent(self.win, evt)
+
 			if self.cancelled:
 				evt = BatchSlicerEvent(msg = None, state = BATCHSLICER_CANCELLED)
 				wx.PostEvent(self.win, evt)
-				p.kill()
-			else:
-				evt = BatchSlicerEvent(stlfn = stlfn, gcfn = gcfn, state = BATCHSLICER_ENDFILE)
-				wx.PostEvent(self.win, evt)
+				if self.hardcancel:
+					p.kill()
+				break
 			
-		evt = BatchSlicerEvent(state = BATCHSLICER_FINISHED)
-		p.wait()
-		wx.PostEvent(self.win, evt)
+		if not self.cancelled:
+			p.wait()
+			evt = BatchSlicerEvent(state = BATCHSLICER_FINISHED)
+			wx.PostEvent(self.win, evt)
 
 		self.running = False
 
@@ -355,7 +361,7 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 
 		self.bSliceCfg = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicecfg, size=BUTTONDIM)
-		self.bSliceCfg.SetToolTipString("Configure Chosen SLicer")
+		self.bSliceCfg.SetToolTipString("Configure Chosen Slicer")
 		self.sizerSlice.Add(self.bSliceCfg)
 		self.Bind(wx.EVT_BUTTON, self.doSliceConfig, self.bSliceCfg)
 	
@@ -528,35 +534,41 @@ class FilePrepare(wx.Panel):
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerQueues2 = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
 		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
 		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
 		self.sizerQueues.Add(self.bSliceQ)
+		self.sizerQueues.AddSpacer((10, 10))
 		
 		stlqlen = len(self.settings.stlqueue)
 		self.bSliceStart = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStartbatch, size=BUTTONDIM)
 		self.bSliceStart.SetToolTipString("Begin batch slicing")
 		self.Bind(wx.EVT_BUTTON, self.doBeginSlice, self.bSliceStart)
 		self.sizerQueues.Add(self.bSliceStart)
+		self.sizerQueues.AddSpacer((10, 10))
 		self.bSliceStart.Enable(stlqlen != 0)
 
 		self.bSlicePause = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPause, size=BUTTONDIM)
 		self.bSlicePause.SetToolTipString("Pause batch slicing after the current file completes")
 		self.Bind(wx.EVT_BUTTON, self.doPauseSlice, self.bSlicePause)
 		self.sizerQueues.Add(self.bSlicePause)
+		self.sizerQueues.AddSpacer((10, 10))
 		self.bSlicePause.Enable(False)
 
 		self.bSliceStop = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStop, size=BUTTONDIM)
 		self.bSliceStop.SetToolTipString("Stop batch slicing immediately")
 		self.Bind(wx.EVT_BUTTON, self.doStopSlice, self.bSliceStop)
 		self.sizerQueues.Add(self.bSliceStop)
+		self.sizerQueues.AddSpacer((10, 10))
 		self.bSliceStop.Enable(False)
 
 		self.bSliceNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
 		self.bSliceNext.SetToolTipString("Remove the first file and slice it")
 		self.Bind(wx.EVT_BUTTON, self.doNextSlice, self.bSliceNext)
 		self.sizerQueues.Add(self.bSliceNext)
+		self.sizerQueues.AddSpacer((10, 10))
 		self.bSliceNext.Enable(stlqlen != 0)
 			
 		self.sizerQueues.AddSpacer((5,5))
@@ -577,13 +589,15 @@ class FilePrepare(wx.Panel):
 		self.bGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
 		self.bGCodeQ.SetToolTipString("Manage G Code queue")
 		self.Bind(wx.EVT_BUTTON, self.doGCodeQueue, self.bGCodeQ)
-		self.sizerQueues.Add(self.bGCodeQ)
+		self.sizerQueues2.Add(self.bGCodeQ)
+		self.sizerQueues2.AddSpacer((10, 10))
 
 		gcqlen = len(self.settings.gcodequeue)
 		self.bGCodeNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
 		self.bGCodeNext.SetToolTipString("Remove the first file and load it")
 		self.Bind(wx.EVT_BUTTON, self.doNextGCode, self.bGCodeNext)
-		self.sizerQueues.Add(self.bGCodeNext)
+		self.sizerQueues2.Add(self.bGCodeNext)
+		self.sizerQueues2.AddSpacer((10, 10))
 		self.bGCodeNext.Enable(gcqlen != 0)
 		
 		szt = wx.BoxSizer(wx.VERTICAL)			
@@ -591,10 +605,12 @@ class FilePrepare(wx.Panel):
 		szt.Add(self.tGCodeQLen)
 		self.setGCodeQLen(gcqlen)
 		
-		self.sizerQueues.Add(szt)
+		self.sizerQueues2.Add(szt)
 
 		
 		self.sizerRight.Add(self.sizerQueues, 0, wx.LEFT, 1)
+		self.sizerRight.AddSpacer((5, 5))
+		self.sizerRight.Add(self.sizerQueues2, 0, wx.LEFT, 1)
 		self.sizerRight.AddSpacer((20, 20))
 		
 		self.infoPane = wx.GridBagSizer()
@@ -756,8 +772,10 @@ class FilePrepare(wx.Panel):
 			self.setSliceQLen(n)
 			if n == 0:
 				self.bSliceStart.Enable(False)
+				self.bSliceNext.Enable(False)
 			else:
 				self.bSliceStart.Enable(True)
+				self.bSliceNext.Enable(True)
 
 				
 		dlg.Destroy();
@@ -774,7 +792,7 @@ class FilePrepare(wx.Panel):
 			s = ""
 		else:
 			s = "NOT "
-		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will" + s + "be saved in the G Code queue")
+		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will " + s + "be saved in the G Code queue")
 		self.logOverrides(self.overrideValues)
 		self.slicer.setOverrides(self.overrideValues)
 		
@@ -802,27 +820,37 @@ class FilePrepare(wx.Panel):
 		self.bSliceQ.Enable(False)
 		self.bSliceNext.Enable(False)
 		self.bSlicePause.Enable(True)
-		self.bSLiceStop.Enable(True)
+		self.bSliceStop.Enable(True)
 		self.batchSliceThread.Start()
 		
 	def doPauseSlice(self, evt):
 		self.bSliceStop.Enable(False)
 		self.bSlicePause.Enable(False)
+		self.batchSliceThread.Stop(False)
 	
 	def doStopSlice(self, evt):
 		self.bSliceStop.Enable(False)
 		self.bSlicePause.Enable(False)
+		self.batchSliceThread.Stop()
 	
 	def doNextSlice(self, evt):
 		fn = self.settings.stlqueue[0]
 		self.settings.stlqueue = self.settings.stlqueue[1:]
-		self.bSliceStart.Enable(False)
-		self.bSliceNext.Enable(False)
+		self.setSliceQLen(len(self.settings.stlqueue))
+		self.nextSliceProhibit()
+		self.sliceFile(fn)
 
-	def nextSliceComplete(self):
+	def nextSliceAllow(self):
 		if len(self.settings.stlqueue) != 0:
 			self.bSliceStart.Enable(True)
 			self.bSliceNext.Enable(True)
+		if len(self.settings.gcodequeue) != 0:
+			self.bGCodeNext.Enable(True)
+	
+	def nextSliceProhibit(self):
+		self.bSliceStart.Enable(False)
+		self.bSliceNext.Enable(False)
+		self.bGCodeNext.Enable(False)
 	
 	def doGCodeQueue(self, evt):
 		pass
@@ -831,7 +859,11 @@ class FilePrepare(wx.Panel):
 		self.tGCodeQLen.SetLabel("%d files in queue" % qlen)
 	
 	def doNextGCode(self, evt):
-		pass
+		fn = self.settings.gcodequeue[0]
+		self.settings.gcodequeue = self.settings.gcodequeue[1:]
+		self.setGCodeQLen(len(self.settings.stlqueue))
+		self.nextSliceProhibit()
+		self.loadFile(fn)
 		
 	def batchSlicerUpdate(self, evt):
 			
@@ -847,6 +879,7 @@ class FilePrepare(wx.Panel):
 			self.bSlice.Enable(True)
 			self.bSliceStop.Enable(False)
 			self.bSlicePause.Enable(False)
+			self.logger.LogMessage("Batch Slicer: Cancelled")
 			
 		elif evt.state == BATCHSLICER_FINISHED:
 			self.logger.LogMessage("Batch Slicer: finished all files")
@@ -865,9 +898,13 @@ class FilePrepare(wx.Panel):
 		elif evt.state == BATCHSLICER_ENDFILE:
 			self.logger.LogMessage("Batch Slicer: finished file: " + evt.stlfn)
 			if self.settings.batchaddgcode:
-				self.logger.LogMessage("Adding %s to G Code queue" % evt.gcfn)
-				# TODO: implement this
-				
+				if evt.gcfn in self.settings.gcodequeue:
+					self.logger.LogMessage("G Code file %s is already in queue" % evt.gcfn)
+				else:
+					self.logger.LogMessage("Adding %s to G Code queue" % evt.gcfn)
+					self.settings.gcodequeue.append(evt.gcfn)
+					self.setGCodeQLen(len(self.settings.gcodequeue))
+					self.settings.setModified()
 			try:
 				self.settings.stlqueue.remove(evt.stlfn)
 			except:
@@ -1022,6 +1059,7 @@ class FilePrepare(wx.Panel):
 		cmd = self.slicer.buildSliceCommand()
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
+		self.nextSliceProhibit()
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.disableEditButtons()
@@ -1069,6 +1107,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("Slicer failed to produce expected G Code file: %s" % self.gcFile)
 				self.gcFile = None
 				self.bOpen.Enable(True)
+				self.nextSliceAllow()
 				self.bMerge.Enable(True)
 				self.status = FPSTATUS_IDLE
 				self.app.updateFilePrepStatus(self.status)
@@ -1243,6 +1282,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage(evt.msg)
 
 			model = self.modelerThread.getModel()				
+			self.nextSliceAllow()
 			if self.exporting:
 				if self.temporaryFile:
 					name = TEMPFILELABEL
@@ -1277,6 +1317,7 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage(evt.msg)
 				
 			self.enableButtons()
+			self.nextSliceAllow()
 			self.model = None
 				
 			self.status = FPSTATUS_IDLE
