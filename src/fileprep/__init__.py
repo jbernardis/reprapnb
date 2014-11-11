@@ -18,6 +18,7 @@ from tools import formatElapsed
 from stlview import StlViewer
 from override import Override, ovUserKeyMap, ovKeyOrder
 from slicequeue import SliceQueue
+from gcodequeue import GCodeQueue
 from toolbar import ToolBar
 
 from reprap import MAX_EXTRUDERS
@@ -770,13 +771,8 @@ class FilePrepare(wx.Panel):
 			self.settings.setModified()
 			n = len(self.settings.stlqueue)
 			self.setSliceQLen(n)
-			if n == 0:
-				self.bSliceStart.Enable(False)
-				self.bSliceNext.Enable(False)
-			else:
-				self.bSliceStart.Enable(True)
-				self.bSliceNext.Enable(True)
-
+			self.bSliceStart.Enable(n != 0)
+			self.bSliceNext.Enable(n != 0)
 				
 		dlg.Destroy();
 		
@@ -853,7 +849,16 @@ class FilePrepare(wx.Panel):
 		self.bGCodeNext.Enable(False)
 	
 	def doGCodeQueue(self, evt):
-		pass
+		gclist = self.settings.gcodequeue[:]
+		dlg = GCodeQueue(self, gclist, self.settings, self.images)
+		if dlg.ShowModal() == wx.ID_OK:
+			self.settings.gcodequeue = dlg.getGCodeQueue()
+			self.settings.setModified()
+			n = len(self.settings.gcodequeue)
+			self.setGCodeQLen(n)
+			self.bGCodeNext.Enable(n != 0)
+				
+		dlg.Destroy();
 			
 	def setGCodeQLen(self, qlen):
 		self.tGCodeQLen.SetLabel("%d files in queue" % qlen)

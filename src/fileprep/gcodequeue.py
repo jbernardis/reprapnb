@@ -5,15 +5,15 @@ from images import Images
 from settings import BUTTONDIM
 
 
-wildcard = "STL files (*.stl)|*.stl|"  "All files (*.*)|*.*"
+wildcard = "G Code files (*.gcode)|*.gcode|"  "All files (*.*)|*.*"
 
 VISIBLEQUEUESIZE = 15
 
-class SliceQueue(wx.Dialog):
+class GCodeQueue(wx.Dialog):
 	def __init__(self, parent, stllist, settings, images):
 		self.parent = parent
 		self.settings = settings
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Slicing Queue", size=(800, 804))
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, "G Code Queue", size=(800, 804))
 		self.SetBackgroundColour("white")
 		
 		dsizer = wx.BoxSizer(wx.VERTICAL)
@@ -37,7 +37,7 @@ class SliceQueue(wx.Dialog):
 		lbbtns = wx.BoxSizer(wx.VERTICAL)
 		lbbtns.AddSpacer((10, 10))
 		self.bAdd = wx.BitmapButton(self, wx.ID_ANY, self.images.pngAdd, size=BUTTONDIM)
-		self.bAdd.SetToolTipString("Add new files to the slicing queue")
+		self.bAdd.SetToolTipString("Add new files to the G Code queue")
 		self.Bind(wx.EVT_BUTTON, self.doAdd, self.bAdd)
 		lbbtns.Add(self.bAdd)
 		
@@ -90,7 +90,7 @@ class SliceQueue(wx.Dialog):
 	def doAdd(self, evt):
 		dlg = wx.FileDialog(
 						self, message="Choose a file",
-						defaultDir=self.settings.laststldirectory, 
+						defaultDir=self.settings.lastgcdirectory, 
 						defaultFile="",
 						wildcard=wildcard,
 						style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
@@ -100,8 +100,8 @@ class SliceQueue(wx.Dialog):
 			if len(paths) > 0:
 				self.bSave.Enable(True)
 				nd = os.path.split(paths[0])[0]
-				if nd != self.settings.laststldirectory:
-					self.settings.laststldirectory = nd
+				if nd != self.settings.lastgcdirectory:
+					self.settings.lastgcdirectory = nd
 					self.settings.setModified()
 				
 			dups = []
@@ -184,7 +184,7 @@ class SliceQueue(wx.Dialog):
 	def doSave(self, evt):
 		self.EndModal(wx.ID_OK)
 		
-	def getSliceQueue(self):
+	def getGCodeQueue(self):
 		return self.lbQueue.GetItems()
 		
 	def doCancel(self, evt):
