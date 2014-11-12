@@ -16,7 +16,7 @@ class GCodeQueue(wx.Dialog):
 		self.SetBackgroundColour("white")
 		
 		self.gclist = gclist[:]
-		self.gcdisplay = [self.setDisplayName[x] for x in self.gclist]
+		self.gcdisplay = [self.setDisplayName(x) for x in self.gclist]
 		
 		dsizer = wx.BoxSizer(wx.VERTICAL)
 		dsizer.AddSpacer((10, 10))

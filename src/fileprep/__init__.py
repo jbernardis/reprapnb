@@ -566,7 +566,6 @@ class FilePrepare(wx.Panel):
 		self.bSliceStop.Enable(False)
 
 		self.bSliceNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
-		self.bSliceNext.SetToolTipString("Remove the first file and slice it")
 		self.Bind(wx.EVT_BUTTON, self.doNextSlice, self.bSliceNext)
 		self.sizerQueues.Add(self.bSliceNext)
 		self.sizerQueues.AddSpacer((10, 10))
@@ -595,7 +594,6 @@ class FilePrepare(wx.Panel):
 
 		gcqlen = len(self.settings.gcodequeue)
 		self.bGCodeNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
-		self.bGCodeNext.SetToolTipString("Remove the first file and load it")
 		self.Bind(wx.EVT_BUTTON, self.doNextGCode, self.bGCodeNext)
 		self.sizerQueues2.Add(self.bGCodeNext)
 		self.sizerQueues2.AddSpacer((10, 10))
@@ -777,10 +775,11 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy();
 		
 	def setSliceQLen(self, qlen):
-		s = "%d files in queue" % qlen
+		self.tSliceQLen.SetLabel("%d files in queue" % qlen)
+		s = "Remove the first file and slice it"
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.stlqueue[0]) + ")"
-		self.tSliceQLen.SetLabel(s)
+		self.bSliceNext.SetToolTipString(s)
 				
 	def checkAddBatch(self, evt):
 		self.settings.batchaddgcode = evt.IsChecked()
@@ -864,15 +863,16 @@ class FilePrepare(wx.Panel):
 		dlg.Destroy();
 			
 	def setGCodeQLen(self, qlen):
-		s = "%d files in queue" % qlen
+		self.tGCodeQLen.SetLabel("%d files in queue" % qlen)
+		s = "Remove the first file and load it"
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.gcodequeue[0]) + ")"
-		self.tGCodeQLen.SetLabel(s)
+		self.bGCodeNext.SetToolTipString(s)
 	
 	def doNextGCode(self, evt):
 		fn = self.settings.gcodequeue[0]
 		self.settings.gcodequeue = self.settings.gcodequeue[1:]
-		self.setGCodeQLen(len(self.settings.stlqueue))
+		self.setGCodeQLen(len(self.settings.gcodequeue))
 		self.nextSliceProhibit()
 		self.loadFile(fn)
 		

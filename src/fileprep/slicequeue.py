@@ -16,7 +16,7 @@ class SliceQueue(wx.Dialog):
 		self.SetBackgroundColour("white")
 		
 		self.stllist = stllist[:]
-		self.stldisplay = [self.setDisplayName[x] for x in self.stllist]
+		self.stldisplay = [self.setDisplayName(x) for x in self.stllist]
 
 		dsizer = wx.BoxSizer(wx.VERTICAL)
 		dsizer.AddSpacer((10, 10))
