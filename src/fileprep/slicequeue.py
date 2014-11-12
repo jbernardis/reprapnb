@@ -106,7 +106,7 @@ class SliceQueue(wx.Dialog):
 	def checkBasename(self, evt):
 		self.settings.showstlbasename = evt.IsChecked()
 		self.settings.setModified()
-		self.stldisplay = [self.setDisplayName[x] for x in self.stllist]
+		self.stldisplay = [self.setDisplayName(x) for x in self.stllist]
 		self.lbQueue.SetItems(self.stldisplay)
 
 		

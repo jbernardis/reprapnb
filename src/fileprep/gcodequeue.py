@@ -106,7 +106,7 @@ class GCodeQueue(wx.Dialog):
 	def checkBasename(self, evt):
 		self.settings.showgcbasename = evt.IsChecked()
 		self.settings.setModified()
-		self.gcdisplay = [self.setDisplayName[x] for x in self.gclist]
+		self.gcdisplay = [self.setDisplayName(x) for x in self.gclist]
 		self.lbQueue.SetItems(self.gcdisplay)
 		
 	def doAdd(self, evt):
