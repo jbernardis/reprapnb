@@ -176,19 +176,19 @@ class GCodeQueue(wx.Dialog):
 		ls = self.lbQueue.GetSelections()
 		if len(ls) != 1:
 			return
-		lx = ls[0]+1
-		s = self.lbQueue.GetString(lx)
-		self.lbQueue.Delete(lx)
-		self.lbQueue.Insert(s, lx-1)
+		lx = ls[0]
+		s = self.lbQueue.GetString(lx+1)
+		self.lbQueue.Delete(lx+1)
+		self.lbQueue.Insert(s, lx)
 		
 		sv = self.gclist[lx]
 		del self.gclist[lx]
 		self.gclist = self.gclist[:lx+1] + [sv] + self.gclist[lx+1:]
 
-		self.lbQueue.SetSelection(lx)
-		self.lbQueue.EnsureVisible(lx)
+		self.lbQueue.SetSelection(lx+1)
+		self.lbQueue.EnsureVisible(lx+1)
 		self.bUp.Enable(True)
-		self.bDown.Enable((lx+1) != self.lbQueue.GetCount())
+		self.bDown.Enable((lx+2) != self.lbQueue.GetCount())
 		self.bSave.Enable(True)
 		
 	def doQueueSelect(self, evt):

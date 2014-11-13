@@ -537,6 +537,9 @@ class FilePrepare(wx.Panel):
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizerQueues2 = wx.BoxSizer(wx.HORIZONTAL)
 		
+		self.sizerQueues.AddSpacer(BUTTONDIM)
+		self.sizerQueues.AddSpacer((10, 10))
+		
 		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
 		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
 		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
@@ -585,6 +588,13 @@ class FilePrepare(wx.Panel):
 		szt.Add(self.cbAddBatch)
 		
 		self.sizerQueues.Add(szt)
+		
+		self.bAddGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
+		self.bAddGCodeQ.SetToolTipString("Add the current file to the G Code queue")
+		self.Bind(wx.EVT_BUTTON, self.doAddGCodeQueue, self.bAddGCodeQ)
+		self.sizerQueues2.Add(self.bAddGCodeQ)
+		self.sizerQueues2.AddSpacer((10, 10))
+		self.bAddGCodeQ.Enable(False)
 		
 		self.bGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
 		self.bGCodeQ.SetToolTipString("Manage G Code queue")
@@ -861,6 +871,17 @@ class FilePrepare(wx.Panel):
 			self.bGCodeNext.Enable(n != 0)
 				
 		dlg.Destroy();
+		
+	def doAddGCodeQ(self, evt):
+		if not self.gcFile in self.settings.gcodequeue:
+			self.settings.gcodequeue.append(self.gcFile)
+			self.addGCodeQEnable(False)
+	
+	def addGCodeQueueEnable(self, enable):
+		if enable and self.gcFile in self.settings.gcodequeue:
+			enable = False   # duplicate - no need to add
+			
+		self.bAddGCodeQ.Enable(enable)
 			
 	def setGCodeQLen(self, qlen):
 		self.tGCodeQLen.SetLabel("%d files in queue" % qlen)
@@ -1201,11 +1222,15 @@ class FilePrepare(wx.Panel):
 			self.buildModel()
 		
 			if self.temporaryFile:
+				self.addGCodeQueueEnable(False)
 				try:
 					self.logger.LogMessage("Removing temporary G Code file: %s" % self.gcFile)
 					os.unlink(self.gcFile)
 				except:
 					pass
+			else:
+				self.addGCodeQueueEnable(True)
+
 			
 		elif evt.state == READER_CANCELLED:
 			if evt.msg is not None:
@@ -1569,6 +1594,8 @@ class FilePrepare(wx.Panel):
 		self.setModified(False)
 			
 		fp.close()
+		self.gcFile = path
+		self.addGCodeQueueEnable(True)
 
 	def editSaveLayer(self, event):
 		dlg = SaveLayerDlg(self)
