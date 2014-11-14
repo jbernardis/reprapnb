@@ -165,9 +165,10 @@ class BatchSlicerThread:
 				if self.hardcancel:
 					p.kill()
 				break
+			else:
+				p.wait()
 			
 		if not self.cancelled:
-			p.wait()
 			evt = BatchSlicerEvent(state = BATCHSLICER_FINISHED)
 			wx.PostEvent(self.win, evt)
 
@@ -282,6 +283,8 @@ class FilePrepare(wx.Panel):
 		self.dlgEdit = None
 		self.dlgMerge = None
 		self.dlgView = None
+		self.dlgGCQueue = None
+
 		self.drawGCFirst = None;
 		self.drawGCLast = None;
 		self.overrideValues = {}
@@ -781,7 +784,7 @@ class FilePrepare(wx.Panel):
 			self.setSliceQLen(n)
 			self.bSliceStart.Enable(n != 0)
 			self.bSliceNext.Enable(n != 0)
-				
+
 		dlg.Destroy();
 		
 	def setSliceQLen(self, qlen):
@@ -829,6 +832,7 @@ class FilePrepare(wx.Panel):
 		self.bSliceNext.Enable(False)
 		self.bSlicePause.Enable(True)
 		self.bSliceStop.Enable(True)
+		self.logger.LogMessage("Batch Slicer: Starting for %d files" % len(joblist))
 		self.batchSliceThread.Start()
 		
 	def doPauseSlice(self, evt):
@@ -862,15 +866,16 @@ class FilePrepare(wx.Panel):
 	
 	def doGCodeQueue(self, evt):
 		gclist = self.settings.gcodequeue[:]
-		dlg = GCodeQueue(self, gclist, self.settings, self.images)
-		if dlg.ShowModal() == wx.ID_OK:
-			self.settings.gcodequeue = dlg.getGCodeQueue()
+		self.dlgGCQueue = GCodeQueue(self, gclist, self.settings, self.images)
+		if self.dlgGCQueue.ShowModal() == wx.ID_OK:
+			self.settings.gcodequeue = self.dlgGCQueue.getGCodeQueue()
 			self.settings.setModified()
 			n = len(self.settings.gcodequeue)
 			self.setGCodeQLen(n)
 			self.bGCodeNext.Enable(n != 0)
 				
-		dlg.Destroy();
+		self.dlgGCQueue.Destroy();
+		self.dlgGCQueue = None
 		
 	def doAddGCodeQueue(self, evt):
 		if not self.gcFile in self.settings.gcodequeue:
@@ -937,9 +942,12 @@ class FilePrepare(wx.Panel):
 					self.logger.LogMessage("G Code file %s is already in queue" % evt.gcfn)
 				else:
 					self.logger.LogMessage("Adding %s to G Code queue" % evt.gcfn)
-					self.settings.gcodequeue.append(evt.gcfn)
-					self.setGCodeQLen(len(self.settings.gcodequeue))
-					self.settings.setModified()
+					if self.dlgGCQueue is None:
+						self.settings.gcodequeue.append(evt.gcfn)
+						self.setGCodeQLen(len(self.settings.gcodequeue))
+						self.settings.setModified()
+					else:
+						self.dlgGCQueue.addFile(evt.gcfn)
 			try:
 				self.settings.stlqueue.remove(evt.stlfn)
 			except:

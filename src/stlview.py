@@ -15,10 +15,12 @@ READER_RUNNING = 1
 READER_FINISHED = 2
 
 class ReaderThread:
-	def __init__(self, win, fn, ftype):
+	def __init__(self, win, fn, ftype, center, zzero):
 		self.win = win
 		self.fn = fn
 		self.ftype = ftype
+		self.center = center
+		self.zzero = zzero
 		self.running = False
 		self.cancelled = False
 		self.stlObj = None
@@ -42,7 +44,10 @@ class ReaderThread:
 		wx.PostEvent(self.win, evt)
 		
 		if self.ftype == FT_STL:
-			self.stlObj = stl(cb=self.loadStlEvent, filename=self.fn)
+			self.stlObj = stl(cb=self.loadStlEvent, filename=self.fn, zZero=self.zzero)
+			if self.centeronload:
+				self.stlObj = self.stlObj.translate([-self.stlObj.hxCenter, -self.stlObj.hyCenter, 0])
+				
 		elif self.ftype == FT_AMF:
 			self.stlObj = amf(cb=self.loadStlEvent,filename=self.fn)
 		
@@ -111,6 +116,22 @@ class StlViewer(wx.Dialog):
 		self.bDel.Enable(False)
 		
 		c2.Add(btn1)
+		
+		c2.AddSpacer((10, 20))
+		
+		self.cbCenterOnLoad = wx.CheckBox(self, wx.ID_ANY, "Center STL Objects when loading")
+		self.cbCenterOnLoad.SetToolTipString("Move STL object to the center of the grid")
+		self.cbCenterOnLoad.SetValue(True)
+		c2.Add(self.cbCenterOnLoad)
+		
+		c2.AddSpacer((5, 5))
+		
+		self.cbZZero = wx.CheckBox(self, wx.ID_ANY, "Drop/Raise STL Object to Z=0 when loading")
+		self.cbZZero.SetToolTipString("Drop or Raise STL object so it lies on the XY plane")
+		self.cbZZero.SetValue(True)
+		c2.Add(self.cbZZero)
+		
+		c2.AddSpacer((10, 20))
 		
 		self.lb = wx.ListBox(self, wx.ID_ANY, (-1, -1), (400, 120), [], wx.LB_SINGLE)
 		c2.Add(self.lb)
@@ -183,7 +204,7 @@ class StlViewer(wx.Dialog):
 				fileType = None
 				
 			if fileType:
-				self.readThread = ReaderThread(self, self.stlPath, fileType)
+				self.readThread = ReaderThread(self, self.stlPath, fileType, self.cbCenterOnLoad.GetValue(), self.cbZZero.GetValue())
 				self.readThread.Start()
 				
 		dlg.Destroy()

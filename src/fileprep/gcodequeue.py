@@ -140,7 +140,15 @@ class GCodeQueue(wx.Dialog):
 				
 				dlg.ShowModal()
 				dlg.Destroy()
-
+				
+			if len(dups) != len(paths):
+				self.bSave.Enable(True)
+				
+	def addFile(self, gcfn):
+		if gcfn not in self.gclist:
+			self.lbQueue.Append(self.setDisplayName(gcfn))
+			self.gclist.append(gcfn)
+			self.bSave.Enable(True)
 
 	def doDel(self, evt):
 		ls = self.lbQueue.GetSelections()
@@ -221,5 +229,15 @@ class GCodeQueue(wx.Dialog):
 		return self.gclist
 		
 	def doCancel(self, evt):
-		self.EndModal(wx.ID_CANCEL)
+		if self.bSave.IsEnabled():
+			dlg = wx.MessageDialog(self, "Exit without saving changes?",
+					'G Code Queue', wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION)
+			
+			rc = dlg.ShowModal()
+			dlg.Destroy()
+
+			if rc == wx.ID_YES:
+				self.EndModal(wx.ID_CANCEL)
+		else:
+			self.EndModal(wx.ID_CANCEL)
 		

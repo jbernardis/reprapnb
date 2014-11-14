@@ -2,9 +2,10 @@
 import os
 import wx
 from settings import BUTTONDIM
+from stlview import StlViewer
 
 
-wildcard = "STL files (*.stl)|*.stl|"  "All files (*.*)|*.*"
+wildcard = "STL (*.stl)|*.stl;*STL|AMF (*.amf.xml, *.amf)|*.amf.xml;*.AMF.XML;*.amf;*.AMF|All files (*.*)|*.*"
 
 VISIBLEQUEUESIZE = 15
 
@@ -62,6 +63,14 @@ class SliceQueue(wx.Dialog):
 		lbbtns.Add(self.bDown)
 		self.Bind(wx.EVT_BUTTON, self.doDown, self.bDown)
 		self.bDown.Enable(False)
+		
+		lbbtns.AddSpacer((20, 20))
+		
+		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
+		self.bView.SetToolTipString("View STL/AMF file")
+		lbbtns.Add(self.bView)
+		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
+		self.bView.Enable(True)
 		
 		lbsizer.Add(lbbtns)
 		lbsizer.AddSpacer((10, 10))
@@ -141,7 +150,10 @@ class SliceQueue(wx.Dialog):
 				
 				dlg.ShowModal()
 				dlg.Destroy()
-
+				
+							
+			if len(dups) != len(paths):
+				self.bSave.Enable(True)
 
 	def doDel(self, evt):
 		ls = self.lbQueue.GetSelections()
@@ -215,6 +227,14 @@ class SliceQueue(wx.Dialog):
 					self.bDown.Enable(False)
 				else:
 					self.bDown.Enable(True)
+		
+	def stlView(self, evt):
+		self.dlgView = StlViewer(self)
+		self.dlgView.CenterOnScreen()
+		self.dlgView.Show()
+		
+	def stlViewExit(self):
+		self.dlgView = None
 					
 	def doSave(self, evt):
 		self.EndModal(wx.ID_OK)
@@ -223,5 +243,16 @@ class SliceQueue(wx.Dialog):
 		return self.stllist
 		
 	def doCancel(self, evt):
-		self.EndModal(wx.ID_CANCEL)
+		if self.bSave.IsEnabled():
+			dlg = wx.MessageDialog(self, "Exit without saving changes?",
+					'Slicing Queue', wx.YES_NO | wx.NO_DEFAULT | wx.CANCEL | wx.ICON_INFORMATION)
+			
+			rc = dlg.ShowModal()
+			dlg.Destroy()
+
+			if rc == wx.ID_YES:
+				self.EndModal(wx.ID_CANCEL)
+		else:
+			self.EndModal(wx.ID_CANCEL)
+
 		
