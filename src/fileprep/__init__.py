@@ -875,7 +875,7 @@ class FilePrepare(wx.Panel):
 	def doAddGCodeQueue(self, evt):
 		if not self.gcFile in self.settings.gcodequeue:
 			self.settings.gcodequeue.append(self.gcFile)
-			self.addGCodeQEnable(False)
+			self.addGCodeQueueEnable(False)
 			n = len(self.settings.gcodequeue)
 			self.setGCodeQLen(n)
 			self.bGCodeNext.Enable(n != 0)
