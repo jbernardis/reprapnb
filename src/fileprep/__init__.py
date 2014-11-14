@@ -589,7 +589,7 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerQueues.Add(szt)
 		
-		self.bAddGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
+		self.bAddGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngAdd, size=BUTTONDIM)
 		self.bAddGCodeQ.SetToolTipString("Add the current file to the G Code queue")
 		self.Bind(wx.EVT_BUTTON, self.doAddGCodeQueue, self.bAddGCodeQ)
 		self.sizerQueues2.Add(self.bAddGCodeQ)
@@ -872,10 +872,13 @@ class FilePrepare(wx.Panel):
 				
 		dlg.Destroy();
 		
-	def doAddGCodeQ(self, evt):
+	def doAddGCodeQueue(self, evt):
 		if not self.gcFile in self.settings.gcodequeue:
 			self.settings.gcodequeue.append(self.gcFile)
 			self.addGCodeQEnable(False)
+			n = len(self.settings.gcodequeue)
+			self.setGCodeQLen(n)
+			self.bGCodeNext.Enable(n != 0)
 	
 	def addGCodeQueueEnable(self, enable):
 		if enable and self.gcFile in self.settings.gcodequeue:
