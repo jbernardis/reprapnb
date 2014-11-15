@@ -231,7 +231,7 @@ class SliceQueue(wx.Dialog):
 	def stlView(self, evt):
 		self.dlgView = StlViewer(self)
 		self.dlgView.CenterOnScreen()
-		self.dlgView.Show()
+		self.dlgView.ShowModal()
 		
 	def stlViewExit(self):
 		self.dlgView = None
