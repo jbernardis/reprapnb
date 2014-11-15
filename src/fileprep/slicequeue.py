@@ -10,9 +10,11 @@ wildcard = "STL (*.stl)|*.stl;*STL|AMF (*.amf.xml, *.amf)|*.amf.xml;*.AMF.XML;*.
 VISIBLEQUEUESIZE = 15
 
 class SliceQueue(wx.Dialog):
-	def __init__(self, parent, stllist, settings, images):
+	def __init__(self, parent, stllist):
 		self.parent = parent
-		self.settings = settings
+		self.settings = parent.settings
+		self.images = parent.images
+		self.logger = parent.logger
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Slicing Queue", size=(800, 804))
 		self.SetBackgroundColour("white")
 		
@@ -21,8 +23,6 @@ class SliceQueue(wx.Dialog):
 
 		dsizer = wx.BoxSizer(wx.VERTICAL)
 		dsizer.AddSpacer((10, 10))
-		
-		self.images = images
 		
 		f = wx.Font(12,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc = wx.ScreenDC()

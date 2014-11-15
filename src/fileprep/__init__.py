@@ -776,7 +776,7 @@ class FilePrepare(wx.Panel):
 		
 	def doBatchSlice(self, evt):
 		stllist = self.settings.stlqueue[:]
-		dlg = SliceQueue(self, stllist, self.settings, self.images)
+		dlg = SliceQueue(self, stllist)
 		if dlg.ShowModal() == wx.ID_OK:
 			self.settings.stlqueue = dlg.getSliceQueue()
 			self.settings.setModified()

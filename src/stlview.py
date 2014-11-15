@@ -45,7 +45,7 @@ class ReaderThread:
 		
 		if self.ftype == FT_STL:
 			self.stlObj = stl(cb=self.loadStlEvent, filename=self.fn, zZero=self.zzero)
-			if self.centeronload:
+			if self.center:
 				self.stlObj = self.stlObj.translate([-self.stlObj.hxCenter, -self.stlObj.hyCenter, 0])
 				
 		elif self.ftype == FT_AMF:
