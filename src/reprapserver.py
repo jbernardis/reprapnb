@@ -8,8 +8,6 @@ from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import pygame
 
-webbase = "/var/www/images"
-
 def quote(s):
 	return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
@@ -113,11 +111,14 @@ class RepRapServer:
 			s = {'taken': 'false'}
 		else:
 			fbn = "img%s.jpg" % time.strftime('%y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-			fulldir = os.path.join(webbase, "reprap")
-			os.makedirs(fulldir)
+			fulldir = os.path.join(self.settings.webbase, "reprap")
+			try:
+				os.makedirs(fulldir)
+			except:
+				pass
 			path = os.path.join(fulldir, fbn)
 			pygame.image.save(pic, path)
-			s =  {'taken': 'true', 'file': path[len(webbase)+len(os.sep):]}
+			s =  {'taken': 'true', 'file': path[len(self.settings.webbase)+len(os.sep):]}
 		return {'picture': s}
 	
 	def close(self):

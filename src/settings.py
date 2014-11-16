@@ -186,6 +186,7 @@ class Settings:
 		self.macroOrder = []
 		self.tools = {}
 		self.toolOrder = []
+		self.webbase = "/var/www/html/images"
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -209,6 +210,8 @@ class Settings:
 					self.printers = [x.strip() for x in s]
 				elif opt == 'lastlogdirectory':
 					self.lastlogdirectory = value
+				elif opt == 'webbase':
+					self.webbase = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
 				elif opt == 'buildarea':
@@ -338,6 +341,7 @@ class Settings:
 			
 			self.cfg.set(self.section, "printers", ",".join(self.printers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
+			self.cfg.set(self.section, "webbase", str(self.webbase))
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
