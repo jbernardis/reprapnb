@@ -9,7 +9,7 @@ if cmd_folder not in sys.path:
 	
 from settings import (Settings, MAINTIMER, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, FPSTATUS_IDLE,
 					PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED,
-					PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY)
+					PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY, BATCHSL_IDLE, BATCHSL_RUNNING)
 from fileprep import FilePrepare
 from printmon import PrintMonitor
 from manualctl import ManualControl
@@ -69,6 +69,10 @@ class MainFrame(wx.Frame):
 		self.nbilPrintingIdx = self.nbil.Add(self.images.pngPrinting)
 		self.nbilPausedIdx = self.nbil.Add(self.images.pngPaused)
 		self.nbilIdleIdx = self.nbil.Add(self.images.pngIdle)
+		self.nbilNotReadyBSIdx = self.nbil.Add(self.images.pngNotreadybs)
+		self.nbilReadyBSIdx = self.nbil.Add(self.images.pngReadybs)
+		self.nbilReadyDirtyBSIdx = self.nbil.Add(self.images.pngReadydirtybs)
+		self.nbilIdleBSIdx = self.nbil.Add(self.images.pngIdlebs)
 
 		p = wx.Panel(self)
 		sizer = wx.BoxSizer(wx.VERTICAL)
@@ -247,15 +251,31 @@ class MainFrame(wx.Frame):
 		else:
 			self.nb.SetPageImage(self.pxPlater, -1)
 
-	def updateFilePrepStatus(self, status):
+	def updateFilePrepStatus(self, status, batchstat):
 		if status == FPSTATUS_READY:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyIdx)
+			if batchstat == BATCHSL_IDLE:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyIdx)
+			else:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyBSIdx)
+				
 		elif status == FPSTATUS_READY_DIRTY:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyDirtyIdx)
+			if batchstat == BATCHSL_IDLE:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyDirtyIdx)
+			else:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyDirtyBSIdx)
+				
 		elif status == FPSTATUS_BUSY:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilNotReadyIdx)
+			if batchstat == BATCHSL_IDLE:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilNotReadyIdx)
+			else:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilNotReadyBSIdx)
+				
 		elif status == FPSTATUS_IDLE:
-			self.nb.SetPageImage(self.pxFilePrep, self.nbilIdleIdx)
+			if batchstat == BATCHSL_IDLE:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilIdleIdx)
+			else:
+				self.nb.SetPageImage(self.pxFilePrep, self.nbilIdleBSIdx)
+
 		else:
 			self.nb.SetPageImage(self.pxFilePrep, -1)
 			

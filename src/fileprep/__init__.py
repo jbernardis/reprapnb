@@ -23,7 +23,7 @@ from toolbar import ToolBar
 
 from reprap import MAX_EXTRUDERS
 
-from settings import TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY
+from settings import TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, BATCHSL_IDLE, BATCHSL_RUNNING
 
 
 wildcard = "G Code (*.gcode)|*.gcode"
@@ -285,7 +285,8 @@ class FilePrepare(wx.Panel):
 		self.dlgView = None
 		self.dlgGCQueue = None
 		self.activeSlicer = None
-
+		self.activeBatchSlicer = None
+		self.batchslstatus = BATCHSL_IDLE
 
 		self.drawGCFirst = None;
 		self.drawGCLast = None;
@@ -828,6 +829,9 @@ class FilePrepare(wx.Panel):
 			joblist.append([fn, gcfn, c])
 			
 		self.batchSliceThread = BatchSlicerThread(self, joblist)
+		
+		self.batchslstatus = BATCHSL_RUNNING
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 			
 		self.bSliceStart.Enable(False)
 		self.bSlice.Enable(False)
@@ -836,6 +840,8 @@ class FilePrepare(wx.Panel):
 		self.bSlicePause.Enable(True)
 		self.bSliceStop.Enable(True)
 		self.logger.LogMessage("Batch Slicer: Starting for %d files" % len(joblist))
+		self.activeBatchSlicer = self.slicer
+
 		self.batchSliceThread.Start()
 		
 	def doPauseSlice(self, evt):
@@ -927,6 +933,14 @@ class FilePrepare(wx.Panel):
 			self.bSliceStop.Enable(False)
 			self.bSlicePause.Enable(False)
 			self.logger.LogMessage("Batch Slicer: Cancelled")
+					
+			self.batchslstatus = BATCHSL_IDLE
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
+
+			if self.activeBatchSlicer:
+				self.activeBatchSlicer.sliceComplete()
+				self.activeBatchSlicer = None
+
 			
 		elif evt.state == BATCHSLICER_FINISHED:
 			self.logger.LogMessage("Batch Slicer: finished all files")
@@ -938,6 +952,13 @@ class FilePrepare(wx.Panel):
 			self.bSliceNext.Enable(False)
 			self.bSliceStop.Enable(False)
 			self.bSlicePause.Enable(False)
+					
+			self.batchslstatus = BATCHSL_IDLE
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
+			
+			if self.activeBatchSlicer:
+				self.activeBatchSlicer.sliceComplete()
+				self.activeBatchSlicer = None
 		
 		elif evt.state == BATCHSLICER_STARTFILE:
 			self.logger.LogMessage("Batch Slicer: starting file: " + evt.stlfn)
@@ -1064,7 +1085,7 @@ class FilePrepare(wx.Panel):
 		self.exportTo = printmon
 		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, self.fd, self.settings.acceleration)
 		self.modelerThread.Start()
 		
@@ -1118,7 +1139,7 @@ class FilePrepare(wx.Panel):
 		self.setSliceMode(False)
 		self.sliceActive = True
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.sliceThread.Start()
 		
 	def slicerUpdate(self, evt):
@@ -1135,10 +1156,12 @@ class FilePrepare(wx.Panel):
 			self.gcFile = None
 			self.setSliceMode()
 			self.enableButtons()
-			self.slicer.sliceComplete()
+			if self.activeSlicer:
+				self.activeSlicer.sliceComplete()
+				self.activeSlicer = None
 			self.sliceActive = False
 			self.status = FPSTATUS_IDLE
-			self.app.updateFilePrepStatus(self.status)
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 			
 		elif evt.state == SLICER_FINISHED:
 			if self.temporaryFile:
@@ -1164,7 +1187,7 @@ class FilePrepare(wx.Panel):
 				self.nextSliceAllow()
 				self.bMerge.Enable(True)
 				self.status = FPSTATUS_IDLE
-				self.app.updateFilePrepStatus(self.status)
+				self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 			
 		else:
 			self.logger.LogError("unknown slicer thread state: %s" % evt.state)
@@ -1202,7 +1225,7 @@ class FilePrepare(wx.Panel):
 
 	def loadFile(self, fn):
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
@@ -1264,7 +1287,7 @@ class FilePrepare(wx.Panel):
 			self.gcodeLoaded = False
 			self.model = None
 			self.enableButtons()
-			self.app.updateFilePrepStatus(FPSTATUS_IDLE)
+			self.app.updateFilePrepStatus(FPSTATUS_IDLE, self.batchslstatus)
 			self.status = FPSTATUS_IDLE
 		
 			if self.temporaryFile:
@@ -1367,7 +1390,7 @@ class FilePrepare(wx.Panel):
 				self.status = FPSTATUS_READY_DIRTY
 			else:
 				self.status = FPSTATUS_READY
-			self.app.updateFilePrepStatus(self.status)
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 
 			
 		elif evt.state == MODELER_CANCELLED:
@@ -1379,7 +1402,7 @@ class FilePrepare(wx.Panel):
 			self.model = None
 				
 			self.status = FPSTATUS_IDLE
-			self.app.updateFilePrepStatus(self.status)
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 				
 		else:
 			self.logger.LogError("unknown modeler thread state: %s" % evt.state)
@@ -1463,7 +1486,7 @@ class FilePrepare(wx.Panel):
 
 	def applyShift(self):
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.logger.LogMessage("Applying axis shift in G Code")
 		for i in range(len(self.gcode)):
 			l = self.gcode[i]
@@ -1509,7 +1532,7 @@ class FilePrepare(wx.Panel):
 
 	def applyTempChange(self, temps):
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.logger.LogMessage("Modifying temperature in G Code")
 		self.currentTool = 0
 		for i in range(len(self.gcode)):
@@ -1562,7 +1585,7 @@ class FilePrepare(wx.Panel):
 
 	def applySpeedChange(self, speeds):
 		self.status = FPSTATUS_BUSY
-		self.app.updateFilePrepStatus(self.status)
+		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.logger.LogMessage("Modifying speeds in G Code")
 		self.currentTool = 0
 		for i in range(len(self.gcode)):
@@ -1931,7 +1954,7 @@ class FilePrepare(wx.Panel):
 				newstat = True
 				
 		if newstat:
-			self.app.updateFilePrepStatus(self.status)
+			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 			
 		if self.temporaryFile:
 			fn = TEMPFILELABEL
