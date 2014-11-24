@@ -1,6 +1,8 @@
 import os
 import wx
 
+from managemacros import ManageMacros
+
 BASE_ID = 2000
 
 class MacroDialog(wx.Dialog):
@@ -10,7 +12,6 @@ class MacroDialog(wx.Dialog):
 		self.reprap = reprap
 		self.logger = self.app.logger
 		self.settings = self.app.settings
-		self.path = os.path.join(self.settings.cmdfolder, "macros")
 		self.macroList = MacroList(self.app.settings)
 		
 		pre = wx.PreDialog()
@@ -23,18 +24,36 @@ class MacroDialog(wx.Dialog):
 		
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		sizer = wx.BoxSizer(wx.VERTICAL)
+		hsizer = None
 
 		i = 0
 		self.macroMap = []		
 		for k in self.macroList:
+			if k % 3 == 0:
+				if hsizer:
+					self.sizer.Add(hsizer)
+				hsizer = wx.BoxSizer(wx.HORIZONTAL)
+				
 			self.macroMap.append(k)
 			b = wx.Button(self, BASE_ID + i, k)
 			i += 1
 			self.Bind(wx.EVT_BUTTON, self.runMacro, b)
-			sizer.Add(b)
+			hsizer.Add(b)
+			
+		sizer.Add(hsizer)
+		
+		sizer.AddSpacer((30, 30))
+		b = wx.Button(self, wx.ID_ANY, "Manage Macros")
+		self.Bind(wx.EVT_BUTTON, self.manageMacros, b)
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
+		
+	def manageMacros(self, evt):
+		print "Manage Macros"
+		dlg = ManageMacros(self, self.settings, self.parent.images, self.settings.macroOrder, self.settings.macroList)
+		rc = dlg.ShowModal()
+		dlg.Destroy()
 		
 	def onClose(self, evt):
 		self.parent.onMacroExit()
@@ -49,7 +68,7 @@ class MacroDialog(wx.Dialog):
 		mn = self.macroMap[kid]	
 		self.logger.LogMessage("Running macro \"%s\"" % mn)
 
-		fn = os.path.join(self.path, self.macroList.getFileName(mn))		
+		fn = self.macroList.getFileName(mn)		
 		try:
 			l = list(open(fn))
 		except:

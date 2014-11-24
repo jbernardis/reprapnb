@@ -61,7 +61,7 @@ class myEditor(editor.Editor):
 	def OnFind(self, evt):
 		et = evt.GetEventType()
 		flags = evt.GetFlags()
-		buf = self.GetText()
+		buf = self.getData()
 		down = False
 		if flags & 0x01: down = True
 
@@ -131,7 +131,7 @@ class myEditor(editor.Editor):
 				cy = loc[1]
 			
 	def findString(self, mstr, down, wholeword, casematch, start, replace=None):
-		buf = self.GetText()
+		buf = self.getData()
 		
 		if wholeword:
 			mstr = r"\b" + mstr + r"\b"
@@ -180,18 +180,18 @@ class myEditor(editor.Editor):
 			
 		
 class EditGCodeDlg(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, gcode, closeHandler):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode", size=(800, 804))
-		
-		self.app = parent
+		self.closeHandler = closeHandler
 		
 		self.ed = myEditor(self, -1)
 		box = wx.BoxSizer(wx.VERTICAL)
 		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
 		self.SetSizer(box)
 		self.SetAutoLayout(True)
-		
-		self.editbuffer = self.app.gcode[:]
+
+		self.startGCode = gcode		
+		self.editbuffer = gcode[:]
 
 		self.ed.SetText(self.editbuffer)
 
@@ -212,7 +212,7 @@ class EditGCodeDlg(wx.Dialog):
 		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
 	def doSave(self, evt):
-		self.app.dlgClosed(True, self.ed.GetText())
+		self.closeHandler(True)
 		self.Destroy()
 		
 	def doCancel(self, evt):
@@ -226,19 +226,19 @@ class EditGCodeDlg(wx.Dialog):
 			if rc != wx.ID_YES:
 				return
 
-		self.app.dlgClosed(False, None)
+		self.closeHandler(False)
 		self.Destroy()
 		
-	def GetText(self):
+	def getData(self):
 		return self.ed.GetText()
 	
 	def hasChanged(self):
-		eb = self.GetText()
-		if len(eb) != len(self.app.gcode):
+		eb = self.getData()
+		if len(eb) != len(self.startGCode):
 			return True
 		
 		for i in range(len(eb)):
-			if eb[i] != self.app.gcode[i]:
+			if eb[i] != self.startGCode[i]:
 				return True
 			
 		return False

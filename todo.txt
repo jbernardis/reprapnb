@@ -1,33 +1,21 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
-batch slicing - still need ability to kill slicing/stop after current file
-add a queue of jobs to print
-add logic to model to keep track of pending pauses, and use this in printmon instead of asking reprap.
-
-
 
 send email when print job finishes
-
 
 @runmacro
 @runmacro layer=x layers=n
 
-
-
 Low Hanging
-- fix closure of firmware window when clicking on text boxes
 
 Medium
-- meta-operations inside of macros - @pause, @sh, etc - will need the ability to insert %x% variables into macros
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
-- there were some stls that loaded properly into plater but not into view - need to save one and figure out why
 
 Larger effort
 - Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
-- add the ability to add @ statements right into the g code to perform various functions during print - pronterface has a large list
 
 Uncertain:
 

@@ -1445,11 +1445,15 @@ class FilePrepare(wx.Panel):
 	def editGCode(self, event):
 		self.disableButtons()
 		if self.dlgEdit is None:
-			self.dlgEdit = EditGCodeDlg(self)
+			self.dlgEdit = EditGCodeDlg(self, self.gcode, self.dlgClosed)
 			self.dlgEdit.CenterOnScreen()
 			self.dlgEdit.Show()
 		
-	def dlgClosed(self, rc, data):
+	def dlgClosed(self, rc):
+		if rc:
+			data = self.dlgEdit.getData()
+			
+		self.dlgEdit.Destroy()
 		self.dlgEdit = None
 		if not rc:
 			self.enableButtons()

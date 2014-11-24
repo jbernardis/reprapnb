@@ -155,7 +155,7 @@ class StlViewer(wx.Dialog):
 		self.cbDrawGrid.SetValue(self.settings.drawstlgrid)
 		c2.Add(self.cbDrawGrid)
 
-		c2.AddSpacer((10, 400))
+		c2.AddSpacer((10, 300))
 		
 		btn2 = wx.BoxSizer(wx.HORIZONTAL)
 		
