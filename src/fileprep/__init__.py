@@ -1445,7 +1445,7 @@ class FilePrepare(wx.Panel):
 	def editGCode(self, event):
 		self.disableButtons()
 		if self.dlgEdit is None:
-			self.dlgEdit = EditGCodeDlg(self, self.gcode, self.dlgClosed)
+			self.dlgEdit = EditGCodeDlg(self, self.gcode, "<live buffer>", self.dlgClosed)
 			self.dlgEdit.CenterOnScreen()
 			self.dlgEdit.Show()
 		

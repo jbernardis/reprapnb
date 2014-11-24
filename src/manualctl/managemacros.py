@@ -12,11 +12,12 @@ BUTTONDIM = (64, 64)
 VISIBLEQUEUESIZE = 17
 
 class ManageMacros(wx.Dialog):
-	def __init__(self, parent, settings, images, macroOrder, macroFiles):
+	def __init__(self, parent, settings, images, macroOrder, macroFiles, closehandler):
 		self.parent = parent
 		self.settings = settings
 		self.macroOrder = macroOrder
 		self.macroFiles = macroFiles
+		self.closehandler = closehandler
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Manage Macros", size=(800, 804))
 		self.SetBackgroundColour("white")
 		
@@ -119,7 +120,7 @@ class ManageMacros(wx.Dialog):
 
 		dlg = wx.FileDialog(
 			self, message="Choose a file",
-			defaultDir=self.settings.lastmacrodir, 
+			defaultDir=self.settings.lastmacrodirectory, 
 			defaultFile="",
 			wildcard=wildcard,
 			style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
@@ -129,8 +130,8 @@ class ManageMacros(wx.Dialog):
 			if len(paths) > 0:
 				self.bSave.Enable(True)
 				mdir = os.path.split(paths[0])[0]
-				if mdir != self.settings.lastmacrodir:
-					self.settings.lastmacrodir = mdir
+				if mdir != self.settings.lastmacrodirectory:
+					self.settings.lastmacrodirectory = mdir
 					self.settings.setModified()
 					
 				path = paths[0]
@@ -151,7 +152,7 @@ class ManageMacros(wx.Dialog):
 			
 	def doNewFile(self, evt):
 		self.bNewFile.Enable(False)
-		self.editDlg = EditGCodeDlg(self, [""], self.closeNewFile)
+		self.editDlg = EditGCodeDlg(self, [""], "<new macro file>", self.closeNewFile)
 		self.editDlg.Show()
 	
 	def closeNewFile(self, rc):
@@ -164,7 +165,7 @@ class ManageMacros(wx.Dialog):
 			return
 		
 		dlg = wx.FileDialog(
-			self, message="Save as ...", defaultDir=self.settings.lastmacrodir, 
+			self, message="Save as ...", defaultDir=self.settings.lastmacrodirectory, 
 			defaultFile="", wildcard=wildcard, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 		
 		val = dlg.ShowModal()
@@ -175,8 +176,8 @@ class ManageMacros(wx.Dialog):
 		
 		path = dlg.GetPath()
 		mdir = os.path.split(path)[0]
-		if mdir != self.settings.lastmacrodir:
-			self.settings.lastmacrodir = mdir
+		if mdir != self.settings.lastmacrodirectory:
+			self.settings.lastmacrodirectory = mdir
 			self.settings.setModified()
 			
 		dlg.Destroy()
@@ -209,7 +210,7 @@ class ManageMacros(wx.Dialog):
 			return
 
 		self.editFileName = fn		
-		self.editDlg = EditGCodeDlg(self, data, self.closeEditSelected)
+		self.editDlg = EditGCodeDlg(self, data, fn, self.closeEditSelected)
 		self.editDlg.Show()
 	
 	def closeEditSelected(self, rc):
@@ -259,7 +260,7 @@ class ManageMacros(wx.Dialog):
 					self.bDown.Enable(True)
 					
 	def doSave(self, evt):
-		self.EndModal(wx.ID_OK)
+		self.closehandler(True)
 		
 	def doCancel(self, evt):
 		if self.bSave.IsEnabled():
@@ -270,9 +271,9 @@ class ManageMacros(wx.Dialog):
 			dlg.Destroy()
 
 			if rc == wx.ID_YES:
-				self.EndModal(wx.ID_CANCEL)
+				self.closehandler(False)
 		else:
-			self.EndModal(wx.ID_CANCEL)
+			self.closehandler(False)
 
 class MacroListCtrl(wx.ListCtrl):	
 	def __init__(self, parent, macroOrder, macroFiles, images):
@@ -408,54 +409,3 @@ class MacroListCtrl(wx.ListCtrl):
 	def OnGetItemAttr(self, item):
 		return None
 
-		
-class Settings:
-	def __init__(self):
-		self.startdir = os.getcwd()
-		self.addgcode = True
-		self.lastmacrodir = "c:\\tmp"
-		
-	def setModified(self, flag=True):
-		print "settings modified: ", flag
-		
-class MyFrame(wx.Frame):
-
-	def __init__(self):
-		self.settings = Settings()
-		
-		self.images = Images(os.path.join(os.getcwd(), "images"))
-		dsizer = wx.BoxSizer(wx.VERTICAL)
-		dsizer.AddSpacer((10,10))
-
-		self.t = 0
-		self.seq = 1
-		wx.Frame.__init__(self, None, -1, "My Frame", size=(300, 300))
-		self.Bind(wx.EVT_CLOSE, self.onClose)
-
-		dsizer = wx.BoxSizer(wx.VERTICAL)
-		btn = wx.Button(self, -1, "Do it")
-		self.Bind(wx.EVT_BUTTON, self.doButton, btn)
-		dsizer.Add(btn)
-		
-		self.SetSizer(dsizer)
-		
-	def doButton(self, evt):
-		macroOrder = ["macro1", "macro2", "macro3", "macro4"]
-		macroFiles = {"macro1": "macro1.gcode", "macro2": "macro2.gcode", "macro3": "macro3.gcode", "macro4": "macro4.gcode"}
-		dlg = ManageMacros(self, self.settings, self.images, macroOrder, macroFiles)
-		if dlg.ShowModal() == wx.ID_OK:
-			mo, mf = dlg.getData()
-			for m in mo:
-				print m + ": " + mf[m]
-		
-		dlg.Destroy();
-
-
-	def onClose(self, evt):
-		self.Destroy()
-		
-if __name__ == '__main__':
-	app = wx.PySimpleApp()
-	frame = MyFrame()
-	frame.Show(True)
-	app.MainLoop()

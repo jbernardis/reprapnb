@@ -12,6 +12,7 @@ class MacroDialog(wx.Dialog):
 		self.reprap = reprap
 		self.logger = self.app.logger
 		self.settings = self.app.settings
+		self.mmdlg = None
 		self.macroList = MacroList(self.app.settings)
 		
 		pre = wx.PreDialog()
@@ -29,7 +30,7 @@ class MacroDialog(wx.Dialog):
 		i = 0
 		self.macroMap = []		
 		for k in self.macroList:
-			if k % 3 == 0:
+			if (i % 3) == 0:
 				if hsizer:
 					self.sizer.Add(hsizer)
 				hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -43,17 +44,23 @@ class MacroDialog(wx.Dialog):
 		sizer.Add(hsizer)
 		
 		sizer.AddSpacer((30, 30))
-		b = wx.Button(self, wx.ID_ANY, "Manage Macros")
-		self.Bind(wx.EVT_BUTTON, self.manageMacros, b)
+		self.bManage = wx.Button(self, wx.ID_ANY, "Manage Macros")
+		sizer.Add(self.bManage)
+		self.Bind(wx.EVT_BUTTON, self.manageMacros, self.bManage)
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
 		
 	def manageMacros(self, evt):
-		print "Manage Macros"
-		dlg = ManageMacros(self, self.settings, self.parent.images, self.settings.macroOrder, self.settings.macroList)
-		rc = dlg.ShowModal()
-		dlg.Destroy()
+		if self.mmdlg is None:
+			self.mmdlg = ManageMacros(self, self.settings, self.parent.images, self.settings.macroOrder, self.settings.macroList, self.manageDone)
+			rc = self.mmdlg.Show()
+			self.bManage.Enable(False)
+
+	def manageDone(self, rc):
+		self.mmdlg.Destroy()
+		self.mmdlg = None
+		self.bManage.Enable(True)
 		
 	def onClose(self, evt):
 		self.parent.onMacroExit()
