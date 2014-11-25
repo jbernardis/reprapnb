@@ -372,7 +372,7 @@ class Settings:
 				pass
 				
 			for m in range(len(self.macroOrder)):
-				opt = "macro.%d" % m
+				opt = "macro.%d" % (m+1)
 				val = self.macroOrder[m] + "," + self.macroList[self.macroOrder[m]]
 				self.cfg.set(section, opt, val)
 			

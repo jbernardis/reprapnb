@@ -32,7 +32,7 @@ class MacroDialog(wx.Dialog):
 		for k in self.macroList:
 			if (i % 3) == 0:
 				if hsizer:
-					self.sizer.Add(hsizer)
+					sizer.Add(hsizer)
 				hsizer = wx.BoxSizer(wx.HORIZONTAL)
 				
 			self.macroMap.append(k)
