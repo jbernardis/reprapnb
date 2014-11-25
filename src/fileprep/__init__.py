@@ -797,6 +797,7 @@ class FilePrepare(wx.Panel):
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.stlqueue[0]) + ")"
 		self.bSliceNext.SetToolTipString(s)
+		self.bSliceNext.Enable(qlen != 0)
 				
 	def checkAddBatch(self, evt):
 		self.settings.batchaddgcode = evt.IsChecked()
@@ -910,6 +911,8 @@ class FilePrepare(wx.Panel):
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.gcodequeue[0]) + ")"
 		self.bGCodeNext.SetToolTipString(s)
+		self.bGCodeNext.Enable(qlen != 0)
+
 	
 	def doNextGCode(self, evt):
 		fn = self.settings.gcodequeue[0]
