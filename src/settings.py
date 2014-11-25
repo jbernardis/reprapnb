@@ -364,6 +364,17 @@ class Settings:
 				self.cfg.set(sc, "nextruders", str(pt.nextr))
 				self.cfg.set(sc, "speedcommand", str(pt.speedcommand))
 				self.cfg.set(sc, "buildarea", str(pt.buildarea))
+
+			section = "macros"
+			try:
+				self.cfg.add_section(section)
+			except ConfigParser.DuplicateSectionError:
+				pass
+				
+			for m in range(len(self.macroOrder)):
+				opt = "macro.%d" % m
+				val = self.macroOrder[m] + "," + self.macroList[self.macroOrder[m]]
+				self.cfg.set(section, opt, val)
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()

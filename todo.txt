@@ -1,26 +1,15 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
 
+work on layout of the macro toolbar some more
+
 send email when print job finishes
+
+incorporate "stty cread" logic to clean up USB ports
 
 @runmacro
 @runmacro layer=x layers=n
 
-Low Hanging
-
-Medium
-
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
-
-Larger effort
-- Macros - ability to add/delete/edit macros from within rrnb - layout of the macro buttons, etc
-
-Uncertain:
-
-
-
-
-
-

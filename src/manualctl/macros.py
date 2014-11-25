@@ -54,17 +54,23 @@ class MacroDialog(wx.Dialog):
 	def manageMacros(self, evt):
 		if self.mmdlg is None:
 			self.mmdlg = ManageMacros(self, self.settings, self.parent.images, self.settings.macroOrder, self.settings.macroList, self.manageDone)
-			rc = self.mmdlg.Show()
+			self.mmdlg.Show()
 			self.bManage.Enable(False)
 
 	def manageDone(self, rc):
+		if rc:
+			mo, mfn = self.mmdlg.getData()
 		self.mmdlg.Destroy()
 		self.mmdlg = None
 		self.bManage.Enable(True)
+		if rc:
+			self.settings.macroOrder = mo
+			self.settings.macroList = mfn
+			self.settings.setModified()
+			self.parent.onMacroExit(True)
 		
 	def onClose(self, evt):
 		self.parent.onMacroExit()
-		self.Destroy()
 		
 	def runMacro(self, evt):
 		kid = evt.GetId() - BASE_ID

@@ -30,6 +30,7 @@ class myEditor(editor.Editor):
 	def __init__(self, parent, iD):
 		self.parent = parent
 		self.findData = wx.FindReplaceData()
+		self.findData.SetFlags(0x01)
 		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
 
 	def BindFindEvents(self, win):
@@ -118,7 +119,8 @@ class myEditor(editor.Editor):
 			rstr = evt.GetReplaceString()
 			
 			while True:
-				loc = self.findString(fstr, down, wholeword, casematch, [cx, cy], rstr)
+				# just ignore the direction and do the whole thing in a downward direction
+				loc = self.findString(fstr, True, wholeword, casematch, [cx, cy], rstr)
 				if loc is None:
 					self.UpdateView()
 					return
@@ -158,6 +160,8 @@ class myEditor(editor.Editor):
 				else:		
 					for i in range(len(m), 0, -1):
 						if (m[i-1][0] <= cx) or (cx == -1): # found one
+							if replace:
+								buf[cy] = buf[cy][:m[i-1][0]] + replace + buf[cy][m[i-1][0]+len(m[i-1][1]):]
 							return([m[i-1][0], cy, m[i-1][1]])
 
 			# no matches - move to the next line

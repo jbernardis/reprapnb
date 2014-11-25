@@ -102,9 +102,12 @@ class ManualControl(wx.Panel):
 		self.dlgMacro.Show(True)
 		self.macroActive = True
 		
-	def onMacroExit(self):
+	def onMacroExit(self, respawn=False):
 		self.bRunMacro.Enable(True)
+		self.dlgMacro.Destroy()
 		self.macroActive = False
+		if respawn:
+			self.doRunMacro(None)
 		
 	def closeMacro(self):
 		if self.macroActive:
