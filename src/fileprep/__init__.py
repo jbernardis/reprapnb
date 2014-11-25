@@ -292,6 +292,8 @@ class FilePrepare(wx.Panel):
 		self.drawGCLast = None;
 		self.overrideValues = {}
 		
+		self.nextSliceProhibited = False
+		self.nextGCProhibited = False
 		self.lh = None
 		self.fd = None
 		
@@ -797,7 +799,7 @@ class FilePrepare(wx.Panel):
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.stlqueue[0]) + ")"
 		self.bSliceNext.SetToolTipString(s)
-		self.bSliceNext.Enable(qlen != 0)
+		self.bSliceNext.Enable((qlen != 0) and not self.nextSliceProhibited)
 				
 	def checkAddBatch(self, evt):
 		self.settings.batchaddgcode = evt.IsChecked()
@@ -863,6 +865,8 @@ class FilePrepare(wx.Panel):
 		self.sliceFile(fn)
 
 	def nextSliceAllow(self):
+		self.nextSliceProhibited = False
+		self.nextGCProhibited = False
 		if len(self.settings.stlqueue) != 0:
 			self.bSliceStart.Enable(True)
 			self.bSliceNext.Enable(True)
@@ -874,6 +878,8 @@ class FilePrepare(wx.Panel):
 		self.bSliceStart.Enable(False)
 		self.bSliceNext.Enable(False)
 		self.bGCodeNext.Enable(False)
+		self.nextSliceProhibited = True
+		self.nextGCProhibited = True
 		self.logger.LogMessage("ENABLE: nextSliceProhibit - False")
 	
 	def doGCodeQueue(self, evt):
@@ -911,7 +917,7 @@ class FilePrepare(wx.Panel):
 		if qlen != 0:
 			s += ": (" + os.path.basename(self.settings.gcodequeue[0]) + ")"
 		self.bGCodeNext.SetToolTipString(s)
-		self.bGCodeNext.Enable(qlen != 0)
+		self.bGCodeNext.Enable((qlen != 0) and not self.nextGCProhibited)
 
 	
 	def doNextGCode(self, evt):
