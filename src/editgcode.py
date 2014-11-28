@@ -217,7 +217,6 @@ class EditGCodeDlg(wx.Dialog):
 
 	def doSave(self, evt):
 		self.closeHandler(True)
-		self.Destroy()
 		
 	def doCancel(self, evt):
 		if self.hasChanged():
@@ -231,7 +230,6 @@ class EditGCodeDlg(wx.Dialog):
 				return
 
 		self.closeHandler(False)
-		self.Destroy()
 		
 	def getData(self):
 		return self.ed.GetText()

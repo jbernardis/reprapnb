@@ -616,7 +616,6 @@ class FilePrepare(wx.Panel):
 		self.sizerQueues2.Add(self.bGCodeNext)
 		self.sizerQueues2.AddSpacer((10, 10))
 		self.bGCodeNext.Enable(gcqlen != 0)
-		self.logger.LogMessage("ENABLE: init, gcqlen=%d" % gcqlen)
 		
 		szt = wx.BoxSizer(wx.VERTICAL)			
 		self.tGCodeQLen = wx.StaticText(self, wx.ID_ANY, "")
@@ -872,7 +871,6 @@ class FilePrepare(wx.Panel):
 			self.bSliceNext.Enable(True)
 		if len(self.settings.gcodequeue) != 0:
 			self.bGCodeNext.Enable(True)
-			self.logger.LogMessage("ENABLE: nextSliceAllow - True")
 	
 	def nextSliceProhibit(self):
 		self.bSliceStart.Enable(False)
@@ -880,7 +878,6 @@ class FilePrepare(wx.Panel):
 		self.bGCodeNext.Enable(False)
 		self.nextSliceProhibited = True
 		self.nextGCProhibited = True
-		self.logger.LogMessage("ENABLE: nextSliceProhibit - False")
 	
 	def doGCodeQueue(self, evt):
 		gclist = self.settings.gcodequeue[:]
@@ -891,7 +888,6 @@ class FilePrepare(wx.Panel):
 			n = len(self.settings.gcodequeue)
 			self.setGCodeQLen(n)
 			self.bGCodeNext.Enable(n != 0)
-			self.logger.LogMessage("ENABLE: in doGCodeQueue, n=%d" % n)
 				
 		self.dlgGCQueue.Destroy();
 		self.dlgGCQueue = None
@@ -903,7 +899,6 @@ class FilePrepare(wx.Panel):
 			n = len(self.settings.gcodequeue)
 			self.setGCodeQLen(n)
 			self.bGCodeNext.Enable(n != 0)
-			self.logger.LogMessage("ENABLE: in doAddGCodeQueue, n=%d" % n)
 	
 	def addGCodeQueueEnable(self, enable):
 		if enable and self.gcFile in self.settings.gcodequeue:
