@@ -4,6 +4,9 @@ import Queue
 import time
 import re
 import wx.lib.newevent
+from sys import platform as _platform
+if _platform == "linux" or _platform == "linux2":
+	import termios
 
 TRACE = False
 
@@ -743,10 +746,19 @@ class RepRap:
 	def reset(self):
 		self.clearPrint()
 		if(self.printer):
+			self.resetPort()
 			self.printer.setDTR(1)
 			time.sleep(2)
 			self.printer.setDTR(0)
 	
+	def resetPort(self):
+		if _platform == "linux" or _platform == "linux2":
+			fp = open(self.port, "r")
+			new = termios.tcgetattr(fp)
+			new[2] = new[2] | ~termios.CREAD
+			termios.tcsetattr(fp, termios.TCSANOW, new)
+			fp.close()
+		
 	def startPrint(self, data):
 		self.sender.resetCounters()
 		self.listener.resetCounters()

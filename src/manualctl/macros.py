@@ -2,6 +2,7 @@ import os
 import wx
 
 from managemacros import ManageMacros
+from settings import BUTTONDIMWIDE
 
 BASE_ID = 2000
 
@@ -32,20 +33,27 @@ class MacroDialog(wx.Dialog):
 		for k in self.macroList:
 			if (i % 3) == 0:
 				if hsizer:
+					sizer.AddSpacer((10, 10))
+					hsizer.AddSpacer((10, 10))
 					sizer.Add(hsizer)
 				hsizer = wx.BoxSizer(wx.HORIZONTAL)
 				
 			self.macroMap.append(k)
-			b = wx.Button(self, BASE_ID + i, k)
+			b = wx.Button(self, BASE_ID + i, k, size=BUTTONDIMWIDE)
 			i += 1
 			self.Bind(wx.EVT_BUTTON, self.runMacro, b)
+			hsizer.AddSpacer((10, 10))
 			hsizer.Add(b)
 			
+		sizer.AddSpacer((10, 10))
 		sizer.Add(hsizer)
 		
 		sizer.AddSpacer((30, 30))
-		self.bManage = wx.Button(self, wx.ID_ANY, "Manage Macros")
-		sizer.Add(self.bManage)
+		bsz = [x for x in BUTTONDIMWIDE]
+		bsz[0] *= 2
+		self.bManage = wx.Button(self, wx.ID_ANY, "Manage Macros", size=bsz)
+		sizer.Add(self.bManage, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		sizer.AddSpacer((10, 10))
 		self.Bind(wx.EVT_BUTTON, self.manageMacros, self.bManage)
 
 		self.SetSizer(sizer)
