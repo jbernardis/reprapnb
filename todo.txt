@@ -1,15 +1,17 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
 
-work on layout of the macro toolbar some more
-
 send email when print job finishes
-
-incorporate "stty cread" logic to clean up USB ports
 
 @runmacro
 @runmacro layer=x layers=n
 
+More capabilities from HTTP interface
+	- initiate and monitor slicer
+	- choose slicer/slicer config
+	- start heaters
+
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
+- I still think there is a bug lurking in plater

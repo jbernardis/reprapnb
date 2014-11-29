@@ -9,7 +9,7 @@ from editgcode import EditGCodeDlg
 wildcard = "G Code files (*.gcode)|*.gcode|"  "All files (*.*)|*.*"
 
 BUTTONDIM = (64, 64)
-VISIBLEQUEUESIZE = 21
+VISIBLEQUEUESIZE = 23
 
 class ManageMacros(wx.Dialog):
 	def __init__(self, parent, settings, images, macroOrder, macroFiles, closehandler):
@@ -64,10 +64,16 @@ class ManageMacros(wx.Dialog):
 		lbbtns.AddSpacer((20, 20))
 		
 		self.bRename = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRename, size=BUTTONDIM)
-		self.bRename.SetToolTipString("Rename the macro")
+		self.bRename.SetToolTipString("Rename the selected macro")
 		lbbtns.Add(self.bRename)
 		self.Bind(wx.EVT_BUTTON, self.doRename, self.bRename)
 		self.bRename.Enable(False)
+		
+		self.bChgFile = wx.BitmapButton(self, wx.ID_ANY, self.images.pngChangefile, size=BUTTONDIM)
+		self.bChgFile.SetToolTipString("Change the selected macro file")
+		lbbtns.Add(self.bChgFile)
+		self.Bind(wx.EVT_BUTTON, self.doChangeFile, self.bChgFile)
+		self.bChgFile.Enable(False)
 		
 		lbbtns.AddSpacer((20, 20))
 		
@@ -133,7 +139,7 @@ class ManageMacros(wx.Dialog):
 			defaultDir=self.settings.lastmacrodirectory, 
 			defaultFile="",
 			wildcard=wildcard,
-			style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
+			style=wx.OPEN | wx.CHANGE_DIR)
 
 		if dlg.ShowModal() == wx.ID_OK:
 			paths = dlg.GetPaths()
@@ -186,6 +192,28 @@ class ManageMacros(wx.Dialog):
 			return
 		self.lbQueue.changeSelectedMacroName(name)
 		self.bSave.Enable(True)
+		
+	def doChangeFile(self, evt):
+		fqn = self.lbQueue.getSelectedFile()
+		(directory, filename) = os.path.split(fqn)
+		dlg = wx.FileDialog(
+			self, message="Choose a new file",
+			defaultDir=directory, 
+			defaultFile=filename,
+			wildcard=wildcard,
+			style=wx.OPEN | wx.CHANGE_DIR)
+
+		if dlg.ShowModal() == wx.ID_OK:
+			paths = dlg.GetPaths()
+			if len(paths) > 0:
+				mdir = os.path.split(paths[0])[0]
+				if mdir != self.settings.lastmacrodirectory:
+					self.settings.lastmacrodirectory = mdir
+					self.settings.setModified()
+					
+				path = paths[0]
+				self.lbQueue.setSelectedFile(path)
+				self.bSave.Enable(True)
 			
 	def doNewFile(self, evt):
 		self.bNewFile.Enable(False)
@@ -234,6 +262,8 @@ class ManageMacros(wx.Dialog):
 	def doEditSelected(self, evt):
 		fn = self.lbQueue.getSelectedFile()
 		self.bEditSel.Enable(False)
+		self.bRename.Enable(False)
+		self.bChgFile.Enable(False)
 		if not fn:
 			return
 		
@@ -257,6 +287,8 @@ class ManageMacros(wx.Dialog):
 			
 		self.editDlg.Destroy();
 		self.bEditSel.Enable(True)
+		self.bRename.Enable(True)
+		self.bChgFile.Enable(True)
 		
 		if not rc:
 			return
@@ -278,6 +310,8 @@ class ManageMacros(wx.Dialog):
 			self.bUp.Enable(False)
 			self.bDown.Enable(False)
 			self.bEditSel.Enable(False)
+			self.bRename.Enable(False)
+			self.bChgFile.Enable(False)
 		else:
 			
 			if nSelected is None:
@@ -285,8 +319,12 @@ class ManageMacros(wx.Dialog):
 				self.bUp.Enable(False)
 				self.bDown.Enable(False)
 				self.bEditSel.Enable(False)
+				self.bRename.Enable(False)
+				self.bChgFile.Enable(False)
 			else:
 				self.bEditSel.Enable(True)
+				self.bRename.Enable(True)
+				self.bChgFile.Enable(True)
 				self.bDel.Enable(True)
 				if nSelected == 0:
 					self.bUp.Enable(False)
@@ -423,6 +461,16 @@ class MacroListCtrl(wx.ListCtrl):
 			return None
 		
 		return self.macroFiles[self.macroOrder[self.selectedItem]]	
+	
+	def setSelectedFile(self, newfile):
+		if self.selectedItem is None:
+			return None
+		
+		if self.selectedItem < 0 or self.selectedItem >= len(self.macroOrder):
+			return None
+		
+		self.macroFiles[self.macroOrder[self.selectedItem]]	= newfile
+		self.RefreshItem(self.selectedItem)
 		
 	def getSelectedMacroName(self):
 		if self.selectedItem is None:
