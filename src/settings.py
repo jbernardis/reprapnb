@@ -189,6 +189,7 @@ class Settings:
 		self.macroOrder = []
 		self.tools = {}
 		self.toolOrder = []
+		self.historysize = 100
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
 		
@@ -237,6 +238,14 @@ class Settings:
 							self.showWarning("Invalid value for maxloglines")
 							self.maxloglines = 5000
 							self.modified = True
+				elif opt == 'historysize':
+					try:
+						self.historysize = int(value)
+					except:
+						self.showWarning("Invalid value for history size")
+						self.historysize = 100
+						self.modified = True
+						
 				elif opt == 'port':
 					try:
 						self.port = int(value)
@@ -351,6 +360,7 @@ class Settings:
 			self.cfg.set(self.section, "webbase", str(self.webbase))
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
+			self.cfg.set(self.section, "historysize", str(self.historysize))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 							

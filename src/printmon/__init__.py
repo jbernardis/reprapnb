@@ -37,11 +37,12 @@ def _get_float(l, which):
 	return float(gcRegex.findall(l.split(which)[1])[0])
 
 class PrintMonitor(wx.Panel):
-	def __init__(self, parent, app, prtname, reprap):
+	def __init__(self, parent, app, prtname, reprap, history):
 		self.model = None
 		self.app = app
 		self.buildarea = self.app.settings.printersettings[prtname].buildarea
 		self.prtname = prtname
+		self.history = history
 		self.reprap = reprap
 		self.manctl = None
 
@@ -308,6 +309,7 @@ class PrintMonitor(wx.Panel):
 			return
 
 		if evt.event == SD_PRINT_COMPLETE:
+			self.history.SDPrintFromComplete(self.prtname)
 			self.endTime = time.time()
 			self.infoPane.setSDPrintComplete()
 			self.sdprintingfrom = False
@@ -422,6 +424,7 @@ class PrintMonitor(wx.Panel):
 		self.setStatus(PMSTATUS_PRINTING)
 		
 	def resumeSDPrintFrom(self, fn):
+		self.history.SDPrintFromStart(fn, self.prtname)
 		self.clearModel()
 		self.reprap.send_now("M23 " + fn[1].lower())
 		self.reprap.send_now("M24")
@@ -441,6 +444,7 @@ class PrintMonitor(wx.Panel):
 		self.sdcard.startPrintToSD()
 		
 	def resumeSDPrintTo(self, tfn):
+		self.history.SDPrintToStart(tfn, self.prtname)
 		self.setSDTargetFile(tfn[1].lower())
 		self.suspendTempProbe(True)
 		self.reprap.send_now("M28 %s" % self.sdTargetFile)
@@ -500,9 +504,12 @@ class PrintMonitor(wx.Panel):
 			self.endTime = time.time()
 			self.infoPane.setPrintComplete()
 			if self.sdTargetFile is not None:
+				self.history.SDPrintToComplete(self.prtname)
 				self.reprap.send_now("M29 %s" % self.sdTargetFile)
 				self.suspendTempProbe(False)
 				self.setSDTargetFile(None)
+			else:
+				self.history.PrintComplete(self.prtname)
 
 			self.printing = False
 			self.paused = False
@@ -583,6 +590,7 @@ class PrintMonitor(wx.Panel):
 				action = "restarted"
 				self.reprap.restartPrint(self.model)
 			else:
+				self.history.PrintStart(self.gcFile, self.prtname)
 				action = "started"
 				self.reprap.startPrint(self.model)
 			self.logger.LogMessage("Print %s at %s" % (action, time.strftime('%H:%M:%S', time.localtime(self.startTime))))

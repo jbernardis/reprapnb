@@ -10,6 +10,9 @@ More capabilities from HTTP interface
 	- initiate and monitor slicer
 	- choose slicer/slicer config
 	- start heaters
+	
+Slicing history
+Printing history
 
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box

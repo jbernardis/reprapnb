@@ -160,7 +160,7 @@ class BatchSlicerThread:
 				wx.PostEvent(self.win, evt)
 
 			if self.cancelled:
-				evt = BatchSlicerEvent(msg = None, state = BATCHSLICER_CANCELLED)
+				evt = BatchSlicerEvent(msg = None, state = BATCHSLICER_CANCELLED, hard = self.hardcancel)
 				wx.PostEvent(self.win, evt)
 				if self.hardcancel:
 					p.kill()
@@ -269,11 +269,12 @@ class ModelerThread:
 		self.running = False
 
 class FilePrepare(wx.Panel):
-	def __init__(self, parent, app):
+	def __init__(self, parent, app, history):
 		self.model = None
 		self.app = app
 		self.logger = self.app.logger
 		self.settings = app.settings.fileprep
+		self.history = history
 		self.modified = False
 		self.temporaryFile = False	
 		self.gcodeLoaded = False
@@ -822,6 +823,7 @@ class FilePrepare(wx.Panel):
 
 		self.stlFile = saveStlFile
 		self.gcFile = saveGcFile
+		self.batchSliceCfg = self.getSlicerConfigString()
 		
 		joblist = []
 		
@@ -929,6 +931,9 @@ class FilePrepare(wx.Panel):
 				self.logger.LogMessage("(s) - " + evt.msg)
 				
 		elif evt.state == BATCHSLICER_CANCELLED:
+			if evt.hard:
+				self.history.BatchSliceCancel()
+				
 			if len(self.settings.stlqueue) != 0:
 				self.bSliceStart.Enable(True)
 				self.bSliceNext.Enable(True)
@@ -965,9 +970,11 @@ class FilePrepare(wx.Panel):
 				self.activeBatchSlicer = None
 		
 		elif evt.state == BATCHSLICER_STARTFILE:
+			self.history.BatchSliceStart(evt.stlfn, self.batchSliceCfg)
 			self.logger.LogMessage("Batch Slicer: starting file: " + evt.stlfn)
 		
 		elif evt.state == BATCHSLICER_ENDFILE:
+			self.history.BatchSliceComplete(evt.stlfn)
 			self.logger.LogMessage("Batch Slicer: finished file: " + evt.stlfn)
 			if self.settings.batchaddgcode:
 				if evt.gcfn in self.settings.gcodequeue:
@@ -1125,6 +1132,7 @@ class FilePrepare(wx.Panel):
 		self.sliceFile(fn, tempFile=True)
 		
 	def sliceFile(self, fn, tempFile = False):
+		self.history.SliceStart(fn, self.getSlicerConfigString())
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
@@ -1157,6 +1165,7 @@ class FilePrepare(wx.Panel):
 			pass
 				
 		elif evt.state == SLICER_CANCELLED:
+			self.history.SliceCancel()
 			self.gcFile = None
 			self.setSliceMode()
 			self.enableButtons()
@@ -1168,6 +1177,7 @@ class FilePrepare(wx.Panel):
 			self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 			
 		elif evt.state == SLICER_FINISHED:
+			self.history.SliceComplete()
 			if self.temporaryFile:
 				try:
 					self.logger.LogMessage("Removing temporary STL file: %s" % self.stlFile)

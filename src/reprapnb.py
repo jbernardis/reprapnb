@@ -20,6 +20,7 @@ from reprapserver import RepRapServer
 from tools import formatElapsed
 from gcref import GCRef
 from connection import ConnectionManagerPanel
+from history import History
 
 LOGGER_TAB_TEXT = "Log"
 GCREF_TAB_TEXT = "G Code Reference"
@@ -52,6 +53,7 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)
+		self.history = History(self.settings.historysize)
 		
 		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
 		self.SetIcon(ico)
@@ -93,7 +95,7 @@ class MainFrame(wx.Frame):
 		self.pxConnMgr = 4
 
 		self.pgPlater = Plater(self.nb, self)
-		self.pgFilePrep = FilePrepare(self.nb, self)
+		self.pgFilePrep = FilePrepare(self.nb, self, self.history)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgGCodeRef, GCREF_TAB_TEXT, imageId=-1)
@@ -131,7 +133,7 @@ class MainFrame(wx.Frame):
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
-		pm = self.pgPrtMon[printer] = PrintMonitor(self.nb, self, printer, reprap)
+		pm = self.pgPrtMon[printer] = PrintMonitor(self.nb, self, printer, reprap, self.history)
 		pm.setManCtl(mc)
 		mc.setPrtMon(pm)
 		mcText = MANCTL_TAB_TEXT % printer
