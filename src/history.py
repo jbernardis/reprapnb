@@ -2,16 +2,21 @@ import time
 import marshal
 import os
 
-SLICEHISTORYFILE = "./slice.history"
-PRINTHISTORYFILE = "./print.history"
-
 class History:
-	def __init__(self, hsize):
+	def __init__(self, hsize, slicehistoryfile, printhistoryfile):
 		self.hsize = hsize
+		self.slicehistoryfile = slicehistoryfile
+		self.printhistoryfile = printhistoryfile
 		self.sliceHistory = []
 		self.printHistory = []
 		self.LoadHistory()
 		pass
+	
+	def GetSliceHistory(self):
+		return self.sliceHistory[:]
+	
+	def GetPrintHistory(self):
+		return self.printHistory[:]
 	
 	def SaveHistory(self):
 		self.SaveSliceHistory()
@@ -20,7 +25,7 @@ class History:
 	def SaveSliceHistory(self):
 		print "save slice history"
 		try:
-			f = open(SLICEHISTORYFILE, 'wb')
+			f = open(self.slicehistoryfile, 'wb')
 		except:
 			print "Error opening slice history file for write"
 		else:
@@ -35,7 +40,7 @@ class History:
 	def SavePrintHistory(self):
 		print "save print history"
 		try:
-			f = open(PRINTHISTORYFILE, 'wb')
+			f = open(self.printhistoryfile, 'wb')
 		except:
 			print "Error opening print history file for write"
 		else:
@@ -53,15 +58,17 @@ class History:
 		self.LoadPrintHistory()
 		
 	def LoadSliceHistory(self):
-		if not os.path.exists(SLICEHISTORYFILE):
+		if not os.path.exists(self.slicehistoryfile):
 			print "Slice history file does not exist"
 			self.sliceHistory = []
+			return
 			
 		try:
-			f = open(SLICEHISTORYFILE, 'rb')
+			f = open(self.slicehistoryfile, 'rb')
 		except:
 			print "Error opening slice history file"
 			self.sliceHistory = []
+			return
 
 		try:
 			self.sliceHistory = marshal.load(f)
@@ -72,15 +79,17 @@ class History:
 			f.close()
 			
 	def LoadPrintHistory(self):
-		if not os.path.exists(PRINTHISTORYFILE):
+		if not os.path.exists(self.printhistoryfile):
 			print "Print history file does not exist"
 			self.printHistory = []
+			return
 			
 		try:
-			f = open(PRINTHISTORYFILE, 'rb')
+			f = open(self.printhistoryfile, 'rb')
 		except:
 			print "Error opening print history file"
 			self.printHistory = []
+			return
 
 		try:
 			self.printHistory = marshal.load(f)
@@ -89,11 +98,10 @@ class History:
 			print "Error loading print history"
 			self.printHistory = []
 			f.close()
-
 	
 	def ts(self):
 		now = time.time()
-		return time.strftime('%H:%M:%S', time.localtime(now))
+		return time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(now))
 
 	def SliceStart(self, fn, cfgstring):
 		self.sliceHistory.append([fn, cfgstring, self.ts(), "", "Start"])

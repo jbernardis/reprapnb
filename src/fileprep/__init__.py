@@ -20,6 +20,7 @@ from override import Override, ovUserKeyMap, ovKeyOrder
 from slicequeue import SliceQueue
 from gcodequeue import GCodeQueue
 from toolbar import ToolBar
+from viewslicehistory import ViewSliceHistory
 
 from reprap import MAX_EXTRUDERS
 
@@ -541,6 +542,22 @@ class FilePrepare(wx.Panel):
 		self.sizerOpts.Add(self.cbBuffDC)
 		
 		self.sizerLeft.Add(self.sizerOpts)
+		
+		self.sizerHistBtns = wx.BoxSizer(wx.HORIZONTAL)
+			
+		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIM)
+		self.bSliceHist.SetToolTipString("View slicing history")
+		self.sizerHistBtns.Add(self.bSliceHist)
+		self.Bind(wx.EVT_BUTTON, self.doViewSliceHistory, self.bSliceHist)
+		
+		self.sizerHistBtns.AddSpacer((20, 20))
+			
+		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIM)
+		self.bPrintHist.SetToolTipString("View printing history")
+		self.sizerHistBtns.Add(self.bPrintHist)
+		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
+		
+		self.sizerLeft.Add(self.sizerHistBtns)
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
@@ -780,6 +797,24 @@ class FilePrepare(wx.Panel):
 		self.Layout()
 		self.Fit()
 		
+	def doViewSliceHistory(self, evt):
+		# disable button
+		# need protection here is slicing is active - perhaps don't draw (or permanently disable) slice button???
+		self.slhistdlg = ViewSliceHistory(self, self.settings, self.images, self.history.GetSliceHistory(), self.closeViewSliceHist)
+		self.slhistdlg.Show()
+
+	def closeViewSliceHist(self, rc):
+		# enable button
+		if rc:
+			fn = self.slhistdlg.getSelectedFile()
+		self.slhistdlg.Destroy()
+		if rc:
+			print "File", fn
+			# slice this file
+		
+	def doViewPrintHistory(self, evt):
+		pass
+	
 	def doBatchSlice(self, evt):
 		stllist = self.settings.stlqueue[:]
 		dlg = SliceQueue(self, stllist)
@@ -974,7 +1009,7 @@ class FilePrepare(wx.Panel):
 			self.logger.LogMessage("Batch Slicer: starting file: " + evt.stlfn)
 		
 		elif evt.state == BATCHSLICER_ENDFILE:
-			self.history.BatchSliceComplete(evt.stlfn)
+			self.history.BatchSliceComplete()
 			self.logger.LogMessage("Batch Slicer: finished file: " + evt.stlfn)
 			if self.settings.batchaddgcode:
 				if evt.gcfn in self.settings.gcodequeue:

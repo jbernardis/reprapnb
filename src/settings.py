@@ -190,6 +190,9 @@ class Settings:
 		self.tools = {}
 		self.toolOrder = []
 		self.historysize = 100
+		self.slicehistoryfile = os.path.join(folder, "slice.history")
+		self.printhistoryfile = os.path.join(folder, "print.history")
+		self.showhistbasename = True
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
 		
@@ -217,10 +220,16 @@ class Settings:
 					self.lastlogdirectory = value
 				elif opt == 'lastmacrodirectory':
 					self.lastmacrodirectory = value
+				elif opt == 'slicehistoryfile':
+					self.slicehistoryfile = value
+				elif opt == 'printhistoryfile':
+					self.printhistoryfile = value
 				elif opt == 'webbase':
 					self.webbase = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
+				elif opt == 'showhistbasename':
+					self.showhistbasename = parseBoolean(value, True)
 				elif opt == 'buildarea':
 					try:
 						exec("s=%s" % value)
@@ -357,10 +366,13 @@ class Settings:
 			self.cfg.set(self.section, "printers", ",".join(self.printers))
 			self.cfg.set(self.section, "lastlogdirectory", str(self.lastlogdirectory))
 			self.cfg.set(self.section, "lastmacrodirectory", str(self.lastmacrodirectory))
+			self.cfg.set(self.section, "slicehistoryfile", str(self.slicehistoryfile))
+			self.cfg.set(self.section, "printhistoryfile", str(self.printhistoryfile))
 			self.cfg.set(self.section, "webbase", str(self.webbase))
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "historysize", str(self.historysize))
+			self.cfg.set(self.section, "showhistbasename", str(self.showhistbasename))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 							

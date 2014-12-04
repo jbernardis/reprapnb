@@ -53,7 +53,7 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		self.settings = Settings(self, cmd_folder)
-		self.history = History(self.settings.historysize)
+		self.history = History(self.settings.historysize, self.settings.slicehistoryfile, self.settings.printhistoryfile)
 		
 		ico = wx.Icon(os.path.join(self.settings.cmdfolder, "images", "rrh.ico"), wx.BITMAP_TYPE_ICO)
 		self.SetIcon(ico)
