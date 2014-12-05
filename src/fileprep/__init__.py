@@ -287,6 +287,7 @@ class FilePrepare(wx.Panel):
 		self.dlgView = None
 		self.dlgGCQueue = None
 		self.slhistdlg = None
+		self.sliceMode = True
 
 		self.activeSlicer = None
 		self.activeBatchSlicer = None
@@ -546,6 +547,7 @@ class FilePrepare(wx.Panel):
 		self.sizerLeft.Add(self.sizerOpts)
 		
 		self.sizerHistBtns = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerHistBtns.AddSpacer((195, 20))
 			
 		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIMWIDE)
 		self.bSliceHist.SetToolTipString("View slicing history")
@@ -559,7 +561,9 @@ class FilePrepare(wx.Panel):
 		self.sizerHistBtns.Add(self.bPrintHist)
 		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
 		
-		self.sizerLeft.Add(self.sizerHistBtns, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		#self.sizerLeft.Add(self.sizerHistBtns, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		self.sizerLeft.AddSpacer((5,5))
+		self.sizerLeft.Add(self.sizerHistBtns)
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
@@ -802,7 +806,8 @@ class FilePrepare(wx.Panel):
 	def doViewSliceHistory(self, evt):
 		# disable button
 		# need protection here is slicing is active - perhaps don't draw (or permanently disable) slice button???
-		self.slhistdlg = ViewSliceHistory(self, self.settings, self.images, self.history.GetSliceHistory(), self.bSlice.IsEnabled(), self.closeViewSliceHist)
+		ena = self.bSlice.IsEnabled() and self.sliceMode
+		self.slhistdlg = ViewSliceHistory(self, self.settings, self.images, self.history.GetSliceHistory(), ena, self.closeViewSliceHist)
 		self.slhistdlg.Show()
 
 	def closeViewSliceHist(self, rc):
@@ -1110,6 +1115,7 @@ class FilePrepare(wx.Panel):
 		self.dlgView = None
 
 	def setSliceMode(self, flag=True):
+		self.sliceMode = flag
 		if flag:
 			self.bSlice.SetBitmapLabel(self.images.pngSlice)
 			self.bSlice.SetToolTipString("Slice a file using the currently configured slicer")
