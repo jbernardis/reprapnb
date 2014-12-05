@@ -192,7 +192,6 @@ class Settings:
 		self.historysize = 100
 		self.slicehistoryfile = os.path.join(folder, "slice.history")
 		self.printhistoryfile = os.path.join(folder, "print.history")
-		self.showhistbasename = True
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
 		
@@ -228,8 +227,6 @@ class Settings:
 					self.webbase = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
-				elif opt == 'showhistbasename':
-					self.showhistbasename = parseBoolean(value, True)
 				elif opt == 'buildarea':
 					try:
 						exec("s=%s" % value)
@@ -372,7 +369,6 @@ class Settings:
 			self.cfg.set(self.section, "port", str(self.port))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "historysize", str(self.historysize))
-			self.cfg.set(self.section, "showhistbasename", str(self.showhistbasename))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 							
@@ -429,6 +425,7 @@ class SettingsFilePrep:
 		self.acceleration = 1500
 		self.drawstlgrid = True
 		self.toolpathsonly = False
+		self.showhistbasename = True
 		self.batchaddgcode = True
 		self.stlqueue = []
 		self.gcodequeue = []
@@ -457,6 +454,9 @@ class SettingsFilePrep:
 				elif opt == 'slicers':
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
+
+				elif opt == 'showhistbasename':
+					self.showhistbasename = parseBoolean(value, True)
 
 				elif opt == 'acceleration':
 					try:
@@ -582,6 +582,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
 			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
 			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
+			self.cfg.set(self.section, "showhistbasename", str(self.showhistbasename))
 			self.cfg.set(self.section, "stlqueue", ",".join(self.stlqueue))
 			self.cfg.set(self.section, "gcodequeue", ",".join(self.gcodequeue))
 			self.cfg.set(self.section, "showstlbasename", str(self.showstlbasename))
