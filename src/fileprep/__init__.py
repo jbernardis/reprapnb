@@ -286,6 +286,8 @@ class FilePrepare(wx.Panel):
 		self.dlgMerge = None
 		self.dlgView = None
 		self.dlgGCQueue = None
+		self.slhistdlg = None
+
 		self.activeSlicer = None
 		self.activeBatchSlicer = None
 		self.batchslstatus = BATCHSL_IDLE
@@ -545,19 +547,19 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerHistBtns = wx.BoxSizer(wx.HORIZONTAL)
 			
-		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIM)
+		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIMWIDE)
 		self.bSliceHist.SetToolTipString("View slicing history")
 		self.sizerHistBtns.Add(self.bSliceHist)
 		self.Bind(wx.EVT_BUTTON, self.doViewSliceHistory, self.bSliceHist)
 		
 		self.sizerHistBtns.AddSpacer((20, 20))
 			
-		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIM)
+		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIMWIDE)
 		self.bPrintHist.SetToolTipString("View printing history")
 		self.sizerHistBtns.Add(self.bPrintHist)
 		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
 		
-		self.sizerLeft.Add(self.sizerHistBtns)
+		self.sizerLeft.Add(self.sizerHistBtns, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
@@ -800,7 +802,7 @@ class FilePrepare(wx.Panel):
 	def doViewSliceHistory(self, evt):
 		# disable button
 		# need protection here is slicing is active - perhaps don't draw (or permanently disable) slice button???
-		self.slhistdlg = ViewSliceHistory(self, self.settings, self.images, self.history.GetSliceHistory(), self.closeViewSliceHist)
+		self.slhistdlg = ViewSliceHistory(self, self.settings, self.images, self.history.GetSliceHistory(), self.bSlice.IsEnabled(), self.closeViewSliceHist)
 		self.slhistdlg.Show()
 
 	def closeViewSliceHist(self, rc):
@@ -808,9 +810,17 @@ class FilePrepare(wx.Panel):
 		if rc:
 			fn = self.slhistdlg.getSelectedFile()
 		self.slhistdlg.Destroy()
+		self.slhistdlg = None
 		if rc:
 			print "File", fn
+			self.sliceFile(fn)
 			# slice this file
+			
+	def allowHistorySlicing(self, flag):
+		if self.slhistdlg is None:
+			return 
+		
+		self.slhistdlg.AllowSlicing(flag)
 		
 	def doViewPrintHistory(self, evt):
 		pass
@@ -874,6 +884,7 @@ class FilePrepare(wx.Panel):
 			
 		self.bSliceStart.Enable(False)
 		self.bSlice.Enable(False)
+		self.allowHistorySlicing(False)
 		self.bSliceQ.Enable(False)
 		self.bSliceNext.Enable(False)
 		self.bSlicePause.Enable(True)
@@ -974,6 +985,7 @@ class FilePrepare(wx.Panel):
 				self.bSliceNext.Enable(True)
 			self.bSliceQ.Enable(True)
 			self.bSlice.Enable(True)
+			self.allowHistorySlicing(True)
 			self.bSliceStop.Enable(False)
 			self.bSlicePause.Enable(False)
 			self.logger.LogMessage("Batch Slicer: Cancelled")
@@ -993,6 +1005,7 @@ class FilePrepare(wx.Panel):
 			self.bSliceQ.Enable(True)
 			self.bSliceStart.Enable(False)
 			self.bSlice.Enable(True)
+			self.allowHistorySlicing(True)
 			self.bSliceNext.Enable(False)
 			self.bSliceStop.Enable(False)
 			self.bSlicePause.Enable(False)
@@ -1139,6 +1152,7 @@ class FilePrepare(wx.Panel):
 		if self.sliceActive:
 			self.sliceThread.Stop()
 			self.bSlice.Enable(False)
+			self.allowHistorySlicing(False)
 			self.setAllowPulls(False)
 			self.bOpen.Enable(False)
 			self.bMerge.Enable(False)
@@ -1184,6 +1198,7 @@ class FilePrepare(wx.Panel):
 		self.disableEditButtons()
 		self.setAllowPulls(False)
 		self.setSliceMode(False)
+		self.allowHistorySlicing(False)
 		self.sliceActive = True
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
@@ -1278,6 +1293,7 @@ class FilePrepare(wx.Panel):
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
+		self.allowHistorySlicing(False)
 		self.disableEditButtons()
 		self.setAllowPulls(False)
 		self.filename = fn
@@ -1460,6 +1476,7 @@ class FilePrepare(wx.Panel):
 		self.bOpen.Enable(True)
 		self.bMerge.Enable(True)
 		self.bSlice.Enable(True)
+		self.allowHistorySlicing(True)
 		self.bSave.Enable(self.gcodeLoaded)
 		self.bSaveLayer.Enable(self.gcodeLoaded)
 		self.bFilamentChange.Enable(self.gcodeLoaded)
@@ -1473,6 +1490,7 @@ class FilePrepare(wx.Panel):
 		self.bOpen.Enable(False)
 		self.bMerge.Enable(False)
 		self.bSlice.Enable(False)
+		self.allowHistorySlicing(False)
 		self.bSave.Enable(False)
 		self.bSaveLayer.Enable(False)
 		self.bFilamentChange.Enable(False)

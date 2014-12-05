@@ -6,10 +6,11 @@ from settings import BUTTONDIM
 VISIBLEQUEUESIZE = 21
 
 class ViewSliceHistory(wx.Dialog):
-	def __init__(self, parent, settings, images, sliceHistory, ch):
+	def __init__(self, parent, settings, images, sliceHistory, allowSlice, ch):
 		self.parent = parent
 		self.settings = settings
 		self.closehandler = ch
+		self.allowslice = allowSlice
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Slicing History", size=(800, 804))
 		self.SetBackgroundColour("white")
 		
@@ -65,7 +66,14 @@ class ViewSliceHistory(wx.Dialog):
 		return self.lbHistory.getSelectedFile()
 	
 	def UpdateDlg(self, exists):
-		self.bSlice.Enable(exists)
+		if self.allowslice:
+			self.bSlice.Enable(exists)
+		else:
+			self.bSlice.Enable(False)
+			
+	def AllowSlicing(self, flag):
+		self.allowslice = flag
+		self.UpdateDlg(self.lbHistory.doesSelectedExist())
 		
 	def doExit(self, evt):
 		self.closehandler(False)
@@ -81,10 +89,10 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		dc.SetFont(f)
 		fontWidth, fontHeight = dc.GetTextExtent("Xy")
 		
-		colWidths = [500, 150, 120, 120, 100]
+		colWidths = [500, 170, 120, 120, 120]
 		colTitles = ["File", "Config", "Start Time", "End Time", "Status"]
 		
-		totwidth = 0;
+		totwidth = 20;
 		for w in colWidths:
 			totwidth += w
 		
@@ -96,6 +104,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		self.slicehistory = slicehistory
 		self.basenameonly = basenameonly
 		self.selectedItem = None
+		self.selectedExists = False
 		self.il = wx.ImageList(16, 16)
 		self.il.Add(images.pngSelected)
 		self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
@@ -117,17 +126,20 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		
 	def doListSelect(self, evt):
 		x = self.selectedItem
-		self.selectedItem = evt.m_itemIndex
+		self.selectedItem = len(self.sliceHistory) - evt.m_itemIndex - 1
 		if x is not None:
 			self.RefreshItem(x)
 			
 		fn = self.slicehistory[self.selectedItem][0]
 		if os.path.exists(fn):
-			exists = True
+			self.selectedExists = True
 		else:
-			exists = False
-		print fn, " exists ", exists
-		self.parent.UpdateDlg(exists)
+			self.selectedExists = False
+		print fn, " exists ", self.selectedExists
+		self.parent.UpdateDlg(self.selectedExists)
+		
+	def doesSelectedExist(self):
+		return self.selectedExists
 			
 	def setBaseNameOnly(self, flag):
 		if self.basenameonly == flag:
@@ -138,10 +150,11 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			self.RefreshItem(i)
 
 	def OnGetItemText(self, item, col):
+		i = len(self.sliceHistory) - item - 1
 		if col == 0 and self.basenameonly:
-			return os.path.basename(self.slicehistory[item][0])
+			return os.path.basename(self.slicehistory[i][0])
 		else:
-			return self.slicehistory[item][col]
+			return self.slicehistory[i][col]
 
 	def OnGetItemImage(self, item):
 		if item == self.selectedItem:
