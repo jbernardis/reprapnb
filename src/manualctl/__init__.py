@@ -11,6 +11,9 @@ from firmware import Firmware
 from macros import MacroDialog
 from settings import BUTTONDIM, BUTTONDIMWIDE
 
+snHotEnds = ("HE0", "HE1", "HE2")
+snBed = "Bed"
+
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, prtname, reprap):
 		self.model = None
@@ -25,6 +28,7 @@ class ManualControl(wx.Panel):
 		self.prtmon = None
 		self.currentTool = 0
 		self.macroActive = False
+		self.nextr = self.app.settings.printersettings[prtname].nextr
 		
 		if self.speedcommand is not None:
 			self.reprap.addToAllowedCommands(self.speedcommand)
@@ -46,7 +50,7 @@ class ManualControl(wx.Panel):
 		self.sizerMove.AddSpacer((20,20))
 		self.sizerMove.Add(self.moveAxis)
 		
-		self.sizerExtrude = self.addExtruder(self.app.settings.printersettings[prtname].nextr)
+		self.sizerExtrude = self.addExtruder(self.nextr)
 		self.sizerBed = self.addBed()
 		self.sizerSpeed = self.addSpeedControls()
 		self.sizerGCode = self.addGCEntry()
@@ -153,7 +157,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.Add(t, flag=wx.LEFT)
 		sizerExtrude.AddSpacer((10,10))
 		
-		self.heWin = HotEnd(self, self.app, self.reprap, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=("HE0", "HE1", "HE2"), 
+		self.heWin = HotEnd(self, self.app, self.reprap, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=snHotEnds, 
 					target=(185, 185, 185), trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
@@ -178,7 +182,7 @@ class ManualControl(wx.Panel):
 		sizerBed.Add(t, flag=wx.LEFT)
 		sizerBed.AddSpacer((10,10))
 		
-		self.bedWin = HotBed(self, self.app, self.reprap, name="Heated Print Bed", shortname="Bed", 
+		self.bedWin = HotBed(self, self.app, self.reprap, name="Heated Print Bed", shortname=snBed, 
 					target=60, trange=[20, 150])
 		sizerBed.Add(self.bedWin)
 		sizerBed.AddSpacer((10,10))
@@ -285,3 +289,44 @@ class ManualControl(wx.Panel):
 
 	def onClose(self, evt):
 		return True
+	
+	def setHeaters(self, q):
+		rv = {}
+		errors = False
+		count = 0
+		for k in q.keys():
+			if k.lower() == snBed.lower():
+				try:
+					t = int(q[k])
+					self.bedWin.heaterTemp(t)
+					rv[k] = str(t)
+					count += 1
+				except:
+					rv[k] = "invalid temperature value"
+					errors = True
+			else:
+				found = False
+				for t in range(self.nextr):
+					if k.lower() == snHotEnds[t].lower():
+						found = True
+						try:
+							tmp = int(q[k])
+							self.heWin.heaterTemp(t, tmp)
+							rv[k] = str(tmp)
+							count += 1
+						except:
+							rv[k] = "invalid temperature value"
+							errors = True
+						break
+					
+				if not found:
+					rv[k] = "Unknown heater: " + k
+					errors = True
+							
+		if errors:
+			rv['result'] = "Failed - errors encountered, %d temps changed" % count
+		else:
+			rv['result'] = "Success - %d temps changes" % count
+		return rv
+					
+				

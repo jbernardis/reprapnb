@@ -10,7 +10,6 @@ class ViewPrintHistory(wx.Dialog):
 		self.parent = parent
 		self.settings = settings
 		self.closehandler = ch
-		print "initial allowload value = ", allowLoad
 		self.allowload = allowLoad
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Printing History", size=(800, 804))
 		self.SetBackgroundColour("white")
@@ -66,7 +65,6 @@ class ViewPrintHistory(wx.Dialog):
 		return self.lbHistory.getSelectedFile()
 	
 	def UpdateDlg(self, exists):
-		print "Udpatedlg ", self.allowload
 		if self.allowload:
 			self.bLoad.Enable(exists)
 		else:
@@ -79,7 +77,7 @@ class ViewPrintHistory(wx.Dialog):
 	def doExit(self, evt):
 		self.closehandler(False)
 		
-	def doReslice(self, evt):
+	def doReload(self, evt):
 		self.closehandler(True)
 
 class PrintHistoryCtrl(wx.ListCtrl):	
@@ -136,11 +134,9 @@ class PrintHistoryCtrl(wx.ListCtrl):
 			self.selectedExists = True
 		else:
 			self.selectedExists = False
-		print fn, " exists ", self.selectedExists
 		self.parent.UpdateDlg(self.selectedExists)
 		
 	def doesSelectedExist(self):
-		print "DoesSelectedExist returning ", self.selectedExists
 		return self.selectedExists
 			
 	def setBaseNameOnly(self, flag):

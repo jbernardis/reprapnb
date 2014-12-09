@@ -44,6 +44,8 @@ class MainFrame(wx.Frame):
 		self.pgPrinters = {}
 		self.pgManCtl = {}
 		self.pgPrtMon = {}
+		self.connected = {}
+		self.printing = {}
 		
 		wx.Frame.__init__(self, None, title="Rep Rap Notebook", size=[NBWIDTH, NBHEIGHT])
 		
@@ -114,6 +116,7 @@ class MainFrame(wx.Frame):
 		self.httpServer = RepRapServer(self, self.settings, self.logger)
 		self.logger.LogMessage("Reprap host ready!")
 		self.nb.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.changePages)
+		self.history.SetLogger(self.logger)
 		self.timer.Start(MAINTIMER)
 		
 	def changePages(self, evt):
@@ -134,6 +137,8 @@ class MainFrame(wx.Frame):
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
 		pm = self.pgPrtMon[printer] = PrintMonitor(self.nb, self, printer, reprap, self.history)
+		self.connected[printer] = True
+		self.printing[printer] = False
 		pm.setManCtl(mc)
 		mc.setPrtMon(pm)
 		mcText = MANCTL_TAB_TEXT % printer
@@ -146,6 +151,9 @@ class MainFrame(wx.Frame):
 	def delPages(self, printer):
 		if printer not in self.pgPrinters.keys():
 			return
+		
+		del self.connected[printer]
+		del self.printing[printer]
 		mcText, pmText = self.pgPrinters[printer]
 		self.deletePageByTabText(mcText)
 		self.deletePageByTabText(pmText)
@@ -236,14 +244,19 @@ class MainFrame(wx.Frame):
 		if pn is not None:
 			if status == PMSTATUS_NOT_READY:
 				self.nb.SetPageImage(pn, self.nbilNotReadyIdx)
+				self.printing[pname] = False
 			elif status == PMSTATUS_READY:
 				self.nb.SetPageImage(pn, self.nbilReadyIdx)
+				self.printing[pname] = False
 			elif status == PMSTATUS_PRINTING:
 				self.nb.SetPageImage(pn, self.nbilPrintingIdx)
+				self.printing[pname] = True
 			elif status == PMSTATUS_PAUSED:
 				self.nb.SetPageImage(pn, self.nbilPausedIdx)
+				self.printing[pname] = False
 			else:
 				self.nb.SetPageImage(pn, -1)
+				self.printing[pname] = False
 		
 	def updatePlaterStatus(self, status):
 		if status == PLSTATUS_LOADED_CLEAN:
@@ -287,15 +300,58 @@ class MainFrame(wx.Frame):
 	def getStatus(self):
 		return self.pgConnMgr.getStatus()
 	
-	def stopPrint(self):
-		st = {}
-		for p in self.settings.printers:
-			if self.connected[p] and self.printing[p]:
-				pst = self.pgPrtMon[p].stopPrint()
+	def stopPrint(self, q):
+		print "Q=(", q, ")"
+		
+		if 'printer' not in q.keys():
+			if len(self.connected) == 1:
+				p = self.connected.keys()[0]
 			else:
-				pst = {'result': "Skipped - not printing"}
-			st[p] = pst
-		return st
+				return {'result': 'failed - please specify printer'}
+		else:
+			p = q['printer']
+			if p not in self.settings.printers and p != 'all':
+				return {'result': 'failed - unknown printer'}
+		
+		if p == 'all':
+			st = {}
+			for p in self.settings.printers:
+				print "Printer (", p, ")"
+				if p in self.connected.keys() and self.printing[p]:
+					#pst = self.pgPrtMon[p].stopPrint()
+					pst = {'result': "We would have stopped here"}
+				else:
+					pst = {'result': "Skipped - not printing"}
+				st[p] = pst
+			return st
+		else:
+			if p in self.connected.keys() and self.printing[p]:
+				#return self.pgPrtMon[p].stopPrint()
+				return {'result': "We would have stopped here"}
+			else:
+				return {'result': "Skipped - not printing"}
+	
+	def setHeaters(self, q):
+		print "Q=(", q, ")"
+		
+		if len(self.connected) == 0:
+			return {'result': 'failed - no printers connected'}
+		
+		if 'printer' not in q.keys():
+			if len(self.connected) == 1:
+				p = self.connected.keys()[0]
+			else:
+				return {'result': 'failed - please specify printer'}
+		else:
+			p = q['printer']
+			del q['printer']
+			if p not in self.settings.printers:
+				return {'result': 'failed - unknown printer: ' + p}
+
+		if not p in self.connected.keys():
+			return {'result': 'failed - printer not connected'}
+		
+		return self.pgManCtl[p].setHeaters(q)
 		
 	def getTemps(self):
 		return self.pgConnMgr.getTemps()

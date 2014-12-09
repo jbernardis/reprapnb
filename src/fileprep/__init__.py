@@ -816,16 +816,15 @@ class FilePrepare(wx.Panel):
 		self.slhistdlg.Destroy()
 		self.slhistdlg = None
 		if rc:
-			print "File", fn
 			self.sliceFile(fn)
 			
 	def allowHistoryAction(self, flag):
-		if self.slhistdlg is None:
-			return 
-		
-		self.slhistdlg.AllowSlicing(flag)
-		self.slhistdlg.AllowLoading(flag)
-		
+		if self.slhistdlg is not None:
+			self.slhistdlg.AllowSlicing(flag)
+			
+		if self.prhistdlg is not None:
+			self.prhistdlg.AllowLoading(flag)
+			
 	def doViewPrintHistory(self, evt):
 		ena = self.bSlice.IsEnabled() and self.sliceMode
 		self.prhistdlg = ViewPrintHistory(self, self.settings, self.images, self.history.GetPrintHistory(), ena, self.closeViewPrintHist)
@@ -837,7 +836,6 @@ class FilePrepare(wx.Panel):
 		self.prhistdlg.Destroy()
 		self.prhistdlg = None
 		if rc:
-			print "File", fn
 			self.loadFile(fn)
 	
 	def doBatchSlice(self, evt):

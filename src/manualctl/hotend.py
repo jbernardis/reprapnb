@@ -253,10 +253,7 @@ class HotEnd(wx.Window):
 			return
 					
 		t = self.sliders[i].GetValue()
-		cmd = "M104 S%d" % t
-		if self.nextr > 1:
-			cmd += " T" + str(sel)
-		self.reprap.send_now(cmd)
+		self.heaterTemp(t, sel)
 		
 	def heaterOff(self, evt):
 		tc_sel = evt.GetEventObject()
@@ -269,9 +266,13 @@ class HotEnd(wx.Window):
 		if sel is None:
 			return
 					
-		cmd = "M104 S0"
+		self.heaterTemp(sel, 0)
+			
+	def heaterTemp(self, tool, temp):
+		cmd = "M104 S%d" % temp
 		if self.nextr > 1:
-			cmd += " T" + str(sel)
+			cmd += " T" + str(tool)
 		self.reprap.send_now(cmd)
+
 
 

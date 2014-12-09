@@ -89,6 +89,8 @@ class RepRapServer:
 			return True, self.queryStatus(query)
 		elif path == "/stop":
 			return True, self.stopPrint(query)
+		elif path == "/setheat":
+			return True, self.setHeat(query)
 		elif path == "/temps":
 			return True, self.getTemps(query)
 		elif path == "/picture":
@@ -100,7 +102,10 @@ class RepRapServer:
 		return {'status' : self.app.getStatus()}
 	
 	def stopPrint(self, q):
-		return {'stop': self.app.stopPrint()}
+		return {'stop': self.app.stopPrint(q)}
+	
+	def setHeat(self, q):
+		return {'setheat': self.app.setHeat(q)}
 	
 	def getTemps(self, q):
 		return {'temps': self.app.getTemps()}

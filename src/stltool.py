@@ -109,6 +109,11 @@ class stl:
 					cb("Error opening STL file")
 				return
 			
+			if len(self.f) < 1:
+				if cb:
+					cb("File is empty")
+				return
+			
 			if not self.f[0].startswith("solid"):
 				if cb:
 					cb("Not an ascii stl solid - attempting to parse as binary")

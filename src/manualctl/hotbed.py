@@ -154,8 +154,12 @@ class HotBed(wx.Window):
 	
 	def heaterOn(self, evt):
 		t = self.slTarget.GetValue()
-		self.reprap.send_now("M140 S%d" % t)
+		self.heaterTemp(t)
 		
 	def heaterOff(self, evt):
-		self.reprap.send_now("M140 S0")
+		self.heaterTemp(0)
+		
+	def heaterTemp(self, temp):
+		self.reprap.send_now("M140 S%d" % temp)
+		
 
