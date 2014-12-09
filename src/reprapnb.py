@@ -309,7 +309,7 @@ class MainFrame(wx.Frame):
 			else:
 				return {'result': 'failed - please specify printer'}
 		else:
-			p = q['printer']
+			p = q['printer'][0]
 			if p not in self.settings.printers and p != 'all':
 				return {'result': 'failed - unknown printer'}
 		
@@ -343,10 +343,10 @@ class MainFrame(wx.Frame):
 			else:
 				return {'result': 'failed - please specify printer'}
 		else:
-			p = q['printer']
+			p = q['printer'][0]
 			del q['printer']
 			if p not in self.settings.printers:
-				return {'result': 'failed - unknown printer: ' + p}
+				return {'result': ('failed - unknown printer: ' + p)}
 
 		if not p in self.connected.keys():
 			return {'result': 'failed - printer not connected'}

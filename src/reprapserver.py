@@ -105,7 +105,7 @@ class RepRapServer:
 		return {'stop': self.app.stopPrint(q)}
 	
 	def setHeat(self, q):
-		return {'setheat': self.app.setHeat(q)}
+		return {'setheat': self.app.setHeaters(q)}
 	
 	def getTemps(self, q):
 		return {'temps': self.app.getTemps()}

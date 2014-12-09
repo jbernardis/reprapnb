@@ -297,7 +297,7 @@ class ManualControl(wx.Panel):
 		for k in q.keys():
 			if k.lower() == snBed.lower():
 				try:
-					t = int(q[k])
+					t = int(q[k][0])
 					self.bedWin.heaterTemp(t)
 					rv[k] = str(t)
 					count += 1
@@ -310,7 +310,7 @@ class ManualControl(wx.Panel):
 					if k.lower() == snHotEnds[t].lower():
 						found = True
 						try:
-							tmp = int(q[k])
+							tmp = int(q[k][0])
 							self.heWin.heaterTemp(t, tmp)
 							rv[k] = str(tmp)
 							count += 1
@@ -320,13 +320,23 @@ class ManualControl(wx.Panel):
 						break
 					
 				if not found:
-					rv[k] = "Unknown heater: " + k
+					rv[k] = ("Unknown heater: " + k)
 					errors = True
 							
-		if errors:
-			rv['result'] = "Failed - errors encountered, %d temps changed" % count
+		if count == 0 and not errors:
+			self.bedWin.heaterTemp(0)
+			rv[snBed] = 0
+			for i in range(self.nextr):
+				self.heWin.heaterTemp(i, 0)
+				rv[snHotEnds[i]] = 0
+			rv['result'] = "Success - all heaters turned off"
+
+		elif errors:
+			rv['result'] = ("Failed - errors encountered, %d temps changed" % count)
+		
 		else:
-			rv['result'] = "Success - %d temps changes" % count
+			rv['result'] = ("Success - %d temps changes" % count)
+
 		return rv
 					
 				
