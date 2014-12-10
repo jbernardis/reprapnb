@@ -301,57 +301,64 @@ class MainFrame(wx.Frame):
 		return self.pgConnMgr.getStatus()
 	
 	def stopPrint(self, q):
-		print "Q=(", q, ")"
-		
+		usage = "stop?[printer=name|all] - printer not needed if only 1"
 		if 'printer' not in q.keys():
 			if len(self.connected) == 1:
 				p = self.connected.keys()[0]
 			else:
-				return {'result': 'failed - please specify printer'}
+				return {'result': 'failed - please specify printer', 'usage': usage}
 		else:
 			p = q['printer'][0]
 			if p not in self.settings.printers and p != 'all':
-				return {'result': 'failed - unknown printer'}
+				return {'result': 'failed - unknown printer', 'usage': usage}
 		
 		if p == 'all':
 			st = {}
+			error = False
 			for p in self.settings.printers:
 				print "Printer (", p, ")"
 				if p in self.connected.keys() and self.printing[p]:
 					#pst = self.pgPrtMon[p].stopPrint()
 					pst = {'result': "We would have stopped here"}
 				else:
+					error = True
 					pst = {'result': "Skipped - not printing"}
 				st[p] = pst
+			if error:
+				st['usage'] = usage
+				
 			return st
 		else:
 			if p in self.connected.keys() and self.printing[p]:
 				#return self.pgPrtMon[p].stopPrint()
 				return {'result': "We would have stopped here"}
 			else:
-				return {'result': "Skipped - not printing"}
+				return {'result': "Skipped - not printing", 'usage': usage}
 	
 	def setHeaters(self, q):
-		print "Q=(", q, ")"
-		
+		usage = "setheat?[printer=name];[bed=temp];[he0-2=temp] - if no temps, all will be set to 0; printer not needed if only 1"
 		if len(self.connected) == 0:
-			return {'result': 'failed - no printers connected'}
+			return {'result': 'failed - no printers connected', 'usage': usage}
 		
 		if 'printer' not in q.keys():
 			if len(self.connected) == 1:
 				p = self.connected.keys()[0]
 			else:
-				return {'result': 'failed - please specify printer'}
+				return {'result': 'failed - please specify printer', 'usage': usage}
 		else:
 			p = q['printer'][0]
 			del q['printer']
 			if p not in self.settings.printers:
-				return {'result': ('failed - unknown printer: ' + p)}
+				return {'result': ('failed - unknown printer: ' + p), 'usage': usage}
 
 		if not p in self.connected.keys():
-			return {'result': 'failed - printer not connected'}
+			return {'result': 'failed - printer not connected', 'usgae': usage}
 		
-		return self.pgManCtl[p].setHeaters(q)
+		errors, rv = self.pgManCtl[p].setHeaters(q, usage)
+		if errors:
+			rv['usage'] = usage
+			
+		return rv
 		
 	def getTemps(self):
 		return self.pgConnMgr.getTemps()

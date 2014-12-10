@@ -1,5 +1,8 @@
 In Progress/Need Testing
 - need to test HTTP server - stop print
+Slicing history
+Printing history
+
 
 send email when print job finishes
 
@@ -9,11 +12,7 @@ send email when print job finishes
 More capabilities from HTTP interface
 	- initiate and monitor slicer
 	- choose slicer/slicer config
-	- start heaters
 	
-Slicing history
-Printing history
-
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available

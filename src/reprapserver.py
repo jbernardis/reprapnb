@@ -1,6 +1,6 @@
 import os
 import time
-import cgi
+import urlparse
 import select
 import socket
 from threading import Thread
@@ -30,7 +30,7 @@ class Handler(BaseHTTPRequestHandler):
 		
 		if '?' in self.path:
 			path, opts = self.path.split('?', 1)
-			query = cgi.parse_qs(opts)
+			query = urlparse.parse_qs(opts)
 		else:
 			path = self.path
 			query = {}
@@ -41,7 +41,7 @@ class Handler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.send_header("Content-type", "text/plain")
 			self.end_headers()
-			self.wfile.write("Unknown request")
+			self.wfile.write("Unknown request.  Allowed: /picture, /setheat, /status, /stop, /temps")
 		
 		else:
 			self.send_response(200)

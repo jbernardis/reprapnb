@@ -253,7 +253,7 @@ class HotEnd(wx.Window):
 			return
 					
 		t = self.sliders[i].GetValue()
-		self.heaterTemp(t, sel)
+		self.heaterTemp(sel, t)
 		
 	def heaterOff(self, evt):
 		tc_sel = evt.GetEventObject()

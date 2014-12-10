@@ -337,6 +337,6 @@ class ManualControl(wx.Panel):
 		else:
 			rv['result'] = ("Success - %d temps changes" % count)
 
-		return rv
+		return errors, rv
 					
 				
