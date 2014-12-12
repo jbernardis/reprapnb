@@ -1099,6 +1099,20 @@ class FilePrepare(wx.Panel):
 		if len(text) > MAXCFGCHARS:
 			text = text[:MAXCFGCHARS]
 		self.tSlicerCfg.SetLabel(text)
+		
+	def setSlicerDirect(self, newSlicer):
+		if newSlicer not in self.settings.slicers:
+			return False, 'Unknown slicer'
+		
+		self.settings.slicer = newSlicer
+		self.cbSlicer.SetValue(newSlicer)
+		self.settings.setModified()
+		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
+		if self.slicer is None:
+			self.logger.LogError("Unable to get slicer settings") 
+		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
+		return True, 'success'
 
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -1108,6 +1122,13 @@ class FilePrepare(wx.Panel):
 			self.logger.LogError("Unable to get slicer settings") 
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
+		
+	def cfgSlicerDirect(self, cfgopts):
+		rc, msg = self.slicer.configSlicerDirect(cfgopts)
+		if rc:
+			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+			self.lh, self.fd = self.slicer.type.getDimensionInfo()
+		return rc, msg
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():

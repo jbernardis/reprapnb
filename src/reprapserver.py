@@ -95,6 +95,8 @@ class RepRapServer:
 			return True, self.getTemps(query)
 		elif path == "/picture":
 			return True, self.getPicture(query)
+		elif path == "/setslicer":
+			return True, self.setSlicer(query)
 		else:
 			return False, None
 		
@@ -109,6 +111,9 @@ class RepRapServer:
 	
 	def getTemps(self, q):
 		return {'temps': self.app.getTemps()}
+	
+	def setSlicer(self, q):
+		return {'setslicer': self.app.setSlicer()}
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()

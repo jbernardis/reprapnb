@@ -5,6 +5,7 @@ import shlex, subprocess
 import ConfigParser
 
 from settings import BUTTONDIM, SAVE_SETTINGS_FILE
+from cProfile import Profile
 
 CBSIZE = 200
 PREFSECTION = 'preference'
@@ -204,7 +205,31 @@ class Cura:
 		
 		self.vprofile, self.vprinter, refreshFlag = dlg.getValues()
 		dlg.Destroy()
+		return self.updateSlicerCfg(refreshFlag)
+		
+	def configSlicerDirect(self, cfgopts):
+		self.getProfileOptions()
+		if len(cfgopts) != 2:
+			return False, "incorrect number of parameters for configuring cura - 2 expected"
 
+		err = False
+		msg = ""
+		if cfgopts[0] not in self.profilemap.keys():
+			err = True
+			msg += "invalid profile: %s " % cfgopts[0]
+		if cfgopts[1] not in self.printermap.keys():
+			err = True
+			msg += "invalid printer: %s " % cfgopts[1]
+			
+		if err:
+			return False, msg
+		
+		self.vprofile = cfgopts[0]
+		self.vprinter = cfgopts[1]
+		self.updateSlicerCfg(False)
+		return True, "success"
+		
+	def updateSlicerCfg(self, refreshFlag):
 		chg = refreshFlag
 		if self.parent.settings['profile'] != self.vprofile:
 			self.parent.settings['profile'] = self.vprofile

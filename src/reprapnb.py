@@ -359,6 +359,30 @@ class MainFrame(wx.Frame):
 			rv['usage'] = usage
 			
 		return rv
+	
+	def setSlicer(self, q):
+		usage = "setslicer?slicer=name[;config=parm/parm/parm] - parm can be a comma separated list"
+		if 'slicer' not in q.keys():
+			return {'result': 'failed - no slicer named', 'usage': usage}
+		
+		rc, msg = self.pgFilePrep.setSlicerDirect(q['slicer'][0])
+		if not rc:
+			return {'result': msg, 'usage': usage}
+		
+		if 'config' in q.keys():
+			cfg = []
+			for c in q['config'][0].split('/'):
+				if ',' in c:
+					c = c.split(',')
+				cfg.append(c)
+				
+			rc, msg = self.pgFilePrep.cfgSlicerDirect(cfg)
+			if not rc:
+				return {'result': msg, 'usage': usage}
+			
+		return {'result': 'success'}
+
+		
 		
 	def getTemps(self):
 		return self.pgConnMgr.getTemps()

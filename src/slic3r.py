@@ -323,7 +323,43 @@ class Slic3r:
 		
 		self.vprinter, self.vprint, self.vfilament, refreshFlag = dlg.getValues()
 		dlg.Destroy()
+		return self.updateSlicerCfg(refreshFlag, oldNExtr)
+		
+	def configSlicerDirect(self, cfgopts):
+		self.getPrintOptions()
+		self.getPrinterOptions()
+		self.getFilamentOptions()
+		
+		if len(cfgopts) != 3:
+			return False, "incorrect number of parameters for configuring slic3r - 3 expected"
 
+		err = False
+		msg = ""
+		if cfgopts[0] not in self.printmap.keys():
+			err = True
+			msg += "invalid print: %s " % cfgopts[0]
+		if cfgopts[1] not in self.printermap.keys():
+			err = True
+			msg += "invalid printer: %s " % cfgopts[1]
+		fl = cfgopts[2]
+		if not isinstance(fl, list):
+			fl = [ fl ]
+		for f in fl:
+			if f not in self.filmap.keys():
+				err = True
+				msg += "invalid filament: %s " % f
+			
+		if err:
+			return False, msg
+
+		oldNExtr = self.printerext[self.parent.settings['printer']]
+		self.vprint = cfgopts[0]
+		self.vprinter = cfgopts[1]
+		self.vfilament = fl
+		self.updateSlicerCfg(False, oldNExtr)
+		return True, "success"
+		
+	def updateSlicerCfg(self, refreshFlag, oldNExtr):
 		chg = refreshFlag
 		if self.parent.settings['print'] != self.vprint:
 			self.parent.settings['print'] = self.vprint

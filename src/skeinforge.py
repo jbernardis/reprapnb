@@ -411,7 +411,20 @@ class Skeinforge:
 		
 		self.vprofile, refreshFlag = dlg.getValues()
 		dlg.Destroy()
+		return self.updateSlicerCfg(refreshFlag)
+		
+	def configSlicerDirect(self, cfgopts):
+		self.getProfileOptions()
+		if len(cfgopts) != 1:
+			return False, "incorrect number of parameters for configuring skeinforge - 1 expected"
+		if cfgopts[0] not in self.profilemap.keys():
+			return False, "invalid profile :" % cfgopts[0]
+		
+		self.vprofile = cfgopts[0]
+		self.updateSlicerCfg(False)
+		return True, "success"
 
+	def updateSlicerCfg(self, refreshFlag):
 		chg = refreshFlag
 		if self.parent.settings['profile'] != self.vprofile:
 			self.writeProfile(self.parent.settings['profile'], self.vprofile)
