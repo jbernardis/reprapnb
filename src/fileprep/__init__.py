@@ -38,6 +38,10 @@ reS = re.compile("(.*[sS])([0-9\.]+)(.*)")
 reF = re.compile("(.*[fF])([0-9\.]+)(.*)")
 reE = re.compile("(.*[eE])([0-9\.]+)(.*)")
 
+(HttpEvent, EVT_HTTP_FILEPREP) = wx.lib.newevent.NewEvent()
+HTTPFP_SETSLICER = 0
+HTTPFP_CFGSLICER = 1
+
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
 SLICER_RUNNINGCR = 2
@@ -330,6 +334,7 @@ class FilePrepare(wx.Panel):
 			
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(900, 250))
 		self.SetBackgroundColour("white")
+		self.Bind(EVT_HTTP_FILEPREP, self.httpRequest)
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
 		self.Bind(EVT_BATCHSLICER_UPDATE, self.batchSlicerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
@@ -1100,12 +1105,27 @@ class FilePrepare(wx.Panel):
 			text = text[:MAXCFGCHARS]
 		self.tSlicerCfg.SetLabel(text)
 		
+	def httpSetSlicer(self, newSlicer):
+		evt = HttpEvent(cmd=HTTPFP_SETSLICER, slicer=newSlicer)
+		wx.PostEvent(self, evt)
+		
+	def httpCfgSlicer(self, newCfg):
+		evt = HttpEvent(cmd=HTTPFP_CFGSLICER, config=newCfg)
+		wx.PostEvent(self, evt)
+		
+	def httpRequest(self, evt):
+		print "in httprequest"
+		if evt.cmd == HTTPFP_SETSLICER:
+			self.setSlicerDirect(evt.slicer)
+		elif evt.cmd == HTTPFP_CFGSLICER:
+			self.cfgSlicerDirect(evt.config)
+		
 	def setSlicerDirect(self, newSlicer):
 		if newSlicer not in self.settings.slicers:
 			return False, 'Unknown slicer'
 		
 		self.settings.slicer = newSlicer
-		self.cbSlicer.SetValue(newSlicer)
+		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.settings.setModified()
 		self.slicer = self.settings.getSlicerSettings(self.settings.slicer)
 		if self.slicer is None:

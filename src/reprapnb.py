@@ -365,9 +365,7 @@ class MainFrame(wx.Frame):
 		if 'slicer' not in q.keys():
 			return {'result': 'failed - no slicer named', 'usage': usage}
 		
-		rc, msg = self.pgFilePrep.setSlicerDirect(q['slicer'][0])
-		if not rc:
-			return {'result': msg, 'usage': usage}
+		self.pgFilePrep.httpSetSlicer(q['slicer'][0])
 		
 		if 'config' in q.keys():
 			cfg = []
@@ -376,11 +374,9 @@ class MainFrame(wx.Frame):
 					c = c.split(',')
 				cfg.append(c)
 				
-			rc, msg = self.pgFilePrep.cfgSlicerDirect(cfg)
-			if not rc:
-				return {'result': msg, 'usage': usage}
+			self.pgFilePrep.httpCfgSlicer(cfg)
 			
-		return {'result': 'success'}
+		return {'result': 'posted'}
 
 		
 		

@@ -41,7 +41,7 @@ class Handler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.send_header("Content-type", "text/plain")
 			self.end_headers()
-			self.wfile.write("Unknown request.  Allowed: /picture, /setheat, /status, /stop, /temps")
+			self.wfile.write("Unknown request.  Allowed: /picture, /setheat, /setslicer, /status, /stop, /temps")
 		
 		else:
 			self.send_response(200)
@@ -113,7 +113,7 @@ class RepRapServer:
 		return {'temps': self.app.getTemps()}
 	
 	def setSlicer(self, q):
-		return {'setslicer': self.app.setSlicer()}
+		return {'setslicer': self.app.setSlicer(q)}
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()
