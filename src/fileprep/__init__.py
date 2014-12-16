@@ -41,6 +41,7 @@ reE = re.compile("(.*[eE])([0-9\.]+)(.*)")
 (HttpEvent, EVT_HTTP_FILEPREP) = wx.lib.newevent.NewEvent()
 HTTPFP_SETSLICER = 0
 HTTPFP_CFGSLICER = 1
+HTTPFP_SLICE = 3
 
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
@@ -1113,16 +1114,21 @@ class FilePrepare(wx.Panel):
 		evt = HttpEvent(cmd=HTTPFP_CFGSLICER, config=newCfg)
 		wx.PostEvent(self, evt)
 		
+	def httpSliceFile(self, fn):
+		evt = HttpEvent(cmd=HTTPFP_SLICE, filename=fn)
+		wx.PostEvent(self, evt)
+		
 	def httpRequest(self, evt):
-		print "in httprequest"
 		if evt.cmd == HTTPFP_SETSLICER:
 			self.setSlicerDirect(evt.slicer)
 		elif evt.cmd == HTTPFP_CFGSLICER:
 			self.cfgSlicerDirect(evt.config)
+		elif evt.cmd == HTTPFP_SLICE:
+			self.sliceFile(evt.filename)
 		
 	def setSlicerDirect(self, newSlicer):
 		if newSlicer not in self.settings.slicers:
-			return False, 'Unknown slicer'
+			self.logger.LogError("HTTP setslicer Request specified invalid slicer: %s" % newSlicer)
 		
 		self.settings.slicer = newSlicer
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
@@ -1132,7 +1138,7 @@ class FilePrepare(wx.Panel):
 			self.logger.LogError("Unable to get slicer settings") 
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
-		return True, 'success'
+		self.logger.LogMessage("HTTP setslicer successfully changed slicer to : %s" % newSlicer)
 
 	def doChooseSlicer(self, evt):
 		self.settings.slicer = self.cbSlicer.GetValue()
@@ -1144,11 +1150,14 @@ class FilePrepare(wx.Panel):
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		
 	def cfgSlicerDirect(self, cfgopts):
-		rc, msg = self.slicer.configSlicerDirect(cfgopts)
+		rc, msg = self.slicer.type.configSlicerDirect(cfgopts)
 		if rc:
-			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
+			cfg = self.slicer.type.getConfigString()	
+			self.updateSlicerConfigString(cfg)	
 			self.lh, self.fd = self.slicer.type.getDimensionInfo()
-		return rc, msg
+			self.logger.LogMessage("HTTP cfgslicer successfully set slicer configuration to: %s", cfg)
+		else:
+			self.logger.LogError("HTTP cfgslicer failed: %s" % msg)
 		
 	def doSliceConfig(self, evt):
 		if self.slicer.configSlicer():

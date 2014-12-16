@@ -214,12 +214,12 @@ class Cura:
 
 		err = False
 		msg = ""
-		if cfgopts[0] not in self.profilemap.keys():
+		if cfgopts[0] not in self.printermap.keys():
 			err = True
-			msg += "invalid profile: %s " % cfgopts[0]
-		if cfgopts[1] not in self.printermap.keys():
+			msg += "invalid printer: %s " % cfgopts[0]
+		if cfgopts[1] not in self.profilemap.keys():
 			err = True
-			msg += "invalid printer: %s " % cfgopts[1]
+			msg += "invalid profile: %s " % cfgopts[1]
 			
 		if err:
 			return False, msg

@@ -41,7 +41,7 @@ class Handler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.send_header("Content-type", "text/plain")
 			self.end_headers()
-			self.wfile.write("Unknown request.  Allowed: /picture, /setheat, /setslicer, /status, /stop, /temps")
+			self.wfile.write("Unknown request.  Allowed: /getslicer, /picture, /setheat, /setslicer, /slice, /status, /stop, /temps")
 		
 		else:
 			self.send_response(200)
@@ -97,6 +97,10 @@ class RepRapServer:
 			return True, self.getPicture(query)
 		elif path == "/setslicer":
 			return True, self.setSlicer(query)
+		elif path == "/getslicer":
+			return True, self.getSlicer(query)
+		elif path == "/slice":
+			return True, self.sliceFile(query)
 		else:
 			return False, None
 		
@@ -114,6 +118,12 @@ class RepRapServer:
 	
 	def setSlicer(self, q):
 		return {'setslicer': self.app.setSlicer(q)}
+	
+	def getSlicer(self, q):
+		return {'getslicer': self.app.getSlicer()}
+	
+	def sliceFile(self, q):
+		return {'slice': self.app.sliceFile()}
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()

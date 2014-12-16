@@ -335,12 +335,12 @@ class Slic3r:
 
 		err = False
 		msg = ""
-		if cfgopts[0] not in self.printmap.keys():
+		if cfgopts[0] not in self.printermap.keys():
 			err = True
-			msg += "invalid print: %s " % cfgopts[0]
-		if cfgopts[1] not in self.printermap.keys():
+			msg += "invalid printer: %s " % cfgopts[0]
+		if cfgopts[1] not in self.printmap.keys():
 			err = True
-			msg += "invalid printer: %s " % cfgopts[1]
+			msg += "invalid print: %s " % cfgopts[1]
 		fl = cfgopts[2]
 		if not isinstance(fl, list):
 			fl = [ fl ]
@@ -401,7 +401,7 @@ class Slic3r:
 		return chg
 		
 	def getConfigString(self):
-		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + "-".join(self.vfilament) + ")"
+		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + ",".join(self.vfilament) + ")"
 	
 	def getDimensionInfo(self):
 		dProfile = {}

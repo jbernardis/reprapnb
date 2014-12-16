@@ -194,6 +194,7 @@ class Settings:
 		self.printhistoryfile = os.path.join(folder, "print.history")
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
+		self.shares = {}
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -328,6 +329,12 @@ class Settings:
 					self.toolOrder.append(opt)
 				else:
 					self.showError("Invalid number of parameters for tool %s - skipping" % opt)
+					
+		section = "shares"
+		self.shares = {}
+		if self.cfg.has_section(section):
+			for opt, value in self.cfg.items(section):
+				self.shares[opt] = value
 
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
 		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
@@ -393,6 +400,15 @@ class Settings:
 				opt = "macro.%d" % (m+1)
 				val = self.macroOrder[m] + "," + self.macroList[self.macroOrder[m]]
 				self.cfg.set(section, opt, val)
+				
+			section = "shares"
+			try:
+				self.cfg.add_section(section)
+			except ConfigParser.DuplicateSectionError:
+				pass
+				
+			for m in self.shares.keys():
+				self.cfg.set(section, m, self.share[m])
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()

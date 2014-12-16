@@ -40,6 +40,7 @@ class MainFrame(wx.Frame):
 		
 		self.allowPulls = False
 		self.shuttingDown = False
+		self.fpstatus = FPSTATUS_READY
 		
 		self.pgPrinters = {}
 		self.pgManCtl = {}
@@ -267,6 +268,7 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxPlater, -1)
 
 	def updateFilePrepStatus(self, status, batchstat):
+		self.fpstatus = status
 		if status == FPSTATUS_READY:
 			if batchstat == BATCHSL_IDLE:
 				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyIdx)
@@ -377,8 +379,37 @@ class MainFrame(wx.Frame):
 			self.pgFilePrep.httpCfgSlicer(cfg)
 			
 		return {'result': 'posted'}
-
+	
+	def sliceFile(self, q):
+		usage = "slice?file=share:file"
+		if 'file' not in q.keys():
+			return { 'result': 'failed - no file named', 'usage': usage}
 		
+		fspec = q['file'][0]
+		
+		fp = fspec.split(':', 1)
+		if len(fp) == 1:
+			fn = fp[0]
+		elif len(fp) == 2:
+			if fp[0] not in self.settings.shares.keys():
+				return { 'result': 'failed - unknown share', 'usage': usage}
+			fn = self.settings.shares[fp[0]] + os.path.sep + fp[1]
+		else:
+			return { 'result': 'failed - invalid filespec', 'usage': usage}
+		
+		if not os.path.isfile(fn):
+			return { 'result': 'failed - (%s) does not exist' % fn, 'usage': usage}
+		
+		if self.fpstatus == FPSTATUS_BUSY:
+			return { 'result': 'failed - slicer currently busy'}
+		
+		self.pgFilePrep.httpSliceFile(fn)
+
+
+		return {'result': 'posted'}
+
+	def httpGetSlicer(self):
+		return {'result': self.pgFilePrep.getSlicerConfigString()}
 		
 	def getTemps(self):
 		return self.pgConnMgr.getTemps()
