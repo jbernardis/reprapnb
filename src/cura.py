@@ -209,23 +209,27 @@ class Cura:
 		
 	def configSlicerDirect(self, cfgopts):
 		self.getProfileOptions()
-		if len(cfgopts) != 2:
-			return False, "incorrect number of parameters for configuring cura - 2 expected"
+		if len(cfgopts) == 2 or len(cfgopts) > 2:
+			return False, "incorrect number of parameters for configuring cura - 1 or 2 expected: printer[/profile]"
 
 		err = False
 		msg = ""
-		if cfgopts[0] not in self.printermap.keys():
+		if cfgopts != "" and cfgopts[0] not in self.printermap.keys():
 			err = True
 			msg += "invalid printer: %s " % cfgopts[0]
-		if cfgopts[1] not in self.profilemap.keys():
-			err = True
-			msg += "invalid profile: %s " % cfgopts[1]
+		if len(cfgopts) == 2:
+			if cfgopts[1] != "" and cfgopts[1] not in self.profilemap.keys():
+				err = True
+				msg += "invalid profile: %s " % cfgopts[1]
 			
 		if err:
 			return False, msg
 		
-		self.vprofile = cfgopts[0]
-		self.vprinter = cfgopts[1]
+		if cfgopts[0] != "":
+			self.vprinter = cfgopts[0]
+		if len(cfgopts) == 2:
+			if cfgopts[1] != "":
+				self.vprofile = cfgopts[1]
 		self.updateSlicerCfg(False)
 		return True, "success"
 		
@@ -317,6 +321,8 @@ class Cura:
 		
 	def getOverrideHelpText(self):
 		ht = {}
+		ht["filamentdiam"] = "Filament diameter"
+		ht["extrusionmult"] = "Extrusion Multiplier"
 		ht["layerheight"] = "Used directly as cura's layer_height setting"
 		ht["extrusionwidth"] = "Used directly as cura's wall_thickness setting"
 		ht["infilldensity"] = "Used for cura's fill_density setting.  Values less than 1 are assumed as ratios and are scaled to a percentage"
@@ -346,8 +352,34 @@ class Cura:
 				tempOver = True
 				temps = self.overrides['temperature'].split(',')
 				
+			fildiamOver = False		
+			if 'filamentdiam' in self.overrides.keys():
+				fildiamOver = True
+				diams = self.overrides['filamentdiam'].split(',')
+				
 			for l in ll:
-				if l.startswith("layer_height = "):
+				if l.startswith("filament_diameter"):
+					if fildiamOver:
+						try:
+							ix = int(l[17]) - 1
+							prefix = l[:21]
+						except:
+							ix = 0
+							prefix = l[:20]
+						if ix < len(diams):
+							nl = prefix + diams[ix] + "\n"
+						else:
+							nl = l.rstrip() + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("filament_flow = "):
+					if 'extrusionmlt' in self.overrides.keys():
+						nl = "filament_flow = " + str(self.overrides['extrusionmlt']) + "\n"
+					else:
+						nl = l.rstrip() + "\n"
+						
+				elif l.startswith("layer_height = "):
 					if 'layerheight' in self.overrides.keys():
 						nl = "layer_height = " + str(self.overrides['layerheight']) + "\n"
 					else:

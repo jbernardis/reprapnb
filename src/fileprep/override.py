@@ -1,11 +1,13 @@
 import wx
 
-ovKeyOrder = ['layerheight', 'extrusionwidth', 'infilldensity',
+ovKeyOrder = ['filamentdiam', 'extrusionmult', 'layerheight', 'extrusionwidth', 'infilldensity',
 			'layer1bedtemperature', 'bedtemperature', 'layer1temperature', 'temperature',
 			'printspeed', 'travelspeed', 'print1speed',
 			'support', 'skirt', 'adhesion']
 
-ovUserKeyMap = {'layerheight': "Layer Height",
+ovUserKeyMap = {'filamentdiam': "Filament Diameter",
+			'extrusionmult': "Extrusion Multiplier",
+			'layerheight': "Layer Height",
 			'extrusionwidth' : "Extrusion Width",
 			'infilldensity' : "Infill Density",
 			'layer1bedtemperature' : "Layer 1 Bed Temperature",
@@ -36,6 +38,40 @@ class Override(wx.Dialog):
 		self.controls = {}
 
 		ln = 1
+		value = "2.95"
+		key = "filamentdiam"
+		self.cbOvFilDia = wx.CheckBox(self, wx.ID_ANY, "Filament Diameter")
+		self.Bind(wx.EVT_CHECKBOX, self.checkFilDia, self.cbOvFilDia)
+		bgrid.Add(self.cbOvFilDia, pos=(ln, 1))
+		self.teOvFilDia = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
+		self.teOvFilDia.Enable(False)
+		self.controls[key] = self.teOvFilDia
+		if key in values.keys():
+			self.teOvFilDia.SetValue(values[key])
+			self.teOvFilDia.Enable(True)
+			self.cbOvFilDia.SetValue(True)
+			
+		bgrid.Add(self.teOvFilDia, pos=(ln,3))
+		
+		h = self.teOvFilDia.GetSize()[1]
+		
+		ln += 1
+		value = "0.95"
+		key = "extrusionmult"
+		self.cbOvExtMlt = wx.CheckBox(self, wx.ID_ANY, "Extrusion Multiplier")
+		self.Bind(wx.EVT_CHECKBOX, self.checkExtMlt, self.cbOvExtMlt)
+		bgrid.Add(self.cbOvExtMlt, pos=(ln, 1))
+		self.teOvExtMlt = wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
+		self.teOvExtMlt.Enable(False)
+		self.controls[key] = self.teOvExtMlt
+		if key in values.keys():
+			self.teOvExtMlt.SetValue(values[key])
+			self.teOvExtMlt.Enable(True)
+			self.cbOvExtMlt.SetValue(True)
+			
+		bgrid.Add(self.teOvExtMlt, pos=(ln,3))
+		
+		ln += 1
 		value = "0.2"
 		key = "layerheight"
 		self.cbOvLH = wx.CheckBox(self, wx.ID_ANY, "Layer Height")
@@ -50,8 +86,6 @@ class Override(wx.Dialog):
 			self.cbOvLH.SetValue(True)
 			
 		bgrid.Add(self.teOvLH, pos=(ln,3))
-		
-		h = self.teOvLH.GetSize()[1]
 		
 		ln += 1
 		value = "2.8"
@@ -285,6 +319,18 @@ class Override(wx.Dialog):
 			else:
 				self.controls[ck].SetToolTipString("")
 		
+	def checkFilDia(self, evt):
+		if self.cbOvFilDia.IsChecked():
+			self.teOvFilDia.Enable(True)
+		else:
+			self.teOvFilDia.Enable(False)
+		
+	def checkExtMlt(self, evt):
+		if self.cbOvExtMlt.IsChecked():
+			self.teOvExtMlt.Enable(True)
+		else:
+			self.teOvExtMlt.Enable(False)
+		
 	def checkLH(self, evt):
 		if self.cbOvLH.IsChecked():
 			self.teOvLH.Enable(True)
@@ -365,6 +411,12 @@ class Override(wx.Dialog):
 
 	def getOverrides(self):
 		r = {}     
+		if self.cbOvFilDia.IsChecked():
+			r['filamentdiam'] = self.teOvFilDia.GetValue()
+			
+		if self.cbOvExtMlt.IsChecked():
+			r['extrusionmult'] = self.teOvExtMlt.GetValue()
+			
 		if self.cbOvLH.IsChecked():
 			r['layerheight'] = self.teOvLH.GetValue()
 			

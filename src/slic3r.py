@@ -330,32 +330,39 @@ class Slic3r:
 		self.getPrinterOptions()
 		self.getFilamentOptions()
 		
-		if len(cfgopts) != 3:
-			return False, "incorrect number of parameters for configuring slic3r - 3 expected"
+		if len(cfgopts) == 0 or len(cfgopts) > 3:
+			return False, "incorrect number of parameters for configuring slic3r - 1, 2, or 3 expected: printer[/print[/filament[,filament]]]"
 
 		err = False
 		msg = ""
-		if cfgopts[0] not in self.printermap.keys():
+		if cfgopts[0] != "" and cfgopts[0] not in self.printermap.keys():
 			err = True
 			msg += "invalid printer: %s " % cfgopts[0]
-		if cfgopts[1] not in self.printmap.keys():
-			err = True
-			msg += "invalid print: %s " % cfgopts[1]
-		fl = cfgopts[2]
-		if not isinstance(fl, list):
-			fl = [ fl ]
-		for f in fl:
-			if f not in self.filmap.keys():
+		if len(cfgopts) > 1:
+			if cfgopts[1] != "" and cfgopts[1] not in self.printmap.keys():
 				err = True
-				msg += "invalid filament: %s " % f
+				msg += "invalid print: %s " % cfgopts[1]
+		if len(cfgopts) > 2:
+			if cfgopts[2] != "":
+				fl = cfgopts[2]
+				if not isinstance(fl, list):
+					fl = [ fl ]
+				for f in fl:
+					if f not in self.filmap.keys():
+						err = True
+						msg += "invalid filament: %s " % f
 			
 		if err:
 			return False, msg
 
 		oldNExtr = self.printerext[self.parent.settings['printer']]
-		self.vprinter = cfgopts[0]
-		self.vprint = cfgopts[1]
-		self.vfilament = fl
+		if cfgopts[0] != "":
+			self.vprinter = cfgopts[0]
+		if len(cfgopts) > 1 and cfgopts[1] != "":
+			self.vprint = cfgopts[1]
+		if len(cfgopts) > 2 and cfgopts[2] != "":
+			self.vfilament = fl
+			
 		self.updateSlicerCfg(False, oldNExtr)
 		return True, "success"
 		
@@ -436,12 +443,14 @@ class Slic3r:
 	
 	def getOverrideHelpText(self):
 		ht = {}
+		ht["filamentdiam"] = "Filament diameter (list)"
+		ht["extrusionmult"] = "Extrusion Multiplier (list)"
 		ht["layerheight"] = "Used directly as slic3r's layer_height setting"
 		ht["extrusionwidth"] = "Used directly as slic3r's extrusion_width setting.  May end with a %"
 		ht["infilldensity"] = "Used directly as slic3r's fill_density setting"
-		ht["temperature"] = "Used directly as slic3r's temperature setting"
+		ht["temperature"] = "Used directly as slic3r's temperature setting (list)"
 		ht["bedtemperature"] = "Used directly as slic3r's bed_temperature setting"
-		ht["layer1temperature"] = "Used directly as slic3r's first_layer_temperature setting"
+		ht["layer1temperature"] = "Used directly as slic3r's first_layer_temperature setting (list)"
 		ht["layer1bedtemperature"] = "Used directly as slic3r's first_layer_bed_temperature setting"
 		ht["printspeed"] = "Used directly as slic3r's perimeter_speed, infill_speed, and solid_infill_speed settings"
 		ht["print1speed"] = "Used directly as slic3r's first_layer_speed setting"
@@ -466,7 +475,13 @@ class Slic3r:
 		
 		# apply overrides
 		for k in self.overrides.keys():
-			if k == 'layerheight':
+			if k == 'filamentdiam':
+				dProfile['filament_diameter'] = self.verifyListLength(self.overrides[k], dProfile['filament_diameter'])
+				
+			elif k == 'extrusionmult':
+				dProfile['extrusion_multiplier'] = self.verifyListLength(self.overrides[k], dProfile['extrusion_multiplier'])
+				
+			elif k == 'layerheight':
 				dProfile['layer_height'] = self.overrides[k]
 				
 			elif k == 'extrusionwidth':
@@ -499,9 +514,9 @@ class Slic3r:
 				dProfile['travel_speed'] = self.overrides[k]
 				
 			elif k == 'temperature':
-				dProfile['temperature'] = self.overrides[k]
+				dProfile['temperature'] = self.verifyListLength(self.overrides[k], dProfile['temperature'])
 			elif k == 'layer1temperature':
-				dProfile['first_layer_temperature'] = self.overrides[k]
+				dProfile['first_layer_temperature'] = self.verifyListLength(self.overrides[k], dProfile['first_layer_temperature'])
 				
 			elif k == 'skirt':
 				if self.overrides[k] == "True":
@@ -535,6 +550,31 @@ class Slic3r:
 		tfn.close()
 		self.tempFile = tfn.name
 		self.parent.settings['configfile'] = tfn.name
+		
+	def verifyListLength(self, newList, currentList):
+		nl = newList.split(',')
+		cl = currentList.split(',')
+		print "Verifying newlist (%s) against current list(%s)" % (newList, currentList)
+		print "lengths after split = ", len(nl), len(cl)
+		
+		if len(nl) == len(cl):
+			print 'Equal lengths'
+			return newList
+		
+		if len(nl) < len(cl):
+			print "not enough new values - using corresponding values from current list"
+		else:
+			print "too many values specified - ignoring extra"
+			
+		rl = []
+		for i in range(len(cl)):
+			if i <= len(nl):
+				rl.append(nl[i])
+			else:
+				rl.append(cl[i])
+		rs = ','.join(rl)
+		return rs
+		
 	
 	def sliceComplete(self):
 		if self.tempFile is not None and not SAVE_SETTINGS_FILE:

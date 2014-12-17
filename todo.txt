@@ -1,7 +1,11 @@
 In Progress/Need Testing
-- need to test HTTP server - stop print
-Slicing history
-Printing history
+  need to test HTTP functions:
+    - stop print
+	- initiate and monitor slicer
+	- choose slicer/slicer config
+	- fileprep status
+  Slicing history
+  Printing history
 
 
 send email when print job finishes
@@ -10,8 +14,9 @@ send email when print job finishes
 @runmacro layer=x layers=n
 
 More capabilities from HTTP interface
-	- initiate and monitor slicer
-	- choose slicer/slicer config
+	- send file to printer
+	- start printer
+	- activate camera
 	
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box

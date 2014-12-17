@@ -7,7 +7,7 @@ from settings import BUTTONDIM
 CBSIZE = 200
 
 
-proFiles = ["carve.csv", "inset.csv", "fill.csv", "skirt.csv", "chamber.csv", "temperature.csv", "raft.csv", "speed.csv"]
+proFiles = ["carve.csv", "dimension.csv", "inset.csv", "fill.csv", "skirt.csv", "chamber.csv", "temperature.csv", "raft.csv", "speed.csv"]
 
 def intersection(a, b):
 	return len([val for val in a if val in b]) != 0
@@ -38,6 +38,25 @@ def modifyCSV(fn, ovr, logger):
 		except:
 			restoreCSV(fn)
 			logger("Unable to modify carve.csv")
+	
+	elif bfn == "dimension.csv" and intersection(['filamentdiam', 'extrusionmult'],  ovr.keys()):
+		try:
+			os.rename(fn, fn + ".save")
+			fpCsv = list(open(fn + ".save"))
+			fpNew = open(fn, "w")
+			for s in fpCsv:
+				if s.startswith("Filament Diameter (mm):") and 'filamentdiam' in ovr.keys():
+					ns = "Filament Diameter (mm):\t"+str(ovr['filamentdiam'])
+				elif s.startswith("Filament Packing Density (ratio):") and 'extrusionmult' in ovr.keys():
+					ns = "Filament Packing Density (ratio):\t"+str(ovr['extrusionmult'])
+				else:
+					ns = s.rstrip()
+				fpNew.write(ns + "\n")
+			
+			fpNew.close()
+		except:
+			restoreCSV(fn)
+			logger("Unable to modify dimension.csv")
 	
 	elif bfn == "inset.csv" and intersection(['extrusionwidth'],  ovr.keys()):
 		try:
@@ -467,6 +486,8 @@ class Skeinforge:
 		
 	def getOverrideHelpText(self):
 		ht = {}
+		ht["filamentdiam"] = "Filament diameter (dimension)"
+		ht["extrusionmult"] = "Filament Packing Density (dimension)"
 		ht["layerheight"] = "Used directly as Layer Height (carve)"
 		ht["extrusionwidth"] = "Used directly as Edge Width over Height (carve) and Infill Width over Thickness (inset)"
 		ht["infilldensity"] = "Used directly as Infill Solidity (fill)"

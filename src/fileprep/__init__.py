@@ -1100,6 +1100,38 @@ class FilePrepare(wx.Panel):
 		
 	def getSlicerConfigString(self):
 		return self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
+	
+	def getStatus(self):
+		st = {}
+		
+		st['slicer'] = self.getSlicerConfigString()
+		fn = str(self.stlFile)
+		if self.temporaryFile:
+			fn += " (temporary)"
+		st['stlfile'] = fn
+		st['gcodefile'] = str(self.gcFile)
+		
+		if self.status in [ FPSTATUS_READY, FPSTATUS_READY_DIRTY ]:
+			if self.batchslstatus == BATCHSL_IDLE:
+				stat = "ready"
+			else:
+				stat = "ready (batch slicing)"
+				
+		elif self.status == FPSTATUS_BUSY:
+			if self.batchslstatus == BATCHSL_IDLE:
+				stat = "busy"
+			else:
+				stat = "busy (batch slicing)"
+				
+		elif self.status == FPSTATUS_IDLE:
+			if self.batchslstatus == BATCHSL_IDLE:
+				stat = "idle"
+			else:
+				stat = "idle (batch slicing)"
+				
+		st['status'] = stat
+		
+		return st
 		
 	def updateSlicerConfigString(self, text):
 		if len(text) > MAXCFGCHARS:

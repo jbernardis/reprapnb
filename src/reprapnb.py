@@ -41,6 +41,7 @@ class MainFrame(wx.Frame):
 		self.allowPulls = False
 		self.shuttingDown = False
 		self.fpstatus = FPSTATUS_READY
+		self.batchslstatus = BATCHSL_IDLE
 		
 		self.pgPrinters = {}
 		self.pgManCtl = {}
@@ -269,6 +270,7 @@ class MainFrame(wx.Frame):
 
 	def updateFilePrepStatus(self, status, batchstat):
 		self.fpstatus = status
+		self.batchslstatus = batchstat
 		if status == FPSTATUS_READY:
 			if batchstat == BATCHSL_IDLE:
 				self.nb.SetPageImage(self.pxFilePrep, self.nbilReadyIdx)
@@ -300,7 +302,9 @@ class MainFrame(wx.Frame):
 		return self.pgFilePrep.checkModified(message=message)
 		
 	def getStatus(self):
-		return self.pgConnMgr.getStatus()
+		r = self.pgConnMgr.getStatus()
+		r['fileprep'] = self.pgFilePrep.getStatus()
+		return r
 	
 	def stopPrint(self, q):
 		usage = "stop?[printer=name|all] - printer not needed if only 1"
@@ -400,7 +404,7 @@ class MainFrame(wx.Frame):
 		if not os.path.isfile(fn):
 			return { 'result': 'failed - (%s) does not exist' % fn, 'usage': usage}
 		
-		if self.fpstatus == FPSTATUS_BUSY:
+		if self.fpstatus == FPSTATUS_BUSY or self.batchslstatus == BATCHSL_RUNNING:
 			return { 'result': 'failed - slicer currently busy'}
 		
 		self.pgFilePrep.httpSliceFile(fn)
