@@ -123,7 +123,7 @@ class RepRapServer:
 		return {'getslicer': self.app.getSlicer()}
 	
 	def sliceFile(self, q):
-		return {'slice': self.app.sliceFile()}
+		return {'slice': self.app.sliceFile(q)}
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()

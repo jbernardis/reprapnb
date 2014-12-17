@@ -353,8 +353,8 @@ class Slic3r:
 			return False, msg
 
 		oldNExtr = self.printerext[self.parent.settings['printer']]
-		self.vprint = cfgopts[0]
-		self.vprinter = cfgopts[1]
+		self.vprinter = cfgopts[0]
+		self.vprint = cfgopts[1]
 		self.vfilament = fl
 		self.updateSlicerCfg(False, oldNExtr)
 		return True, "success"

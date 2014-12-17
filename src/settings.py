@@ -408,7 +408,7 @@ class Settings:
 				pass
 				
 			for m in self.shares.keys():
-				self.cfg.set(section, m, self.share[m])
+				self.cfg.set(section, m, self.shares[m])
 			
 			self.fileprep.cleanUp()
 			self.plater.cleanUp()

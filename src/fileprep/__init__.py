@@ -1155,7 +1155,7 @@ class FilePrepare(wx.Panel):
 			cfg = self.slicer.type.getConfigString()	
 			self.updateSlicerConfigString(cfg)	
 			self.lh, self.fd = self.slicer.type.getDimensionInfo()
-			self.logger.LogMessage("HTTP cfgslicer successfully set slicer configuration to: %s", cfg)
+			self.logger.LogMessage("HTTP cfgslicer successfully set slicer configuration to: %s" % cfg)
 		else:
 			self.logger.LogError("HTTP cfgslicer failed: %s" % msg)
 		

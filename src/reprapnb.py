@@ -408,7 +408,7 @@ class MainFrame(wx.Frame):
 
 		return {'result': 'posted'}
 
-	def httpGetSlicer(self):
+	def getSlicer(self):
 		return {'result': self.pgFilePrep.getSlicerConfigString()}
 		
 	def getTemps(self):
