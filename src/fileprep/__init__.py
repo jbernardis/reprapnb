@@ -875,7 +875,7 @@ class FilePrepare(wx.Panel):
 		else:
 			s = "NOT "
 		self.logger.LogMessage("Beginning batch slice.  Resultant G Code files will " + s + "be saved in the G Code queue")
-		self.logOverrides(self.overrideValues)
+		#self.logOverrides(self.overrideValues)
 		self.slicer.setOverrides(self.overrideValues)
 		
 		saveStlFile = self.stlFile
@@ -1282,7 +1282,7 @@ class FilePrepare(wx.Panel):
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
-		self.logOverrides(self.overrideValues)
+		#self.logOverrides(self.overrideValues)
 		self.slicer.setOverrides(self.overrideValues)
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		cmd = self.slicer.buildSliceCommand()
@@ -1747,7 +1747,7 @@ class FilePrepare(wx.Panel):
 
 		if val == wx.ID_OK:
 			modSpeeds = dlg.getResult()
-			self.applySpeedChange(modSpeeds)
+			self.applySpeedChange([float(x)/100.0 for x in modSpeeds])
 
 		dlg.Destroy()
 
