@@ -28,8 +28,10 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Layer Height (mm):") and 'layerheight' in ovr.keys():
 					ns = "Layer Height (mm):\t"+str(ovr['layerheight'])
+					logger("Override: " + ns + " (carve)")
 				elif s.startswith("Edge Width over Height (ratio):") and 'extrusionwidth' in ovr.keys():
 					ns = "Edge Width over Height (ratio):\t"+str(ovr['extrusionwidth'])
+					logger("Override: " + ns + " (carve)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -47,8 +49,10 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Filament Diameter (mm):") and 'filamentdiam' in ovr.keys():
 					ns = "Filament Diameter (mm):\t"+str(ovr['filamentdiam'])
+					logger("Override: " + ns + " (dimension)")
 				elif s.startswith("Filament Packing Density (ratio):") and 'extrusionmult' in ovr.keys():
 					ns = "Filament Packing Density (ratio):\t"+str(ovr['extrusionmult'])
+					logger("Override: " + ns + " (dimension)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -66,6 +70,7 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Infill Width over Thickness (ratio):"):
 					ns = "Infill Width over Thickness (ratio):\t"+str(ovr['extrusionwidth'])
+					logger("Override: " + ns + " (inset)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -83,6 +88,7 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Infill Solidity (ratio):"):
 					ns = "Infill Solidity (ratio):\t"+str(ovr['infilldensity'])
+					logger("Override: " + ns + " (fill)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -100,9 +106,10 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Bed Temperature (Celcius):") and 'layer1bedtemperature' in ovr.keys():
 					ns = "Bed Temperature (Celcius):\t"+str(ovr['layer1bedtemperature'])
-					
+					logger("Override: " + ns + " (chamber)")					
 				elif s.startswith("Bed Temperature End (Celcius):") and 'bedtemperature' in ovr.keys():
 					ns = "Bed Temperature End (Celcius):\t"+str(ovr['bedtemperature'])
+					logger("Override: " + ns + " (chamber)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -120,11 +127,13 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Object Next Layers Temperature (Celcius):") and 'temperature' in ovr.keys():
 					ns = "Object Next Layers Temperature (Celcius):\t"+str(ovr['temperature']).split(',')[0]
-					
+					logger("Override: " + ns + " (temperature)")
 				elif s.startswith("Object First Layer Infill Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
 					ns = "Object First Layer Infill Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+					logger("Override: " + ns + " (temperature)")
 				elif s.startswith("Object First Layer Perimeter Temperature (Celcius):") and 'layer1temperature' in ovr.keys():
 					ns = "Object First Layer Perimeter Temperature (Celcius):\t"+str(ovr['layer1temperature']).split(',')[0]
+					logger("Override: " + ns + " (temperature)")
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -161,6 +170,7 @@ def modifyCSV(fn, ovr, logger):
 			for s in fpCsv:
 				if s.startswith("Feed Rate (mm/s):") and 'printspeed' in ovr.keys():
 					ns = "Feed Rate (mm/s):\t"+str(ovr['printspeed'])
+					logger("Override: " + ns + " (speed)")
 					try:
 						spd = float(ovr['printspeed'])
 					except:
@@ -169,10 +179,11 @@ def modifyCSV(fn, ovr, logger):
 						
 				elif s.startswith("Flow Rate Setting (float):") and 'printspeed' in ovr.keys():
 					ns = "Flow Rate Setting (float):\t"+str(ovr['printspeed'])
+					logger("Override: " + ns + " (speed)")
 					
 				elif s.startswith("Travel Feed Rate (mm/s):") and 'travelspeed' in ovr.keys():
 					ns = "Travel Feed Rate (mm/s):\t"+str(ovr['travelspeed'])
-					
+					logger("Override: " + ns + " (speed)")
 					
 				elif s.startswith("Object First Layer") and 'print1speed' in ovr.keys():
 					if p1 > 2.0:
@@ -184,12 +195,18 @@ def modifyCSV(fn, ovr, logger):
 						
 					if s.startswith("Object First Layer Feed Rate Infill Multiplier (ratio):"):
 						ns = "Object First Layer Feed Rate Infill Multiplier (ratio):\t"+sp1
+						logger("Override: " + ns + " (speed)")
 					elif s.startswith("Object First Layer Feed Rate Perimeter Multiplier (ratio):"):
 						ns = "Object First Layer Feed Rate Perimeter Multiplier (ratio):\t"+sp1
+						logger("Override: " + ns + " (speed)")
 					elif s.startswith("Object First Layer Flow Rate Infill Multiplier (ratio):"):
 						ns = "Object First Layer Flow Rate Infill Multiplier (ratio):\t"+sp1
+						logger("Override: " + ns + " (speed)")
 					elif s.startswith("Object First Layer Flow Rate Perimeter Multiplier (ratio):"):
 						ns = "Object First Layer Flow Rate Perimeter Multiplier (ratio):\t"+sp1
+						logger("Override: " + ns + " (speed)")
+					else:
+						ns = s.rstrip()			
 				else:
 					ns = s.rstrip()
 				fpNew.write(ns + "\n")
@@ -210,24 +227,28 @@ def modifyCSV(fn, ovr, logger):
 						ns = "None\tFalse"
 					else:
 						ns = "None\tTrue"
+					logger("Override: " + ns + " (raft)")
 						
 				elif s.startswith("Everywhere\t") and 'support' in ovr.keys():
 					if ovr['support'] == "True":
 						ns = "Everywhere\tTrue"
 					else:
 						ns = "Everywhere\tFalse"
+					logger("Override: " + ns + " (raft)")
 						
 				elif s.startswith("Base Layers (integer):") and 'adhesion' in ovr.keys():
 					if ovr['adhesion'] == "Raft":
 						ns = "Base Layers (integer):\t1"
 					else:
 						ns = "Base Layers (integer):\t0"
+					logger("Override: " + ns + " (raft)")
 						
 				elif s.startswith("Interface Layers (integer):") and 'adhesion' in ovr.keys():
 					if ovr['adhesion'] == "Raft":
 						ns = "Interface Layers (integer):\t2"
 					else:
 						ns = "Interface Layers (integer):\t0"
+					logger("Override: " + ns + " (raft)")
 						
 				else:
 					ns = s.rstrip()
@@ -249,20 +270,22 @@ def modifyCSV(fn, ovr, logger):
 					if 'adhesion' in ovr.keys():
 						if ovr['adhesion'] == "Brim":
 							ns = "Activate Skirt\tTrue"
+							logger("Override: " + ns + " (skirt)")
 						elif 'skirt' in ovr.keys():
 							ns = "Activate Skirt\t"+str(ovr['skirt'])
+							logger("Override: " + ns + " (skirt)")
 						else:
 							ns = s.rstrip()
 					else:
 						ns = "Activate Skirt\t"+str(ovr['skirt'])
-
+						logger("Override: " + ns + " (skirt)")
 				
 				elif s.startswith("Brim Width:") and 'adhesion' in ovr.keys():	
 					if ovr['adhesion'] == "Brim":
 						ns = "Brim Width:\t6"
 					else:
 						ns = "Brim Width:\t0"
-				
+					logger("Override: " + ns + " (skirt)")
 				
 				else:
 					ns = s.rstrip()

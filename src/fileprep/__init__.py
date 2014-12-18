@@ -1109,9 +1109,10 @@ class FilePrepare(wx.Panel):
 		if self.temporaryFile:
 			fn += " (temporary)"
 		st['stlfile'] = fn
-		st['gcodefile'] = str(self.gcFile)
+		st['gcodefile'] = "None"
 		
 		if self.status in [ FPSTATUS_READY, FPSTATUS_READY_DIRTY ]:
+			st['gcodefile'] = str(self.gcFile)
 			if self.batchslstatus == BATCHSL_IDLE:
 				stat = "ready"
 			else:
@@ -1763,7 +1764,7 @@ class FilePrepare(wx.Panel):
 		l = self.gcf.getCurrentLayer()
 		self.buildModel(layer=l)
 
-	def applySingleSpeed(self, s, speeds):
+	def applySingleSpeedChange(self, s, speeds):
 		if "m117" in s or "M117" in s:
 			return s
 

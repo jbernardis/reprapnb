@@ -367,7 +367,9 @@ class Cura:
 							ix = 0
 							prefix = l[:20]
 						if ix < len(diams):
-							nl = prefix + diams[ix] + "\n"
+							nl = prefix + diams[ix]
+							self.log("Override: " + nl)
+							nl += "\n"
 						else:
 							nl = l.rstrip() + "\n"
 					else:
@@ -375,20 +377,26 @@ class Cura:
 						
 				elif l.startswith("filament_flow = "):
 					if 'extrusionmlt' in self.overrides.keys():
-						nl = "filament_flow = " + str(self.overrides['extrusionmlt']) + "\n"
+						nl = "filament_flow = " + str(self.overrides['extrusionmlt'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("layer_height = "):
 					if 'layerheight' in self.overrides.keys():
-						nl = "layer_height = " + str(self.overrides['layerheight']) + "\n"
+						nl = "layer_height = " + str(self.overrides['layerheight'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("wall_thickness = "):
 					if 'extrusionwidth' in self.overrides.keys():
 						self.log("Using override value of %s for extrusion width as wall_thickness value" % self.overrides['extrusionwidth'])
-						nl = "wall_thickness = " + str(self.overrides['extrusionwidth']) + "\n"
+						nl = "wall_thickness = " + str(self.overrides['extrusionwidth'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
@@ -409,13 +417,17 @@ class Cura:
 						if v is None:
 							nl = l.rstrip() + "\n"
 						else:
-							nl = "fill_density = " + v + "\n"
+							nl = "fill_density = " + v
+							self.log("Override: " + nl)
+							nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("print_bed_temperature = "):
 					if 'bedtemperature' in self.overrides.keys():
-						nl = "print_bed_temperature = " + str(self.overrides['bedtemperature']) + "\n"
+						nl = "print_bed_temperature = " + str(self.overrides['bedtemperature'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
@@ -428,7 +440,9 @@ class Cura:
 							ix = 0
 							prefix = l[:20]
 						if ix < len(temps):
-							nl = prefix + temps[ix] + "\n"
+							nl = prefix + temps[ix]
+							self.log("Override: " + nl)
+							nl += "\n"
 						else:
 							nl = l.rstrip() + "\n"
 					else:
@@ -439,7 +453,9 @@ class Cura:
 						skv = 0
 						if self.overrides['skirt'] == 'True':
 							skv = 1
-						nl = "skirt_line_count = %d\n" % skv
+						nl = "skirt_line_count = %d" % skv
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
@@ -448,31 +464,41 @@ class Cura:
 						res = "None"
 						if self.overrides['support'] == 'True':
 							res = "Everywhere"
-						nl = "support = %s\n" % res
+						nl = "support = %s" % res
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("print_speed = "):
 					if 'printspeed' in self.overrides.keys():
-						nl = "print_speed = " + str(self.overrides['printspeed']) + "\n"
+						nl = "print_speed = " + str(self.overrides['printspeed'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("travel_speed = "):
 					if 'travelspeed' in self.overrides.keys():
-						nl = "travel_speed = " + str(self.overrides['travelspeed']) + "\n"
+						nl = "travel_speed = " + str(self.overrides['travelspeed'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("bottom_layer_speed = "):
 					if 'print1speed' in self.overrides.keys():
-						nl = "bottom_layer_speed = " + str(self.overrides['print1speed']) + "\n"
+						nl = "bottom_layer_speed = " + str(self.overrides['print1speed'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						
 				elif l.startswith("platform_adhesion = "):
 					if 'adhesion' in self.overrides.keys():
-						nl = "platform_adhesion = " + str(self.overrides['adhesion']) + "\n"
+						nl = "platform_adhesion = " + str(self.overrides['adhesion'])
+						self.log("Override: " + nl)
+						nl += "\n"
 					else:
 						nl = l.rstrip() + "\n"
 						

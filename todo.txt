@@ -6,6 +6,7 @@ In Progress/Need Testing
 	- fileprep status
   Slicing history
   Printing history
+  log overrides
 
 
 send email when print job finishes
