@@ -130,7 +130,7 @@ class PrintHistoryCtrl(wx.ListCtrl):
 			self.RefreshItem(x)
 			
 		fn = self.printhistory[self.selectedItem][0]
-		if os.path.exists(fn):
+		if fn and  os.path.exists(fn):
 			self.selectedExists = True
 		else:
 			self.selectedExists = False
@@ -148,8 +148,14 @@ class PrintHistoryCtrl(wx.ListCtrl):
 			self.RefreshItem(i)
 
 	def OnGetItemText(self, item, col):
-		if col == 0 and self.basenameonly:
-			return os.path.basename(self.printhistory[item][0])
+		if col == 0:
+			if not self.printhistory[item][0]:
+				return "<temporary file>"
+			else:
+				if self.basenameonly:
+					return os.path.basename(self.printhistory[item][0])
+				else:
+					return self.printhistory[item][0]
 		else:
 			return self.printhistory[item][col]
 
