@@ -91,7 +91,7 @@ class History:
 			
 	def LoadPrintHistory(self):
 		if not os.path.exists(self.printhistoryfile):
-			self.logWarming("Print history file does not exist - creating empty")
+			self.logWarning("Print history file does not exist - creating empty")
 			self.printHistory = []
 			return
 			

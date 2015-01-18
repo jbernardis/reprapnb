@@ -58,9 +58,10 @@ class MsgCache:
 		return self.cache[i]
 
 class SendThread:
-	def __init__(self, win, printer, priQ, mainQ):
+	def __init__(self, win, printer, firmware, priQ, mainQ):
 		self.priQ = priQ
 		self.mainQ = mainQ
+		self.firmware = firmware
 		self.isPrinting = False
 		self.win = win
 		self.printer = printer
@@ -317,15 +318,25 @@ class SendThread:
 		return []
 
 class ListenThread:
-	def __init__(self, win, printer, sender):
+	def __init__(self, win, printer, firmware, sender):
 		self.win = win
 		self.printer = printer
+		self.firmware = firmware
 		self.isRunning = False
 		self.endoflife = False
 		self.sender = sender
 		self.eatOK = 0
 		self.resendRequests = 0
-		self.resendre = re.compile("resend: *([0-9]+)")
+		if firmware == "MARLIN":
+			self.resend = "resend:"
+			self.resendre = re.compile("resend: *([0-9]+)")
+		elif firmware == "TEACUP":
+			self.resend = "rs"
+			self.resendre = re.compile("rs *N([0-9]+)")
+		else:
+			print "Unknown firmware: ", self.firmware
+			self.resend = "resend:"
+			self.resendre = re.compile("resend: *([0-9]+)")
 		thread.start_new_thread(self.Run, ())
 		
 	def kill(self):
@@ -361,7 +372,7 @@ class ListenThread:
 					print "<==", line
 				llow = line.strip().lower()
 				
-				if llow.startswith("resend:"):
+				if llow.startswith(self.resend):
 					m = self.resendre.search(llow)
 					if m:
 						t = m.groups()
@@ -402,6 +413,7 @@ class RepRapParser:
 		self.manctl = None
 		self.printmon = None
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
+		self.trpt1bre = re.compile("ok *T: *([0-9\.]+) *B: *([0-9\.]+)")
 		self.toolre = re.compile(".*?T([0-2]): *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
 		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *W:.*")
@@ -563,6 +575,37 @@ class RepRapParser:
 				self.printmon.M105pending = False
 				return True
 			return False
+		
+		m = self.trpt1bre.search(msg)
+		if m:
+			gotHE = [False for i in range(MAX_EXTRUDERS)]
+			HEtemp = [0 for i in range(MAX_EXTRUDERS)]
+			HEtarget = [0 for i in range(MAX_EXTRUDERS)]
+			t = m.groups()
+			if len(t) >= 1:
+				HEtemp[0] = float(t[0])
+				gotHE[0] = True
+			if len(t) >= 2:
+				self.setBedTemp(float(t[1]))
+				
+			m = self.toolre.findall(msg)
+			if m:
+				for t in m:
+					tool = int(t[0])
+					if tool >= 0 and tool < MAX_EXTRUDERS:
+						HEtemp[tool] = float(t[1])
+						HEtarget[tool] = float(t[2])
+						gotHE[tool] = True
+
+			for i in range(MAX_EXTRUDERS):
+				if gotHE[i]:
+					self.setHETemp(i, HEtemp[i])
+					self.setHETarget(i, HEtarget[i])
+	
+			if self.printmon.M105pending:
+				self.printmon.M105pending = False
+				return True
+			return False
 
 		m = self.trpt2re.search(msg)
 		if m:
@@ -665,6 +708,7 @@ class RepRap:
 		self.app = app
 		self.printer = None
 		self.sender = None
+		self.firmware = None
 		self.listener = None
 		self.online = False
 		self.printing = False
@@ -677,6 +721,9 @@ class RepRap:
 		self.holdFan = flag
 		if self.sender is not None:
 			self.sender.setHoldFan(flag)
+			
+	def setFirmware(self, fw):
+		self.firmware = fw
 
 	def connect(self, port, baud):
 		if(self.printer is not None):
@@ -695,10 +742,10 @@ class RepRap:
 		
 	def bind(self, win, handler):
 		win.Bind(EVT_REPRAP_UPDATE, handler)
-		self.sender = SendThread(win, self.printer, self.priQ, self.mainQ)
+		self.sender = SendThread(win, self.printer, self.firmware, self.priQ, self.mainQ)
 		self.sender.setHoldFan(self.holdFan)
 		self.sender.setCheckSum(True)
-		self.listener = ListenThread(win, self.printer, self.sender)
+		self.listener = ListenThread(win, self.printer, self.firmware, self.sender)
 		self.online = True
 		
 	def clearPendingPauses(self):

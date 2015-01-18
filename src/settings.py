@@ -173,6 +173,7 @@ class PrinterSettings:
 		self.nextr = 1
 		self.buildarea = [200, 200]
 		self.speedcommand = None
+		self.firmware = "MARLIN"
 
 class Settings:
 	def __init__(self, app, folder):
@@ -277,6 +278,9 @@ class Settings:
 						except:
 							self.showWarning("Illegal number of extruders for %s - using 1" % sc)
 							pt.nextr = 1
+							
+					elif opt == 'firmware':
+						pt.firmware = value
 							
 					elif opt == 'speedcommand':
 						if value.lower() == "none":
@@ -389,6 +393,7 @@ class Settings:
 				self.cfg.set(sc, "nextruders", str(pt.nextr))
 				self.cfg.set(sc, "speedcommand", str(pt.speedcommand))
 				self.cfg.set(sc, "buildarea", str(pt.buildarea))
+				self.cfg.set(sc, "firmware", str(pt.firmware))
 
 			section = "macros"
 			try:

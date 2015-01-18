@@ -25,6 +25,7 @@ class ManualControl(wx.Panel):
 		self.prtName = prtname
 		self.speedcommand = self.app.settings.printersettings[prtname].speedcommand
 		self.reprap = reprap
+		self.reprap.setFirmware(self.app.settings.printersettings[prtname].firmware)
 		self.prtmon = None
 		self.currentTool = 0
 		self.macroActive = False

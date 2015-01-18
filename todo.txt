@@ -1,12 +1,10 @@
 In Progress/Need Testing
   need to test HTTP functions:
     - stop print
-	- initiate and monitor slicer
+	- initiate slicer
 	- choose slicer/slicer config
-	- fileprep status
   Slicing history
   Printing history
-  log overrides
 
 
 send email when print job finishes
