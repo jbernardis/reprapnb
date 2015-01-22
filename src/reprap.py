@@ -22,7 +22,7 @@ CACHE_SIZE = 50
 
 # printer commands that are permissible while actively printing
 allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M29", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
-					"M104", "M105", "M106", "M107", "M114", "M115", "M117", "M119", "M140",
+					"M104", "M105", "M106", "M107", "M114", "M115", "M116", "M117", "M119", "M140",
 					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M220", "M221", "M240",
 					"M301", "M302", "M303",
 					"M500", "M501", "M502", "M503"]
@@ -352,7 +352,7 @@ class ListenThread:
 		return self.endoflife
 	
 	def setEatOk(self):
-		self.eatOK = 1
+		self.eatOK += 1
 		
 	def Run(self):
 		self.isRunning = True
@@ -413,10 +413,11 @@ class RepRapParser:
 		self.manctl = None
 		self.printmon = None
 		self.trpt1re = re.compile("ok *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
-		self.trpt1bre = re.compile("ok *T: *([0-9\.]+) *B: *([0-9\.]+)")
+		#self.trpt1bre = re.compile("ok *T: *([0-9\.]+) *B: *([0-9\.]+)")
 		self.toolre = re.compile(".*?T([0-2]): *([0-9\.]+) */ *([0-9\.]+)")
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
 		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *W:.*")
+		self.trpt4re = re.compile(" *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
 		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
 		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
 		self.toolchgre = re.compile("Active tool is now T([0-9])")
@@ -576,36 +577,36 @@ class RepRapParser:
 				return True
 			return False
 		
-		m = self.trpt1bre.search(msg)
-		if m:
-			gotHE = [False for i in range(MAX_EXTRUDERS)]
-			HEtemp = [0 for i in range(MAX_EXTRUDERS)]
-			HEtarget = [0 for i in range(MAX_EXTRUDERS)]
-			t = m.groups()
-			if len(t) >= 1:
-				HEtemp[0] = float(t[0])
-				gotHE[0] = True
-			if len(t) >= 2:
-				self.setBedTemp(float(t[1]))
-				
-			m = self.toolre.findall(msg)
-			if m:
-				for t in m:
-					tool = int(t[0])
-					if tool >= 0 and tool < MAX_EXTRUDERS:
-						HEtemp[tool] = float(t[1])
-						HEtarget[tool] = float(t[2])
-						gotHE[tool] = True
-
-			for i in range(MAX_EXTRUDERS):
-				if gotHE[i]:
-					self.setHETemp(i, HEtemp[i])
-					self.setHETarget(i, HEtarget[i])
-	
-			if self.printmon.M105pending:
-				self.printmon.M105pending = False
-				return True
-			return False
+# 		m = self.trpt1bre.search(msg)
+# 		if m:
+# 			gotHE = [False for i in range(MAX_EXTRUDERS)]
+# 			HEtemp = [0 for i in range(MAX_EXTRUDERS)]
+# 			HEtarget = [0 for i in range(MAX_EXTRUDERS)]
+# 			t = m.groups()
+# 			if len(t) >= 1:
+# 				HEtemp[0] = float(t[0])
+# 				gotHE[0] = True
+# 			if len(t) >= 2:
+# 				self.setBedTemp(float(t[1]))
+# 				
+# 			m = self.toolre.findall(msg)
+# 			if m:
+# 				for t in m:
+# 					tool = int(t[0])
+# 					if tool >= 0 and tool < MAX_EXTRUDERS:
+# 						HEtemp[tool] = float(t[1])
+# 						HEtarget[tool] = float(t[2])
+# 						gotHE[tool] = True
+# 
+# 			for i in range(MAX_EXTRUDERS):
+# 				if gotHE[i]:
+# 					self.setHETemp(i, HEtemp[i])
+# 					self.setHETarget(i, HEtarget[i])
+# 	
+# 			if self.printmon.M105pending:
+# 				self.printmon.M105pending = False
+# 				return True
+# 			return False
 
 		m = self.trpt2re.search(msg)
 		if m:
@@ -637,6 +638,21 @@ class RepRapParser:
 
 			if gotHeTemp:
 				self.setHETemp(tool, HeTemp)
+			return False
+		
+		m = self.trpt4re.search(msg)
+		if m:
+			t = m.groups()
+			tool = 0
+			if len(t) >= 1:
+				self.setHETemp(tool, float(t[0]))
+			if len(t) >= 2:
+				self.setHETarget(tool, float(t[1]))
+			if len(t) >= 3:
+				self.setBedTemp(float(t[2]))
+			if len(t) >= 4:
+				self.setBedTarget(float(t[3]))
+
 			return False
 		
 		m = self.speedrptre.search(msg)
@@ -755,9 +771,6 @@ class RepRap:
 	def addToAllowedCommands(self, cmd):
 		allow_while_printing.append(cmd)
 		
-	def setEatOk(self):
-		self.listener.setEatOk()
-
 	def getPrintPosition(self):
 		if self.sender and self.sender.isPrinting:
 			return self.sender.getPrintIndex()
@@ -873,19 +886,23 @@ class RepRap:
 		self.printing = False
 		self.paused = False
 				
-	def send_now(self, cmd):
+	def send_now(self, cmd, eatOK = False):
 		verb = cmd.split()[0]
 		if not self.printer:
 			self.app.logger.LogWarning("Printer is off-line")
 			return False
 		elif self.printing and verb not in allow_while_printing:
 			if self.forceGCode:
+				if eatOK:
+					self.listener.setEatOK()
 				self.app.logger.LogWarning("Command (%s) forced" % cmd)
 				return self._send(cmd, priority=True)
 			else:
 				self.app.logger.LogWarning("Command not allowed while printing")
 				return False
 		else:
+			if eatOK:
+				self.listener.setEatOK()
 			return self._send(cmd, priority=True)
 				
 	def send(self, cmd):

@@ -25,7 +25,8 @@ class ManualControl(wx.Panel):
 		self.prtName = prtname
 		self.speedcommand = self.app.settings.printersettings[prtname].speedcommand
 		self.reprap = reprap
-		self.reprap.setFirmware(self.app.settings.printersettings[prtname].firmware)
+		self.firmwareName = self.app.settings.printersettings[prtname].firmware
+		self.reprap.setFirmware(self.firmwareName)
 		self.prtmon = None
 		self.currentTool = 0
 		self.macroActive = False
@@ -194,20 +195,21 @@ class ManualControl(wx.Panel):
 		sizerSpeed = wx.BoxSizer(wx.VERTICAL)
 		sizerSpeed.AddSpacer((10, 10))
 
-		t = wx.StaticText(self, wx.ID_ANY, "Feed Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
-		t.SetFont(self.font12bold)
-		sizerSpeed.Add(t, flag=wx.ALL)
-
-		self.slFeedSpeed = wx.Slider(
-			self, wx.ID_ANY, 100, 50, 200, size=(320, -1), 
-			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
-			)
-		self.slFeedSpeed.SetTickFreq(5, 1)
-		self.slFeedSpeed.SetPageSize(1)
-		self.slFeedSpeed.Bind(wx.EVT_SCROLL_CHANGED, self.onFeedSpeedChanged)
-		self.slFeedSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFeedSpeedWheel)
-		sizerSpeed.Add(self.slFeedSpeed)
-		sizerSpeed.AddSpacer((10, 10))
+		if self.firmwareName in [ "MARLIN" ]:
+			t = wx.StaticText(self, wx.ID_ANY, "Feed Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
+			t.SetFont(self.font12bold)
+			sizerSpeed.Add(t, flag=wx.ALL)
+	
+			self.slFeedSpeed = wx.Slider(
+				self, wx.ID_ANY, 100, 50, 200, size=(320, -1), 
+				style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
+				)
+			self.slFeedSpeed.SetTickFreq(5, 1)
+			self.slFeedSpeed.SetPageSize(1)
+			self.slFeedSpeed.Bind(wx.EVT_SCROLL_CHANGED, self.onFeedSpeedChanged)
+			self.slFeedSpeed.Bind(wx.EVT_MOUSEWHEEL, self.onFeedSpeedWheel)
+			sizerSpeed.Add(self.slFeedSpeed)
+			sizerSpeed.AddSpacer((10, 10))
 
 		t = wx.StaticText(self, wx.ID_ANY, "Fan Speed", style=wx.ALIGN_CENTER, size=(-1, -1))
 		t.SetFont(self.font12bold)

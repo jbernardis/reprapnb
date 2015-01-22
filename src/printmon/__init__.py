@@ -288,8 +288,7 @@ class PrintMonitor(wx.Panel):
 				self.M105pending = False
 			elif not self.M105pending:
 				self.M105pending = True
-				self.reprap.setEatOk()
-				self.reprap.send_now("M105")
+				self.reprap.send_now("M105", True)
 				
 		if self.cycle % POSITIONINTERVAL == 0:
 			n = self.reprap.getPrintPosition()
