@@ -5,6 +5,8 @@ In Progress/Need Testing
 	- choose slicer/slicer config
   Slicing history
   Printing history
+  
+in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
 
 send email when print job finishes

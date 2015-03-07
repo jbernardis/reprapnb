@@ -1656,17 +1656,37 @@ class FilePrepare(wx.Panel):
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.logger.LogMessage("Applying axis shift in G Code")
+		startTrigger = False
+		endTrigger = False
 		for i in range(len(self.gcode)):
 			l = self.gcode[i]
-			l = self.applyAxisShift(l, 'x', self.shiftX)
-			l = self.applyAxisShift(l, 'y', self.shiftY)
-			self.gcode[i] = l
+			if not startTrigger:
+				startTrigger = self.checkStartTrigger(l)
+			else:
+				if not endTrigger:
+					endTrigger = self.checkEndTrigger(l)
+				if not endTrigger:
+					l = self.applyAxisShift(l, 'x', self.shiftX)
+					l = self.applyAxisShift(l, 'y', self.shiftY)
+					self.gcode[i] = l
 
 		self.shiftX = 0
 		self.shiftY = 0
 		self.setModified(True)
 		l = self.gcf.getCurrentLayer()
 		self.buildModel(layer=l)
+		
+	def checkStartTrigger(self, l):
+		if self.settings.editTrigger is None:
+			return True
+			
+		return self.settings.editTrigger in l
+		
+	def checkEndTrigger(self, l):
+		if self.settings.editTrigger is None:
+			return False
+		
+		return self.settings.editTrigger in l
 
 	def applyAxisShift(self, s, axis, shift):
 		if "m117" in s or "M117" in s:
@@ -1675,9 +1695,11 @@ class FilePrepare(wx.Panel):
 		if axis == 'x':
 			m = reX.match(s)
 			shift = self.shiftX
+			maxv = self.buildarea[0]
 		elif axis == 'y':
 			m = reY.match(s)
 			shift = self.shiftY
+			maxv = self.buildarea[1]
 		else:
 			return s
 		
@@ -1685,6 +1707,11 @@ class FilePrepare(wx.Panel):
 			return s
 		
 		value = float(m.group(2)) + float(shift)
+		if value < 0:
+			value = 0
+		elif value > maxv:
+			value = maxv
+			
 		return "%s%s%s" % (m.group(1), str(value), m.group(3))
 	
 	def modifyTemps(self, event):
@@ -1844,6 +1871,7 @@ class FilePrepare(wx.Panel):
 		
 		info = self.model.getLayerInfo(v[0])
 		sx = info[4][0]
+		# TODO Need to figure out here how to handle multiple tools
 		sTool = self.model.findToolByLine(sx)
 		info = self.model.getLayerInfo(v[1])
 		ex = info[4][1]
@@ -1861,14 +1889,14 @@ class FilePrepare(wx.Panel):
 			fp.write(s+"\n")
 				
 		if v[2]:
-			fp.write("G92 E%.3f\n" % self.model.layer_e_start[v[0]])
+			fp.write("G92 E%.3f\n" % self.model.layer_e_start[v[0]][0])
 		
 		for ln in self.gcode[sx:ex+1]:
 			fp.write(ln + "\n")
 		
 		if v[7]:
 			fp.write("G92 E%.3f\n" % (self.model.layer_e_end[v[1]][0]+2))
-			fp.write("G1 E%.3f\n" % self.model.layer_e_end[v[1][0]])
+			fp.write("G1 E%.3f\n" % self.model.layer_e_end[v[1]][0])
 		
 		if v[6]:
 			fp.write("G1 Z%.3f" % (z+10))

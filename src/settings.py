@@ -452,6 +452,7 @@ class SettingsFilePrep:
 		self.gcodequeue = []
 		self.showgcbasename = False
 		self.showstlbasename = False
+		self.editTrigger = "====="
 		
 		if cfg is None:
 			self.modified = True
@@ -515,6 +516,12 @@ class SettingsFilePrep:
 						
 				elif opt == 'showgcbasename':
 					self.showgcbasename = parseBoolean(value, False)
+						
+				elif opt == 'edittrigger':
+					if value.lower() == "none":
+						self.editTrigger = None
+					else:
+						self.editTrigger = value
 						
 				elif opt == 'stlqueue':
 					if value == '':
@@ -608,6 +615,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "gcodequeue", ",".join(self.gcodequeue))
 			self.cfg.set(self.section, "showstlbasename", str(self.showstlbasename))
 			self.cfg.set(self.section, "showgcbasename", str(self.showgcbasename))
+			self.cfg.set(self.section, "edittrigger", str(self.editTrigger))
 			
 			for i in range(len(self.slicers)):
 				s = self.slicers[i]

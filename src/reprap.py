@@ -21,11 +21,9 @@ from settings import (MAX_EXTRUDERS, SD_PRINT_COMPLETE, SD_PRINT_POSITION, SD_CA
 CACHE_SIZE = 50
 
 # printer commands that are permissible while actively printing
-allow_while_printing = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M29", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
-					"M104", "M105", "M106", "M107", "M114", "M115", "M116", "M117", "M119", "M140",
-					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M220", "M221", "M240",
-					"M301", "M302", "M303",
-					"M500", "M501", "M502", "M503"]
+allow_while_printing_base = [ "M0", "M1", "M20", "M21", "M22", "M23", "M25", "M27", "M29", "M30", "M31", "M42", "M82", "M83", "M85", "M92",
+					"M104", "M105", "M106", "M114", "M115", "M117", "M119", "M140",
+					"M200", "M201", "M202", "M203", "M204", "M205", "M206", "M207", "M208", "M209", "M240"]
 
 class MsgCache:
 	def __init__(self, size):
@@ -351,7 +349,7 @@ class ListenThread:
 	def isKilled(self):
 		return self.endoflife
 	
-	def setEatOk(self):
+	def setEatOK(self):
 		self.eatOK += 1
 		
 	def Run(self):
@@ -393,9 +391,8 @@ class ListenThread:
 						self.eatOK -= 1
 					else:
 						self.sender.endWait()
-
-				if llow == "ok":
-					continue
+						if llow == "ok":
+							continue
 						
 				if line.startswith("echo:"):
 					line = line[5:]
@@ -732,6 +729,7 @@ class RepRap:
 		self.forceGCode = False
 		self.restarting = False
 		self.restartData = None
+		self.allowWhilePrinting = allow_while_printing_base[:]
 		
 	def setHoldFan(self, flag):
 		self.holdFan = flag
@@ -740,6 +738,24 @@ class RepRap:
 			
 	def setFirmware(self, fw):
 		self.firmware = fw
+		if fw in ["TEACUP" ]:
+			self.addToAllowedCommands("M130")
+			self.addToAllowedCommands("M131")
+			self.addToAllowedCommands("M132")
+			self.addToAllowedCommands("M133")
+			self.addToAllowedCommands("M134")
+			self.addToAllowedCommands("M136")
+		elif fw in [ "MARLIN" ]:
+			self.addToAllowedCommands("M107")
+			self.addToAllowedCommands("M220")
+			self.addToAllowedCommands("M221")
+			self.addToAllowedCommands("M301")
+			self.addToAllowedCommands("M302")
+			self.addToAllowedCommands("M303")
+			self.addToAllowedCommands("M500")
+			self.addToAllowedCommands("M501")
+			self.addToAllowedCommands("M502")
+			self.addToAllowedCommands("M503")
 
 	def connect(self, port, baud):
 		if(self.printer is not None):
@@ -769,7 +785,7 @@ class RepRap:
 			self.sender.clearPendingPauses()
 
 	def addToAllowedCommands(self, cmd):
-		allow_while_printing.append(cmd)
+		self.allowWhilePrinting.append(cmd)
 		
 	def getPrintPosition(self):
 		if self.sender and self.sender.isPrinting:
@@ -891,7 +907,7 @@ class RepRap:
 		if not self.printer:
 			self.app.logger.LogWarning("Printer is off-line")
 			return False
-		elif self.printing and verb not in allow_while_printing:
+		elif self.printing and verb not in self.allowWhilePrinting:
 			if self.forceGCode:
 				if eatOK:
 					self.listener.setEatOK()
