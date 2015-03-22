@@ -127,7 +127,7 @@ class MainFrame(wx.Frame):
 			return
 		
 		sel = evt.GetSelection()
-		oldSel = evt.getOldSelection()
+		oldSel = evt.GetOldSelection()
 		for p in self.pxManCtl.keys():
 			if oldSel == self.pxManCtl[p]:
 				self.pgManCtl[p].leavePage()
