@@ -902,6 +902,9 @@ class RepRap:
 	def printComplete(self):
 		self.printing = False
 		self.paused = False
+		
+	def isPrinting(self):
+		return self.printing
 				
 	def send_now(self, cmd, eatOK = False):
 		verb = cmd.split()[0]

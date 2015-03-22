@@ -113,11 +113,17 @@ class ManualControl(wx.Panel):
 		
 	def onEngageZ(self, evt):
 		if not self.zEngaged:
-			self.zEngaged = True
-			self.zdir = True
-			self.ztimer = wx.Timer(self)
-			self.Bind(wx.EVT_TIMER, self.onZTimer, self.ztimer)  
-			self.ztimer.Start(10000)
+			if self.reprap.isPrinting():
+				dlg = wx.MessageDialog(self, "Disallowed while printing",
+					'Printer Busy', wx.OK | wx.ICON_INFORMATION)
+				dlg.ShowModal()
+				self.Destroy()
+			else:
+				self.zEngaged = True
+				self.zdir = True
+				self.ztimer = wx.Timer(self)
+				self.Bind(wx.EVT_TIMER, self.onZTimer, self.ztimer)  
+				self.ztimer.Start(10000)
 		else:
 			self.zEngaged = False
 			self.ztimer.Stop()
