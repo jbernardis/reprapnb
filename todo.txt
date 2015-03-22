@@ -18,6 +18,12 @@ More capabilities from HTTP interface
 	- send file to printer
 	- start printer
 	- activate camera
+	- add to slice queue
+	- slice from slice queue
+	- add to print queue
+	- load from print queue
+	
+manual control - need a button to keep Z motor engaged
 	
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box

@@ -32,6 +32,8 @@ class ManualControl(wx.Panel):
 		self.macroActive = False
 		self.nextr = self.app.settings.printersettings[prtname].nextr
 		
+		self.zEngaged = False
+		
 		if self.speedcommand is not None:
 			self.reprap.addToAllowedCommands(self.speedcommand)
 
@@ -74,6 +76,12 @@ class ManualControl(wx.Panel):
 		sizerRight.Add(sizerBedSpd)
 		
 		sizerBtn = wx.BoxSizer(wx.HORIZONTAL)
+		self.bZEngage = wx.BitmapButton(self, wx.ID_ANY, self.images.pngEngagez, size=BUTTONDIM)
+		self.zEngaged = False
+		self.setZEngage()
+		sizerBtn.Add(self.bZEngage)
+		self.Bind(wx.EVT_BUTTON, self.onEngageZ, self.bZEngage)
+		sizerBtn.AddSpacer((20, 20))
 		self.bFirmware = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFirmware, size=BUTTONDIM)
 		self.bFirmware.SetToolTipString("Manage Firmware settings")
 		sizerBtn.Add(self.bFirmware)
@@ -94,6 +102,34 @@ class ManualControl(wx.Panel):
 		self.SetSizer(self.sizerMain)
 		self.Layout()
 		self.Fit()
+		
+	def setZEngage(self):
+		if self.zEngaged:
+			self.bZEngage.SetToolTipString("Disengage Z Axis")
+			self.bZEngage.SetBitmapLabel(self.images.pngDisengagez)
+		else:
+			self.bZEngage.SetToolTipString("Engage Z Axis")
+			self.bZEngage.SetBitmapLabel(self.images.pngEngagez)
+		
+	def onEngageZ(self, evt):
+		if not self.zEngaged:
+			self.zEngaged = True
+			self.zdir = True
+			self.ztimer = wx.Timer(self)
+			self.Bind(wx.EVT_TIMER, self.onZTimer, self.ztimer)  
+			self.ztimer.Start(10000)
+		else:
+			self.zEngaged = False
+			self.ztimer.Stop()
+			
+	def onZTimer(self, evt):
+		self.reprap.send_now("G91")
+		if self.zdir:
+			self.reprap.send_now("G1 Z0.1 F300")
+		else:
+			self.reprap.send_now("G1 Z-0.1 F300")
+		self.reprap.send_now("G90")
+		self.zdir = not self.zdir
 		
 	def setPrtMon(self, pm):
 		self.prtmon = pm

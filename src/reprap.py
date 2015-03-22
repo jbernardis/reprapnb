@@ -391,8 +391,9 @@ class ListenThread:
 						self.eatOK -= 1
 					else:
 						self.sender.endWait()
-						if llow == "ok":
-							continue
+						
+					if llow == "ok":
+						continue
 						
 				if line.startswith("echo:"):
 					line = line[5:]
