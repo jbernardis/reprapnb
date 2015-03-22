@@ -45,6 +45,7 @@ class MainFrame(wx.Frame):
 		
 		self.pgPrinters = {}
 		self.pgManCtl = {}
+		self.pxManCtl = {}
 		self.pgPrtMon = {}
 		self.connected = {}
 		self.printing = {}
@@ -126,6 +127,11 @@ class MainFrame(wx.Frame):
 			return
 		
 		sel = evt.GetSelection()
+		oldSel = evt.getOldSelection()
+		for p in self.pxManCtl.keys():
+			if oldSel == self.pxManCtl[p]:
+				self.pgManCtl[p].leavePage()
+				
 		if sel != self.pxLogger:
 			self.logger.checkShowToaster()
 			
@@ -145,6 +151,7 @@ class MainFrame(wx.Frame):
 		mc.setPrtMon(pm)
 		mcText = MANCTL_TAB_TEXT % printer
 		pmText = PRTMON_TAB_TEXT % printer
+		self.pxManCtl[printer] = self.nb.GetPageCount()
 		self.nb.AddPage(self.pgManCtl[printer], mcText)
 		self.nb.AddPage(self.pgPrtMon[printer], pmText, imageId=self.nbilNotReadyIdx)
 		self.pgPrinters[printer] = (mcText, pmText)
@@ -156,11 +163,13 @@ class MainFrame(wx.Frame):
 		
 		del self.connected[printer]
 		del self.printing[printer]
+		self.pgManCtl[printer].leavePage()
 		mcText, pmText = self.pgPrinters[printer]
 		self.deletePageByTabText(mcText)
 		self.deletePageByTabText(pmText)
 		del self.pgPrinters[printer]
 		del self.pgManCtl[printer]
+		del self.pxManCtl[printer]
 		del self.pgPrtMon[printer]
 		
 	def deletePageByTabText(self, text):

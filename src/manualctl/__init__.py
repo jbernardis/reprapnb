@@ -127,6 +127,18 @@ class ManualControl(wx.Panel):
 		else:
 			self.zEngaged = False
 			self.ztimer.Stop()
+		self.setZEngage()
+		
+	def leavePage(self):
+		if self.zEngaged:
+			self.logger.LogMessage("Disengaging Z axis")
+			self.disengageZ()
+		
+	def disengageZ(self):
+		if self.zEngaged:
+			self.ztimer.Stop()
+		self.zEngaged = False
+		self.setZEngage()
 			
 	def onZTimer(self, evt):
 		self.reprap.send_now("G91")
