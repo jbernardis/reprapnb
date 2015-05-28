@@ -19,6 +19,38 @@ snBed = "Bed"
 HTTPMC_SETHEATER = 0
 HTTPMC_PENDANT = 1
 
+pendantHomes = {
+	'home': "G28",
+	'homex': "G28 X0",
+	'homey': "G28 Y0",
+	'homez': "G28 Z0",
+	}
+
+pendantMoves = {
+	'movex1': "X0.1",
+	'movex2': "X1",
+	'movex3': "X10",
+	'movex4': "X100",
+	'movex-1': "X-0.1",
+	'movex-2': "X-1",
+	'movex-3': "X-10",
+	'movex-4': "X-100",
+	'movey1': "Y0.1",
+	'movey2': "Y1",
+	'movey3': "Y10",
+	'movey4': "Y100",
+	'movey-1': "Y-0.1",
+	'movey-2': "Y-1",
+	'movey-3': "Y-10",
+	'movey-4': "Y-100",
+	'movez1': "Z0.1",
+	'movez2': "Z1",
+	'movez3': "Z10",
+	'movez-1': "Z-0.1",
+	'movez-2': "Z-1",
+	'movez-3': "Z-10",
+	}
+
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, prtname, reprap):
 		self.model = None
@@ -419,8 +451,28 @@ class ManualControl(wx.Panel):
 					if htr == snHotEnds[i]:
 						self.heWin.heaterTemp(i, temp)
 		elif evt.cmd == HTTPMC_PENDANT:
-			print "pendant command ", evt.button
+			self.executePendantCommand(evt.button)
 
+	def executePendantCommand(self, cmd):
+		c = cmd.lower()
+		if c in pendantMoves.keys():
+			axis = pendantMoves[c]
+			if axis.startswith("Z"):
+				speed = "F%s" % str(self.settings.zspeed)
+			else:
+				speed = "F%s" % str(self.settings.xyspeed)
+				
+			self.reprap.send_now("G91")
+			self.reprap.send_now("G1 %s %s" % (axis, speed))
+			self.reprap.send_now("G90")
+				
+		elif c in pendantHomes.keys():
+			self.reprap.send_now(pendantHomes[c])
+			
+		else:
+			self.logger.LogMessage("Unknown pendant command: %s" % cmd)
+
+			
 	def pendantCommand(self, cmd):
 		evt = HttpEvent(cmd=HTTPMC_PENDANT, button=cmd)
 		wx.PostEvent(self, evt)
