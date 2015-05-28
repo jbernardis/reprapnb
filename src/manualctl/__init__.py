@@ -1,4 +1,5 @@
 import wx
+import wx.lib.newevent
 import os.path
 from imagemap import ImageMap
 from extruder import Extruder
@@ -13,6 +14,9 @@ from settings import BUTTONDIM, BUTTONDIMWIDE
 
 snHotEnds = ("HE0", "HE1", "HE2")
 snBed = "Bed"
+
+(HttpEvent, EVT_HTTP_MANCTL) = wx.lib.newevent.NewEvent()
+HTTPMC_SETHEATER = 0
 
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, prtname, reprap):
@@ -48,6 +52,8 @@ class ManualControl(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onFeedSpeedChanged, self.slFeedTimer)
 		self.slFanTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onFanSpeedChanged, self.slFanTimer)
+
+		self.Bind(EVT_HTTP_MANCTL, self.httpRequest)
 
 		self.moveAxis = MoveAxis(self, self.app, self.reprap)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
@@ -355,7 +361,8 @@ class ManualControl(wx.Panel):
 			if k.lower() == snBed.lower():
 				try:
 					t = int(q[k][0])
-					self.bedWin.heaterTemp(t)
+					evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snBed, temp=t)
+					wx.PostEvent(self, evt)
 					rv[k] = str(t)
 					count += 1
 				except:
@@ -368,7 +375,8 @@ class ManualControl(wx.Panel):
 						found = True
 						try:
 							tmp = int(q[k][0])
-							self.heWin.heaterTemp(t, tmp)
+							evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snHotEnds[t], temp=tmp)
+							wx.PostEvent(self, evt)
 							rv[k] = str(tmp)
 							count += 1
 						except:
@@ -381,19 +389,33 @@ class ManualControl(wx.Panel):
 					errors = True
 							
 		if count == 0 and not errors:
-			self.bedWin.heaterTemp(0)
+			evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snBed, temp=0)
+			wx.PostEvent(self, evt)
+
 			rv[snBed] = 0
 			for i in range(self.nextr):
-				self.heWin.heaterTemp(i, 0)
+				evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snHotEnds[i], temp=0)
+				wx.PostEvent(self, evt)
 				rv[snHotEnds[i]] = 0
-			rv['result'] = "Success - all heaters turned off"
+			rv['result'] = "Success - all heaters off posted"
 
 		elif errors:
-			rv['result'] = ("Failed - errors encountered, %d temps changed" % count)
+			rv['result'] = ("Failed - errors encountered, %d temp changes posted" % count)
 		
 		else:
-			rv['result'] = ("Success - %d temps changes" % count)
+			rv['result'] = ("Success - %d temp changes posted" % count)
 
 		return errors, rv
-					
+	
+	def httpRequest(self, evt):
+		if evt.cmd == HTTPMC_SETHEATER:
+			htr = evt.heater
+			temp = evt.temp
+			if htr == snBed:
+				self.bedWin.heaterTemp(temp)
+			else:
+				for i in range(self.nextr):
+					if htr == snHotEnds[i]:
+						self.heWin.heaterTemp(i, temp)
+
 				

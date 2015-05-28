@@ -418,7 +418,6 @@ class MainFrame(wx.Frame):
 		
 		self.pgFilePrep.httpSliceFile(fn)
 
-
 		return {'result': 'posted'}
 
 	def getSlicer(self):
@@ -426,6 +425,10 @@ class MainFrame(wx.Frame):
 		
 	def getTemps(self):
 		return self.pgConnMgr.getTemps()
+	
+	def pendantCommand(self, q):
+		cmd = q['cmd'][0]
+		return self.pgConnMgr.pendantCommand(cmd)
 	
 	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)

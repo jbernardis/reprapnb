@@ -1,4 +1,5 @@
 import wx
+import wx.lib.newevent
 import os
 import time
 import re
@@ -32,6 +33,11 @@ TEMPINTERVAL = 3
 POSITIONINTERVAL = 1
 M27Interval = 2000
 
+(HttpEvent, EVT_HTTP_PRINTMON) = wx.lib.newevent.NewEvent()
+HTTPPM_STOPPRINT= 0
+HTTPPM_PENDANT = 1
+
+
 gcRegex = re.compile("[-]?\d+[.]?\d*")
 def _get_float(l, which):
 	return float(gcRegex.findall(l.split(which)[1])[0])
@@ -60,7 +66,7 @@ class PrintMonitor(wx.Panel):
 		self.settings = app.settings.printmon
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
-		self.knownHeaters = ['HE0', 'Bed']
+		self.knownHeaters = ['HE0', 'HE1', 'HE2', 'Bed']
 		self.targets = {}
 		self.temps = {}
 		self.tempData = {}
@@ -247,6 +253,8 @@ class PrintMonitor(wx.Panel):
 		self.openFpLog()
 		self.timer.Start(1000)
 		self.reprap.setHoldFan(self.holdFan)
+		
+		self.Bind(EVT_HTTP_PRINTMON, self.httpRequest)
 		
 		self.infoPane.setMode(MODE_NORMAL)
 		self.setSDTargetFile(None)
@@ -638,24 +646,6 @@ class PrintMonitor(wx.Panel):
 			else:
 				self.stopPrintNormal()
 				
-	def stopPrint(self):
-		result = {}
-		if self.sdTargetFile is not None:
-			self.stopPrintToSD()
-			result['result'] = "Success - Print to SD stopped"
-			
-		elif self.sdprintingfrom:
-			self.stopPrintFromSD()
-			self.stopMotorsAndHeaters()
-			result['result'] = "Success - Print from SD stopped"
-			
-		else:
-			self.stopPrintNormal()
-			self.stopMotorsAndHeaters()
-			result['result'] = "Success - Print stopped"
-			
-		return result
-			
 	def stopPrintToSD(self):
 		self.reprap.pausePrint()
 		self.reprap.send_now("M29 %s" % self.sdTargetFile)
@@ -859,7 +849,7 @@ class PrintMonitor(wx.Panel):
 		temps['temps'] = self.temps
 		temps['targets'] = self.targets
 		return temps
-		
+	
 	def onTimer(self, evt):
 		for h in self.knownHeaters:
 			if h in self.temps.keys():
@@ -906,3 +896,28 @@ class PrintMonitor(wx.Panel):
 				self.slideLayer.Enable(False)
 		else:
 			self.slideLayer.Enable(False)
+			
+	def stopPrint(self):
+		evt = HttpEvent(cmd=HTTPPM_STOPPRINT)
+		wx.PostEvent(self, evt)
+	
+	def pendantCommand(self, button):
+		evt = HttpEvent(cmd=HTTPPM_PENDANT, button=button)
+		wx.PostEvent(self, evt)
+		
+	def httpRequest(self, evt):
+		if evt.cmd == HTTPPM_STOPPRINT:
+			if self.sdTargetFile is not None:
+				self.stopPrintToSD()
+				
+			elif self.sdprintingfrom:
+				self.stopPrintFromSD()
+				self.stopMotorsAndHeaters()
+				
+			else:
+				self.stopPrintNormal()
+				self.stopMotorsAndHeaters()
+				
+		elif evt.cmd == HTTPPM_PENDANT:
+			print "pendant command: ", evt.button
+

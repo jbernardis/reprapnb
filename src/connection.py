@@ -76,6 +76,8 @@ class ConnectionManager:
 		self.printerList = self.settings.printers[:]
 		self.activePorts = []
 		self.activePrinters = []
+		self.pendantConnection = None
+		self.pendantIndex = None
 		self.manageDlg = None
 		
 	def manageDlgClose(self):
@@ -128,10 +130,20 @@ class ConnectionManager:
 			cx += 1
 			
 		return result
+	
+	def pendantCommand(self, cmd):
+		if self.pendantConnection is None:
+			return {'result': 'No printers connected, or pendant connection not assigned'}
+		
+		return self.pendantConnection.prtmon.pendantCommand(cmd)
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
 		self.connections.append(cx)
+		if len(self.connections) == 1:
+			self.pendantConnection = cx
+			self.pendantIndex = 0
+			
 		self.activePorts.append(port)
 		self.activePrinters.append(printer)
 		self.portList.remove(port)
@@ -167,6 +179,10 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
+		if self.pendantIndex == idx:
+			self.pendantIndex = None
+			self.pendantConnection = None
+		
 		self.printerList.append(printer)
 		self.printerList.sort()
 		self.portList.append(port)
@@ -189,6 +205,10 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
+		if self.pendantIndex == idx:
+			self.pendantIndex = None
+			self.pendantConnection = None
+		
 		self.printerList.append(printer)
 		self.printerList.sort()
 		self.portList.append(port)
@@ -208,6 +228,8 @@ class ConnectionManager:
 		for c in self.connections:
 			c.close()
 		self.connections = []
+		self.pendantIndex = None
+		self.pendantConnection = None
 	
 	def disconnectByRepRap(self, reprap):
 		port = reprap.getPort()
