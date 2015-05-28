@@ -35,7 +35,6 @@ M27Interval = 2000
 
 (HttpEvent, EVT_HTTP_PRINTMON) = wx.lib.newevent.NewEvent()
 HTTPPM_STOPPRINT= 0
-HTTPPM_PENDANT = 1
 
 
 gcRegex = re.compile("[-]?\d+[.]?\d*")
@@ -901,10 +900,6 @@ class PrintMonitor(wx.Panel):
 		evt = HttpEvent(cmd=HTTPPM_STOPPRINT)
 		wx.PostEvent(self, evt)
 	
-	def pendantCommand(self, button):
-		evt = HttpEvent(cmd=HTTPPM_PENDANT, button=button)
-		wx.PostEvent(self, evt)
-		
 	def httpRequest(self, evt):
 		if evt.cmd == HTTPPM_STOPPRINT:
 			if self.sdTargetFile is not None:
@@ -917,7 +912,3 @@ class PrintMonitor(wx.Panel):
 			else:
 				self.stopPrintNormal()
 				self.stopMotorsAndHeaters()
-				
-		elif evt.cmd == HTTPPM_PENDANT:
-			print "pendant command: ", evt.button
-

@@ -135,7 +135,7 @@ class ConnectionManager:
 		if self.pendantConnection is None:
 			return {'result': 'No printers connected, or pendant connection not assigned'}
 		
-		return self.pendantConnection.prtmon.pendantCommand(cmd)
+		return self.pendantConnection.manctl.pendantCommand(cmd)
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
@@ -590,6 +590,9 @@ class ConnectionManagerPanel(wx.Panel):
 			
 	def getTemps(self):
 		return self.cm.getTemps()
+	
+	def pendantCommand(self, cmd):
+		return self.cm.pendantCommand(cmd)
 	
 	def doDisconnect(self, evt):
 		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())

@@ -17,6 +17,7 @@ snBed = "Bed"
 
 (HttpEvent, EVT_HTTP_MANCTL) = wx.lib.newevent.NewEvent()
 HTTPMC_SETHEATER = 0
+HTTPMC_PENDANT = 1
 
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, prtname, reprap):
@@ -417,5 +418,12 @@ class ManualControl(wx.Panel):
 				for i in range(self.nextr):
 					if htr == snHotEnds[i]:
 						self.heWin.heaterTemp(i, temp)
+		elif evt.cmd == HTTPMC_PENDANT:
+			print "pendant command ", evt.button
+
+	def pendantCommand(self, cmd):
+		evt = HttpEvent(cmd=HTTPMC_PENDANT, button=cmd)
+		wx.PostEvent(self, evt)
+		return {'result' : "Pendant command posted"}
 
 				
