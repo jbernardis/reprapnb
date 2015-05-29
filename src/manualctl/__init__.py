@@ -472,6 +472,12 @@ class ManualControl(wx.Panel):
 		elif c in pendantHomes.keys():
 			self.reprap.send_now(pendantHomes[c])
 			
+		elif c == "extrude":
+			self.extWin.doExtrude()
+			
+		elif c == "retract":
+			self.extWin.doRetract()
+			
 		elif c.startswith("temp"):
 			target = c[4:7]
 			try:

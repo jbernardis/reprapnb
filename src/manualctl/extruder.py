@@ -79,7 +79,7 @@ class Extruder(wx.Window):
 		except:
 			self.logger.LogError("Invalid value for E Distance: %s" % self.tEDistance.GetValue())
 			
-	def doExtrude(self, evt):
+	def doExtrude(self, evt=None):
 		try:
 			sp = float(self.tESpeed.GetValue())
 		except:
@@ -94,7 +94,7 @@ class Extruder(wx.Window):
 		self.reprap.send_now("G1 %s%.3f F%.3f" % (self.axis.upper(), dst, sp))
 		self.reprap.send_now("G90")
 		
-	def doRetract(self, evt):
+	def doRetract(self, evt=None):
 		try:
 			sp = float(self.tESpeed.GetValue())
 		except:
