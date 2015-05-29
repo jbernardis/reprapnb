@@ -51,6 +51,7 @@ pendantMoves = {
 	'movez-3': "Z-10",
 	}
 
+
 class ManualControl(wx.Panel): 
 	def __init__(self, parent, app, prtname, reprap):
 		self.model = None
@@ -68,6 +69,8 @@ class ManualControl(wx.Panel):
 		self.currentTool = 0
 		self.macroActive = False
 		self.nextr = self.app.settings.printersettings[prtname].nextr
+		self.standardBedTemp = [ 0, self.settings.standardbedlo, self.settings.standardbedhi]
+		self.standardHeTemp = [0, self.settings.standardhelo, self.settings.standardhehi]
 		
 		self.zEngaged = False
 		
@@ -468,6 +471,34 @@ class ManualControl(wx.Panel):
 				
 		elif c in pendantHomes.keys():
 			self.reprap.send_now(pendantHomes[c])
+			
+		elif c.startswith("temp"):
+			target = c[4:7]
+			try:
+				temp = int(c[7])
+				if temp < 0 or temp > 2:
+					temp = None
+			except:
+				temp = None
+
+			if temp is not None:				
+				if target == "bed":
+					self.bedWin.heaterTemp(self.standardBedTemp[temp])
+				elif target.startswith("he"):
+					try:
+						tool = int(target[2])
+						if tool < 0 or tool >= self.nextr:
+							tool = None
+					except:
+						tool = None
+					if tool is not None:
+						self.heWin.heaterTemp(tool, self.standardHeTemp[temp])
+					else:
+						self.logger.LogMessage("Pendant temp command had invalid tool number: " + cmd)
+				else:
+					self.logger.LogMessage("Pendant temp command had invalid target: " + cmd)
+			else:
+				self.logger.LogMessage("Pendant temp command had invalid temp index: " + cmd)
 			
 		else:
 			self.logger.LogMessage("Unknown pendant command: %s" % cmd)

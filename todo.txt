@@ -8,6 +8,10 @@ In Progress/Need Testing
   
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
+pendant commands
+	retraction/extrusion
+	connection to printer
+	executable to interface
 
 send email when print job finishes
 
