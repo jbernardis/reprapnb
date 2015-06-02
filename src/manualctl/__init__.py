@@ -8,7 +8,6 @@ from gcodeentry import GCodeEntry
 from moveaxis import MoveAxis
 from hotend import HotEnd
 from images import Images
-from firmware import Firmware
 from macros import MacroDialog
 from settings import BUTTONDIM, BUTTONDIMWIDE
 
@@ -77,7 +76,6 @@ class ManualControl(wx.Panel):
 		if self.speedcommand is not None:
 			self.reprap.addToAllowedCommands(self.speedcommand)
 
-		self.firmware = Firmware(self.app, self.reprap)
 
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(100, 100))
 		self.SetBackgroundColour("white")
@@ -124,11 +122,16 @@ class ManualControl(wx.Panel):
 		sizerBtn.Add(self.bZEngage)
 		self.Bind(wx.EVT_BUTTON, self.onEngageZ, self.bZEngage)
 		sizerBtn.AddSpacer((20, 20))
-		self.bFirmware = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFirmware, size=BUTTONDIM)
-		self.bFirmware.SetToolTipString("Manage Firmware settings")
-		sizerBtn.Add(self.bFirmware)
-		self.Bind(wx.EVT_BUTTON, self.doFirmware, self.bFirmware)
-		sizerBtn.AddSpacer((20, 20))
+		
+		if self.firmwareName in [ "MARLIN" ]:
+			from firmwaremarlin import FirmwareMarlin 
+			self.firmware = FirmwareMarlin(self.app, self.reprap)
+			self.bFirmware = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFirmware, size=BUTTONDIM)
+			self.bFirmware.SetToolTipString("Manage Firmware settings")
+			sizerBtn.Add(self.bFirmware)
+			self.Bind(wx.EVT_BUTTON, self.doFirmware, self.bFirmware)
+			sizerBtn.AddSpacer((20, 20))
+			
 		self.bRunMacro = wx.BitmapButton(self, wx.ID_ANY, self.images.pngRunmacro, size=BUTTONDIM)
 		self.bRunMacro.SetToolTipString("Run a macro")
 		sizerBtn.Add(self.bRunMacro)

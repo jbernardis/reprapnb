@@ -121,25 +121,26 @@ class PrintMonitor(wx.Panel):
 
 		self.sizerBtns.AddSpacer(BUTTONDIM)
 		
-		self.bSDPrintFrom = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintfrom, size=BUTTONDIMWIDE)
-		self.bSDPrintFrom.SetToolTipString("Print from SD Card")
-		self.sizerBtns.Add(self.bSDPrintFrom)
-		self.Bind(wx.EVT_BUTTON, self.doSDPrintFrom, self.bSDPrintFrom)
-		self.bSDPrintFrom.Enable(True)
-		
-		self.bSDPrintTo = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintto, size=BUTTONDIMWIDE)
-		self.bSDPrintTo.SetToolTipString("Print to SD Card")
-		self.sizerBtns.Add(self.bSDPrintTo)
-		self.Bind(wx.EVT_BUTTON, self.doSDPrintTo, self.bSDPrintTo)
-		self.bSDPrintTo.Enable(False)
-		
-		self.bSDDelete = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSddelete, size=BUTTONDIM)
-		self.bSDDelete.SetToolTipString("Delete a file from SD Card")
-		self.sizerBtns.Add(self.bSDDelete)
-		self.Bind(wx.EVT_BUTTON, self.doSDDelete, self.bSDDelete)
-		self.bSDDelete.Enable(True)
-		
-		self.sizerBtns.AddSpacer(BUTTONDIM)
+		if self.app.settings.printersettings[prtname].hassdcard:
+			self.bSDPrintFrom = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintfrom, size=BUTTONDIMWIDE)
+			self.bSDPrintFrom.SetToolTipString("Print from SD Card")
+			self.sizerBtns.Add(self.bSDPrintFrom)
+			self.Bind(wx.EVT_BUTTON, self.doSDPrintFrom, self.bSDPrintFrom)
+			self.bSDPrintFrom.Enable(True)
+			
+			self.bSDPrintTo = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintto, size=BUTTONDIMWIDE)
+			self.bSDPrintTo.SetToolTipString("Print to SD Card")
+			self.sizerBtns.Add(self.bSDPrintTo)
+			self.Bind(wx.EVT_BUTTON, self.doSDPrintTo, self.bSDPrintTo)
+			self.bSDPrintTo.Enable(False)
+			
+			self.bSDDelete = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSddelete, size=BUTTONDIM)
+			self.bSDDelete.SetToolTipString("Delete a file from SD Card")
+			self.sizerBtns.Add(self.bSDDelete)
+			self.Bind(wx.EVT_BUTTON, self.doSDDelete, self.bSDDelete)
+			self.bSDDelete.Enable(True)
+			
+			self.sizerBtns.AddSpacer(BUTTONDIM)
 	
 		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomin, size=BUTTONDIM)
 		self.bZoomIn.SetToolTipString("Zoom the view in")

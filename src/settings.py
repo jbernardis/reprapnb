@@ -174,6 +174,7 @@ class PrinterSettings:
 		self.buildarea = [200, 200]
 		self.speedcommand = None
 		self.firmware = "MARLIN"
+		self.hassdcard = True
 
 class Settings:
 	def __init__(self, app, folder):
@@ -287,6 +288,9 @@ class Settings:
 							pt.speedcommand = None
 						else:
 							pt.speedcommand = value
+							
+					elif opt == 'hassdcard':
+						pt.hassdcard = parseBoolean(value, True)
 
 					elif opt == 'buildarea':
 						try:
@@ -394,6 +398,7 @@ class Settings:
 				self.cfg.set(sc, "speedcommand", str(pt.speedcommand))
 				self.cfg.set(sc, "buildarea", str(pt.buildarea))
 				self.cfg.set(sc, "firmware", str(pt.firmware))
+				self.cfg.set(sc, "hassdcard", str(pt.hassdcard))
 
 			section = "macros"
 			try:

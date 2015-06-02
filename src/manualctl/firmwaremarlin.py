@@ -78,7 +78,7 @@ class FwSettings:
 		
 		return self.values[tag]
 	
-class Firmware:
+class FirmwareMarlin:
 	def __init__(self, app, reprap):
 		self.app = app
 		self.reprap = reprap
