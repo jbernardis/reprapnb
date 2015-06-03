@@ -50,6 +50,7 @@ class PrintMonitor(wx.Panel):
 		self.history = history
 		self.reprap = reprap
 		self.manctl = None
+		self.hassd = self.app.settings.printersettings[prtname].hassdcard
 
 		self.M105pending = False
 		self.M27pending = False
@@ -121,7 +122,7 @@ class PrintMonitor(wx.Panel):
 
 		self.sizerBtns.AddSpacer(BUTTONDIM)
 		
-		if self.app.settings.printersettings[prtname].hassdcard:
+		if self.hassd:
 			self.bSDPrintFrom = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSdprintfrom, size=BUTTONDIMWIDE)
 			self.bSDPrintFrom.SetToolTipString("Print from SD Card")
 			self.sizerBtns.Add(self.bSDPrintFrom)
@@ -485,9 +486,10 @@ class PrintMonitor(wx.Panel):
 			self.bPrint.Enable(False)
 			self.bPull.Enable(False)
 			self.bPause.Enable(True)
-			self.bSDPrintFrom.Enable(False)
-			self.bSDPrintTo.Enable(False)
-			self.bSDDelete.Enable(False)
+			if self.hassd:
+				self.bSDPrintFrom.Enable(False)
+				self.bSDPrintTo.Enable(False)
+				self.bSDDelete.Enable(False)
 			
 		elif evt.event in [PRINT_STOPPED, PRINT_AUTOSTOPPED]:
 			self.paused = True
@@ -499,9 +501,10 @@ class PrintMonitor(wx.Panel):
 			self.bPrint.Enable(True)
 			self.bPull.Enable(self.app.currentPullStatus())
 			self.bPause.Enable(True)
-			self.bSDPrintFrom.Enable(True)
-			self.bSDPrintTo.Enable(True)
-			self.bSDDelete.Enable(True)
+			if self.hassd:
+				self.bSDPrintFrom.Enable(True)
+				self.bSDPrintTo.Enable(True)
+				self.bSDDelete.Enable(True)
 			if evt.event == PRINT_AUTOSTOPPED:
 				self.logger.LogMessage(evt.msg)
 				
@@ -527,9 +530,10 @@ class PrintMonitor(wx.Panel):
 			self.bPrint.Enable(True)
 			self.bPull.Enable(self.app.currentPullStatus())
 			self.bPause.Enable(False)
-			self.bSDPrintFrom.Enable(True)
-			self.bSDPrintTo.Enable(True)
-			self.bSDDelete.Enable(True)
+			if self.hassd:
+				self.bSDPrintFrom.Enable(True)
+				self.bSDPrintTo.Enable(True)
+				self.bSDDelete.Enable(True)
 			self.logger.LogMessage("Print completed at %s" % time.strftime('%H:%M:%S', time.localtime(self.endTime)))
 			self.logger.LogMessage("Total elapsed time: %s" % formatElapsed(self.endTime - self.startTime))
 			rs, rq = self.reprap.getCounters()
@@ -818,9 +822,10 @@ class PrintMonitor(wx.Panel):
 		self.bPrint.Enable(self.hasFileLoaded())
 		self.bPull.Enable(self.app.currentPullStatus())
 		self.bPause.Enable(False)
-		self.bSDPrintFrom.Enable(True)
-		self.bSDPrintTo.Enable(self.hasFileLoaded())
-		self.bSDDelete.Enable(True)
+		if self.hassd:
+			self.bSDPrintFrom.Enable(True)
+			self.bSDPrintTo.Enable(self.hasFileLoaded())
+			self.bSDDelete.Enable(True)
 		self.sdprintingfrom = False
 		self.sdpaused = False
 		
