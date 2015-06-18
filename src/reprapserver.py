@@ -101,8 +101,6 @@ class RepRapServer:
 			return True, self.getSlicer(query)
 		elif path == "/slice":
 			return True, self.sliceFile(query)
-		elif path == "/pendant":
-			return True, self.pendantCommand(query)
 		else:
 			return False, None
 		
@@ -126,9 +124,6 @@ class RepRapServer:
 	
 	def sliceFile(self, q):
 		return {'slice': self.app.sliceFile(q)}
-	
-	def pendantCommand(self, q):
-		return {'pendant': self.app.pendantCommand(q)}
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()

@@ -14,9 +14,9 @@ from settings import BUTTONDIM, BUTTONDIMWIDE
 snHotEnds = ("HE0", "HE1", "HE2")
 snBed = "Bed"
 
-(HttpEvent, EVT_HTTP_MANCTL) = wx.lib.newevent.NewEvent()
-HTTPMC_SETHEATER = 0
-HTTPMC_PENDANT = 1
+(FgndEvent, EVT_MANCTL) = wx.lib.newevent.NewEvent()
+MC_SETHEATER = 0
+MC_PENDANT = 1
 
 pendantHomes = {
 	'home': "G28",
@@ -29,19 +29,19 @@ pendantMoves = {
 	'movex1': "X0.1",
 	'movex2': "X1",
 	'movex3': "X10",
-	'movex4': "X100",
+	's-movex3': "X100",
 	'movex-1': "X-0.1",
 	'movex-2': "X-1",
 	'movex-3': "X-10",
-	'movex-4': "X-100",
+	's-movex-3': "X-100",
 	'movey1': "Y0.1",
 	'movey2': "Y1",
 	'movey3': "Y10",
-	'movey4': "Y100",
+	's-movey3': "Y100",
 	'movey-1': "Y-0.1",
 	'movey-2': "Y-1",
 	'movey-3': "Y-10",
-	'movey-4': "Y-100",
+	's-movey-3': "Y-100",
 	'movez1': "Z0.1",
 	'movez2': "Z1",
 	'movez3': "Z10",
@@ -88,7 +88,7 @@ class ManualControl(wx.Panel):
 		self.slFanTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onFanSpeedChanged, self.slFanTimer)
 
-		self.Bind(EVT_HTTP_MANCTL, self.httpRequest)
+		self.Bind(EVT_MANCTL, self.foregroundRequest)
 
 		self.moveAxis = MoveAxis(self, self.app, self.reprap)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
@@ -394,6 +394,7 @@ class ManualControl(wx.Panel):
 		return True
 	
 	def setHeaters(self, q):
+		# http request to set heaters - we can't do this here in elevated code - parse and send a message to main loop to perform
 		rv = {}
 		errors = False
 		count = 0
@@ -401,7 +402,7 @@ class ManualControl(wx.Panel):
 			if k.lower() == snBed.lower():
 				try:
 					t = int(q[k][0])
-					evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snBed, temp=t)
+					evt = FgndEvent(cmd=MC_SETHEATER, heater=snBed, temp=t)
 					wx.PostEvent(self, evt)
 					rv[k] = str(t)
 					count += 1
@@ -415,7 +416,7 @@ class ManualControl(wx.Panel):
 						found = True
 						try:
 							tmp = int(q[k][0])
-							evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snHotEnds[t], temp=tmp)
+							evt = FgndEvent(cmd=MC_SETHEATER, heater=snHotEnds[t], temp=tmp)
 							wx.PostEvent(self, evt)
 							rv[k] = str(tmp)
 							count += 1
@@ -429,12 +430,12 @@ class ManualControl(wx.Panel):
 					errors = True
 							
 		if count == 0 and not errors:
-			evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snBed, temp=0)
+			evt = FgndEvent(cmd=MC_SETHEATER, heater=snBed, temp=0)
 			wx.PostEvent(self, evt)
 
 			rv[snBed] = 0
 			for i in range(self.nextr):
-				evt = HttpEvent(cmd=HTTPMC_SETHEATER, heater=snHotEnds[i], temp=0)
+				evt = FgndEvent(cmd=MC_SETHEATER, heater=snHotEnds[i], temp=0)
 				wx.PostEvent(self, evt)
 				rv[snHotEnds[i]] = 0
 			rv['result'] = "Success - all heaters off posted"
@@ -447,8 +448,8 @@ class ManualControl(wx.Panel):
 
 		return errors, rv
 	
-	def httpRequest(self, evt):
-		if evt.cmd == HTTPMC_SETHEATER:
+	def foregroundRequest(self, evt):
+		if evt.cmd == MC_SETHEATER:
 			htr = evt.heater
 			temp = evt.temp
 			if htr == snBed:
@@ -457,7 +458,7 @@ class ManualControl(wx.Panel):
 				for i in range(self.nextr):
 					if htr == snHotEnds[i]:
 						self.heWin.heaterTemp(i, temp)
-		elif evt.cmd == HTTPMC_PENDANT:
+		elif evt.cmd == MC_PENDANT:
 			self.executePendantCommand(evt.button)
 
 	def executePendantCommand(self, cmd):
@@ -515,7 +516,7 @@ class ManualControl(wx.Panel):
 
 			
 	def pendantCommand(self, cmd):
-		evt = HttpEvent(cmd=HTTPMC_PENDANT, button=cmd)
+		evt = FgndEvent(cmd=MC_PENDANT, button=cmd)
 		wx.PostEvent(self, evt)
 		return {'result' : "Pendant command posted"}
 

@@ -194,6 +194,8 @@ class Settings:
 		self.historysize = 100
 		self.slicehistoryfile = os.path.join(folder, "slice.history")
 		self.printhistoryfile = os.path.join(folder, "print.history")
+		self.pendantPort = "/dev/pendant"
+		self.pendantBaud = 9600
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
 		self.shares = {}
@@ -230,6 +232,14 @@ class Settings:
 					self.webbase = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
+				elif opt == 'pendantport':
+					self.pendantPort = value
+				elif opt == 'pendantbaud':
+					try:
+						self.pendantBaud = int(value)
+					except:
+						self.pendantBaud = 9600
+						self.showWarning("Invalid value (%s) for pendant baud rate - using %d" % (value, self.pendantBaud))
 				elif opt == 'buildarea':
 					try:
 						exec("s=%s" % value)
@@ -382,6 +392,8 @@ class Settings:
 			self.cfg.set(self.section, "printhistoryfile", str(self.printhistoryfile))
 			self.cfg.set(self.section, "webbase", str(self.webbase))
 			self.cfg.set(self.section, "port", str(self.port))
+			self.cfg.set(self.section, "pendantport", str(self.pendantPort))
+			self.cfg.set(self.section, "pendantbaud", str(self.pendantBaud))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "historysize", str(self.historysize))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))

@@ -4,6 +4,7 @@ import time
 import pygame.camera
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
+from pendant import Pendant
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
@@ -68,10 +69,8 @@ class ConnectionManager:
 		self.settings = self.app.settings
 		self.logger = self.app.logger
 		self.connections = []
-		
-		"""scan for available ports. return a list of device names."""
-		self.portList = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + \
-					glob.glob("/dev/tty.*")+glob.glob("/dev/cu.*")+glob.glob("/dev/rfcomm*")
+	
+		self.portlist = self.getPortList()	
 					
 		self.printerList = self.settings.printers[:]
 		self.activePorts = []
@@ -80,13 +79,24 @@ class ConnectionManager:
 		self.pendantIndex = None
 		self.manageDlg = None
 		
+		self.pendant = Pendant(self.pendantCommand, self.settings.pendantPort, self.settings.pendantBaud)
+		
 	def manageDlgClose(self):
 		self.manageDlg = None
 		
+	def getPortList(self):
+		"""scan for available ports. return a list of device names."""
+		pl  = glob.glob('/dev/rr*')
+		pl += glob.glob('/dev/ttyUSB*')
+		pl += glob.glob('/dev/ttyACM*') 
+		pl += glob.glob("/dev/tty.*")
+		pl += glob.glob("/dev/cu.*")
+		pl += glob.glob("/dev/rfcomm*")
+		return pl
+					
 	def getLists(self, refreshPorts=False):
 		if refreshPorts:
-			pl = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + \
-					glob.glob("/dev/tty.*")+glob.glob("/dev/cu.*")+glob.glob("/dev/rfcomm*")
+			pl = self.getPortList()
 			self.portList = []
 			for p in pl:
 				if p not in self.activePorts:
@@ -132,10 +142,7 @@ class ConnectionManager:
 		return result
 	
 	def pendantCommand(self, cmd):
-		if self.pendantConnection is None:
-			return {'result': 'No printers connected, or pendant connection not assigned'}
-		
-		return self.pendantConnection.manctl.pendantCommand(cmd)
+		self.pendantConnection.manctl.pendantCommand(cmd)
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
