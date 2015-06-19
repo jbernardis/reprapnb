@@ -463,8 +463,21 @@ class ManualControl(wx.Panel):
 
 	def executePendantCommand(self, cmd):
 		c = cmd.lower()
+		if c.startswith("pendant"):
+			self.logger.LogMessage(cmd)
+			return
+
+		shifted = False
+		if c.startswith("s-"):
+			cShifted = c
+			c = c[2:]
+			shifted = True
+
 		if c in pendantMoves.keys():
-			axis = pendantMoves[c]
+			if shifted and cShifted in pendantMoves.keys():
+				axis = pendantMoves[cShifted]
+			else:
+				axis = pendantMoves[c]
 			if axis.startswith("Z"):
 				speed = "F%s" % str(self.settings.zspeed)
 			else:
@@ -475,7 +488,10 @@ class ManualControl(wx.Panel):
 			self.reprap.send_now("G90")
 				
 		elif c in pendantHomes.keys():
-			self.reprap.send_now(pendantHomes[c])
+			if shifted and cShifted in pendantHomes.keys():
+				self.reprap.send_now(pendantHomes[cShifted])
+			else:
+				self.reprap.send_now(pendantHomes[c])
 			
 		elif c == "extrude":
 			self.extWin.doExtrude()
@@ -518,6 +534,3 @@ class ManualControl(wx.Panel):
 	def pendantCommand(self, cmd):
 		evt = FgndEvent(cmd=MC_PENDANT, button=cmd)
 		wx.PostEvent(self, evt)
-		return {'result' : "Pendant command posted"}
-
-				

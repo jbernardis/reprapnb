@@ -70,7 +70,7 @@ class ConnectionManager:
 		self.logger = self.app.logger
 		self.connections = []
 	
-		self.portlist = self.getPortList()	
+		self.portList = self.getPortList()	
 					
 		self.printerList = self.settings.printers[:]
 		self.activePorts = []
@@ -142,7 +142,13 @@ class ConnectionManager:
 		return result
 	
 	def pendantCommand(self, cmd):
-		self.pendantConnection.manctl.pendantCommand(cmd)
+		if self.pendantConnection is not None:
+			self.pendantConnection.manctl.pendantCommand(cmd)
+		else:
+			if cmd.lower().startswith("pendant"):
+				self.logger.LogMessage(cmd)
+			else:
+				self.logger.LogMessage("Pendant command: (%s) when not connected to printer" % cmd)
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
