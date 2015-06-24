@@ -78,7 +78,7 @@ class ConnectionManager:
 		self.logger = self.app.logger
 		self.connections = []
 	
-		self.portlist = self.getPortList()	
+		self.portList = self.getPortList()	
 					
 		self.printerList = self.settings.printers[:]
 		self.activePorts = []
@@ -154,7 +154,7 @@ class ConnectionManager:
 		if self.pendantConnection:
 			self.pendantConnection.manctl.pendantCommand(cmd)
 		else:
-			self.logger.LogMessage("Pendant command ignored - no pronter connected")
+			self.logger.LogMessage("Pendant command ignored - no printer connected")
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
