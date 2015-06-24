@@ -16,6 +16,8 @@ PENDANT_CONNECT = 0
 PENDANT_DISCONNECT = 1
 PENDANT_COMMAND = 3
 
+TRACE = False
+
 
 class Connection:
 	def __init__(self, app, printer, port, baud):
@@ -71,9 +73,8 @@ class Connection:
 			self.prtmon.reprapEvent(evt)
 
 class ConnectionManager:
-	def __init__(self, app, win):
+	def __init__(self, app):
 		self.app = app
-		self.win = win
 		self.settings = self.app.settings
 		self.logger = self.app.logger
 		self.connections = []
@@ -87,8 +88,6 @@ class ConnectionManager:
 		self.pendantIndex = None
 		self.manageDlg = None
 		
-		self.win.Bind(EVT_PENDANT, self.pendantCommand)
-		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		
 	def manageDlgClose(self):
 		self.manageDlg = None
@@ -276,7 +275,11 @@ class ConnectionManagerPanel(wx.Panel):
 		self.app = app
 		self.settings = self.app.settings
 		self.logger = self.app.logger
-		self.cm = ConnectionManager(self.app, self)
+		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
+
+		self.cm = ConnectionManager(self.app)
+		self.Bind(EVT_PENDANT, self.pendantCommand)
+		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		
 		pygame.init()
 		pygame.camera.init()
@@ -285,7 +288,6 @@ class ConnectionManagerPanel(wx.Panel):
 		self.Camera = None
 		self.CameraPort = None
 		
-		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		self.SetBackgroundColour("white")
 
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
@@ -615,9 +617,9 @@ class ConnectionManagerPanel(wx.Panel):
 				evt = PendantEvent(eid = PENDANT_CONNECT)
 		elif cmd == "pendant disconnected":
 				evt = PendantEvent(eid = PENDANT_DISCONNECT)
-		if cmd == "pendant connected":
+		else:
 				evt = PendantEvent(eid = PENDANT_COMMAND, cmdString=cmd)
-		wx.PostEvent(self.win, evt)
+		wx.PostEvent(self, evt)
 		
 	def pendantCommand(self, evt):
 		if evt.eid == PENDANT_CONNECT:
@@ -625,6 +627,8 @@ class ConnectionManagerPanel(wx.Panel):
 		elif evt.eid == PENDANT_DISCONNECT:
 			self.logger.LogMessage("Pendant disconnected")
 		else:
+			if TRACE:
+				self.logger.LogMessage(evt.cmdString)
 			self.cm.pendantCommand(evt.cmdString)
 	
 	def doDisconnect(self, evt):

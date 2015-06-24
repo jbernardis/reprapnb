@@ -5,8 +5,6 @@ from sys import platform as _platform
 if _platform == "linux" or _platform == "linux2":
 	import termios
 
-TRACE = False
-
 class Pendant:
 	def __init__(self, cb, port, baud=9600):
 		self.cb = cb
@@ -36,8 +34,6 @@ class Pendant:
 					line = ""
 
 				if(len(line)>1):
-					if TRACE:
-						print "<==", line
 					self.cb(line.strip())
 			time.sleep(2);
 
