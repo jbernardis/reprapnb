@@ -16,7 +16,6 @@ snBed = "Bed"
 
 (FgndEvent, EVT_MANCTL) = wx.lib.newevent.NewEvent()
 MC_SETHEATER = 0
-MC_PENDANT = 1
 
 pendantHomes = {
 	'home': "G28",
@@ -458,10 +457,8 @@ class ManualControl(wx.Panel):
 				for i in range(self.nextr):
 					if htr == snHotEnds[i]:
 						self.heWin.heaterTemp(i, temp)
-		elif evt.cmd == MC_PENDANT:
-			self.executePendantCommand(evt.button)
 
-	def executePendantCommand(self, cmd):
+	def pendantCommand(self, cmd):
 		c = cmd.lower()
 		if c in pendantMoves.keys():
 			axis = pendantMoves[c]
@@ -513,11 +510,5 @@ class ManualControl(wx.Panel):
 			
 		else:
 			self.logger.LogMessage("Unknown pendant command: %s" % cmd)
-
-			
-	def pendantCommand(self, cmd):
-		evt = FgndEvent(cmd=MC_PENDANT, button=cmd)
-		wx.PostEvent(self, evt)
-		return {'result' : "Pendant command posted"}
 
 				

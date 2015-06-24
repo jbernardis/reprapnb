@@ -1,4 +1,5 @@
 import wx
+import wx.lib.newevent
 import glob
 import time 
 import pygame.camera
@@ -9,6 +10,12 @@ from pendant import Pendant
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
 from reprap import RepRap, RepRapParser
+
+(PendantEvent, EVT_PENDANT) = wx.lib.newevent.NewEvent()
+PENDANT_CONNECT = 0
+PENDANT_DISCONNECT = 1
+PENDANT_COMMAND = 3
+
 
 class Connection:
 	def __init__(self, app, printer, port, baud):
@@ -64,8 +71,9 @@ class Connection:
 			self.prtmon.reprapEvent(evt)
 
 class ConnectionManager:
-	def __init__(self, app):
+	def __init__(self, app, win):
 		self.app = app
+		self.win = win
 		self.settings = self.app.settings
 		self.logger = self.app.logger
 		self.connections = []
@@ -79,7 +87,8 @@ class ConnectionManager:
 		self.pendantIndex = None
 		self.manageDlg = None
 		
-		self.pendant = Pendant(self.pendantCommand, self.settings.pendantPort, self.settings.pendantBaud)
+		self.win.Bind(EVT_PENDANT, self.pendantCommand)
+		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		
 	def manageDlgClose(self):
 		self.manageDlg = None
@@ -142,7 +151,10 @@ class ConnectionManager:
 		return result
 	
 	def pendantCommand(self, cmd):
-		self.pendantConnection.manctl.pendantCommand(cmd)
+		if self.pendantConnection:
+			self.pendantConnection.manctl.pendantCommand(cmd)
+		else:
+			self.logger.LogMessage("Pendant command ignored - no pronter connected")
 
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
@@ -264,7 +276,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.app = app
 		self.settings = self.app.settings
 		self.logger = self.app.logger
-		self.cm = ConnectionManager(self.app)
+		self.cm = ConnectionManager(self.app, self)
 		
 		pygame.init()
 		pygame.camera.init()
@@ -598,8 +610,22 @@ class ConnectionManagerPanel(wx.Panel):
 	def getTemps(self):
 		return self.cm.getTemps()
 	
-	def pendantCommand(self, cmd):
-		return self.cm.pendantCommand(cmd)
+	def pendantEvent(self, cmd):
+		if cmd == "pendant connected":
+				evt = PendantEvent(eid = PENDANT_CONNECT)
+		elif cmd == "pendant disconnected":
+				evt = PendantEvent(eid = PENDANT_DISCONNECT)
+		if cmd == "pendant connected":
+				evt = PendantEvent(eid = PENDANT_COMMAND, cmdString=cmd)
+		wx.PostEvent(self.win, evt)
+		
+	def pendantCommand(self, evt):
+		if evt.eid == PENDANT_CONNECT:
+			self.logger.LogMessage("Pendant connected")
+		elif evt.eid == PENDANT_DISCONNECT:
+			self.logger.LogMessage("Pendant disconnected")
+		else:
+			self.cm.pendantCommand(evt.cmdString)
 	
 	def doDisconnect(self, evt):
 		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())

@@ -9,9 +9,10 @@ In Progress/Need Testing
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
 pendant commands
-	retraction/extrusion
-	connection to printer
-	executable to interface
+	connection to printer when multiple printers
+	meta-comands (start/stop print eg)
+
+Make HTTP server more thread-safe
 
 send email when print job finishes
 
@@ -26,8 +27,6 @@ More capabilities from HTTP interface
 	- slice from slice queue
 	- add to print queue
 	- load from print queue
-	
-manual control - need a button to keep Z motor engaged
 	
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
