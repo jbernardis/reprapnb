@@ -14,9 +14,6 @@ from settings import BUTTONDIM, BUTTONDIMWIDE
 snHotEnds = ("HE0", "HE1", "HE2")
 snBed = "Bed"
 
-(FgndEvent, EVT_MANCTL) = wx.lib.newevent.NewEvent()
-MC_SETHEATER = 0
-
 pendantHomes = {
 	'home': "G28",
 	'homex': "G28 X0",
@@ -86,8 +83,6 @@ class ManualControl(wx.Panel):
 		self.Bind(wx.EVT_TIMER, self.onFeedSpeedChanged, self.slFeedTimer)
 		self.slFanTimer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.onFanSpeedChanged, self.slFanTimer)
-
-		self.Bind(EVT_MANCTL, self.foregroundRequest)
 
 		self.moveAxis = MoveAxis(self, self.app, self.reprap)				
 		self.sizerMove = wx.BoxSizer(wx.VERTICAL)
@@ -392,71 +387,23 @@ class ManualControl(wx.Panel):
 	def onClose(self, evt):
 		return True
 	
-	def setHeaters(self, q):
-		# http request to set heaters - we can't do this here in elevated code - parse and send a message to main loop to perform
-		rv = {}
-		errors = False
-		count = 0
-		for k in q.keys():
-			if k.lower() == snBed.lower():
-				try:
-					t = int(q[k][0])
-					evt = FgndEvent(cmd=MC_SETHEATER, heater=snBed, temp=t)
-					wx.PostEvent(self, evt)
-					rv[k] = str(t)
-					count += 1
-				except:
-					rv[k] = "invalid temperature value"
-					errors = True
+	def setHeaters(self, heaters):
+		for htr, temp, orig in heaters:
+			if temp is None:
+				self.logger.LogMessage("Invalid temperature (%s) specified for heater %s" % (orig, htr))
 			else:
-				found = False
-				for t in range(self.nextr):
-					if k.lower() == snHotEnds[t].lower():
-						found = True
-						try:
-							tmp = int(q[k][0])
-							evt = FgndEvent(cmd=MC_SETHEATER, heater=snHotEnds[t], temp=tmp)
-							wx.PostEvent(self, evt)
-							rv[k] = str(tmp)
-							count += 1
-						except:
-							rv[k] = "invalid temperature value"
-							errors = True
-						break
-					
-				if not found:
-					rv[k] = ("Unknown heater: " + k)
-					errors = True
-							
-		if count == 0 and not errors:
-			evt = FgndEvent(cmd=MC_SETHEATER, heater=snBed, temp=0)
-			wx.PostEvent(self, evt)
+				if htr == snBed:
+					self.bedWin.heaterTemp(temp)
+				else:
+					found = False
+					for i in range(self.nextr):
+						if htr == snHotEnds[i]:
+							self.heWin.heaterTemp(i, temp)
+							found = True
+							break
+					if not found:
+						self.logger.LogMessage("Requested set heater on non-existent heater: %s", htr)
 
-			rv[snBed] = 0
-			for i in range(self.nextr):
-				evt = FgndEvent(cmd=MC_SETHEATER, heater=snHotEnds[i], temp=0)
-				wx.PostEvent(self, evt)
-				rv[snHotEnds[i]] = 0
-			rv['result'] = "Success - all heaters off posted"
-
-		elif errors:
-			rv['result'] = ("Failed - errors encountered, %d temp changes posted" % count)
-		
-		else:
-			rv['result'] = ("Success - %d temp changes posted" % count)
-
-		return errors, rv
-	
-	def foregroundRequest(self, evt):
-		if evt.cmd == MC_SETHEATER:
-			htr = evt.heater
-			temp = evt.temp
-			if htr == snBed:
-				self.bedWin.heaterTemp(temp)
-			else:
-				for i in range(self.nextr):
-					if htr == snHotEnds[i]:
-						self.heWin.heaterTemp(i, temp)
 
 	def pendantCommand(self, cmd):
 		c = cmd.lower()

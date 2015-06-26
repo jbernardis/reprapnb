@@ -315,110 +315,62 @@ class MainFrame(wx.Frame):
 		r['fileprep'] = self.pgFilePrep.getStatus()
 		return r
 	
-	def stopPrint(self, q):
-		usage = "stop?[printer=name|all] - printer not needed if only 1"
-		if 'printer' not in q.keys():
-			if len(self.connected) == 1:
-				p = self.connected.keys()[0]
+	def stopPrint(self, pname):
+		if pname is None:
+			if len(self.connected) >= 1:
+				pname = self.connected.keys()[0]
 			else:
-				return {'result': 'failed - please specify printer', 'usage': usage}
+				self.logger.LogMessage("No printer connected to stop")
+				return
 		else:
-			p = q['printer'][0]
-			if p not in self.settings.printers and p != 'all':
-				return {'result': 'failed - unknown printer', 'usage': usage}
+			if pname not in self.settings.printers and pname != 'all':
+				self.logger.LogMessage("Unknown printer in stop print request")
+				return
 		
-		if p == 'all':
-			st = {}
-			error = False
+		if pname == 'all':
 			for p in self.settings.printers:
-				print "Printer (", p, ")"
 				if p in self.connected.keys() and self.printing[p]:
 					#pst = self.pgPrtMon[p].stopPrint()
-					pst = {'result': "We would have stopped here"}
-				else:
-					error = True
-					pst = {'result': "Skipped - not printing"}
-				st[p] = pst
-			if error:
-				st['usage'] = usage
+					self.logger.LogMessage("We would have stopped printer %s here" %  p)
 				
-			return st
 		else:
-			if p in self.connected.keys() and self.printing[p]:
+			if pname in self.connected.keys() and self.printing[pname]:
 				#return self.pgPrtMon[p].stopPrint()
-				return {'result': "We would have stopped here"}
+				self.logger.LogMessage("We would have stopped printer %s here" %  pname)
 			else:
-				return {'result': "Skipped - not printing", 'usage': usage}
+				self.logger.LogMessage("Printer %s not printing - skipping stop request" % pname)
 	
-	def setHeaters(self, q):
-		usage = "setheat?[printer=name];[bed=temp];[he0-2=temp] - if no temps, all will be set to 0; printer not needed if only 1"
-		if len(self.connected) == 0:
-			return {'result': 'failed - no printers connected', 'usage': usage}
-		
-		if 'printer' not in q.keys():
-			if len(self.connected) == 1:
-				p = self.connected.keys()[0]
+	def setHeaters(self, pname, heaters):
+		if pname is None:
+			if len(self.connected) >= 1:
+				pname = self.connected.keys()[0]
 			else:
-				return {'result': 'failed - please specify printer', 'usage': usage}
+				self.logger.LogMessage("No printer connected to set heaters")
+				return
 		else:
-			p = q['printer'][0]
-			del q['printer']
-			if p not in self.settings.printers:
-				return {'result': ('failed - unknown printer: ' + p), 'usage': usage}
-
-		if not p in self.connected.keys():
-			return {'result': 'failed - printer not connected', 'usgae': usage}
+			if pname not in self.settings.printers and pname != 'all':
+				self.logger.LogMessage("Unknown printer in set heater request")
+				return
 		
-		errors, rv = self.pgManCtl[p].setHeaters(q, usage)
-		if errors:
-			rv['usage'] = usage
-			
-		return rv
-	
-	def setSlicer(self, q):
-		usage = "setslicer?slicer=name[;config=parm/parm/parm] - parm can be a comma separated list"
-		if 'slicer' not in q.keys():
-			return {'result': 'failed - no slicer named', 'usage': usage}
-		
-		self.pgFilePrep.httpSetSlicer(q['slicer'][0])
-		
-		if 'config' in q.keys():
-			cfg = []
-			for c in q['config'][0].split('/'):
-				if ',' in c:
-					c = c.split(',')
-				cfg.append(c)
+		if pname == 'all':
+			for p in self.settings.printers:
+				if p in self.connected.keys():
+					self.pgManCtl[p].setHeaters(heaters)
 				
-			self.pgFilePrep.httpCfgSlicer(cfg)
-			
-		return {'result': 'posted'}
-	
-	def sliceFile(self, q):
-		usage = "slice?file=share:file"
-		if 'file' not in q.keys():
-			return { 'result': 'failed - no file named', 'usage': usage}
-		
-		fspec = q['file'][0]
-		
-		fp = fspec.split(':', 1)
-		if len(fp) == 1:
-			fn = fp[0]
-		elif len(fp) == 2:
-			if fp[0] not in self.settings.shares.keys():
-				return { 'result': 'failed - unknown share', 'usage': usage}
-			fn = self.settings.shares[fp[0]] + os.path.sep + fp[1]
 		else:
-			return { 'result': 'failed - invalid filespec', 'usage': usage}
+			if pname in self.connected.keys():
+				self.pgManCtl[pname].setHeaters(heaters)
+			else:
+				self.logger.LogMessage("Printer %s not connected - skipping set heater request" % pname)
+	
+	def setSlicer(self, slicername, config):
+		self.pgFilePrep.httpSetSlicer(slicername)
 		
-		if not os.path.isfile(fn):
-			return { 'result': 'failed - (%s) does not exist' % fn, 'usage': usage}
-		
-		if self.fpstatus == FPSTATUS_BUSY or self.batchslstatus == BATCHSL_RUNNING:
-			return { 'result': 'failed - slicer currently busy'}
-		
+		if config is not None:				
+			self.pgFilePrep.httpCfgSlicer(config)
+	
+	def sliceFile(self, fn):
 		self.pgFilePrep.httpSliceFile(fn)
-
-		return {'result': 'posted'}
 
 	def getSlicer(self):
 		return {'result': self.pgFilePrep.getSlicerConfigString()}

@@ -1,4 +1,5 @@
 import os
+import wx.lib.newevent
 import time
 import urlparse
 import select
@@ -7,6 +8,12 @@ from threading import Thread
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import pygame
+
+(HttpEvent, EVT_HTTP_REQUEST) = wx.lib.newevent.NewEvent()
+HTTP_SETSLICER = 0
+HTTP_SLICEFILE = 1
+HTTP_SETHEATER = 2
+HTTP_STOPPRINT = 3
 
 def quote(s):
 	return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -81,6 +88,7 @@ class RepRapServer:
 		
 		self.server = ThreadingHTTPServer((self.ipaddr, self.port), Handler)
 		self.server.setApp(self)
+		self.app.Bind(EVT_HTTP_REQUEST, self.httpRequest)
 		Thread(target=self.server.serve_reprap).start()
 		self.log.LogMessage("HTTP Server started on %s:%d" % (self.ipaddr, self.port))
 		
@@ -104,26 +112,82 @@ class RepRapServer:
 		else:
 			return False, None
 		
+	def httpRequest(self, evt):
+		if evt.eid == HTTP_SETSLICER:
+			self.app.setSlicer(evt.slicer, evt.config)
+		
+		elif evt.eid == HTTP_SLICEFILE:
+			self.app.sliceFile(evt.file)
+			
+		elif evt.eid == HTTP_SETHEATER:
+			self.app.setHeaters(evt.printer, evt.heaters)
+			
+		elif evt.eid == HTTP_STOPPRINT:
+			self.app.stopPrint(evt.printer)
+		
 	def queryStatus(self, q):
 		return {'status' : self.app.getStatus()}
 	
 	def stopPrint(self, q):
-		return {'stop': self.app.stopPrint(q)}
+		prtr = None
+		if 'printer' in q.keys():
+			prtr = q['printer'][0]
+		
+		evt = HttpEvent(cmd=HTTP_STOPPRINT, printer=prtr)
+		wx.PostEvent(self, evt)
+		return {'stop': {'result': 'posted' } }
 	
 	def setHeat(self, q):
-		return {'setheat': self.app.setHeaters(q)}
+		prtr = None
+		if 'printer' in q.keys():
+			prtr = q['printer'][0]
+			
+		heaters = []
+		for hn in ["bed", "he0", "he1", "he2"]:
+			if hn in q.keys():
+				try:
+					t = float(q[hn][0])
+					heaters.append([hn, t, q[hn][0]])
+				except:
+					heaters.append([hn, None, q[hn][0]])
+				
+		evt = HttpEvent(cmd=HTTP_SETHEATER, printer=prtr, heaters=heaters)
+		wx.PostEvent(self, evt)
+		return {'setheat': {'result': 'posted' } }
 	
 	def getTemps(self, q):
 		return {'temps': self.app.getTemps()}
 	
 	def setSlicer(self, q):
-		return {'setslicer': self.app.setSlicer(q)}
+		usage = "setslicer?slicer=name[;config=parm/parm/parm] - parm can be a comma separated list"
+		if 'slicer' not in q.keys():
+			return {'setslicer': {'result': 'failed - no slicer named', 'usage': usage} }
+		
+		slicerName = q['slicer'][0]
+		
+		cfg = None
+		if 'config' in q.keys():
+			cfg = []
+			for c in q['config'][0].split('/'):
+				if ',' in c:
+					c = c.split(',')
+				cfg.append(c)
+		
+		evt = HttpEvent(cmd=HTTP_SETSLICER, slicer=slicerName, config=cfg)
+		wx.PostEvent(self, evt)
+		return {'setslicer': {'result': 'posted'} }
 	
 	def getSlicer(self, q):
 		return {'getslicer': self.app.getSlicer()}
 	
 	def sliceFile(self, q):
-		return {'slice': self.app.sliceFile(q)}
+		usage = "slice?file=name"
+		if 'file' not in q.keys():
+			return {'slice': {'result': 'failed - no file named', 'usage': usage} }
+		
+		evt = HttpEvent(cmd=HTTP_SLICEFILE, file=q['file'][0])
+		wx.PostEvent(self, evt)
+		return {'slice': { 'result': 'posted'} }
 	
 	def getPicture(self, q):
 		pic = self.app.snapShot()

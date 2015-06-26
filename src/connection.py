@@ -565,15 +565,18 @@ class ConnectionManagerPanel(wx.Panel):
 			image = self.Camera.get_image()
 			self.Camera.stop()
 		except:
-			self.camActive = False
-			self.Camera = None
-			self.CameraPort = None
-			self.cbCamActive.SetValue(False)
-			self.refreshCamPorts()
+			wx.CallAfter(self.disconnectCamera)
 			return None
 
 		return image
-		
+	
+	def disconnectCamera(self):
+		self.logger.LogMessage("Disconnecting camera due to error")
+		self.camActive = False
+		self.Camera = None
+		self.CameraPort = None
+		self.cbCamActive.SetValue(False)
+		self.refreshCamPorts()
 	
 	def tick(self):
 		cxlist = self.cm.getLists()[2]

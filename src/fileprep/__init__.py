@@ -39,8 +39,6 @@ reF = re.compile("(.*[fF])([0-9\.]+)(.*)")
 reE = re.compile("(.*[eE])([0-9\.]+)(.*)")
 
 (HttpEvent, EVT_HTTP_FILEPREP) = wx.lib.newevent.NewEvent()
-HTTPFP_SETSLICER = 0
-HTTPFP_CFGSLICER = 1
 HTTPFP_SLICE = 3
 
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
@@ -1139,27 +1137,10 @@ class FilePrepare(wx.Panel):
 			text = text[:MAXCFGCHARS]
 		self.tSlicerCfg.SetLabel(text)
 		
-	def httpSetSlicer(self, newSlicer):
-		evt = HttpEvent(cmd=HTTPFP_SETSLICER, slicer=newSlicer)
-		wx.PostEvent(self, evt)
-		
-	def httpCfgSlicer(self, newCfg):
-		evt = HttpEvent(cmd=HTTPFP_CFGSLICER, config=newCfg)
-		wx.PostEvent(self, evt)
-		
 	def httpSliceFile(self, fn):
-		evt = HttpEvent(cmd=HTTPFP_SLICE, filename=fn)
-		wx.PostEvent(self, evt)
+		self.sliceFile(fn)
 		
-	def httpRequest(self, evt):
-		if evt.cmd == HTTPFP_SETSLICER:
-			self.setSlicerDirect(evt.slicer)
-		elif evt.cmd == HTTPFP_CFGSLICER:
-			self.cfgSlicerDirect(evt.config)
-		elif evt.cmd == HTTPFP_SLICE:
-			self.sliceFile(evt.filename)
-		
-	def setSlicerDirect(self, newSlicer):
+	def httpSetSlicer(self, newSlicer):
 		if newSlicer not in self.settings.slicers:
 			self.logger.LogError("HTTP setslicer Request specified invalid slicer: %s" % newSlicer)
 		
@@ -1182,7 +1163,7 @@ class FilePrepare(wx.Panel):
 		self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		
-	def cfgSlicerDirect(self, cfgopts):
+	def httpCfgSlicer(self, cfgopts):
 		rc, msg = self.slicer.type.configSlicerDirect(cfgopts)
 		if rc:
 			cfg = self.slicer.type.getConfigString()	

@@ -12,8 +12,6 @@ pendant commands
 	connection to printer when multiple printers
 	meta-comands (start/stop print eg)
 
-Make HTTP server more thread-safe
-
 send email when print job finishes
 
 @runmacro
