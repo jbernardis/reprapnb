@@ -133,8 +133,8 @@ class RepRapServer:
 		if 'printer' in q.keys():
 			prtr = q['printer'][0]
 		
-		evt = HttpEvent(cmd=HTTP_STOPPRINT, printer=prtr)
-		wx.PostEvent(self, evt)
+		evt = HttpEvent(eid=HTTP_STOPPRINT, printer=prtr)
+		wx.PostEvent(self.app, evt)
 		return {'stop': {'result': 'posted' } }
 	
 	def setHeat(self, q):
@@ -151,8 +151,8 @@ class RepRapServer:
 				except:
 					heaters.append([hn, None, q[hn][0]])
 				
-		evt = HttpEvent(cmd=HTTP_SETHEATER, printer=prtr, heaters=heaters)
-		wx.PostEvent(self, evt)
+		evt = HttpEvent(eid=HTTP_SETHEATER, printer=prtr, heaters=heaters)
+		wx.PostEvent(self.app, evt)
 		return {'setheat': {'result': 'posted' } }
 	
 	def getTemps(self, q):
@@ -173,8 +173,8 @@ class RepRapServer:
 					c = c.split(',')
 				cfg.append(c)
 		
-		evt = HttpEvent(cmd=HTTP_SETSLICER, slicer=slicerName, config=cfg)
-		wx.PostEvent(self, evt)
+		evt = HttpEvent(eid=HTTP_SETSLICER, slicer=slicerName, config=cfg)
+		wx.PostEvent(self.app, evt)
 		return {'setslicer': {'result': 'posted'} }
 	
 	def getSlicer(self, q):
@@ -185,8 +185,8 @@ class RepRapServer:
 		if 'file' not in q.keys():
 			return {'slice': {'result': 'failed - no file named', 'usage': usage} }
 		
-		evt = HttpEvent(cmd=HTTP_SLICEFILE, file=q['file'][0])
-		wx.PostEvent(self, evt)
+		evt = HttpEvent(eid=HTTP_SLICEFILE, file=q['file'][0])
+		wx.PostEvent(self.app, evt)
 		return {'slice': { 'result': 'posted'} }
 	
 	def getPicture(self, q):

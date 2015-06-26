@@ -38,9 +38,6 @@ reS = re.compile("(.*[sS])([0-9\.]+)(.*)")
 reF = re.compile("(.*[fF])([0-9\.]+)(.*)")
 reE = re.compile("(.*[eE])([0-9\.]+)(.*)")
 
-(HttpEvent, EVT_HTTP_FILEPREP) = wx.lib.newevent.NewEvent()
-HTTPFP_SLICE = 3
-
 (SlicerEvent, EVT_SLICER_UPDATE) = wx.lib.newevent.NewEvent()
 SLICER_RUNNING = 1
 SLICER_RUNNINGCR = 2
@@ -333,7 +330,6 @@ class FilePrepare(wx.Panel):
 			
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(900, 250))
 		self.SetBackgroundColour("white")
-		self.Bind(EVT_HTTP_FILEPREP, self.httpRequest)
 		self.Bind(EVT_SLICER_UPDATE, self.slicerUpdate)
 		self.Bind(EVT_BATCHSLICER_UPDATE, self.batchSlicerUpdate)
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)

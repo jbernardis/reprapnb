@@ -460,7 +460,7 @@ class Skeinforge:
 		if len(cfgopts) != 1:
 			return False, "incorrect number of parameters for configuring skeinforge - 1 expected"
 		if cfgopts[0] not in self.profilemap.keys():
-			return False, "invalid profile :" % cfgopts[0]
+			return False, "invalid profile : %s" % cfgopts[0]
 		
 		self.vprofile = cfgopts[0]
 		self.updateSlicerCfg(False)

@@ -389,20 +389,21 @@ class ManualControl(wx.Panel):
 	
 	def setHeaters(self, heaters):
 		for htr, temp, orig in heaters:
+			htrl = htr.lower()
 			if temp is None:
 				self.logger.LogMessage("Invalid temperature (%s) specified for heater %s" % (orig, htr))
 			else:
-				if htr == snBed:
+				if htrl == snBed.lower():
 					self.bedWin.heaterTemp(temp)
 				else:
 					found = False
 					for i in range(self.nextr):
-						if htr == snHotEnds[i]:
+						if htrl == snHotEnds[i].lower():
 							self.heWin.heaterTemp(i, temp)
 							found = True
 							break
 					if not found:
-						self.logger.LogMessage("Requested set heater on non-existent heater: %s", htr)
+						self.logger.LogMessage("Requested set heater on non-existent heater: %s" % htr)
 
 
 	def pendantCommand(self, cmd):
