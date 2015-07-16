@@ -36,6 +36,11 @@ M27Interval = 2000
 (HttpEvent, EVT_HTTP_PRINTMON) = wx.lib.newevent.NewEvent()
 HTTPPM_STOPPRINT= 0
 
+pendantCmds = {
+	"s-home" : "@print",
+	"s-homex" : "@pause",
+}
+
 
 gcRegex = re.compile("[-]?\d+[.]?\d*")
 def _get_float(l, which):
@@ -280,6 +285,19 @@ class PrintMonitor(wx.Panel):
 		
 	def setManCtl(self, mc):
 		self.manctl = mc;
+		
+	def pendantCommand(self, cmd):
+		c = cmd.lower()
+		if c in pendantCmds.keys():
+			mcmd = pendantCmds[c]
+			if mcmd == "@print":
+				self.emulatePrintButton()
+			elif mcmd == "@pause":
+				self.emulatePauseButton()
+		else:
+			return False  # command not handled
+		
+		return True # command handled
 
 	def assertAllowPulls(self, flag):
 		if not self.isPrinting():
@@ -581,6 +599,12 @@ class PrintMonitor(wx.Panel):
 			self.bPause.SetToolTipString("Pause the print")
 		elif mode == PAUSE_MODE_RESUME:
 			self.bPause.SetToolTipString("Resume the print from the paused point")
+			
+	def emulatePrintButton(self):
+		if self.bPrint.IsEnabled():
+			self.doPrint(None)
+		else:
+			self.logger.LogMessage("Print button currently disabled")
 		
 	def doPrint(self, evt):
 		if self.sdpaused:
@@ -615,6 +639,14 @@ class PrintMonitor(wx.Panel):
 			self.bPull.Enable(False)
 			self.bPause.Enable(False)
 			self.setSDTargetFile(None)
+		
+	def emulatePauseButton(self):
+		if self.sdTargetFile is not None:
+			self.logger.LogMessage("Unable to pause print to SD - use GUI")
+		elif self.bPause.IsEnabled():
+			self.doPause(None)
+		else:
+			self.logger.LogMessage("Pause button currently disabled")
 		
 	def doPause(self, evt):
 		if self.sdTargetFile is not None:

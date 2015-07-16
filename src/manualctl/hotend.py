@@ -7,7 +7,7 @@ orange = wx.Colour(237, 139, 33)
 class HotEnd(wx.Window): 
 	def __init__(self, parent, app, reprap,
 				name=("", "", ""), shortname=("", "", ""),
-				target=(20, 20, 20), trange=((0, 100), (0,100), (0, 100)), nextr=1):
+				target=([0, 20, 20], [0, 20, 20], [0, 20, 20]), trange=((0, 100), (0,100), (0, 100)), nextr=1):
 		self.parent = parent
 		self.app = app
 		self.reprap = reprap
@@ -91,7 +91,7 @@ class HotEnd(wx.Window):
 			sizerRow.AddSpacer((10, 10))
 
 			if i < self.nextr:
-				tgt = target[i]
+				tgt = target[i][1]
 			else:
 				tgt = 20
 				

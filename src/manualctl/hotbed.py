@@ -5,7 +5,7 @@ from settings import BUTTONDIM
 orange = wx.Colour(237, 139, 33)
 
 class HotBed(wx.Window):
-	def __init__(self, parent, app, reprap, name="", shortname="", target=20, trange=(0, 100)):
+	def __init__(self, parent, app, reprap, name="", shortname="", target=[0, 20, 20], trange=(0, 100)):
 		self.parent = parent
 		self.app = app
 		self.reprap = reprap
@@ -51,7 +51,7 @@ class HotBed(wx.Window):
 		sizerHB.Add(self.tTarget, pos=(2,4))
 		
 		self.slTarget = wx.Slider(
-			self, wx.ID_ANY, target, self.trange[0], self.trange[1], size=(320, -1), 
+			self, wx.ID_ANY, target[1], self.trange[0], self.trange[1], size=(320, -1), 
 			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
 			)
 		self.slTarget.SetTickFreq(5, 1)

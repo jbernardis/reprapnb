@@ -23,27 +23,41 @@ pendantHomes = {
 
 pendantMoves = {
 	'movex1': "X0.1",
+	's-movex1': "X0.1",
 	'movex2': "X1",
+	's-movex2': "X1",
 	'movex3': "X10",
 	's-movex3': "X100",
 	'movex-1': "X-0.1",
+	's-movex-1': "X-0.1",
 	'movex-2': "X-1",
+	'smovex-2': "X-1",
 	'movex-3': "X-10",
 	's-movex-3': "X-100",
 	'movey1': "Y0.1",
+	's-movey1': "Y0.1",
 	'movey2': "Y1",
+	's-movey2': "Y1",
 	'movey3': "Y10",
 	's-movey3': "Y100",
 	'movey-1': "Y-0.1",
+	's-movey-1': "Y-0.1",
 	'movey-2': "Y-1",
-	'movey-3': "Y-10",
+	'movey-2': "Y-1",
+	's-movey-3': "Y-10",
 	's-movey-3': "Y-100",
 	'movez1': "Z0.1",
+	's-movez1': "Z0.1",
 	'movez2': "Z1",
+	's-movez2': "Z1",
 	'movez3': "Z10",
+	's-movez3': "Z10",
 	'movez-1': "Z-0.1",
+	's-movez-1': "Z-0.1",
 	'movez-2': "Z-1",
+	's-movez-2': "Z-1",
 	'movez-3': "Z-10",
+	's-movez-3': "Z-10",
 	}
 
 
@@ -56,17 +70,18 @@ class ManualControl(wx.Panel):
 		self.appsettings = app.settings
 		self.settings = app.settings.manualctl
 		self.prtName = prtname
-		self.speedcommand = self.app.settings.printersettings[prtname].speedcommand
+		self.prtSettings = self.app.settings.printersettings[prtname]
+		self.speedcommand = self.prtSettings.speedcommand
 		self.reprap = reprap
 		self.firmware = None
-		self.firmwareName = self.app.settings.printersettings[prtname].firmware
+		self.firmwareName = self.prtSettings.firmware
 		self.reprap.setFirmware(self.firmwareName)
 		self.prtmon = None
 		self.currentTool = 0
 		self.macroActive = False
 		self.nextr = self.app.settings.printersettings[prtname].nextr
-		self.standardBedTemp = [ 0, self.settings.standardbedlo, self.settings.standardbedhi]
-		self.standardHeTemp = [0, self.settings.standardhelo, self.settings.standardhehi]
+		self.standardBedTemp = [ 0, self.prtSettings.standardbedlo, self.prtSettings.standardbedhi]
+		self.standardHeTemp = [0, self.prtSettings.standardhelo, self.prtSettings.standardhehi]
 		
 		self.zEngaged = False
 		
@@ -254,7 +269,7 @@ class ManualControl(wx.Panel):
 		sizerExtrude.AddSpacer((10,10))
 		
 		self.heWin = HotEnd(self, self.app, self.reprap, name=("Hot End 0", "Hot End 1", "Hot End 2"), shortname=snHotEnds, 
-					target=(185, 185, 185), trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
+					target=(self.standardHeTemp, self.standardHeTemp, self.standardHeTemp), trange=((20, 250), (20, 250), (20, 250)), nextr=nExtr)
 		sizerExtrude.Add(self.heWin, flag=wx.LEFT | wx.EXPAND)
 		sizerExtrude.AddSpacer((10,10))
 
@@ -279,7 +294,7 @@ class ManualControl(wx.Panel):
 		sizerBed.AddSpacer((10,10))
 		
 		self.bedWin = HotBed(self, self.app, self.reprap, name="Heated Print Bed", shortname=snBed, 
-					target=60, trange=[20, 150])
+					target=self.standardBedTemp, trange=[20, 150])
 		sizerBed.Add(self.bedWin)
 		sizerBed.AddSpacer((10,10))
 
@@ -408,21 +423,9 @@ class ManualControl(wx.Panel):
 
 	def pendantCommand(self, cmd):
 		c = cmd.lower()
-		if c.startswith("pendant"):
-			self.logger.LogMessage(cmd)
-			return
-
-		shifted = False
-		if c.startswith("s-"):
-			cShifted = c
-			c = c[2:]
-			shifted = True
-
 		if c in pendantMoves.keys():
-			if shifted and cShifted in pendantMoves.keys():
-				axis = pendantMoves[cShifted]
-			else:
-				axis = pendantMoves[c]
+			axis = pendantMoves[c]
+				
 			if axis.startswith("Z"):
 				speed = "F%s" % str(self.settings.zspeed)
 			else:
@@ -433,10 +436,7 @@ class ManualControl(wx.Panel):
 			self.reprap.send_now("G90")
 				
 		elif c in pendantHomes.keys():
-			if shifted and cShifted in pendantHomes.keys():
-				self.reprap.send_now(pendantHomes[cShifted])
-			else:
-				self.reprap.send_now(pendantHomes[c])
+			self.reprap.send_now(pendantHomes[c])
 			
 		elif c == "extrude":
 			self.extWin.doExtrude()
@@ -473,5 +473,7 @@ class ManualControl(wx.Panel):
 				self.logger.LogMessage("Pendant temp command had invalid temp index: " + cmd)
 			
 		else:
-			self.logger.LogMessage("Unknown pendant command: %s" % cmd)
+			return False   # command not handled
+		
+		return True # command handled
 

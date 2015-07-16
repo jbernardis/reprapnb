@@ -175,6 +175,10 @@ class PrinterSettings:
 		self.speedcommand = None
 		self.firmware = "MARLIN"
 		self.hassdcard = True
+		self.standardbedlo = 60;
+		self.standardbedhi = 110;
+		self.standardhelo = 185;
+		self.standardhehi = 225;
 
 class Settings:
 	def __init__(self, app, folder):
@@ -302,6 +306,30 @@ class Settings:
 					elif opt == 'hassdcard':
 						pt.hassdcard = parseBoolean(value, True)
 
+					elif opt == 'standardbedlo':
+						try:
+							self.standardbedlo = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for standardbedlo")
+							self.standardbedlo = 60
+					elif opt == 'standardbedhi':
+						try:
+							self.standardbedhi = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for standardbedhi")
+							self.standardbedhi = 110
+					elif opt == 'standardhelo':
+						try:
+							self.standardhelo = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for standardbhelo")
+							self.standardbhelo = 185
+					elif opt == 'standardhehi':
+						try:
+							self.standardhehi = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for standardhehi")
+							self.standardhehi = 225
 					elif opt == 'buildarea':
 						try:
 							exec("s=%s" % value)
@@ -411,6 +439,10 @@ class Settings:
 				self.cfg.set(sc, "buildarea", str(pt.buildarea))
 				self.cfg.set(sc, "firmware", str(pt.firmware))
 				self.cfg.set(sc, "hassdcard", str(pt.hassdcard))
+				self.cfg.set(sc, "standardbedlo", str(pt.standardbedlo))
+				self.cfg.set(sc, "standardbedhi", str(pt.standardbedhi))
+				self.cfg.set(sc, "standardhelo", str(pt.standardhelo))
+				self.cfg.set(sc, "standardhehi", str(pt.standardhehi))
 
 			section = "macros"
 			try:
@@ -721,10 +753,6 @@ class SettingsManualCtl:
 		self.zspeed = 300
 		self.espeed = 300
 		self.edistance = 5
-		self.standardbedlo = 60;
-		self.standardbedhi = 110;
-		self.standardhelo = 185;
-		self.standardhehi = 225;
 
 		if cfg is None:
 			self.modified = True
@@ -754,30 +782,6 @@ class SettingsManualCtl:
 					except:
 						self.parent.showWarning("Non-integer value in ini file for espeed")
 						self.zspeed = 300
-				elif opt == 'standardbedlo':
-					try:
-						self.standardbedlo = int(value)
-					except:
-						self.parent.showWarning("Non-integer value in ini file for standardbedlo")
-						self.standardbedlo = 60
-				elif opt == 'standardbedhi':
-					try:
-						self.standardbedhi = int(value)
-					except:
-						self.parent.showWarning("Non-integer value in ini file for standardbedhi")
-						self.standardbedhi = 110
-				elif opt == 'standardhelo':
-					try:
-						self.standardhelo = int(value)
-					except:
-						self.parent.showWarning("Non-integer value in ini file for standardbhelo")
-						self.standardbhelo = 185
-				elif opt == 'standardhehi':
-					try:
-						self.standardhehi = int(value)
-					except:
-						self.parent.showWarning("Non-integer value in ini file for standardhehi")
-						self.standardhehi = 225
 				elif opt == 'edistance':
 					try:
 						self.edistance = int(value)
@@ -807,10 +811,6 @@ class SettingsManualCtl:
 			self.cfg.set(self.section, "zspeed", str(self.zspeed))
 			self.cfg.set(self.section, "espeed", str(self.espeed))
 			self.cfg.set(self.section, "edistance", str(self.edistance))
-			self.cfg.set(self.section, "standardbedlo", str(self.standardbedlo))
-			self.cfg.set(self.section, "standardbedhi", str(self.standardbedhi))
-			self.cfg.set(self.section, "standardhelo", str(self.standardhelo))
-			self.cfg.set(self.section, "standardhehi", str(self.standardhehi))
 	
 class SettingsPrintMon:
 	def __init__(self, parent, app, cfg, folder, section):

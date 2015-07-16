@@ -151,7 +151,10 @@ class ConnectionManager:
 	
 	def pendantCommand(self, cmd):
 		if self.pendantConnection:
-			self.pendantConnection.manctl.pendantCommand(cmd)
+			if not self.pendantConnection.manctl.pendantCommand(cmd):
+				if not self.pendantConnection.prtmon.pendantCommand(cmd):
+					self.logger.LogMessage("Unknown pendant command: %s" % cmd)
+
 		else:
 			self.logger.LogMessage("Pendant command ignored - no printer connected")
 

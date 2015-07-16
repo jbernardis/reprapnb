@@ -1,16 +1,13 @@
 In Progress/Need Testing
+  pendant meta-comands (start/stop print eg)
   need to test HTTP functions:
     - stop print
 	- initiate slicer
-	- choose slicer/slicer config
-  Slicing history
-  Printing history
   
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
 pendant commands
 	connection to printer when multiple printers
-	meta-comands (start/stop print eg)
 
 send email when print job finishes
 
