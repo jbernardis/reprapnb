@@ -1,5 +1,5 @@
 import wx
-from settings import BUTTONDIM, MAX_EXTRUDERS
+from settings import BUTTONDIM, BUTTONDIMSHORT, MAX_EXTRUDERS
 
 orange = wx.Colour(237, 139, 33)
 
@@ -16,6 +16,7 @@ class HotEnd(wx.Window):
 		self.name = name
 		self.shortname = shortname
 		self.trange = trange
+		self.target = target
 		self.currentTemp = [0.0, 0.0, 0.0]
 		self.currentTarget = [0.0, 0.0, 0.0]
 		self.currentTempColor = [None, None, None]
@@ -36,6 +37,8 @@ class HotEnd(wx.Window):
 		self.txtTarget = []
 		self.sliders = []
 		self.btnImport = []
+		self.btnHi = []
+		self.btnLo = []
 		
 		for i in range(MAX_EXTRUDERS):
 			sizerRow = wx.BoxSizer(wx.HORIZONTAL)
@@ -107,13 +110,34 @@ class HotEnd(wx.Window):
 			sizerRow.Add(sldr, flag=wx.ALIGN_CENTER)
 			self.sliders.append(sldr)
 
+			btnsz = wx.BoxSizer(wx.VERTICAL)
 			btn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
 			btn.SetToolTipString("Import from G Code")
 			btn.Enable(i<self.nextr)
-			sizerRow.Add(btn)
+			btnsz.Add(btn)
 			self.Bind(wx.EVT_BUTTON, self.importProfile, btn)
 			sizerRow.Add(btn, flag=wx.ALIGN_CENTER)
 			self.btnImport.append(btn)
+
+			btnsz.AddSpacer((5, 5))
+
+			btn = wx.Button(self, wx.ID_ANY, "HI", size=BUTTONDIMSHORT)
+			btn.SetToolTipString("Set slider to high temperature value")
+			btn.Enable(i<self.nextr)
+			btnsz.Add(btn);
+			self.Bind(wx.EVT_BUTTON, self.setHi, btn)
+			self.btnHi.append(btn)
+
+			btnsz.AddSpacer((5, 5))
+
+			btn = wx.Button(self, wx.ID_ANY, "LO", size=BUTTONDIMSHORT)
+			btn.SetToolTipString("Set slider to low temperature value")
+			btn.Enable(i<self.nextr)
+			btnsz.Add(btn);
+			self.Bind(wx.EVT_BUTTON, self.setLo, btn)
+			self.btnLo.append(btn)
+
+			sizerRow.Add(btnsz)
 			
 			sizerRow.AddSpacer((10, 10))
 			sizerHE.Add(sizerRow)
@@ -161,6 +185,32 @@ class HotEnd(wx.Window):
 			return
 		
 		self.sliders[sel].SetValue(temp)
+
+	def setLo(self, evt):
+		tc_sel = evt.GetEventObject()
+		sel = None
+		for i in range(self.nextr):
+			if tc_sel is self.btnLo[i]:
+				sel = i
+				break
+
+		if sel is None:
+			return
+
+		self.sliders[sel].SetValue(self.target[sel][1])
+
+	def setHi(self, evt):
+		tc_sel = evt.GetEventObject()
+		sel = None
+		for i in range(self.nextr):
+			if tc_sel is self.btnHi[i]:
+				sel = i
+				break
+
+		if sel is None:
+			return
+
+		self.sliders[sel].SetValue(self.target[sel][2])
 		
 	def setHeatTarget(self, tool, temp):
 		if tool < 0 or tool >= self.nextr:

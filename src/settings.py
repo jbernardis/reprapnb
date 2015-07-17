@@ -8,6 +8,7 @@ SAVE_SETTINGS_FILE = False
 BUTTONDIM = (48, 48)
 BUTTONDIMLG = (128, 64)
 BUTTONDIMWIDE = (96, 48)
+BUTTONDIMSHORT = (48, 24)
 
 MAX_EXTRUDERS = 2
 MAINTIMER = 1000
@@ -308,28 +309,28 @@ class Settings:
 
 					elif opt == 'standardbedlo':
 						try:
-							self.standardbedlo = int(value)
+							pt.standardbedlo = int(value)
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardbedlo")
-							self.standardbedlo = 60
+							pt.standardbedlo = 60
 					elif opt == 'standardbedhi':
 						try:
-							self.standardbedhi = int(value)
+							pt.standardbedhi = int(value)
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardbedhi")
-							self.standardbedhi = 110
+							pt.standardbedhi = 110
 					elif opt == 'standardhelo':
 						try:
-							self.standardhelo = int(value)
+							pt.standardhelo = int(value)
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardbhelo")
-							self.standardbhelo = 185
+							pt.standardhelo = 185
 					elif opt == 'standardhehi':
 						try:
-							self.standardhehi = int(value)
+							pt.standardhehi = int(value)
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardhehi")
-							self.standardhehi = 225
+							pt.standardhehi = 225
 					elif opt == 'buildarea':
 						try:
 							exec("s=%s" % value)

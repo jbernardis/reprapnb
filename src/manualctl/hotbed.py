@@ -1,6 +1,6 @@
 import wx
 
-from settings import BUTTONDIM
+from settings import BUTTONDIM, BUTTONDIMSHORT
 
 orange = wx.Colour(237, 139, 33)
 
@@ -13,6 +13,7 @@ class HotBed(wx.Window):
 		self.name = name
 		self.shortname = shortname
 		self.trange = trange
+		self.target = target
 		self.currentTemp = 0.0
 		self.currentTarget = 0.0
 		self.currentTempColor = None
@@ -58,7 +59,7 @@ class HotBed(wx.Window):
 		self.slTarget.SetPageSize(1)
 		self.slTarget.Bind(wx.EVT_SCROLL_CHANGED, self.onTargetChanged)
 		self.slTarget.Bind(wx.EVT_MOUSEWHEEL, self.onTargetWheel)
-		sizerHB.Add(self.slTarget, pos=(3,1), span=(1,5))
+		sizerHB.Add(self.slTarget, pos=(3,1), span=(1,4))
 
 		self.bHeatOn = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngHeaton, size=BUTTONDIM)
 		self.bHeatOn.SetToolTipString("Turn %s heater on" % self.name)
@@ -70,10 +71,25 @@ class HotBed(wx.Window):
 		sizerHB.Add(self.bHeatOff, pos=(1,2),span=(2,1))
 		self.Bind(wx.EVT_BUTTON, self.heaterOff, self.bHeatOff)
 				
+		btnsz = wx.BoxSizer(wx.VERTICAL)
 		self.bProfile = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngProfile, size=BUTTONDIM)
 		self.bProfile.SetToolTipString("Import from G Code")
-		sizerHB.Add(self.bProfile, pos=(1,5),span=(2,1))
+		btnsz.Add(self.bProfile)
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)
+		btnsz.AddSpacer((5, 5))
+
+		b = wx.Button(self, wx.ID_ANY, "HI", size=BUTTONDIMSHORT)
+		b.SetToolTipString("Set slider to high temperature value")
+		btnsz.Add(b);
+		self.Bind(wx.EVT_BUTTON, self.setHi, b)
+		btnsz.AddSpacer((5, 5))
+
+		b = wx.Button(self, wx.ID_ANY, "LO", size=BUTTONDIMSHORT)
+		b.SetToolTipString("Set slider to low temperature value")
+		btnsz.Add(b);
+		self.Bind(wx.EVT_BUTTON, self.setLo, b)
+
+		sizerHB.Add(btnsz, pos=(1,5), span=(3,1));
 
 		self.SetSizer(sizerHB)
 		self.Layout()
@@ -90,6 +106,12 @@ class HotBed(wx.Window):
 			return
 		
 		self.slTarget.SetValue(temp)
+
+	def setLo(self, evt):
+		self.slTarget.SetValue(self.target[1])
+
+	def setHi(self, evt):
+		self.slTarget.SetValue(self.target[2])
 		
 	def setHeatTarget(self, t):
 		if t is None or t == 0:
