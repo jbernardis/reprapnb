@@ -121,7 +121,7 @@ class HotEnd(wx.Window):
 
 			btnsz.AddSpacer((5, 5))
 
-			btn = wx.Button(self, wx.ID_ANY, "HI", size=BUTTONDIMSHORT)
+			btn = wx.Button(self, wx.ID_ANY, "%d" % self.target[i][2], size=BUTTONDIMSHORT)
 			btn.SetToolTipString("Set slider to high temperature value")
 			btn.Enable(i<self.nextr)
 			btnsz.Add(btn);
@@ -130,7 +130,7 @@ class HotEnd(wx.Window):
 
 			btnsz.AddSpacer((5, 5))
 
-			btn = wx.Button(self, wx.ID_ANY, "LO", size=BUTTONDIMSHORT)
+			btn = wx.Button(self, wx.ID_ANY, "%d" % self.target[i][1], size=BUTTONDIMSHORT)
 			btn.SetToolTipString("Set slider to low temperature value")
 			btn.Enable(i<self.nextr)
 			btnsz.Add(btn);

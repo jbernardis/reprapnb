@@ -294,6 +294,8 @@ class PrintMonitor(wx.Panel):
 				self.emulatePrintButton()
 			elif mcmd == "@pause":
 				self.emulatePauseButton()
+			else:
+				return False # command not handled
 		else:
 			return False  # command not handled
 		

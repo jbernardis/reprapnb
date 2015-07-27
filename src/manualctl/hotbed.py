@@ -78,13 +78,13 @@ class HotBed(wx.Window):
 		self.Bind(wx.EVT_BUTTON, self.importProfile, self.bProfile)
 		btnsz.AddSpacer((5, 5))
 
-		b = wx.Button(self, wx.ID_ANY, "HI", size=BUTTONDIMSHORT)
+		b = wx.Button(self, wx.ID_ANY, "%d" % self.target[2], size=BUTTONDIMSHORT)
 		b.SetToolTipString("Set slider to high temperature value")
 		btnsz.Add(b);
 		self.Bind(wx.EVT_BUTTON, self.setHi, b)
 		btnsz.AddSpacer((5, 5))
 
-		b = wx.Button(self, wx.ID_ANY, "LO", size=BUTTONDIMSHORT)
+		b = wx.Button(self, wx.ID_ANY, "%d" % self.target[1], size=BUTTONDIMSHORT)
 		b.SetToolTipString("Set slider to low temperature value")
 		btnsz.Add(b);
 		self.Bind(wx.EVT_BUTTON, self.setLo, b)

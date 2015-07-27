@@ -43,8 +43,8 @@ pendantMoves = {
 	'movey-1': "Y-0.1",
 	's-movey-1': "Y-0.1",
 	'movey-2': "Y-1",
-	'movey-2': "Y-1",
-	's-movey-3': "Y-10",
+	's-movey-2': "Y-1",
+	'movey-3': "Y-10",
 	's-movey-3': "Y-100",
 	'movez1': "Z0.1",
 	's-movez1': "Z0.1",
@@ -466,11 +466,14 @@ class ManualControl(wx.Panel):
 					if tool is not None:
 						self.heWin.heaterTemp(tool, self.standardHeTemp[temp])
 					else:
-						self.logger.LogMessage("Pendant temp command had invalid tool number: " + cmd)
+						self.logger.LogMessage("Pendant temp command has invalid tool number: " + cmd)
+						return False
 				else:
-					self.logger.LogMessage("Pendant temp command had invalid target: " + cmd)
+					self.logger.LogMessage("Pendant temp command has invalid target: " + cmd)
+					return False
 			else:
-				self.logger.LogMessage("Pendant temp command had invalid temp index: " + cmd)
+				self.logger.LogMessage("Pendant temp command has invalid temp index: " + cmd)
+				return False
 			
 		else:
 			return False   # command not handled
