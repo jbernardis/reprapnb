@@ -176,6 +176,7 @@ class PrinterSettings:
 		self.speedcommand = None
 		self.firmware = "MARLIN"
 		self.hassdcard = True
+		self.allowsColdExtrusion = True
 		self.standardbedlo = 60;
 		self.standardbedhi = 110;
 		self.standardhelo = 185;
@@ -306,6 +307,9 @@ class Settings:
 							
 					elif opt == 'hassdcard':
 						pt.hassdcard = parseBoolean(value, True)
+							
+					elif opt == 'allowscoldextrusion':
+						pt.allowsColdExtrusion = parseBoolean(value, True)
 
 					elif opt == 'standardbedlo':
 						try:
@@ -440,6 +444,7 @@ class Settings:
 				self.cfg.set(sc, "buildarea", str(pt.buildarea))
 				self.cfg.set(sc, "firmware", str(pt.firmware))
 				self.cfg.set(sc, "hassdcard", str(pt.hassdcard))
+				self.cfg.set(sc, "allowscoldextrusion", str(pt.allowsColdExtrusion))
 				self.cfg.set(sc, "standardbedlo", str(pt.standardbedlo))
 				self.cfg.set(sc, "standardbedhi", str(pt.standardbedhi))
 				self.cfg.set(sc, "standardhelo", str(pt.standardhelo))

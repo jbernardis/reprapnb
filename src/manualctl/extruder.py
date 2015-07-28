@@ -7,6 +7,7 @@ class Extruder(wx.Window):
 		self.app = app
 		self.reprap = reprap
 		self.logger = self.app.logger
+		self.prtSettings = parent.prtSettings
 
 		self.name = name
 		self.axis = axis
@@ -47,6 +48,14 @@ class Extruder(wx.Window):
 		self.tEDistance.SetFont(f)
 		szCenter.Add(self.tEDistance, flag=wx.ALL, border=5)
 		self.tEDistance.Bind(wx.EVT_KILL_FOCUS, self.evtEDistanceKillFocus)
+
+		self.valColdExtrude = False	
+		if self.prtSettings.allowsColdExtrusion:	
+			self.cbColdExtrude = wx.CheckBox(self, wx.ID_ANY, "Allow Cold Extrusion")
+			self.cbColdExtrude.SetValue(self.valColdExtrude)
+			szCenter.AddSpacer((10, 10))
+			szCenter.Add(self.cbColdExtrude)
+			self.Bind(wx.EVT_CHECKBOX, self.doColdExtrusion, self.cbColdExtrusion)
 		
 		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")
@@ -66,6 +75,13 @@ class Extruder(wx.Window):
 		self.SetSizer(sizerExtrude)
 		self.Layout()
 		self.Fit()
+		
+	def doColdExtrude(self, evt):
+		self.valColdExtrude = self.cbColdExtrude.IsChecked()
+		if self.valColdExtrude:
+			self.reprap.send_now("M302 S0")
+		else:
+			self.reprap.send_now("M302 S170")
 		
 	def evtESpeedKillFocus(self, evt):
 		try:
