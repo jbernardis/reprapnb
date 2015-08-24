@@ -53,8 +53,8 @@ class Extruder(wx.Window):
 		if self.prtSettings.allowsColdExtrusion:	
 			self.cbColdExtrude = wx.CheckBox(self, wx.ID_ANY, "Allow Cold Extrusion")
 			self.cbColdExtrude.SetValue(self.valColdExtrude)
-			szCenter.AddSpacer((10, 10))
-			szCenter.Add(self.cbColdExtrude)
+			szLeft.AddSpacer((10, 10))
+			szLeft.Add(self.cbColdExtrude)
 			self.Bind(wx.EVT_CHECKBOX, self.doColdExtrusion, self.cbColdExtrusion)
 		
 		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngExtrude, size=BUTTONDIM)

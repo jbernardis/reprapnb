@@ -28,14 +28,16 @@ class Pendant:
 			while self.pendant is not None:
 				try:
 					line=self.pendant.readline()
+					if(len(line)>1):
+						self.cb(line.strip())
+						
+					time.sleep(2);
+					
 				except:
 					self.cb("pendant disconnected")
 					self.disconnect()
 					line = ""
 
-				if(len(line)>1):
-					self.cb(line.strip())
-			time.sleep(2);
 
 	def connect(self):
 		try:
