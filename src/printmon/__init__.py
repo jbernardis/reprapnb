@@ -445,11 +445,22 @@ class PrintMonitor(wx.Panel):
 		self.paused = False
 		self.sdpaused = False
 		self.sdprintingfrom = True
-		self.sdcard.startPrintFromSD()
 		self.sdStartTime = time.time()
 		self.infoPane.setSDStartTime(self.sdStartTime)
 		self.setPrintMode(PRINT_MODE_PRINT)
 		self.setStatus(PMSTATUS_PRINTING)
+		self.sdcard.startPrintFromSD()
+		
+	def cancelSDPrintFrom(self):
+		self.sdprintingfrom = False
+		self.printing = False
+		self.paused = False
+		self.setStatus(PMSTATUS_READY)
+		self.setPrintMode(PRINT_MODE_PRINT)
+		self.setPauseMode(PAUSE_MODE_PAUSE)
+		self.bPrint.Enable(True)
+		self.bPull.Enable(self.app.currentPullStatus())
+		self.bPause.Enable(False)
 		
 	def resumeSDPrintFrom(self, fn):
 		self.history.SDPrintFromStart(fn, self.prtname)
@@ -484,6 +495,7 @@ class PrintMonitor(wx.Panel):
 		self.origEta = self.startTime + self.model.duration
 		self.countGLines = len(self.model)
 		self.infoPane.setMode(MODE_TO_SD)
+		self.infoPane.showFileInfo()
 		self.infoPane.setStartTime(self.startTime)
 		self.bPrint.Enable(False)
 		self.bPull.Enable(False)

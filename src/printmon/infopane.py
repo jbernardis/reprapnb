@@ -127,9 +127,7 @@ class InfoPane (wx.Window):
 			times['expectedduration'] = formatElapsed(self.duration)
 			times['origeta'] = time.strftime('%H:%M:%S', time.localtime(self.eta))
 			times['remaining'] = formatElapsed(self.remains)
-			times['neweta'] = "%s/%s" % (
-					time.strftime('%H:%M:%S', time.localtime(self.newEta)), 
-					time.strftime('%H:%M:%S', time.localtime(self.newEta2)) )
+			times['neweta'] = time.strftime('%H:%M:%S', time.localtime(self.newEta)) 
 			elapsed = time.time() - self.startTime
 			times['elapsed'] = formatElapsed(elapsed)
 			stat['times'] = times
@@ -188,6 +186,7 @@ class InfoPane (wx.Window):
 
 		self.setValue("filename", lfn)
 		self.filename = lfn
+
 		self.duration = duration
 		self.gcount = gcount
 		self.layers = layers
@@ -323,11 +322,9 @@ class InfoPane (wx.Window):
 				remains = self.eta + diff - now
 				self.remains = remains
 				strRemains = formatElapsed(remains)
-				self.newEta = now+remains
-				self.newEta2 = now+(remains * lateness)
+				self.newEta = now+(remains * lateness)
 				strNewEta = time.strftime('%H:%M:%S', time.localtime(self.newEta))
-				strNewEta2 = time.strftime('%H:%M:%S', time.localtime(self.newEta2))
-				self.setValue("eta2", "Remaining: %s  New ETA: %s/%s" % (strRemains, strNewEta, strNewEta2))
+				self.setValue("eta2", "Remaining: %s  New ETA: %s" % (strRemains, strNewEta))
 				
 				pctDiff = float(elapsed + remains)/float(self.duration) * 100.0
 				secDiff = math.fabs(elapsed + remains - self.duration)

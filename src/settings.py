@@ -59,6 +59,8 @@ CMD_RESUMEPRINT = 6
 
 TEMPFILELABEL = "<temporary>"
 
+PORTPREFIXLIST = ['/dev/rr*', '/dev/ttyUSB*', '/dev/ttyACM*', "/dev/tty.*", "/dev/cu.*", "/dev/rfcomm*"]
+
 from slic3r import Slic3r
 from skeinforge import Skeinforge
 from cura import Cura
@@ -204,6 +206,7 @@ class Settings:
 		self.pendantBaud = 9600
 		self.webbase = "/var/www/html/images"
 		self.lastmacrodirectory = os.path.join(folder, "macros")
+		self.portprefixes = PORTPREFIXLIST
 		self.shares = {}
 		
 		self.cfg = ConfigParser.ConfigParser()
@@ -246,6 +249,13 @@ class Settings:
 					except:
 						self.pendantBaud = 9600
 						self.showWarning("Invalid value (%s) for pendant baud rate - using %d" % (value, self.pendantBaud))
+				elif opt == 'portprefixes':
+					try:
+						exec("s=%s" % value)
+						self.portprefixes = s
+					except:
+						print "invalid value in ini file for portprefixes"
+						self.portprefixes = PORTPREFIXLIST
 				elif opt == 'buildarea':
 					try:
 						exec("s=%s" % value)
@@ -431,6 +441,7 @@ class Settings:
 			self.cfg.set(self.section, "historysize", str(self.historysize))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
+			self.cfg.set(self.section, "portprefixes", str(self.portprefixes))
 							
 			for p in self.printersettings.keys():
 				sc = "printer." + p

@@ -1,3 +1,9 @@
+1) when finished print to SD and try to exit, it thinks I'm still printing
+2) when print to SD card, infopane does not show source file
+
+
+
+
 In Progress/Need Testing
   pendant meta-comands (start/stop print eg)
   need to test HTTP functions:

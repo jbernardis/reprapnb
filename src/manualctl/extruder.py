@@ -55,7 +55,7 @@ class Extruder(wx.Window):
 			self.cbColdExtrude.SetValue(self.valColdExtrude)
 			szLeft.AddSpacer((10, 10))
 			szLeft.Add(self.cbColdExtrude)
-			self.Bind(wx.EVT_CHECKBOX, self.doColdExtrusion, self.cbColdExtrusion)
+			self.Bind(wx.EVT_CHECKBOX, self.doColdExtrude, self.cbColdExtrude)
 		
 		self.bExtrude = wx.BitmapButton(self, wx.ID_ANY, self.parent.images.pngExtrude, size=BUTTONDIM)
 		self.bExtrude.SetToolTipString("Extrude filament")

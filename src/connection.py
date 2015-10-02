@@ -94,6 +94,9 @@ class ConnectionManager:
 		
 	def getPortList(self):
 		"""scan for available ports. return a list of device names."""
+		for pt in self.settings.portprefixes:
+			print "Port prefix (%s)" % pt
+			
 		pl  = glob.glob('/dev/rr*')
 		pl += glob.glob('/dev/ttyUSB*')
 		pl += glob.glob('/dev/ttyACM*') 

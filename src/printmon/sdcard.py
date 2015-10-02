@@ -208,6 +208,7 @@ class SDCard:
 			while True:
 				okFlag = dlg.ShowModal()
 				if okFlag != wx.ID_OK:
+					self.prtmon.cancelSDPrintFrom()
 					break
 				
 				fileList = dlg.getSelection()
@@ -221,6 +222,7 @@ class SDCard:
 				msgdlg.Destroy()
 				
 				if rc != wx.ID_OK:
+					self.prtmon.cancelSDPrintFrom()
 					break
 					
 			dlg.Destroy()
