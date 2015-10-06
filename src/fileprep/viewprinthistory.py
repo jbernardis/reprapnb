@@ -151,6 +151,8 @@ class PrintHistoryCtrl(wx.ListCtrl):
 		if col == 0:
 			if not self.printhistory[item][0]:
 				return "<temporary file>"
+			elif self.printhistory[item][0].startswith("SD:"):
+				return self.printhistory[item][0]
 			else:
 				if self.basenameonly:
 					return os.path.basename(self.printhistory[item][0])

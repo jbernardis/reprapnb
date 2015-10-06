@@ -1,5 +1,4 @@
 1) when finished print to SD and try to exit, it thinks I'm still printing
-2) when print to SD card, infopane does not show source file
 
 
 
@@ -33,3 +32,4 @@ Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
 - if plater->slice fails, it leaves nb in a weird state where no buttons are available
 - I still think there is a bug lurking in plater
+- many stl files cannot be loaded by viewer or plater

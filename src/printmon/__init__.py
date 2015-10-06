@@ -463,7 +463,7 @@ class PrintMonitor(wx.Panel):
 		self.bPause.Enable(False)
 		
 	def resumeSDPrintFrom(self, fn):
-		self.history.SDPrintFromStart(fn, self.prtname)
+		self.history.SDPrintFromStart("SD:" + fn[1].lower(), self.prtname)
 		self.clearModel()
 		self.reprap.send_now("M23 " + fn[1].lower())
 		self.reprap.send_now("M24")
@@ -483,7 +483,7 @@ class PrintMonitor(wx.Panel):
 		self.sdcard.startPrintToSD()
 		
 	def resumeSDPrintTo(self, tfn):
-		self.history.SDPrintToStart(tfn, self.prtname)
+		self.history.SDPrintToStart("SD:" + tfn[1].lower(), self.prtname)
 		self.setSDTargetFile(tfn[1].lower())
 		self.suspendTempProbe(True)
 		self.reprap.send_now("M28 %s" % self.sdTargetFile)

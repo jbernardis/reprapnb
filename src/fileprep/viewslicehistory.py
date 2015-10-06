@@ -1,5 +1,6 @@
 import os
 import wx
+import time
 
 from settings import BUTTONDIM
 
@@ -87,10 +88,10 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		f = wx.Font(8,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc = wx.ScreenDC()
 		dc.SetFont(f)
-		fontWidth, fontHeight = dc.GetTextExtent("Xy")
+		fontHeight = dc.GetTextExtent("Xy")[1]
 		
-		colWidths = [500, 170, 120, 120, 120]
-		colTitles = ["File", "Config", "Start Time", "End Time", "Status"]
+		colWidths = [500, 130, 170, 120, 120, 120]
+		colTitles = ["File", "Modified", "Config", "Slice Start", "Slice End", "Status"]
 		
 		totwidth = 20;
 		for w in colWidths:
@@ -149,10 +150,22 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			self.RefreshItem(i)
 
 	def OnGetItemText(self, item, col):
-		if col == 0 and self.basenameonly:
-			return os.path.basename(self.slicehistory[item][0])
+		if col == 0:
+			if self.basenameonly:
+				return os.path.basename(self.slicehistory[item][0])
+			else:
+				return self.slicehistory[item][0]
+		elif col == 1:
+			try:
+				# return time.ctime(os.path.getmtime(self.slicehistory[item][0]))
+				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(self.slicehistory[item][0])))
+				if mt > self.slicehistory[item][3]:
+					mt += "**"
+				return mt
+			except:
+				return ""
 		else:
-			return self.slicehistory[item][col]
+			return self.slicehistory[item][col-1]
 
 	def OnGetItemImage(self, item):
 		if item == self.selectedItem:
