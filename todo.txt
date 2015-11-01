@@ -1,4 +1,5 @@
 1) when finished print to SD and try to exit, it thinks I'm still printing
+2) when I choose a gcode file from the history and load it, the file name does not appear in infopane
 
 
 

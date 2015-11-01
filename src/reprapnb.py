@@ -9,11 +9,10 @@ if cmd_folder not in sys.path:
 	
 from settings import (Settings, MAINTIMER, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, FPSTATUS_IDLE,
 					PMSTATUS_NOT_READY, PMSTATUS_READY, PMSTATUS_PRINTING, PMSTATUS_PAUSED,
-					PLSTATUS_LOADED_CLEAN, PLSTATUS_LOADED_DIRTY, BATCHSL_IDLE, BATCHSL_RUNNING)
+					BATCHSL_IDLE, BATCHSL_RUNNING)
 from fileprep import FilePrepare
 from printmon import PrintMonitor
 from manualctl import ManualControl
-from plater import Plater
 from logger import Logger
 from images import Images
 from reprapserver import RepRapServer
@@ -95,16 +94,13 @@ class MainFrame(wx.Frame):
 	
 		self.pxLogger = 0
 		self.pxGCodeRef = 1
-		self.pxPlater = 2
-		self.pxFilePrep = 3
-		self.pxConnMgr = 4
+		self.pxFilePrep = 2
+		self.pxConnMgr = 3
 
-		self.pgPlater = Plater(self.nb, self)
 		self.pgFilePrep = FilePrepare(self.nb, self, self.history)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgGCodeRef, GCREF_TAB_TEXT, imageId=-1)
-		self.nb.AddPage(self.pgPlater, PLATER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgFilePrep, FILEPREP_TAB_TEXT, imageId=self.nbilIdleIdx)
 		self.nb.AddPage(self.pgConnMgr, CONNMGR_TAB_TEXT, imageId=-1)
 
@@ -139,8 +135,6 @@ class MainFrame(wx.Frame):
 			self.pgConnMgr.refreshPorts()
 		elif sel == self.pxLogger:
 			self.logger.hideToaster()
-		elif sel == self.pxPlater:
-			self.pgPlater.updateSlicerProfile(self.pgFilePrep.getSlicerConfigString())
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
@@ -196,7 +190,7 @@ class MainFrame(wx.Frame):
 			self.nb.SetPageImage(self.pxLogger, -1)
 
 	def doPrinterError(self, printer):
-		if self.nb.GetSelection() not in [ self.pxLogger, self.pxPlater, self.pxFilePrep ]:
+		if self.nb.GetSelection() not in [ self.pxLogger, self.pxFilePrep ]:
 			self.nb.SetSelection(self.pxFilePrep)
 		self.pgConnMgr.disconnectByPrinter(printer)
 		self.pgConnMgr.refreshPorts()
@@ -269,14 +263,6 @@ class MainFrame(wx.Frame):
 				self.nb.SetPageImage(pn, -1)
 				self.printing[pname] = False
 		
-	def updatePlaterStatus(self, status):
-		if status == PLSTATUS_LOADED_CLEAN:
-			self.nb.SetPageImage(self.pxPlater, self.nbilLoadedCleanIdx)
-		elif status == PLSTATUS_LOADED_DIRTY:
-			self.nb.SetPageImage(self.pxPlater, self.nbilLoadedDirtyIdx)
-		else:
-			self.nb.SetPageImage(self.pxPlater, -1)
-
 	def updateFilePrepStatus(self, status, batchstat):
 		self.fpstatus = status
 		self.batchslstatus = batchstat
@@ -396,10 +382,6 @@ class MainFrame(wx.Frame):
 		
 	def onClose(self, evt):
 		if self.checkPrinting():
-			return
-			
-		if not self.pgPlater.onClose(evt):
-			self.nb.SetSelection(self.pxPlater)
 			return
 		
 		if not self.pgFilePrep.onClose(evt):

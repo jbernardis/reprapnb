@@ -157,9 +157,8 @@ class SliceHistoryCtrl(wx.ListCtrl):
 				return self.slicehistory[item][0]
 		elif col == 1:
 			try:
-				# return time.ctime(os.path.getmtime(self.slicehistory[item][0]))
 				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(self.slicehistory[item][0])))
-				if mt > self.slicehistory[item][3]:
+				if mt > self.slicehistory[item][2]:
 					mt += "**"
 				return mt
 			except:

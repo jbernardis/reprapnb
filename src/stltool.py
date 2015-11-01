@@ -1,4 +1,6 @@
-import sys, struct, math, numpy, thread
+import sys, struct, math
+
+nest = 0
 
 def cross(v1,v2):
 	return [v1[1]*v2[2]-v1[2]*v2[1],v1[2]*v2[0]-v1[0]*v2[2],v1[0]*v2[1]-v1[1]*v2[0]]
@@ -109,11 +111,6 @@ class stl:
 					cb("Error opening STL file")
 				return
 			
-			if len(self.f) < 1:
-				if cb:
-					cb("File is empty")
-				return
-			
 			if not self.f[0].startswith("solid"):
 				if cb:
 					cb("Not an ascii stl solid - attempting to parse as binary")
@@ -162,205 +159,78 @@ class stl:
 				if cb:
 					cb("Text Read Completed")
 				
-			self.setHull(cb)
+			if cb:
+				cb("Calculating Mesh Geometry")
+	
+			minx = 99999
+			maxx = -99999
+			miny = 99999
+			maxy = -99999
+			minz = 99999
+			maxz = -99999
+			fx = 0
+			for f in self.facets:
+				minx = min([minx, f[1][0][0], f[1][1][0], f[1][2][0]])
+				miny = min([miny, f[1][0][1], f[1][1][1], f[1][2][1]])
+				minz = min([minz, f[1][0][2], f[1][1][2], f[1][2][2]])
+				maxx = max([maxx, f[1][0][0], f[1][1][0], f[1][2][0]])
+				maxy = max([maxy, f[1][0][1], f[1][1][1], f[1][2][1]])
+				maxz = max([maxz, f[1][0][2], f[1][1][2], f[1][2][2]])
+				fx += 1
+				if (fx % 10000 == 0) and cb:
+					cb("Processed %d facets" % fx)
+					
+			if cb:
+				cb("Processed %d total facets" % fx)
+				
+			self.hxCenter = (minx + maxx)/2.0
+			self.hyCenter = (miny + maxy)/2.0
+			if cb:
+				cb("Center=(%f,%f)" % (self.hxCenter, self.hyCenter))
+				
+			self.hxSize = maxx-minx
+			self.hySize = maxy-miny
+			self.hArea = self.hxSize * self.hySize
+	
+			modFacets = False
+			if self.zZero and minz != 0:
+				if cb:
+					cb("Dropping object to z=0 plane from a height of %f" % minz)
+				for i in range(len(self.facets)):
+					for j in range(3):
+						self.facets[i][1][j][2] -= minz
+				modFacets = True
+				self.zZero = False
+				
+			if self.xOffset + self.yOffset != 0:
+				if cb:
+					cb("Translating object (%d, %d)" % (self.xOffset, self.yOffset))
+				for i in range(len(self.facets)):
+					for j in range(3):
+						self.facets[i][1][j][0] += self.xOffset
+						self.facets[i][1][j][1] += self.yOffset
+				modFacets = True
+				self.xOffset = 0
+				self.yOffset = 0
+	
+			if modFacets:
+				if cb:
+					cb("Adjusting facets")					
+				self.facetsminz=[]
+				self.facetsmaxz=[]
+				for facet in self.facets:
+					self.facetsminz+=[(min(map(lambda x:x[2], facet[1])),facet)]
+					self.facetsmaxz+=[(max(map(lambda x:x[2], facet[1])),facet)]
+			
 			if cb:
 				cb("STL load completed")
-			
+						
 	def setId(self, sid):
 		self.id = sid
 		
 	def getId(self):
 		return self.id
 	
-	def setHull(self, cb=None):
-		def unique_rows(a):
-			a = numpy.ascontiguousarray(a)		
-			unique_a = numpy.unique(a.view([('', a.dtype)]*a.shape[1]))
-			return unique_a.view(a.dtype).reshape((unique_a.shape[0], a.shape[1]))
-		
-		if cb:
-			cb("Calculating Hull")
-
-		self.projection = numpy.array([])
-		minz = 99999
-		fx = 0
-		for f in self.facets:
-			if f[1][0][2] < minz: minz = f[1][0][2]
-			if f[1][1][2] < minz: minz = f[1][1][2]
-			if f[1][2][2] < minz: minz = f[1][2][2]
-			fx += 1
-			if (fx % 10000 == 0) and cb:
-				cb("Processed %d facets" % fx)
-				
-		if cb:
-			cb("Processed %d total facets" % fx)
-
-		self.projection = numpy.concatenate(
-				[[f[1][0][0], f[1][0][1],
-				  f[1][1][0], f[1][1][1],
-				  f[1][2][0], f[1][2][1]] for f in self.facets])
-		
-		if cb:
-			cb("Done Projecting")
-
-		n = len(self.projection)			
-		self.projection = self.projection.reshape(n/2,2)
-		self.projection = unique_rows(self.projection)
-		h = self.qhull(self.projection)
-		self.adjustHull(h)
-		
-		modFacets = False
-		if self.zZero and minz != 0:
-			if cb:
-				cb("Dropping object to z=0 plane")
-			for i in range(len(self.facets)):
-				for j in range(3):
-					self.facets[i][1][j][2] -= minz
-			modFacets = True
-			self.zZero = False
-			
-		if self.xOffset + self.yOffset != 0:
-			if cb:
-				cb("Translating object (%d, %d)" % (self.xOffset, self.yOffset))
-			for i in range(len(self.facets)):
-				for j in range(3):
-					self.facets[i][1][j][0] += self.xOffset
-					self.facets[i][1][j][1] += self.yOffset
-			modFacets = True
-			self.xOffset = 0
-			self.yOffset = 0
-
-		if modFacets:
-			if cb:
-				cb("Adjusting facets")					
-			self.facetsminz=[]
-			self.facetsmaxz=[]
-			for facet in self.facets:
-				self.facetsminz+=[(min(map(lambda x:x[2], facet[1])),facet)]
-				self.facetsmaxz+=[(max(map(lambda x:x[2], facet[1])),facet)]
-		
-		if cb:
-			cb("Hull calculation done")
-
-	def adjustHull(self, d):
-		self.hull = d
-		hmin = []
-		hmax = []
-		
-		hmin.append(min([x[0] for x in d]))
-		hmin.append(min([x[1] for x in d]))
-		hmax.append(max([x[0] for x in d]))
-		hmax.append(max([x[1] for x in d]))
-		
-		self.hxCenter = (hmin[0] + hmax[0])/2.0
-		self.hyCenter = (hmin[1] + hmax[1])/2.0
-		self.hxSize = hmax[0]-hmin[0]
-		self.hySize = hmax[1]-hmin[1]
-		self.hArea = self.hxSize * self.hySize
-		
-	def deltaTranslation(self, dx, dy):
-		self.translatex += dx
-		self.translatey += dy
-		
-	def isInside(self, xpoint, ypoint):
-		def _det(xvert, yvert):
-			xvert = numpy.asfarray(xvert)
-			yvert = numpy.asfarray(yvert)
-			x_prev = numpy.concatenate(([xvert[-1]], xvert[:-1]))
-			y_prev = numpy.concatenate(([yvert[-1]], yvert[:-1]))
-			return numpy.sum(yvert * x_prev - xvert * y_prev)
-		
-		smalld=1e-12
-
-		x = []
-		y = []
-		for px, py in self.hull:
-			y.append(py)
-			x.append(px)
-			
-		n = len(x) - 1
-		mindst = None
-		for i in range(n):
-			x1 = x[i]
-			y1 = y[i]
-			x21 = x[i + 1] - x1
-			y21 = y[i + 1] - y1
-			x1p = x1 - xpoint
-			y1p = y1 - ypoint
-
-			t = -(x1p * x21 + y1p * y21) / (x21 ** 2 + y21 ** 2)
-			if t < 0:
-				d = x1p ** 2 + y1p ** 2
-				if mindst is None or d < mindst:
-					snear = False
-					mindst = d
-					j = i
-			elif t <= 1:
-				dx = x1p + t * x21
-				dy = y1p + t * y21
-				d = dx ** 2 + dy ** 2
-				if mindst is None or d < mindst:
-					snear = True
-					mindst = d
-					j = i
-		mindst **= 0.5
-		if mindst < smalld:
-			mindst = 0
-		elif snear:
-			area = _det([x[j], x[j + 1], xpoint],
-							 [y[j], y[j + 1], ypoint])
-			mindst = math.copysign(mindst, area)
-		else:
-			if not j:
-				x = x[:-1]
-				y = y[:-1]
-			area = _det([x[j + 1], x[j], x[j - 1]],
-							 [y[j + 1], y[j], y[j - 1]])
-			mindst = math.copysign(mindst, area)
-		return (mindst<=0)
-
-		
-	def deltaRotation(self, da):
-		self.rotation += da
-		
-	def deltaScale(self, sf):
-		self.scalefactor *= sf
-		
-	def applyDeltas(self):
-		if self.rotation != 0 or self.scalefactor != 1:
-			s1 = self.translate(v=[-self.hxCenter, -self.hyCenter, 0])
-			if self.rotation != 0:
-				s2 = s1.rotate(v=[0, 0, self.rotation])
-				s1 = s2
-			if self.scalefactor != 1:
-				s2 = s1.scale(v=[self.scalefactor, self.scalefactor, self.scalefactor])
-				s1 = s2
-				
-			s = s1.translate(v=[self.hxCenter, self.hyCenter, 0])
-			self.facets = [f for f in s.facets]
-			self.insolid = s.insolid
-			self.infacet = s.infacet
-			self.inloop = s.inloop
-			self.facetloc = s.facetloc
-			self.facetsminz = [f for f in s.facetsminz]
-			self.facetsmaxz = [f for f in s.facetsmaxz]
-			
-		if self.translatex != 0 or self.translatey != 0:
-			s = self.translate(v=[self.translatex, self.translatey, 0])
-			self.facets = [f for f in s.facets]
-			self.insolid = s.insolid
-			self.infacet = s.infacet
-			self.inloop = s.inloop
-			self.facetloc = s.facetloc
-			self.facetsminz = [f for f in s.facetsminz]
-			self.facetsmaxz = [f for f in s.facetsmaxz]
-	
-		self.rotation = 0
-		self.translatex = 0
-		self.translatey = 0	
-		self.scalefactor = 1	
-		self.setHull(None)
-		
 	def translate(self,v=[0,0,0]):
 		matrix=[
 		[1,0,0,v[0]],
@@ -488,27 +358,3 @@ class stl:
 			self.facet[1][self.facetloc]=map(float,l.split()[1:])
 			self.facetloc+=1
 		return 1
-
-	def qhull(self, sample):
-		link = lambda a,b: numpy.concatenate((a,b[1:]))
-		edge = lambda a,b: numpy.concatenate(([a],[b]))
-	
-		def dome(sample,base): 
-			h, t = base
-			dists = numpy.dot(sample-h, numpy.dot(((0,-1),(1,0)),(t-h)))
-			outer = numpy.repeat(sample, dists>0, axis=0)
-			
-			if len(outer):
-				pivot = sample[numpy.argmax(dists)]
-				return link(dome(outer, edge(h, pivot)),
-							dome(outer, edge(pivot, t)))
-			else:
-				return base
-	
-		if len(sample) > 2:
-			axis = sample[:,0]
-			base = numpy.take(sample, [numpy.argmin(axis), numpy.argmax(axis)], axis=0)
-			return link(dome(sample, base),
-						dome(sample, base[::-1]))
-		else:
-			return sample

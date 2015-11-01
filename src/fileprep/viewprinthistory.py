@@ -86,7 +86,7 @@ class PrintHistoryCtrl(wx.ListCtrl):
 		f = wx.Font(8,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc = wx.ScreenDC()
 		dc.SetFont(f)
-		fontWidth, fontHeight = dc.GetTextExtent("Xy")
+		fontHeight = dc.GetTextExtent("Xy")[1]
 		
 		colWidths = [500, 80, 120, 120, 80]
 		colTitles = ["File", "Printer", "Start Time", "End Time", "Type"]
