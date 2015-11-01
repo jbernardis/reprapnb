@@ -350,8 +350,8 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
 		
-		self.bPlate = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
-		self.bPlate.SetToolTipString("Launch plater tool")
+		self.bPlate = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPlater, size=BUTTONDIM)
+		self.bPlate.SetToolTipString("Arrange multiple objects on a plate")
 		self.sizerSlice.Add(self.bPlate)
 		self.Bind(wx.EVT_BUTTON, self.doPlater, self.bPlate)
 
