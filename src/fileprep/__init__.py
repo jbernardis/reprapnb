@@ -350,7 +350,10 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
 		
-		self.sizerSlice.AddSpacer((20, 20))
+		self.bPlate = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
+		self.bPlate.SetToolTipString("Launch plater tool")
+		self.sizerSlice.Add(self.bPlate)
+		self.Bind(wx.EVT_BUTTON, self.doPlater, self.bPlate)
 
 		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
 		self.bView.SetToolTipString("Launch the STL/AMF file viewer")
@@ -1173,6 +1176,18 @@ class FilePrepare(wx.Panel):
 		if self.slicer.configSlicer():
 			self.updateSlicerConfigString(self.slicer.type.getConfigString())	
 			self.lh, self.fd = self.slicer.type.getDimensionInfo()
+
+	def doPlater(self, evt):
+		s = self.settings.plater
+		cmd = os.path.expandvars(os.path.expanduser(self.app.replace(s)))
+		self.logger.LogMessage("Executing: %s" % cmd)
+
+		args = shlex.split(str(cmd))
+		try:
+			subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+		except:
+			self.logger.LogError("Exception occurred trying to spawn plater process")
+			return
 		
 	def stlView(self, evt):
 		self.dlgView = StlViewer(self)

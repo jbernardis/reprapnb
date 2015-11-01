@@ -217,7 +217,6 @@ class Settings:
 			self.modified = True
 			
 			self.fileprep = SettingsFilePrep(self, self.app, None, folder, "fileprep")
-			self.plater = SettingsPlater(self, self.app, None, folder, "plater")
 			self.manualctl = SettingsManualCtl(self, self.app, None, folder, "manualctl")
 			self.printmon = SettingsPrintMon(self, self.app, None, folder, "printmon")
 			return
@@ -398,7 +397,6 @@ class Settings:
 				self.shares[opt] = value
 
 		self.fileprep = SettingsFilePrep(self, self.app, self.cfg, folder, "fileprep")
-		self.plater = SettingsPlater(self, self.app, self.cfg, folder, "plater")
 		self.manualctl = SettingsManualCtl(self, self.app, self.cfg, folder, "manualctl")
 		self.printmon = SettingsPrintMon(self, self.app, self.cfg, folder, "printmon")
 
@@ -415,7 +413,6 @@ class Settings:
 		if self.modified: return True
 			
 		if self.fileprep.checkModified(): return True
-		if self.plater.checkModified(): return True
 		if self.manualctl.checkModified(): return True
 		if self.printmon.checkModified(): return True
 		
@@ -482,7 +479,6 @@ class Settings:
 				self.cfg.set(section, m, self.shares[m])
 			
 			self.fileprep.cleanUp()
-			self.plater.cleanUp()
 			self.manualctl.cleanUp()
 			self.printmon.cleanUp()
 
@@ -519,6 +515,7 @@ class SettingsFilePrep:
 		self.showgcbasename = False
 		self.showstlbasename = False
 		self.editTrigger = "====="
+		self.plater = "/home/jeff/Programs/Slic3r129/bin/slic3r"
 		
 		if cfg is None:
 			self.modified = True
@@ -558,6 +555,9 @@ class SettingsFilePrep:
 						
 				elif opt == 'lastgcdirectory':
 					self.lastgcdirectory = value
+						
+				elif opt == 'plater':
+					self.plater = value
 						
 				elif opt == 'toolpathsonly':
 					self.toolpathsonly = parseBoolean(value, False)
@@ -669,6 +669,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "gcodescale", str(self.gcodescale))
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "lastgcdirectory", str(self.lastgcdirectory))
+			self.cfg.set(self.section, "plater", str(self.plater))
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))
@@ -699,66 +700,6 @@ class SettingsFilePrep:
 							self.cfg.set(sc, k, ",".join(sl.settings[k]))
 						elif k in slicerKeys:
 							self.cfg.set(sc, k, sl.settings[k])
-	
-class SettingsPlater:
-	def __init__(self, parent, app, cfg, folder, section):
-		self.parent = parent
-		self.app = app
-		self.cmdfolder = os.path.join(folder, section)
-
-		self.stlscale = 2
-		self.laststldirectory="."
-		self.autoarrange = False
-		self.drawstlgrid = True
-		
-		if cfg is None:
-			self.modified = True
-			return
-
-		self.cfg = cfg
-		self.modified = False
-		self.section = section	
-		if cfg.has_section(section):
-			for opt, value in cfg.items(section):
-				if opt == 'stlscale':
-					try:
-						self.stlscale = int(value)
-					except:
-						self.parent.showWarning("Non-integer value in ini file for stlscale")
-						self.stlscale = 2
-			
-				elif opt == 'laststldirectory':
-					self.laststldirectory = value
-						
-				elif opt == 'autoarrange':
-					self.autoarrange = parseBoolean(value, False)
-						
-				elif opt == 'drawstlgrid':
-					self.drawstlgrid = parseBoolean(value, True)
-					
-				else:
-					self.parent.showWarning("Unknown %s option: %s - ignoring" % (section,  opt))
-		else:
-			self.parent.showWarning("Missing %s section - assuming defaults" % section)
-			self.modified = True
-
-	def setModified(self):
-		self.modified = True
-
-	def checkModified(self):
-		return self.modified
-			
-	def cleanUp(self):
-		if self.modified:
-			try:
-				self.cfg.add_section(self.section)
-			except ConfigParser.DuplicateSectionError:
-				pass
-			
-			self.cfg.set(self.section, "stlscale", str(self.stlscale))
-			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
-			self.cfg.set(self.section, "autoarrange", str(self.autoarrange))
-			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
 	
 class SettingsManualCtl:
 	def __init__(self, parent, app, cfg, folder, section):
