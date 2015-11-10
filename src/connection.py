@@ -30,6 +30,13 @@ class Connection:
 		self.reprap.connect(port, baud)
 		self.prtmon = None
 		self.manctl = None
+		self.pendantConnected = False
+
+	def hasPendant(self):
+		return self.pendantConnected
+
+	def setPendant(self, flag=True):
+		self.pendantConnected = flag
 
 	def tick(self):
 		if self.prtmon is not None:
@@ -67,8 +74,9 @@ class Connection:
 		
 	def evtRepRap(self, evt):
 		if evt.event == RECEIVED_MSG:
-			if not self.parser.parseMsg(evt.msg):
-				self.logger.LogMessage("(r) - " + evt.msg)
+			if self.parser is not None:
+				if not self.parser.parseMsg(evt.msg):
+					self.logger.LogMessage("(r) - " + evt.msg)
 		elif self.prtmon is not None:
 			self.prtmon.reprapEvent(evt)
 
@@ -156,12 +164,43 @@ class ConnectionManager:
 		else:
 			self.logger.LogMessage("Pendant command ignored - no printer connected")
 
+	def activatePendant(self, flag):
+		self.pendantConnection = None
+		self.pendantIndex = None
+		for cx in self.connections:
+			cx.setPendant(False)
+
+		if flag:
+			if len(self.connections) > 0:
+				self.pendantConnection = self.connections[0]
+				self.pendantConnection.setPendant(True)
+				self.pendantIndex = 0
+
+	def connectPendant(self, cx):
+		if cx == self.pendantIndex:
+			return
+
+		if cx < 0 or cx >= len(self.connections):
+			self.pendantIndex = None
+			self.pendantConnection = None
+			for c in self.connections:
+				c.setPendant(False)
+		else:
+			self.pendantIndex = cx
+			if not self.pendantConnection is None:
+				self.pendantConnection.setPendant(False)
+			self.pendantConnection = self.connections[cx]
+			self.pendantConnection.setPendant(True)
+	
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
 		self.connections.append(cx)
 		if len(self.connections) == 1:
 			self.pendantConnection = cx
 			self.pendantIndex = 0
+			cx.setPendant(True)
+		else:
+			cx.setPendant(False)
 			
 		self.activePorts.append(port)
 		self.activePrinters.append(printer)
@@ -198,9 +237,7 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
-		if self.pendantIndex == idx:
-			self.pendantIndex = None
-			self.pendantConnection = None
+		self.fixPendantLinkage(self.pendantIndex == idx)
 		
 		self.printerList.append(printer)
 		self.printerList.sort()
@@ -224,9 +261,7 @@ class ConnectionManager:
 		con = self.connections[idx]
 		del self.connections[idx]
 		
-		if self.pendantIndex == idx:
-			self.pendantIndex = None
-			self.pendantConnection = None
+		self.fixPendantLinkage(self.pendantIndex == idx)
 		
 		self.printerList.append(printer)
 		self.printerList.sort()
@@ -236,6 +271,28 @@ class ConnectionManager:
 
 		con.close()
 		return True
+
+
+	def fixPendantLinkage(self, delPendant):
+		if delPendant:
+			if len(self.connections) == 0:
+				self.pendantIndex = None
+				self.pendantConnection = None
+			else:
+				self.pendantIndex = 0
+				self.pendantConnection = self.connections[0]
+				self.pendantConnection.setPendant(True)
+		else:
+			self.pendantIndex = None
+			for ix in range(len(self.connections)):
+				if self.connections[ix].hasPendant():
+					self.pendantIndex = ix
+					break
+			if self.pendantIndex is None:
+				self.pendantConnection = None
+
+
+
 	
 	def disconnectAll(self):
 		for p in self.activePrinters:
@@ -281,6 +338,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.cm = ConnectionManager(self.app)
 		self.Bind(EVT_PENDANT, self.pendantCommand)
 		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
+		self.pendantActive = False
 		
 		pygame.init()
 		pygame.camera.init()
@@ -368,6 +426,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbConnections.SetToolTipString("Choose the connection")
 		self.loadConnections(connections)
 		szDisconnect.Add(self.lbConnections, flag=wx.ALL, border=10)
+		self.lbConnections.Bind(wx.EVT_LISTBOX_DCLICK, self.doSetPendant)
 		
 		szBtns = wx.BoxSizer(wx.VERTICAL)
 		
@@ -469,11 +528,14 @@ class ConnectionManagerPanel(wx.Panel):
 		self.sizer.AddSpacer((20, 20))
 		self.SetSizer(self.sizer)
 		self.lbCamPort.SetSelection(0)
-		
+
 	def loadConnections(self, cxlist):
 		self.lbConnections.Clear()
 		for cx in cxlist:
-			self.lbConnections.Append("%s on %s" % (cx.printer, cx.port), cx)
+			if self.pendantActive and cx.hasPendant():
+				self.lbConnections.Append("* %s on %s" % (cx.printer, cx.port), cx)
+			else:
+				self.lbConnections.Append("%s on %s" % (cx.printer, cx.port), cx)
 		if len(cxlist) > 0:
 			self.lbConnections.SetSelection(0)
 			
@@ -628,19 +690,43 @@ class ConnectionManagerPanel(wx.Panel):
 	def pendantCommand(self, evt):
 		if evt.eid == PENDANT_CONNECT:
 			self.logger.LogMessage("Pendant connected")
+			self.pendantActive = True
+			self.cm.activatePendant(True)
+			(printers, ports, connections) = self.cm.getLists()
+			self.loadConnections(connections)
+
 		elif evt.eid == PENDANT_DISCONNECT:
 			self.logger.LogMessage("Pendant disconnected")
+			self.pendantActive = False
+			(printers, ports, connections) = self.cm.getLists()
+			self.loadConnections(connections)
 		else:
 			if TRACE:
 				self.logger.LogMessage(evt.cmdString)
 			self.cm.pendantCommand(evt.cmdString)
 	
+	def doSetPendant(self, evt):
+		if not self.pendantActive:
+			return
+
+		cx = self.lbConnections.GetSelection()
+		
+		self.cm.connectPendant(cx)
+		(printers, ports, connections) = self.cm.getLists()
+		self.loadConnections(connections)
+
 	def doDisconnect(self, evt):
 		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())
 		try:
 			prtr = cxtext.split()[0]
+			if prtr == "*":
+				try:
+					prtr = cxtext.split()[1]
+				except:
+					prtr = None
 		except:
 			prtr = None
+
 		if prtr is not None:
 			cx = self.cm.connectionByPrinter(prtr)
 			if cx is not None:
@@ -654,9 +740,9 @@ class ConnectionManagerPanel(wx.Panel):
 		
 						if rc != wx.ID_YES:
 							return
-			self.disconnectByPrinter(prtr)
+				self.disconnectByPrinter(prtr, cx)
 
-	def disconnectByPrinter(self, prtr):			
+	def disconnectByPrinter(self, prtr, cx):			
 		if self.cm.disconnectByPrinter(prtr):
 			(printers, ports, connections) = self.cm.getLists()
 			self.lbPort.SetItems(ports)
@@ -665,10 +751,11 @@ class ConnectionManagerPanel(wx.Panel):
 			self.lbPrinter.SetSelection(0)
 			if len(ports) > 0 and len(printers) > 0:
 				self.bConnect.Enable(True)
-			self.loadConnections(connections)
 			if len(connections) == 0:
 				self.bDisconnect.Enable(False)
 				self.bReset.Enable(False)
+			self.loadConnections(connections)
+				
 
 	def doConnect(self, evt):
 		port = 	self.lbPort.GetString(self.lbPort.GetSelection())
