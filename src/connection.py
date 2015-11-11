@@ -1,4 +1,3 @@
-import wx
 import wx.lib.newevent
 import glob
 import time 
@@ -17,6 +16,8 @@ PENDANT_DISCONNECT = 1
 PENDANT_COMMAND = 3
 
 TRACE = False
+
+VISIBLELISTSIZE =  5
 
 
 class Connection:
@@ -421,12 +422,10 @@ class ConnectionManagerPanel(wx.Panel):
 		szDisconnect = wx.BoxSizer(wx.HORIZONTAL)
 		szDisconnect.AddSpacer((20, 20))
 
-		self.lbConnections = wx.ListBox(self, wx.ID_ANY, (-1, -1), (400, 120), [], wx.LB_SINGLE)
-		self.lbConnections.SetFont(f)
+		self.lbConnections = ActiveConnectionCtrl(self, self.app.images)
 		self.lbConnections.SetToolTipString("Choose the connection")
 		self.loadConnections(connections)
 		szDisconnect.Add(self.lbConnections, flag=wx.ALL, border=10)
-		self.lbConnections.Bind(wx.EVT_LISTBOX_DCLICK, self.doSetPendant)
 		
 		szBtns = wx.BoxSizer(wx.VERTICAL)
 		
@@ -530,14 +529,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbCamPort.SetSelection(0)
 
 	def loadConnections(self, cxlist):
-		self.lbConnections.Clear()
-		for cx in cxlist:
-			if self.pendantActive and cx.hasPendant():
-				self.lbConnections.Append("* %s on %s" % (cx.printer, cx.port), cx)
-			else:
-				self.lbConnections.Append("%s on %s" % (cx.printer, cx.port), cx)
-		if len(cxlist) > 0:
-			self.lbConnections.SetSelection(0)
+		self.lbConnections.loadConnections(cxlist)
 			
 	def doCamPort(self, evt):
 		self.refreshCamPorts()
@@ -692,13 +684,13 @@ class ConnectionManagerPanel(wx.Panel):
 			self.logger.LogMessage("Pendant connected")
 			self.pendantActive = True
 			self.cm.activatePendant(True)
-			(printers, ports, connections) = self.cm.getLists()
+			connections = self.cm.getLists()[2]
 			self.loadConnections(connections)
 
 		elif evt.eid == PENDANT_DISCONNECT:
 			self.logger.LogMessage("Pendant disconnected")
 			self.pendantActive = False
-			(printers, ports, connections) = self.cm.getLists()
+			connections = self.cm.getLists()[2]
 			self.loadConnections(connections)
 		else:
 			if TRACE:
@@ -709,14 +701,26 @@ class ConnectionManagerPanel(wx.Panel):
 		if not self.pendantActive:
 			return
 
-		cx = self.lbConnections.GetSelection()
+		cx = self.lbConnections.GetFirstSelected()
 		
 		self.cm.connectPendant(cx)
-		(printers, ports, connections) = self.cm.getLists()
+		connections = self.cm.getLists()[2]
+		self.loadConnections(connections)
+
+	def setPendant(self, cx):
+		if not self.pendantActive:
+			return
+		
+		self.cm.connectPendant(cx)
+		connections = self.cm.getLists()[2]
 		self.loadConnections(connections)
 
 	def doDisconnect(self, evt):
-		cxtext = self.lbConnections.GetString(self.lbConnections.GetSelection())
+		item = self.lbConnections.GetFirstSelected()
+		if item == -1:
+			return
+		
+		cxtext = self.lbConnections.GetItemText(item)
 		try:
 			prtr = cxtext.split()[0]
 			if prtr == "*":
@@ -782,7 +786,12 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bDisconnect.Enable(False)
 
 	def doReset(self, evt):
-		cx = self.lbConnections.GetClientData(self.lbConnections.GetSelection())
+		item = self.lbConnections.GetFirstSelected()
+		if item == -1:
+			return
+		
+		connections = self.cm.getLists()[2]
+		cx = connections[item]
 		if cx.reprap is not None:
 			dlg = wx.MessageDialog(self, "Are you sure you want to reset the printer",
 								'Printer Reset', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
@@ -794,5 +803,68 @@ class ConnectionManagerPanel(wx.Panel):
 				cx.reprap.reset()
 				if cx.prtmon is not None:
 					cx.prtmon.printerReset()
+
+class ActiveConnectionCtrl(wx.ListCtrl):	
+	def __init__(self, parent, images):
+		
+		f = wx.Font(8,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		dc = wx.ScreenDC()
+		dc.SetFont(f)
+		fontHeight = dc.GetTextExtent("Xy")[1]
+		
+		colWidths = [100, 100]
+		colTitles = ["Printer", "Port"]
+		
+		totwidth = 20;
+		for w in colWidths:
+			totwidth += w
+		
+		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(totwidth, fontHeight*(VISIBLELISTSIZE+1)),
+			style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL
+			)
+
+		self.parent = parent		
+		self.il = wx.ImageList(16, 16)
+		self.il.Add(images.pngNopendant)
+		self.il.Add(images.pngPendant)
+		self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
+
+		self.cxList = []
+		
+		self.SetFont(f)
+		for i in range(len(colWidths)):
+			self.InsertColumn(i, colTitles[i])
+			self.SetColumnWidth(i, colWidths[i])
+		
+		self.SetItemCount(0)
+		
+		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.doSetPendant)
+		
+	def doSetPendant(self, evt):
+		sx = evt.GetItemIndex()
+		self.parent.setPendant(sx)
+	
+	def loadConnections(self, cxList):
+		self.cxList = cxList
+		self.SetItemCount(len(cxList))
+		self.Refresh()
+	
+	def OnGetItemText(self, item, col):
+		if col == 0:
+			return self.cxList[item].printer
+		elif col == 1:
+			return self.cxList[item].port
+		else:
+			return ""
+
+	def OnGetItemImage(self, item):
+		if self.cxList[item].hasPendant():
+			return 1
+		else:
+			return 0
+	
+	def OnGetItemAttr(self, item):
+		return None
+
 
 
