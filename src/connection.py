@@ -531,6 +531,9 @@ class ConnectionManagerPanel(wx.Panel):
 	def loadConnections(self, cxlist):
 		self.lbConnections.loadConnections(cxlist)
 			
+	def isPendantActive(self):
+		return self.pendantActive
+
 	def doCamPort(self, evt):
 		self.refreshCamPorts()
 			
@@ -744,9 +747,9 @@ class ConnectionManagerPanel(wx.Panel):
 		
 						if rc != wx.ID_YES:
 							return
-				self.disconnectByPrinter(prtr, cx)
+				self.disconnectByPrinter(prtr)
 
-	def disconnectByPrinter(self, prtr, cx):			
+	def disconnectByPrinter(self, prtr):			
 		if self.cm.disconnectByPrinter(prtr):
 			(printers, ports, connections) = self.cm.getLists()
 			self.lbPort.SetItems(ports)
@@ -807,12 +810,12 @@ class ConnectionManagerPanel(wx.Panel):
 class ActiveConnectionCtrl(wx.ListCtrl):	
 	def __init__(self, parent, images):
 		
-		f = wx.Font(8,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		dc = wx.ScreenDC()
 		dc.SetFont(f)
 		fontHeight = dc.GetTextExtent("Xy")[1]
 		
-		colWidths = [100, 100]
+		colWidths = [150, 200]
 		colTitles = ["Printer", "Port"]
 		
 		totwidth = 20;
@@ -838,10 +841,12 @@ class ActiveConnectionCtrl(wx.ListCtrl):
 		
 		self.SetItemCount(0)
 		
-		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.doSetPendant)
+		self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.doSetPendant)
 		
 	def doSetPendant(self, evt):
-		sx = evt.GetItemIndex()
+		sx = self.GetFirstSelected()
+		if sx == -1:
+			return
 		self.parent.setPendant(sx)
 	
 	def loadConnections(self, cxList):
@@ -858,7 +863,7 @@ class ActiveConnectionCtrl(wx.ListCtrl):
 			return ""
 
 	def OnGetItemImage(self, item):
-		if self.cxList[item].hasPendant():
+		if self.parent.isPendantActive() and self.cxList[item].hasPendant():
 			return 1
 		else:
 			return 0
