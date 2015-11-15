@@ -680,7 +680,10 @@ class ConnectionManagerPanel(wx.Panel):
 				evt = PendantEvent(eid = PENDANT_DISCONNECT)
 		else:
 				evt = PendantEvent(eid = PENDANT_COMMAND, cmdString=cmd)
-		wx.PostEvent(self, evt)
+		try:
+			wx.PostEvent(self, evt)
+		except:
+			pass
 		
 	def pendantCommand(self, evt):
 		if evt.eid == PENDANT_CONNECT:
