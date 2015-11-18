@@ -616,6 +616,8 @@ class PrintMonitor(wx.Panel):
 			
 	def emulatePrintButton(self):
 		if self.bPrint.IsEnabled():
+			if not self.manctl is None:
+				self.manctl.disengageZ()
 			self.doPrint(None)
 		else:
 			self.logger.LogMessage("Print button currently disabled")
@@ -658,6 +660,8 @@ class PrintMonitor(wx.Panel):
 		if self.sdTargetFile is not None:
 			self.logger.LogMessage("Unable to pause print to SD - use GUI")
 		elif self.bPause.IsEnabled():
+			if not self.manctl is None:
+				self.manctl.disengageZ()
 			self.doPause(None)
 		else:
 			self.logger.LogMessage("Pause button currently disabled")

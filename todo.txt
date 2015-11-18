@@ -2,8 +2,6 @@
 2) when I choose a gcode file from the history and load it, the file name does not appear in infopane
 
 
-
-
 In Progress/Need Testing
   pendant meta-comands (start/stop print eg)
   need to test HTTP functions:
@@ -12,8 +10,6 @@ In Progress/Need Testing
   
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
-pendant commands
-	connection to printer when multiple printers
 
 send email when print job finishes
 
@@ -31,6 +27,3 @@ More capabilities from HTTP interface
 	
 Need more info
 - cancellation of slice - subsequent slice did not present file open dialog box
-- if plater->slice fails, it leaves nb in a weird state where no buttons are available
-- I still think there is a bug lurking in plater
-- many stl files cannot be loaded by viewer or plater

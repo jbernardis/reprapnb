@@ -1,6 +1,8 @@
 import ConfigParser
 import os
 
+from toaster import TB_UPPERLEFT, TB_UPPERRIGHT, TB_LOWERLEFT, TB_LOWERRIGHT, locString
+
 INIFILE = "reprap.ini"
 
 SAVE_SETTINGS_FILE = False
@@ -194,6 +196,7 @@ class Settings:
 		self.usepopup = True
 		self.port = 8989
 		self.maxloglines = 5000
+		self.popuplocation = TB_LOWERLEFT
 		self.buildarea = [200, 200]
 		self.macroList = {}
 		self.macroOrder = []
@@ -272,6 +275,13 @@ class Settings:
 							self.showWarning("Invalid value for maxloglines")
 							self.maxloglines = 5000
 							self.modified = True
+				elif opt == 'popuplocation':
+					if value in locString:
+						self.popuplocation = locString.index(value)
+					else:
+						self.showWarning("Invalid value for popup location - using lower left")
+						self.popuplocation = TB_LOWERLEFT
+						self.modified = True
 				elif opt == 'historysize':
 					try:
 						self.historysize = int(value)
@@ -437,6 +447,7 @@ class Settings:
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "historysize", str(self.historysize))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
+			self.cfg.set(self.section, "popuplocation", locString[self.popuplocation])
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 			self.cfg.set(self.section, "portprefixes", str(self.portprefixes))
 							

@@ -5,6 +5,8 @@ TB_UPPERRIGHT = 1
 TB_LOWERLEFT = 2
 TB_LOWERRIGHT = 3
 
+locString = ["ul", "ur", "ll", "lr"]
+
 TB_DEFAULT_STYLE = 0x2008002
 TB_CAPTION = 0x22009806
 
