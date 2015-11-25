@@ -5,8 +5,12 @@ TB_UPPERRIGHT = 1
 TB_LOWERLEFT = 2
 TB_LOWERRIGHT = 3
 TB_CENTER = 4
+TB_UPPERCENTER = 5
+TB_LOWERCENTER = 6
+TB_CENTERLEFT = 7
+TB_CENTERRIGHT = 8
 
-locString = ["ul", "ur", "ll", "lr", "c"]
+locString = ["ul", "ur", "ll", "lr", "c", "uc", "lc", "cl", "cr"]
 
 TB_DEFAULT_STYLE = 0x2008002
 TB_CAPTION = 0x22009806
@@ -26,21 +30,22 @@ class Toaster(wx.Frame):
 		
 	def SetPositionByCorner(self, pos):
 		w, h = wx.GetDisplaySize()
+		
+		if pos in [TB_UPPERLEFT, TB_CENTERLEFT, TB_LOWERLEFT]:
+			px = 0
+		elif pos in [TB_UPPERCENTER, TB_CENTER, TB_LOWERCENTER]:
+			px = (w-self.size[0])/2
+		else:
+			px = w-self.size[0]
+			
+		if pos in [TB_UPPERLEFT, TB_UPPERCENTER, TB_UPPERRIGHT]:
+			py = 0
+		elif pos in [TB_CENTERLEFT, TB_CENTER, TB_CENTERRIGHT]:
+			py = (h-self.size[1])/2
+		else:
+			py = h-self.size[1]
 
-		if pos == TB_UPPERLEFT:
-			self.SetPosition(wx.Point(0,0))
-
-		elif pos == TB_UPPERRIGHT:
-			self.SetPosition(wx.Point(w - self.size[0], 0))
-
-		elif pos == TB_LOWERLEFT:
-			self.SetPosition(wx.Point(0, h - self.size[1]))
-
-		elif pos == TB_LOWERRIGHT:
-			self.SetPosition(wx.Point(w - self.size[0],h - self.size[1]))
-
-		elif pos == TB_CENTER:
-			self.SetPosition(wx.Point((w - self.size[0])/2,(h - self.size[1])/2))
+		self.SetPosition(wx.Point(px, py))
 			
 	def SetShowTime(self, t):
 		self.showTime = t

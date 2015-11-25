@@ -2,6 +2,7 @@ import wx.lib.newevent
 import glob
 import time 
 import pygame.camera
+import thread
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 from pendant import Pendant
@@ -97,7 +98,6 @@ class ConnectionManager:
 		self.pendantIndex = None
 		self.manageDlg = None
 		
-		
 	def manageDlgClose(self):
 		self.manageDlg = None
 		
@@ -108,6 +108,9 @@ class ConnectionManager:
 			pl += glob.glob(pt)
 			
 		return pl
+
+	def connectionCount(self):
+		return len(self.connections)
 					
 	def getLists(self, refreshPorts=False):
 		if refreshPorts:
@@ -291,9 +294,6 @@ class ConnectionManager:
 					break
 			if self.pendantIndex is None:
 				self.pendantConnection = None
-
-
-
 	
 	def disconnectAll(self):
 		for p in self.activePrinters:
@@ -347,6 +347,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.camActive = False
 		self.Camera = None
 		self.CameraPort = None
+		self.resolution = self.settings.resolution
+		self.composeTimer = wx.Timer(self)
+		self.composeFrame = None
+		self.Bind(wx.EVT_TIMER, self.onTimer, self.composeTimer)  
 		
 		self.SetBackgroundColour("white")
 
@@ -427,19 +431,6 @@ class ConnectionManagerPanel(wx.Panel):
 		self.loadConnections(connections)
 		szDisconnect.Add(self.lbConnections, flag=wx.ALL, border=10)
 		
-		szBtns = wx.BoxSizer(wx.VERTICAL)
-		
-		szBtns.AddSpacer((20, 20))
-
-		self.bReset = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngReset, size=BUTTONDIM)
-		self.bReset.SetToolTipString("Reset the printer")
-		szBtns.Add(self.bReset, flag=wx.ALL, border=10)
-		self.Bind(wx.EVT_BUTTON, self.doReset, self.bReset)
-		self.bReset.Enable(False)
-		
-		szDisconnect.AddSpacer((10, 10))
-		szDisconnect.Add(szBtns)
-
 		szButtons = wx.BoxSizer(wx.VERTICAL)
 			
 		szButtons.AddSpacer((10, 10))
@@ -456,8 +447,15 @@ class ConnectionManagerPanel(wx.Panel):
 		szButtons.Add(self.bDisconnect, flag=wx.ALL, border=10)
 		self.bDisconnect.Enable(False)
 		self.Bind(wx.EVT_BUTTON, self.doDisconnect, self.bDisconnect)
-		
 		szButtons.AddSpacer((20, 20))
+
+		self.bReset = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngReset, size=BUTTONDIMLG)
+		self.bReset.SetToolTipString("Reset the printer")
+		szButtons.Add(self.bReset, flag=wx.ALL, border=10)
+		self.Bind(wx.EVT_BUTTON, self.doReset, self.bReset)
+		self.bReset.Enable(False)
+		szButtons.AddSpacer((20, 20))
+		
 		self.bPort = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngPorts, size=BUTTONDIMLG)
 		self.bPort.SetToolTipString("Refresh list of available ports")
 		szButtons.Add(self.bPort, flag=wx.ALL, border=10)
@@ -499,6 +497,13 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamera.Add(self.bSnapShot)
 		self.Bind(wx.EVT_BUTTON, self.doSnapShot, self.bSnapShot)
 		self.bSnapShot.Enable(False)
+		
+		self.bCompose = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngCompose, size=BUTTONDIM)
+		self.bCompose.SetToolTipString("Compose the scene")
+		szCamera.AddSpacer((10, 10))
+		szCamera.Add(self.bCompose)
+		self.Bind(wx.EVT_BUTTON, self.doCompose, self.bCompose)
+		self.bCompose.Enable(False)
 		
 		szCamera.AddSpacer((10, 10))
 		szsbCamera.AddSpacer((10, 10))
@@ -549,22 +554,26 @@ class ConnectionManagerPanel(wx.Panel):
 					self.cbCamActive.SetValue(True)
 					self.camActive = True
 					self.bSnapShot.Enable(True)
+					self.bCompose.Enable(True)
 				else:
 					self.lbCamPort.SetSelection(0)
 					self.cbCamActive.SetValue(False)
 					self.camActive = False
 					self.bSnapShot.Enable(False)
+					self.bCompose.Enable(False)
 					self.Camera = None
 					self.CameraPort = None
 			else:
 				self.cbCamActive.SetValue(False)
 				self.camActive = False
 				self.bSnapShot.Enable(False)
+				self.bCompose.Enable(False)
 				self.lbCamPort.SetSelection(0)
 		else:
 			self.lbCamPort.Enable(False)
 			self.cbCamActive.Enable(False)
 			self.bSnapShot.Enable(False)
+			self.bCompose.Enable(False)
 			self.camActive = False
 			self.Camera = None
 			self.CameraPort = None
@@ -572,15 +581,21 @@ class ConnectionManagerPanel(wx.Panel):
 	def getCamPorts(self):
 		pl = glob.glob('/dev/video*')
 		return pl
+
+	def swap(self):
+		self.Camera = None
+		self.Camera = pygame.camera.Camera(self.CameraPort, (1280, 960))
+
 	
 	def checkCamActive(self, evt):
 		self.camActive = evt.IsChecked()
 		if self.camActive:
 			port = 	self.lbCamPort.GetString(self.lbCamPort.GetSelection())
 			try:
-				self.Camera = pygame.camera.Camera(port, (640,480))
+				self.Camera = pygame.camera.Camera(port, self.resolution)
 				self.CameraPort = port[:]
 				self.bSnapShot.Enable(True)
+				self.bCompose.Enable(True)
 				self.lbCamPort.Enable(False)
 			except:
 				dlg = wx.MessageDialog(self, "Error Initializing Camera",
@@ -594,13 +609,31 @@ class ConnectionManagerPanel(wx.Panel):
 				self.cbCamActive.SetValue(False)
 				self.camActive = False
 				self.bSnapShot.Enable(False)
+				self.bCompose.Enable(False)
 				self.lbCamPort.Enable(True)
 		else:
 			self.bSnapShot.Enable(False)
+			self.bCompose.Enable(False)
 			self.lbCamPort.Enable(True)
 			self.Camera = None
 			self.CameraPort = None
 			
+	def doCompose(self, evt):
+		if self.composeFrame is None:
+			self.composeFrame = Composer(self.Camera, self.resolution)
+			self.composeTimer.Start(100)
+
+	def onTimer(self, evt):
+		if self.composeFrame is None:
+			self.composeTimer.Stop()
+			print "thread unexpectedly ended"
+
+		elif self.composeFrame.isRunning():
+			return
+		else:
+			self.composeTimer.Stop()
+			print "thread ended"
+
 	def doSnapShot(self, evt):
 		pic = self.snapShot()
 		if pic is None:
@@ -620,6 +653,7 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		try:
 			self.Camera.start()
+			self.Camera.set_controls(brightness=200)
 			image = self.Camera.get_image()
 			self.Camera.stop()
 		except:
@@ -724,7 +758,14 @@ class ConnectionManagerPanel(wx.Panel):
 	def doDisconnect(self, evt):
 		item = self.lbConnections.GetFirstSelected()
 		if item == -1:
-			return
+			if self.cm.connectionCount() == 1:
+				item = 0
+			else:
+				dlg = wx.MessageDialog(self, "Please choose a connection to disconnect",
+					'No Connection Selected', wx.OK | wx.ICON_ERROR)
+				dlg.ShowModal()
+				dlg.Destroy()
+				return
 		
 		cxtext = self.lbConnections.GetItemText(item)
 		try:
@@ -794,8 +835,15 @@ class ConnectionManagerPanel(wx.Panel):
 	def doReset(self, evt):
 		item = self.lbConnections.GetFirstSelected()
 		if item == -1:
-			return
-		
+			if self.cm.connectionCount() == 1:
+				item = 0
+			else:
+				dlg = wx.MessageDialog(self, "Please choose a connection to reset",
+					'No Connection Selected', wx.OK | wx.ICON_ERROR)
+				dlg.ShowModal()
+				dlg.Destroy()
+				return
+			
 		connections = self.cm.getLists()[2]
 		cx = connections[item]
 		if cx.reprap is not None:
@@ -875,4 +923,38 @@ class ActiveConnectionCtrl(wx.ListCtrl):
 		return None
 
 
+class Composer:
+	def __init__(self, camera, size):
+		self.size = size
+		self.Camera = camera
+
+		thread.start_new_thread(self.run, ())
+
+	def run(self):
+		self.display = pygame.display.set_mode(self.size, 0)
+		pygame.display.set_caption("Compose")
+		self.Camera.start()
+		self.ss = pygame.surface.Surface(self.size, 0, self.display)
+
+		self.running = True
+		while (self.running):
+			events = pygame.event.get()
+			for e in events:
+				if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
+					self.Camera.stop()
+					self.running = False
+			self.flip()
+		pygame.display.quit()
+		
+	def isRunning(self):
+		return self.running
+	
+	def kill(self):
+		self.running = False
+
+	def flip(self):
+		if self.Camera.query_image():
+			self.ss = self.Camera.get_image(self.ss)
+		self.display.blit(self.ss, (0,0))
+		pygame.display.flip()
 

@@ -27,7 +27,7 @@ class Logger(wx.Panel):
 		self.SetBackgroundColour("white")
 		
 		self.toaster = TB.Toaster()
-		self.toaster.SetPositionByCorner(TB.TB_LOWERLEFT)
+		self.toaster.SetPositionByCorner(self.settings.popuplocation)
 		self.toaster.SetShowTime(2000)
 
 		self.hiLiteTabTimer = wx.Timer(self)

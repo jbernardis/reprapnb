@@ -211,6 +211,7 @@ class Settings:
 		self.lastmacrodirectory = os.path.join(folder, "macros")
 		self.portprefixes = PORTPREFIXLIST
 		self.shares = {}
+		self.resolution = [800, 600]
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -265,6 +266,13 @@ class Settings:
 					except:
 						print "invalid value in ini file for buildarea"
 						self.buildarea = (200, 200)
+				elif opt == 'resolution':
+					try:
+						exec("s=%s" % value)
+						self.resolution = s
+					except:
+						print "invalid value in ini file for resolution"
+						self.resolution = (800, 600)
 				elif opt == 'maxloglines':
 					if value.lower() == "none":
 						self.maxloglines = None
@@ -449,6 +457,7 @@ class Settings:
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
 			self.cfg.set(self.section, "popuplocation", locString[self.popuplocation])
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
+			self.cfg.set(self.section, "resolution", str(self.resolution))
 			self.cfg.set(self.section, "portprefixes", str(self.portprefixes))
 							
 			for p in self.printersettings.keys():

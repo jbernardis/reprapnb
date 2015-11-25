@@ -7,6 +7,12 @@ In Progress/Need Testing
   need to test HTTP functions:
     - stop print
 	- initiate slicer
+  connection manager - if only 1 connection and nothing is selected when reset of close is pressed, use that connection
+  If more that 1 connection - give a message box (or see if there is a way to know that nothing is selected and disable buttons)
+
+camera:
+	implement camera controls - light balance, resolution, etc
+	implement a time-lapse algorithm
   
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 
