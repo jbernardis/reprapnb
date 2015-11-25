@@ -107,7 +107,7 @@ class ConnectionManager:
 		for pt in self.settings.portprefixes:
 			pl += glob.glob(pt)
 			
-		return pl
+		return sorted(pl)
 
 	def connectionCount(self):
 		return len(self.connections)
@@ -543,9 +543,13 @@ class ConnectionManagerPanel(wx.Panel):
 		self.refreshCamPorts()
 			
 	def refreshCamPorts(self):
+		if not self.composeFrame is None:
+			return
+
 		ports = self.getCamPorts()
 		self.lbCamPort.Enable(True)
 		self.lbCamPort.SetItems(ports)
+
 		if len(ports) >= 1:
 			self.cbCamActive.Enable(True)
 			if self.CameraPort is not None:
@@ -622,17 +626,27 @@ class ConnectionManagerPanel(wx.Panel):
 		if self.composeFrame is None:
 			self.composeFrame = Composer(self.Camera, self.resolution)
 			self.composeTimer.Start(100)
+			self.bSnapShot.Enable(False)
+			self.bCompose.Enable(False)
+			self.lbCamPort.Enable(False)
+			self.cbCamActive.Enable(False)
 
 	def onTimer(self, evt):
 		if self.composeFrame is None:
-			self.composeTimer.Stop()
-			print "thread unexpectedly ended"
+			self.closeComposeFrame()
 
 		elif self.composeFrame.isRunning():
 			return
 		else:
-			self.composeTimer.Stop()
-			print "thread ended"
+			self.closeComposeFrame()
+
+	def closeComposeFrame(self):
+		self.composeTimer.Stop();
+		self.composeFrame = None
+		self.bSnapShot.Enable(True)
+		self.bCompose.Enable(True)
+		self.lbCamPort.Enable(True)
+		self.cbCamActive.Enable(True)
 
 	def doSnapShot(self, evt):
 		pic = self.snapShot()
@@ -783,7 +797,7 @@ class ConnectionManagerPanel(wx.Panel):
 			if cx is not None:
 				if cx.isPrinting():
 					if self.pgConnMgr.isAnyPrinting():
-						dlg = wx.MessageDialog(self, "Are you sure you want to disconnect while printing is active",
+						dlg = wx.MessageDialog(self, "Are you sure you want to disconnect printer %s while it is active" % prtr,
 											'Printing Active', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
 			
 						rc = dlg.ShowModal()
@@ -846,8 +860,21 @@ class ConnectionManagerPanel(wx.Panel):
 			
 		connections = self.cm.getLists()[2]
 		cx = connections[item]
+
+		cxtext = self.lbConnections.GetItemText(item)
+		try:
+			prtr = cxtext.split()[0]
+			if prtr == "*":
+				try:
+					prtr = cxtext.split()[1]
+				except:
+					prtr = ""
+		except:
+			prtr = ""
+
+
 		if cx.reprap is not None:
-			dlg = wx.MessageDialog(self, "Are you sure you want to reset the printer",
+			dlg = wx.MessageDialog(self, "Are you sure you want to reset printer %s" % prtr,
 								'Printer Reset', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
 		
 			rc = dlg.ShowModal()
