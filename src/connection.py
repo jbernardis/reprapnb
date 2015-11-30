@@ -6,6 +6,7 @@ import thread
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 from pendant import Pendant
+from timelapse import TimeLapse
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
@@ -335,6 +336,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.settings = self.app.settings
 		self.logger = self.app.logger
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
+		
+		self.CamLock = thread.allocate_lock()
 
 		self.cm = ConnectionManager(self.app)
 		self.Bind(EVT_PENDANT, self.pendantCommand)
@@ -469,11 +472,13 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamera = wx.BoxSizer(wx.HORIZONTAL)
 		szCamera.AddSpacer((20, 20))
 
+		szCamCtrl = wx.BoxSizer(wx.VERTICAL)
+		szCamCtrl.AddSpacer((20, 20))
+
 		self.cbCamActive = wx.CheckBox(self, wx.ID_ANY, "Activate Camera")
 		self.cbCamActive.SetToolTipString("Activate/Deactivate the camera")
 		self.Bind(wx.EVT_CHECKBOX, self.checkCamActive, self.cbCamActive)
-		szCamera.AddSpacer((10, 10))
-		szCamera.Add(self.cbCamActive)
+		szCamCtrl.Add(self.cbCamActive)
 		self.cbCamActive.SetValue(False)
 		self.camActive = False
 		
@@ -491,19 +496,49 @@ class ConnectionManagerPanel(wx.Panel):
 		else:
 			self.cbCamActive.Enable(True)
 
+
+		hb = wx.BoxSizer(wx.HORIZONTAL)
 		self.bSnapShot = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSnapshot, size=BUTTONDIM)
 		self.bSnapShot.SetToolTipString("Take a picture")
-		szCamera.AddSpacer((10, 10))
-		szCamera.Add(self.bSnapShot)
+		hb.AddSpacer((10, 10))
+		hb.Add(self.bSnapShot)
 		self.Bind(wx.EVT_BUTTON, self.doSnapShot, self.bSnapShot)
 		self.bSnapShot.Enable(False)
 		
 		self.bCompose = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngCompose, size=BUTTONDIM)
 		self.bCompose.SetToolTipString("Compose the scene")
-		szCamera.AddSpacer((10, 10))
-		szCamera.Add(self.bCompose)
+		hb.AddSpacer((10, 10))
+		hb.Add(self.bCompose)
 		self.Bind(wx.EVT_BUTTON, self.doCompose, self.bCompose)
 		self.bCompose.Enable(False)
+
+		szCamCtrl.AddSpacer((10, 10))
+		szCamCtrl.Add(hb)
+		
+		hb = wx.BoxSizer(wx.HORIZONTAL)
+		self.bTimeStart = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimestart, size=BUTTONDIM)
+		self.bTimeStart.SetToolTipString("Start time lapse photography")
+		hb.AddSpacer((10, 10))
+		hb.Add(self.bTimeStart)
+		self.Bind(wx.EVT_BUTTON, self.doTimeStart, self.bTimeStart)
+		self.bTimeStart.Enable(False)
+		
+		self.bTimePause = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimepause, size=BUTTONDIM)
+		self.bTimePause.SetToolTipString("Pause/resume time lapse photography")
+		hb.AddSpacer((10, 10))
+		hb.Add(self.bTimePause)
+		self.Bind(wx.EVT_BUTTON, self.doTimePause, self.bTimePause)
+		self.bTimePause.Enable(False)
+		
+		self.bTimeStop = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimestop, size=BUTTONDIM)
+		self.bTimeStop.SetToolTipString("Stop time lapse photography")
+		hb.AddSpacer((10, 10))
+		hb.Add(self.bTimeStop)
+		self.Bind(wx.EVT_BUTTON, self.doTimeStop, self.bTimeStop)
+		self.bTimeStop.Enable(False)
+		
+		szCamCtrl.AddSpacer((10, 10))
+		szCamCtrl.Add(hb)
 		
 		szCamera.AddSpacer((10, 10))
 		szsbCamera.AddSpacer((10, 10))
@@ -525,6 +560,8 @@ class ConnectionManagerPanel(wx.Panel):
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		sz.AddSpacer((20, 20))
 		sz.Add(szsbCamera)
+		sz.AddSpacer((20, 20))
+		sz.Add(szCamCtrl)
 		
 		self.sizer.AddSpacer((50, 50))
 		self.sizer.Add(sz)
@@ -532,6 +569,45 @@ class ConnectionManagerPanel(wx.Panel):
 		self.sizer.AddSpacer((20, 20))
 		self.SetSizer(self.sizer)
 		self.lbCamPort.SetSelection(0)
+		
+				
+		self.timelapse = TimeLapse(self.timeLapseInterval)
+		self.timelapse.setInterval(5)
+		
+	def timeLapseInterval(self):
+		print "time lapse interval"
+		
+	def doTimeStart(self, evt):
+		self.timelapse.start(True)
+		self.timeLapsePaused = False
+		
+		self.bSnapShot.Enable(False)
+		self.bCompose.Enable(False)
+		self.bTimeStart.Enable(False)
+		self.lbCamPort.Enable(False)
+		self.cbCamActive.Enable(False)
+
+		self.bTimePause.Enable(True)
+		self.bTimeStop.Enable(True)
+		
+	def doTimePause(self, evt):
+		self.timeLapsePaused = not self.timeLapsePaused
+		if self.timeLapsePaused:
+			self.timelapse.pause()
+		else:
+			self.timelapse.resume()
+			
+	def doTimeStop(self, evt):
+		self.timelapse.stop()
+		
+		self.bSnapShot.Enable(True)
+		self.bCompose.Enable(True)
+		self.bTimeStart.Enable(True)
+		self.lbCamPort.Enable(True)
+		self.cbCamActive.Enable(True)
+
+		self.bTimePause.Enable(False)
+		self.bTimeStop.Enable(False)
 
 	def loadConnections(self, cxlist):
 		self.lbConnections.loadConnections(cxlist)
@@ -559,12 +635,14 @@ class ConnectionManagerPanel(wx.Panel):
 					self.camActive = True
 					self.bSnapShot.Enable(True)
 					self.bCompose.Enable(True)
+					self.bTimeStart.Enable(True)
 				else:
 					self.lbCamPort.SetSelection(0)
 					self.cbCamActive.SetValue(False)
 					self.camActive = False
 					self.bSnapShot.Enable(False)
 					self.bCompose.Enable(False)
+					self.bTimeStart.Enable(False)
 					self.Camera = None
 					self.CameraPort = None
 			else:
@@ -572,12 +650,14 @@ class ConnectionManagerPanel(wx.Panel):
 				self.camActive = False
 				self.bSnapShot.Enable(False)
 				self.bCompose.Enable(False)
+				self.bTimeStart.Enable(False)
 				self.lbCamPort.SetSelection(0)
 		else:
 			self.lbCamPort.Enable(False)
 			self.cbCamActive.Enable(False)
 			self.bSnapShot.Enable(False)
 			self.bCompose.Enable(False)
+			self.bTimeStart.Enable(False)
 			self.camActive = False
 			self.Camera = None
 			self.CameraPort = None
@@ -600,6 +680,7 @@ class ConnectionManagerPanel(wx.Panel):
 				self.CameraPort = port[:]
 				self.bSnapShot.Enable(True)
 				self.bCompose.Enable(True)
+				self.bTimeStart.Enable(True)
 				self.lbCamPort.Enable(False)
 			except:
 				dlg = wx.MessageDialog(self, "Error Initializing Camera",
@@ -614,20 +695,24 @@ class ConnectionManagerPanel(wx.Panel):
 				self.camActive = False
 				self.bSnapShot.Enable(False)
 				self.bCompose.Enable(False)
+				self.bTimeStart.Enable(False)
 				self.lbCamPort.Enable(True)
 		else:
 			self.bSnapShot.Enable(False)
 			self.bCompose.Enable(False)
+			self.bTimeStart.Enable(False)
 			self.lbCamPort.Enable(True)
 			self.Camera = None
 			self.CameraPort = None
 			
 	def doCompose(self, evt):
 		if self.composeFrame is None:
+			self.CamLock.acquire()
 			self.composeFrame = Composer(self.Camera, self.resolution)
 			self.composeTimer.Start(100)
 			self.bSnapShot.Enable(False)
 			self.bCompose.Enable(False)
+			self.bTimeStart.Enable(False)
 			self.lbCamPort.Enable(False)
 			self.cbCamActive.Enable(False)
 
@@ -645,8 +730,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.composeFrame = None
 		self.bSnapShot.Enable(True)
 		self.bCompose.Enable(True)
+		self.bTimeStart.Enable(True)
 		self.lbCamPort.Enable(True)
 		self.cbCamActive.Enable(True)
+		self.CamLock.release()
 
 	def doSnapShot(self, evt):
 		pic = self.snapShot()
@@ -661,10 +748,14 @@ class ConnectionManagerPanel(wx.Panel):
 		s = SnapFrame(self, pic)
 		s.Show()
 			
-	def snapShot(self):
+	def snapShot(self, block=True):
 		if not self.camActive:
 			return None
 		
+		if not block and self.CamLock.locked():
+			return None
+		
+		self.CamLock.acquire()
 		try:
 			self.Camera.start()
 			self.Camera.set_controls(brightness=200)
@@ -672,8 +763,10 @@ class ConnectionManagerPanel(wx.Panel):
 			self.Camera.stop()
 		except:
 			wx.CallAfter(self.disconnectCamera)
+			self.CamLock.release()
 			return None
 
+		self.CamLock.release()
 		return image
 	
 	def disconnectCamera(self):
@@ -843,6 +936,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bReset.Enable(True)
 		
 	def onClose(self):
+		self.timelapse.delete()
 		self.cm.disconnectAll()
 		self.bDisconnect.Enable(False)
 
