@@ -24,7 +24,8 @@ class ViewSliceHistory(wx.Dialog):
 		leftsizer = wx.BoxSizer(wx.VERTICAL)
 		leftsizer.AddSpacer((10, 10))
 		
-		self.lbHistory = SliceHistoryCtrl(self, sliceHistory, self.images, self.settings.showhistbasename)
+		self.lbHistory = SliceHistoryCtrl(self, sliceHistory, self.images,
+				self.settings.showslicehistbasename, self.settings.showslicehisthidedupes)
 		leftsizer.Add(self.lbHistory);
 		leftsizer.AddSpacer((10, 10))
 
@@ -48,8 +49,14 @@ class ViewSliceHistory(wx.Dialog):
 		btnsizer.Add(self.cbBase, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		self.cbBase.SetToolTipString("Show only basename of filenames")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBasename, self.cbBase)
-		self.cbBase.SetValue(self.settings.showhistbasename)
+		self.cbBase.SetValue(self.settings.showslicehistbasename)
 
+		btnsizer.AddSpacer((30, 10))
+		self.cbHideDupes = wx.CheckBox(self, wx.ID_ANY, "Hide Duplicates")
+		btnsizer.Add(self.cbHideDupes, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		self.cbHideDupes.SetToolTipString("Do not show duplicate filenames")
+		self.Bind(wx.EVT_CHECKBOX, self.checkHideDupes, self.cbHideDupes)
+		self.cbHideDupes.SetValue(self.settings.showslicehisthidedupes)
 
 		leftsizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		dsizer.Add(leftsizer)
@@ -59,9 +66,14 @@ class ViewSliceHistory(wx.Dialog):
 		dsizer.Fit(self)
 		
 	def checkBasename(self, evt):
-		self.settings.showhistbasename = evt.IsChecked()
+		self.settings.showslicehistbasename = evt.IsChecked()
 		self.settings.setModified()
 		self.lbHistory.setBaseNameOnly(evt.IsChecked())
+		
+	def checkHideDupes(self, evt):
+		self.settings.showslicehisthidedupes = evt.IsChecked()
+		self.settings.setModified()
+		self.lbHistory.setHideDupes(evt.IsChecked())
 
 	def getSelectedFile(self):
 		return self.lbHistory.getSelectedFile()
@@ -83,7 +95,7 @@ class ViewSliceHistory(wx.Dialog):
 		self.closehandler(True)
 
 class SliceHistoryCtrl(wx.ListCtrl):	
-	def __init__(self, parent, slicehistory, images, basenameonly):
+	def __init__(self, parent, slicehistory, images, basenameonly, hidedupes):
 		
 		f = wx.Font(8,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		dc = wx.ScreenDC()
@@ -96,6 +108,12 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		totwidth = 20;
 		for w in colWidths:
 			totwidth += w
+			
+		self.attrModified = wx.ListItemAttr()
+		self.attrModified.SetBackgroundColour(wx.Colour(135, 206, 236))
+
+		self.attrDeleted = wx.ListItemAttr()
+		self.attrDeleted.SetBackgroundColour(wx.Colour(127, 0, 0))
 		
 		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(totwidth, fontHeight*(VISIBLEQUEUESIZE+1)),
 			style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL
@@ -104,6 +122,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		self.parent = parent		
 		self.slicehistory = slicehistory[::-1]
 		self.basenameonly = basenameonly
+		self.hidedupes = hidedupes
 		self.selectedItem = None
 		self.selectedExists = False
 		self.il = wx.ImageList(16, 16)
@@ -114,16 +133,46 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		for i in range(len(colWidths)):
 			self.InsertColumn(i, colTitles[i])
 			self.SetColumnWidth(i, colWidths[i])
-		
-		self.SetItemCount(len(self.slicehistory))
+			
+		self.fileFlags = []
+		self.modTimes = []
+		for h in self.sliceHistory:
+			try:
+				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(h[0])))
+				if mt > h[2]:
+					self.fileFlags.append("mod")
+				else:
+					self.fileFlags.append("ok")
+				self.modTimes.append(mt)
+			except:
+				self.modTimes.append("   <file deleted>")
+				self.fileFlags.append("del")
+				
+		self.setArraySize()
 		
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.doListSelect)
+
+	def setArraySize(self):		
+		if self.hidedupes:
+			mapFn = {}
+			mapOrder = []
+			for i in self.slicehistory:
+				if not self.slicehistory[i][0] in mapOrder:
+					mapOrder.append(self.slicehistory[i][0])
+				mapFn[self.slicehistory[i][0]] = i
+				
+			self.itemIdx = []
+			for m in mapOrder:
+				self.itemIdx.append(mapFn[m])
+		else:
+			self.itemIdx = range(len(self.slicehistory))
+		self.SetItemCount(len(self.itemIdx))
 		
 	def getSelectedFile(self):
 		if self.selectedItem is None:
 			return None
 		
-		return self.slicehistory[self.selectedItem][0]
+		return self.slicehistory[self.itemIdx[self.selectedItem]][0]
 		
 	def doListSelect(self, evt):
 		x = self.selectedItem
@@ -131,7 +180,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		if x is not None:
 			self.RefreshItem(x)
 			
-		fn = self.slicehistory[self.selectedItem][0]
+		fn = self.slicehistory[self.itemIdx[self.selectedItem]][0]
 		if os.path.exists(fn):
 			self.selectedExists = True
 		else:
@@ -146,25 +195,29 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			return
 		
 		self.basenameonly = flag
-		for i in range(len(self.slicehistory)):
+		for i in range(len(self.itemIdx)):
+			self.RefreshItem(i)
+			
+	def setHideDupes(self, flag):
+		if self.hidedupes == flag:
+			return
+		
+		self.hidedupes = flag
+		self.setArraySize()
+		for i in range(len(self.itemIdx)):
 			self.RefreshItem(i)
 
 	def OnGetItemText(self, item, col):
+		idx = self.itemIdx[item]
 		if col == 0:
 			if self.basenameonly:
-				return os.path.basename(self.slicehistory[item][0])
+				return os.path.basename(self.slicehistory[idx][0])
 			else:
-				return self.slicehistory[item][0]
+				return self.slicehistory[idx][0]
 		elif col == 1:
-			try:
-				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(self.slicehistory[item][0])))
-				if mt > self.slicehistory[item][2]:
-					mt += "**"
-				return mt
-			except:
-				return ""
+			return self.modTimes[idx]
 		else:
-			return self.slicehistory[item][col-1]
+			return self.slicehistory[idx][col-1]
 
 	def OnGetItemImage(self, item):
 		if item == self.selectedItem:
@@ -173,6 +226,12 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			return -1
 	
 	def OnGetItemAttr(self, item):
-		return None
+		idx = self.itemIdx[item]
+		if self.fileFlags[idx] == "mod":
+			return self.attrModified
+		elif self.fileFlags[idx] == "del":
+			return self.attrDeleted
+		else:
+			return None
 
 

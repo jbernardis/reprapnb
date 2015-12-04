@@ -9,7 +9,10 @@ In Progress/Need Testing
 	- initiate slicer
 
 camera:
-	implement a time-lapse algorithm
+	implement a time-lapse algorithm - need to ask for directory and interval, need to integrate with printmon
+	
+new history option - remove duplicates
+slice history - indicate if file does not exist (in mod time column)
   
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 

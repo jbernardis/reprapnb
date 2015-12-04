@@ -22,7 +22,7 @@ class ViewPrintHistory(wx.Dialog):
 		leftsizer = wx.BoxSizer(wx.VERTICAL)
 		leftsizer.AddSpacer((10, 10))
 		
-		self.lbHistory = PrintHistoryCtrl(self, printHistory, self.images, self.settings.showhistbasename)
+		self.lbHistory = PrintHistoryCtrl(self, printHistory, self.images, self.settings.showprinthistbasename)
 		leftsizer.Add(self.lbHistory);
 		leftsizer.AddSpacer((10, 10))
 
@@ -46,7 +46,7 @@ class ViewPrintHistory(wx.Dialog):
 		btnsizer.Add(self.cbBase, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		self.cbBase.SetToolTipString("Show only basename of filenames")
 		self.Bind(wx.EVT_CHECKBOX, self.checkBasename, self.cbBase)
-		self.cbBase.SetValue(self.settings.showhistbasename)
+		self.cbBase.SetValue(self.settings.showprinthistbasename)
 
 
 		leftsizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
@@ -57,7 +57,7 @@ class ViewPrintHistory(wx.Dialog):
 		dsizer.Fit(self)
 		
 	def checkBasename(self, evt):
-		self.settings.showhistbasename = evt.IsChecked()
+		self.settings.showprinthistbasename = evt.IsChecked()
 		self.settings.setModified()
 		self.lbHistory.setBaseNameOnly(evt.IsChecked())
 

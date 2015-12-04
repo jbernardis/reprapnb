@@ -528,7 +528,9 @@ class SettingsFilePrep:
 		self.acceleration = 1500
 		self.drawstlgrid = True
 		self.toolpathsonly = False
-		self.showhistbasename = True
+		self.showslicehistbasename = True
+		self.showslicehisthidedupes = False
+		self.showprinthistbasename = True
 		self.batchaddgcode = True
 		self.stlqueue = []
 		self.gcodequeue = []
@@ -560,8 +562,14 @@ class SettingsFilePrep:
 					s = value.split(',')
 					self.slicers = [x.strip() for x in s]
 
-				elif opt == 'showhistbasename':
-					self.showhistbasename = parseBoolean(value, True)
+				elif opt == 'showslicehistbasename':
+					self.showslicehistbasename = parseBoolean(value, True)
+
+				elif opt == 'showslicehisthidedupes':
+					self.showslicehisthidedupes = parseBoolean(value, False)
+
+				elif opt == 'showprinthistbasename':
+					self.showprinthistbasename = parseBoolean(value, True)
 
 				elif opt == 'acceleration':
 					try:
@@ -697,7 +705,9 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "acceleration", str(self.acceleration))
 			self.cfg.set(self.section, "toolpathsonly", str(self.toolpathsonly))
 			self.cfg.set(self.section, "batchaddgcode", str(self.batchaddgcode))
-			self.cfg.set(self.section, "showhistbasename", str(self.showhistbasename))
+			self.cfg.set(self.section, "showslicehistbasename", str(self.showslicehistbasename))
+			self.cfg.set(self.section, "showslicehisthidedupes", str(self.showslicehisthidedupes))
+			self.cfg.set(self.section, "showprinthistbasename", str(self.showprinthistbasename))
 			self.cfg.set(self.section, "stlqueue", ",".join(self.stlqueue))
 			self.cfg.set(self.section, "gcodequeue", ",".join(self.gcodequeue))
 			self.cfg.set(self.section, "showstlbasename", str(self.showstlbasename))

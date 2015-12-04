@@ -19,7 +19,9 @@ class TimeLapse:
             self.resume()
 
     def start(self, immediateTrigger = False):
-        self.running = False
+        if self.running:
+            return
+        
         if immediateTrigger:
             self.handler()
         

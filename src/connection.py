@@ -1,3 +1,4 @@
+import os
 import wx.lib.newevent
 import glob
 import time 
@@ -572,10 +573,19 @@ class ConnectionManagerPanel(wx.Panel):
 		
 				
 		self.timelapse = TimeLapse(self.timeLapseInterval)
-		self.timelapse.setInterval(5)
+		self.timelapse.setInterval(15)
 		
 	def timeLapseInterval(self):
-		print "time lapse interval"
+		pic = self.snapShot()
+		if not pic is None:
+			fbn = "img%s.jpg" % time.strftime('%y-%m-%d-%H-%M-%S', time.localtime(time.time()))
+			fulldir = os.path.join("/tmp", "reprap")
+			try:
+				os.makedirs(fulldir)
+			except:
+				pass
+			path = os.path.join(fulldir, fbn)
+			pygame.image.save(pic, path)
 		
 	def doTimeStart(self, evt):
 		self.timelapse.start(True)
