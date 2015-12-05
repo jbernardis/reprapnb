@@ -113,7 +113,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		self.attrModified.SetBackgroundColour(wx.Colour(135, 206, 236))
 
 		self.attrDeleted = wx.ListItemAttr()
-		self.attrDeleted.SetBackgroundColour(wx.Colour(127, 0, 0))
+		self.attrDeleted.SetBackgroundColour(wx.Colour(255, 153, 153))
 		
 		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(totwidth, fontHeight*(VISIBLEQUEUESIZE+1)),
 			style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL
@@ -136,7 +136,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			
 		self.fileFlags = []
 		self.modTimes = []
-		for h in self.sliceHistory:
+		for h in self.slicehistory:
 			try:
 				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(h[0])))
 				if mt > h[2]:
@@ -156,10 +156,10 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		if self.hidedupes:
 			mapFn = {}
 			mapOrder = []
-			for i in self.slicehistory:
+			for i in range(len(self.slicehistory)):
 				if not self.slicehistory[i][0] in mapOrder:
 					mapOrder.append(self.slicehistory[i][0])
-				mapFn[self.slicehistory[i][0]] = i
+					mapFn[self.slicehistory[i][0]] = i
 				
 			self.itemIdx = []
 			for m in mapOrder:
