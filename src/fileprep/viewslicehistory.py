@@ -145,7 +145,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 					self.fileFlags.append("ok")
 				self.modTimes.append(mt)
 			except:
-				self.modTimes.append("   <file deleted>")
+				self.modTimes.append("   <file not found>")
 				self.fileFlags.append("del")
 				
 		self.setArraySize()

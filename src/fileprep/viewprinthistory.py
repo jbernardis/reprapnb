@@ -1,5 +1,6 @@
 import os
 import wx
+import time
 
 from settings import BUTTONDIM
 
@@ -94,6 +95,12 @@ class PrintHistoryCtrl(wx.ListCtrl):
 		totwidth = 20;
 		for w in colWidths:
 			totwidth += w
+			
+		self.attrModified = wx.ListItemAttr()
+		self.attrModified.SetBackgroundColour(wx.Colour(135, 206, 236))
+
+		self.attrDeleted = wx.ListItemAttr()
+		self.attrDeleted.SetBackgroundColour(wx.Colour(255, 153, 153))
 		
 		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(totwidth, fontHeight*(VISIBLEQUEUESIZE+1)),
 			style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL
@@ -113,6 +120,20 @@ class PrintHistoryCtrl(wx.ListCtrl):
 			self.InsertColumn(i, colTitles[i])
 			self.SetColumnWidth(i, colWidths[i])
 		
+		self.fileFlags = []
+		self.modTimes = []
+		for h in self.printhistory:
+			try:
+				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(h[0])))
+				if mt > h[2]:
+					self.fileFlags.append("mod")
+				else:
+					self.fileFlags.append("ok")
+				self.modTimes.append(mt)
+			except:
+				self.modTimes.append("   <file not found>")
+				self.fileFlags.append("del")
+
 		self.SetItemCount(len(self.printhistory))
 		
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.doListSelect)
@@ -158,6 +179,8 @@ class PrintHistoryCtrl(wx.ListCtrl):
 					return os.path.basename(self.printhistory[item][0])
 				else:
 					return self.printhistory[item][0]
+		elif col == 1:
+			return self.modTimes[item]
 		else:
 			return self.printhistory[item][col]
 
@@ -168,6 +191,9 @@ class PrintHistoryCtrl(wx.ListCtrl):
 			return -1
 	
 	def OnGetItemAttr(self, item):
-		return None
-
-
+		if self.fileFlags[item] == "mod":
+			return self.attrModified
+		elif self.fileFlags[item] == "del":
+			return self.attrDeleted
+		else:
+			return None
