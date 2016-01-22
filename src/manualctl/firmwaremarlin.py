@@ -100,7 +100,7 @@ class FirmwareMarlin:
 		self.flash = FwSettings()
 		self.eeprom = FwSettings()
 		
-		self.eepromFile = os.path.join(self.app.settings.cmdfolder, EEPROMFILE % reprap.getPrinterName())
+		self.eepromfile = os.path.join(self.app.settings.cmdfolder, EEPROMFILE % reprap.getPrinterName())
 		
 		getFirmwareProfile(self.eepromfile, self.eeprom)
 		
@@ -190,7 +190,7 @@ class FirmwareMarlin:
 			return
 		
 		self.dlgVisible = True
-		self.wDlg = FirmwareDlg(self, self.flash, self.eeprom, self.eepromFile) 
+		self.wDlg = FirmwareDlg(self, self.flash, self.eeprom, self.eepromfile) 
 		self.wDlg.CenterOnScreen()
 		self.wDlg.Show(True)
 		

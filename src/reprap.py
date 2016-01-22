@@ -733,7 +733,7 @@ class RepRap:
 		self.restartData = None
 		self.allowWhilePrinting = allow_while_printing_base[:]
 		
-	def getName(self):
+	def getPrinterName(self):
 		return self.printerName
 		
 	def setHoldFan(self, flag):
