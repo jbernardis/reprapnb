@@ -30,7 +30,7 @@ class Connection:
 		self.printer = printer
 		self.port = port
 		self.parser = RepRapParser(self.app)
-		self.reprap = RepRap(self.app)
+		self.reprap = RepRap(self.app, printer)
 		self.reprap.connect(port, baud)
 		self.prtmon = None
 		self.manctl = None

@@ -718,10 +718,11 @@ class RepRapParser:
 		return None
 
 class RepRap:
-	def __init__(self, app):
+	def __init__(self, app, printerName):
 		self.app = app
 		self.printer = None
 		self.sender = None
+		self.printerName = printerName
 		self.firmware = None
 		self.listener = None
 		self.online = False
@@ -731,6 +732,9 @@ class RepRap:
 		self.restarting = False
 		self.restartData = None
 		self.allowWhilePrinting = allow_while_printing_base[:]
+		
+	def getName(self):
+		return self.printerName
 		
 	def setHoldFan(self, flag):
 		self.holdFan = flag

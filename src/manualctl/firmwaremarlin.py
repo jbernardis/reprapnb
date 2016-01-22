@@ -17,7 +17,7 @@ grpinfo = {'m92' : ['Steps per Unit - M92', 4, ['x', 'y', 'z', 'e'], ['X Steps',
 
 grporder = ['m92', 'm201', 'm203', 'm204', 'm205', 'm206', 'm301']
 
-EEPROMFILE = "settings.eep"
+EEPROMFILE = "settings.%s.eep"
 
 def getFirmwareProfile(fn, container):
 	cfg = ConfigParser.ConfigParser()
@@ -100,7 +100,9 @@ class FirmwareMarlin:
 		self.flash = FwSettings()
 		self.eeprom = FwSettings()
 		
-		getFirmwareProfile(EEPROMFILE, self.eeprom)
+		self.eepromFile = os.path.join(self.app.settings.cmdfolder, EEPROMFILE % reprap.getPrinterName())
+		
+		getFirmwareProfile(self.eepromfile, self.eeprom)
 		
 	def start(self):
 		self.got92 = False
@@ -188,7 +190,7 @@ class FirmwareMarlin:
 			return
 		
 		self.dlgVisible = True
-		self.wDlg = FirmwareDlg(self, self.flash, self.eeprom) 
+		self.wDlg = FirmwareDlg(self, self.flash, self.eeprom, self.eepromFile) 
 		self.wDlg.CenterOnScreen()
 		self.wDlg.Show(True)
 		
@@ -242,13 +244,14 @@ class TextBox(wx.PyWindow):
 	
 BSIZE = (140, 40)
 class FirmwareDlg(wx.Dialog):
-	def __init__(self, parent, flash, eeprom):
+	def __init__(self, parent, flash, eeprom, eepromfile):
 		self.parent = parent
 		self.app = parent.app
 		self.logger = parent.logger
 		self.reprap = parent.reprap
 		self.flash = flash
 		self.eeprom = eeprom
+		self.eepromfile = eepromfile
 		self.working = FwSettings()
 		
 		pre = wx.PreDialog()
@@ -428,7 +431,7 @@ class FirmwareDlg(wx.Dialog):
 			self.itemMap[i][2].setText(v)
 			self.eeprom.setValue(i, v)
 
-		putFirmwareProfile(EEPROMFILE, self.eeprom)
+		putFirmwareProfile(self.eepromfile, self.eeprom)
 			
 	def onCopyEEPromToFlash(self, evt):
 		self.enableButtons(False)
@@ -443,7 +446,7 @@ class FirmwareDlg(wx.Dialog):
 			self.itemMap[i][1].setText(v)
 			self.eeprom.setValue(i, v)
 
-		putFirmwareProfile(EEPROMFILE, self.eeprom)
+		putFirmwareProfile(self.eepromfile, self.eeprom)
 		self.enableButtons(True)
 			
 	def onCopyFlashToWork(self, evt):
