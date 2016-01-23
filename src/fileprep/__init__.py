@@ -44,7 +44,7 @@ SLICER_RUNNINGCR = 2
 SLICER_FINISHED = 3
 SLICER_CANCELLED = 4
 
-TEXT_PAD = 10
+TEXT_PAD = 8
 MAXCFGCHARS = 50
 
 class SlicerThread:
@@ -672,7 +672,7 @@ class FilePrepare(wx.Panel):
 		
 		self.infoPane.AddSpacer((20, 10), pos=(2,0))
 		
-		ipfont = wx.Font(12,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		ipfont = wx.Font(10,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 		
 		dc = wx.WindowDC(self)
 		dc.SetFont(ipfont)
@@ -1462,20 +1462,20 @@ class FilePrepare(wx.Panel):
 				else:
 					lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
-			if self.SliceConfig is None:
+			if self.lastSliceConfig is None:
 				self.ipSliceConfig.SetLabel("")
 			else:
-				self.ipSliceConfig.SetLabel(self.SliceConfig)
+				self.ipSliceConfig.SetLabel(self.lastSliceConfig)
 				
-			if self.SliceFilament is None:
+			if self.lastSliceFilament is None:
 				self.ipSliceFil.SetLabel("")
 			else:
-				self.ipSliceFil.SetLabel(str(self.SliceFilament))
+				self.ipSliceFil.SetLabel(str(self.lastSliceFilament))
 				
-			if self.SliceTemps is None:
+			if self.lastSliceTemps is None:
 				self.ipSliceTemp.SetLabel("")
 			else:
-				self.ipSliceTemp.SetLabel(str(self.SliceTemps))
+				self.ipSliceTemp.SetLabel(str(self.lastSliceTemps))
 
 			self.gcode = self.readerThread.getGCode()
 			self.gcodeLoaded = True

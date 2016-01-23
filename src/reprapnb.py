@@ -29,7 +29,7 @@ CONNMGR_TAB_TEXT = "Connection Manager"
 MANCTL_TAB_TEXT = "Manual Control: %s"
 PRTMON_TAB_TEXT = "Print Monitor: %s"
 
-NBWIDTH = 1450
+NBWIDTH = 1500
 NBHEIGHT = 930
 
 class MainFrame(wx.Frame):
