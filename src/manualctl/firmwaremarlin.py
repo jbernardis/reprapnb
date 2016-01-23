@@ -1,5 +1,4 @@
 import os
-import wx
 import wx.lib.newevent
 import ConfigParser
 

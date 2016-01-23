@@ -1270,7 +1270,8 @@ class FilePrepare(wx.Panel):
 		self.sliceFile(fn, tempFile=True)
 		
 	def sliceFile(self, fn, tempFile = False):
-		self.history.SliceStart(fn, self.getSlicerConfigString())
+		self.lastSliceConfig = self.getSlicerConfigString()
+		self.history.SliceStart(fn, self.lastSliceConfig)
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
@@ -1525,7 +1526,7 @@ class FilePrepare(wx.Panel):
 					name = self.gcFile
 					
 				self.logger.LogMessage("Modeling complete - forwarding %s to printer %s" % (name, self.exportTo.prtname))
-				self.exportTo.forwardModel(model, name=name)
+				self.exportTo.forwardModel(model, name=name, cfg=self.lastSliceConfig)
 				self.exportTo = None
 				self.logger.LogMessage("Forwarding complete")
 				self.enableButtons()

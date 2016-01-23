@@ -387,7 +387,7 @@ class SkeinforgeCfgDialog(wx.Dialog):
 
 		args = shlex.split(str(cmd))
 		try:
-			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+			subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:
 			print "Exception occurred trying to spawn slicer"
 			return
@@ -479,7 +479,13 @@ class Skeinforge:
 		return chg
 		
 	def getConfigString(self):
-		return "(" + str(self.vprofile) + ")"
+		fd = self.getDimensionInfo()[1]
+		if fd is None:
+			fds = ""
+		else:
+			fds = "[FD:%.2f]" % fd[0]
+
+		return fds + "(" + str(self.vprofile) + ")"
 	
 	def getDimensionInfo(self):
 		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))

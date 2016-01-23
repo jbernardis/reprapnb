@@ -5,7 +5,6 @@ import shlex, subprocess
 import ConfigParser
 
 from settings import BUTTONDIM, SAVE_SETTINGS_FILE
-from cProfile import Profile
 
 CBSIZE = 200
 PREFSECTION = 'preference'
@@ -107,7 +106,7 @@ class CuraCfgDialog(wx.Dialog):
 
 		args = shlex.split(str(cmd))
 		try:
-			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+			subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:
 			print "Exception occurred trying to spawn slicer"
 			return
@@ -266,7 +265,13 @@ class Cura:
 		cfp.close()
 		
 	def getConfigString(self):
-		return "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
+		fd = self.getDimensionInfo()[1]
+		if fd is None:
+			fds = ""
+		else:
+			fds = "[FD:%.2f]" % fd[0]
+
+		return fds + "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
 	
 	def getDimensionInfo(self):
 		try:

@@ -49,6 +49,7 @@ def _get_float(l, which):
 class PrintMonitor(wx.Panel):
 	def __init__(self, parent, app, prtname, reprap, history):
 		self.model = None
+		self.cfgString = None
 		self.app = app
 		self.buildarea = self.app.settings.printersettings[prtname].buildarea
 		self.prtname = prtname
@@ -56,6 +57,7 @@ class PrintMonitor(wx.Panel):
 		self.reprap = reprap
 		self.manctl = None
 		self.hassd = self.app.settings.printersettings[prtname].hassdcard
+		self.filamentdiameter = self.app.settings.printersettings[prtname].filamentdiam
 
 		self.M105pending = False
 		self.M27pending = False
@@ -439,6 +441,7 @@ class PrintMonitor(wx.Panel):
 		self.infoPane.clearFileInfo()
 		self.infoPane.clearLayerInfo()
 		self.model = None
+		self.cfgString = None
 		
 	def doSDPrintFrom(self, evt):
 		self.printing = False
@@ -829,13 +832,16 @@ class PrintMonitor(wx.Panel):
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.app.pullGCode(self)
 	
-	def forwardModel(self, model, name=""):
+	def forwardModel(self, model, name="", cfgString=None):
 		self.setSDTargetFile(None)
 		
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
 		self.name = name
+		self.cfgString = cfgString
+		print "need to compare printer filament diam of %.2f" % self.filamentdiameter
+		print "against slicer config string of (" + cfgString + ")"
 		if self.name == TEMPFILELABEL:
 			self.gcFile = None
 		elif len(self.name) > 40:

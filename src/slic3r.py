@@ -408,7 +408,12 @@ class Slic3r:
 		return chg
 		
 	def getConfigString(self):
-		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + ",".join(self.vfilament) + ")"
+		fd = self.getDimensionInfo()[1]
+		if fd is None:
+			fds = ""
+		else:
+			fds = "[FD:%.2f]" % fd[0]
+		return fds + "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + ",".join(self.vfilament) + ")"
 	
 	def getDimensionInfo(self):
 		dProfile = {}
@@ -491,7 +496,7 @@ class Slic3r:
 				v = self.overrides[k]
 				if not v.endswith("%"):
 					try:
-						fv = float(v)
+						float(v)
 					except:
 						self.log("Unable to parse (%s) as a float - ignoring" % v)
 						v = None

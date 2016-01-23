@@ -1,7 +1,7 @@
 import ConfigParser
 import os
 
-from toaster import TB_UPPERLEFT, TB_UPPERRIGHT, TB_LOWERLEFT, TB_LOWERRIGHT, locString
+from toaster import TB_LOWERLEFT, locString
 
 INIFILE = "reprap.ini"
 
@@ -181,10 +181,11 @@ class PrinterSettings:
 		self.firmware = "MARLIN"
 		self.hassdcard = True
 		self.allowsColdExtrusion = True
-		self.standardbedlo = 60;
-		self.standardbedhi = 110;
-		self.standardhelo = 185;
-		self.standardhehi = 225;
+		self.standardbedlo = 60
+		self.standardbedhi = 110
+		self.standardhelo = 185
+		self.standardhehi = 225
+		self.filamentdiam = 3.0
 
 class Settings:
 	def __init__(self, app, folder):
@@ -362,6 +363,12 @@ class Settings:
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardhehi")
 							pt.standardhehi = 225
+					elif opt == 'filamentdiam':
+						try:
+							pt.filamentdiam = float(value)
+						except:
+							self.parent.showWarning("Invalid value in ini file for filamentdiam")
+							pt.filamentdiam = 3.0
 					elif opt == 'buildarea':
 						try:
 							exec("s=%s" % value)
