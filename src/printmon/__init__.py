@@ -887,7 +887,7 @@ class PrintMonitor(wx.Panel):
 		
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name,
-					self.model.duration, self.cfgString, self.filamentDiam, self.tempProfile,
+					self.cfgString, self.filamentDiam, self.tempProfile, self.model.duration, 
 					len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		

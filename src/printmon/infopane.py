@@ -191,21 +191,24 @@ class InfoPane (wx.Window):
 
 		self.setValue("filename", lfn)
 		self.filename = lfn
-		
+
 		if slcfg is None:
 			self.slicecfg = ""
 		else:
 			self.slicecfg = slcfg
+		self.setValue("slicecfg", self.slicecfg)
 			
 		if slfil is None:
 			self.filament = ""
 		else:
 			self.filament = slfil
+		self.setValue("filament", self.filament)
 			
 		if sltemp is None:
 			self.temps = ""
 		else:
 			self.temps = str(sltemp)
+		self.setValue("temps", self.temps)
 
 		self.duration = duration
 		self.gcount = gcount

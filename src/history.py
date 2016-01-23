@@ -3,10 +3,11 @@ import marshal
 import os
 
 class History:
-	def __init__(self, hsize, slicehistoryfile, printhistoryfile):
-		self.hsize = hsize
-		self.slicehistoryfile = slicehistoryfile
-		self.printhistoryfile = printhistoryfile
+	def __init__(self, settings):
+		self.hsize = settings.historysize
+		self.slicehistoryfile = settings.slicehistoryfile
+		self.printhistoryfile = settings.printhistoryfile
+		self.slicers = settings.fileprep.slicersettings
 		self.sliceHistory = []
 		self.printHistory = []
 		self.logger = None
@@ -115,9 +116,11 @@ class History:
 		return time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(now))
 	
 	def FindInSliceHistory(self, fn):
-		for h in self.sliceHistory:
-			if fn == h[0]:
-				return h
+		for h in self.sliceHistory[::-1]:
+			for sl in self.slicers:
+				slin = sl.buildSliceOutputFile(h[0])
+				if fn == slin:
+					return h
 			
 		return None
 

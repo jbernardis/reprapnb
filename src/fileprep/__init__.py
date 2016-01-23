@@ -26,7 +26,6 @@ from viewprinthistory import ViewPrintHistory
 from reprap import MAX_EXTRUDERS
 
 from settings import TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, BATCHSL_IDLE, BATCHSL_RUNNING
-from __builtin__ import None
 
 
 wildcard = "G Code (*.gcode)|*.gcode"
@@ -844,7 +843,7 @@ class FilePrepare(wx.Panel):
 		self.prhistdlg.Destroy()
 		self.prhistdlg = None
 		if rc:
-			self.loadFile(fn)
+			self.loadFile(fn, useHistory=True)
 	
 	def doBatchSlice(self, evt):
 		stllist = self.settings.stlqueue[:]
@@ -989,7 +988,7 @@ class FilePrepare(wx.Panel):
 		self.settings.gcodequeue = self.settings.gcodequeue[1:]
 		self.setGCodeQLen(len(self.settings.gcodequeue))
 		self.nextSliceProhibit()
-		self.loadFile(fn)
+		self.loadFile(fn, useHistory=True)
 		
 	def batchSlicerUpdate(self, evt):
 			
@@ -1370,7 +1369,7 @@ class FilePrepare(wx.Panel):
 		if dlg.ShowModal() == wx.ID_OK:
 			path = dlg.GetPath()
 			self.stlFile = None
-			self.loadFile(path)
+			self.loadFile(path, useHistory=True)
 
 		dlg.Destroy()
 		
@@ -1385,17 +1384,18 @@ class FilePrepare(wx.Panel):
 		self.dlgMerge = None
 		self.enableButtons()
 
-	def loadFile(self, fn):
-		h = self.history.FindInHistory(fn)
-		if not h is None:
-			self.lastSliceConfig = h[1]
-			self.lastSliceFilament = h[2]
-			self.lastSliceTemps = h[3]
-		else:
-			self.lastSliceConfig = None
-			self.lastSliceFilament = None
-			self.lastSliceTemps = None
-			
+	def loadFile(self, fn, useHistory=False):
+		if useHistory:
+			h = self.history.FindInSliceHistory(fn)
+			if not h is None:
+				self.lastSliceConfig = h[1]
+				self.lastSliceFilament = h[2]
+				self.lastSliceTemps = h[3]
+			else:
+				self.lastSliceConfig = None
+				self.lastSliceFilament = None
+				self.lastSliceTemps = None
+				
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.bOpen.Enable(False)
