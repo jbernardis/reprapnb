@@ -683,54 +683,84 @@ class FilePrepare(wx.Panel):
 		
 		self.infoPane.AddSpacer((40, 10), pos=(4,0))
 		
-		text = "Layer Number: "
+		text = "Slice Config: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(5,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipLayerNum = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipLayerNum.SetFont(ipfont)
-		self.infoPane.Add(self.ipLayerNum, pos=(5,1), flag=wx.ALIGN_LEFT)
+		self.ipSliceConfig = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipSliceConfig.SetFont(ipfont)
+		self.infoPane.Add(self.ipSliceConfig, pos=(5,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Height (mm): " 
+		text = "Filament diameter: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(6,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipLayerHeight = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipLayerHeight.SetFont(ipfont)
-		self.infoPane.Add(self.ipLayerHeight, pos=(6,1), flag=wx.ALIGN_LEFT)
-
-		text = "Min/Max X (mm): "
+		self.ipSliceFil = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipSliceFil.SetFont(ipfont)
+		self.infoPane.Add(self.ipSliceFil, pos=(6,1), flag=wx.ALIGN_LEFT)
+		
+		text = "Temp Profile: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(7,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipMinMaxX = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipMinMaxX.SetFont(ipfont)
-		self.infoPane.Add(self.ipMinMaxX, pos=(7,1), flag=wx.ALIGN_LEFT)
+		self.ipSliceTemp = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipSliceTemp.SetFont(ipfont)
+		self.infoPane.Add(self.ipSliceTemp, pos=(7,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Min/Max Y (mm): "
+		text = "Layer Number: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(8,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipMinMaxY = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipMinMaxY.SetFont(ipfont)
-		self.infoPane.Add(self.ipMinMaxY, pos=(8,1), flag=wx.ALIGN_LEFT)
+		self.ipLayerNum = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipLayerNum.SetFont(ipfont)
+		self.infoPane.Add(self.ipLayerNum, pos=(8,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Filament (mm): "
+		text = "Height (mm): " 
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(9,0), flag=wx.ALIGN_RIGHT)
 		
+		self.ipLayerHeight = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipLayerHeight.SetFont(ipfont)
+		self.infoPane.Add(self.ipLayerHeight, pos=(9,1), flag=wx.ALIGN_LEFT)
+
+		text = "Min/Max X (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+		t.SetFont(ipfont)
+		self.infoPane.Add(t, pos=(10,0), flag=wx.ALIGN_RIGHT)
+		
+		self.ipMinMaxX = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipMinMaxX.SetFont(ipfont)
+		self.infoPane.Add(self.ipMinMaxX, pos=(10,1), flag=wx.ALIGN_LEFT)
+		
+		text = "Min/Max Y (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+		t.SetFont(ipfont)
+		self.infoPane.Add(t, pos=(11,0), flag=wx.ALIGN_RIGHT)
+		
+		self.ipMinMaxY = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipMinMaxY.SetFont(ipfont)
+		self.infoPane.Add(self.ipMinMaxY, pos=(11,1), flag=wx.ALIGN_LEFT)
+		
+		text = "Filament (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+		t.SetFont(ipfont)
+		self.infoPane.Add(t, pos=(12,0), flag=wx.ALIGN_RIGHT)
+		
 		self.ipFilament = []
-		ln = 9
+		ln = 12
 		for i in range(MAX_EXTRUDERS):
 			w = wx.StaticText(self, wx.ID_ANY, "", size=(-1, h+TEXT_PAD))
 			w.SetFont(ipfont)
@@ -1432,6 +1462,20 @@ class FilePrepare(wx.Panel):
 				else:
 					lfn = self.gcFile
 			self.ipFileName.SetLabel(lfn)
+			if self.SliceConfig is None:
+				self.ipSliceConfig.SetLabel("")
+			else:
+				self.ipSliceConfig.SetLabel(self.SliceConfig)
+				
+			if self.SliceFilament is None:
+				self.ipSliceFil.SetLabel("")
+			else:
+				self.ipSliceFil.SetLabel(str(self.SliceFilament))
+				
+			if self.SliceTemps is None:
+				self.ipSliceTemp.SetLabel("")
+			else:
+				self.ipSliceTemp.SetLabel(str(self.SliceTemps))
 
 			self.gcode = self.readerThread.getGCode()
 			self.gcodeLoaded = True
