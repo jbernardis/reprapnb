@@ -157,6 +157,16 @@ class SlicerSettings:
 		
 		return self.type.getConfigString()
 	
+	def getFilamentString(self):
+		if self.type is None:
+			return None
+		
+		fd = self.getDimensionInfo()[1]
+		if fd is None:
+			None
+		else:
+			return "%.2f" % fd[0]
+	
 	def getSlicerName(self):
 		return self.name
 		
@@ -165,6 +175,12 @@ class SlicerSettings:
 			return None
 		
 		return self.type.getDimensionInfo()
+		
+	def getTempProfile(self):
+		if self.type is None:
+			return None
+		
+		return self.type.getTempProfile()
 	
 	def getOverrideHelpText(self):
 		if self.type is None:

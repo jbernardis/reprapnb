@@ -6,7 +6,7 @@ import os
 from tools import formatElapsed
 from settings import MAX_EXTRUDERS
 
-filetags = { "filename" : "Name:" }
+filetags = { "filename" : "Name:", "slicecfg" : "Slicing Config:", "filament" : "Filament:", "temps" : "Temperatures:" }
 layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "timeuntil": "Time Until:", "gclines": "G Code Lines:"}
 printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
 
@@ -34,7 +34,7 @@ class InfoPane (wx.Window):
 		self.newEta = None
 		self.printLayer = 0
 		
-		self.filetagorder = ["filename"]
+		self.filetagorder = ["filename", "slicecfg", "filament", "temps"]
 		self.layertagorder = ["layer", "minmaxxy"]
 		for i in range(MAX_EXTRUDERS):
 			tag = "filament%d" % i
@@ -171,14 +171,19 @@ class InfoPane (wx.Window):
 		for t in self.printtagorder:
 			self.setValue(t, "")
 		
-		
 	def clearFileInfo(self):
 		self.setValue("filename", "")
+		self.setValue("slicecfg", "")
+		self.setValue("filament", "")
+		self.setValue("temps", "")
 		
 	def showFileInfo(self):
 		self.setValue("filename", self.filename)
+		self.setValue("slicecfg", self.slicecfg)
+		self.setValue("filament", self.filament)
+		self.setValue("temps", self.temps)
 		
-	def setFileInfo(self, filename, duration, gcount, layers, zmax, filament, layertimes):
+	def setFileInfo(self, filename, slcfg, slfil, sltemp, duration, gcount, layers, zmax, filament, layertimes):
 		if len(filename) > 60:
 			lfn = os.path.basename(filename)
 		else:
@@ -186,6 +191,21 @@ class InfoPane (wx.Window):
 
 		self.setValue("filename", lfn)
 		self.filename = lfn
+		
+		if slcfg is None:
+			self.slicecfg = ""
+		else:
+			self.slicecfg = slcfg
+			
+		if slfil is None:
+			self.filament = ""
+		else:
+			self.filament = slfil
+			
+		if sltemp is None:
+			self.temps = ""
+		else:
+			self.temps = str(sltemp)
 
 		self.duration = duration
 		self.gcount = gcount

@@ -102,8 +102,8 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		dc.SetFont(f)
 		fontHeight = dc.GetTextExtent("Xy")[1]
 		
-		colWidths = [500, 130, 170, 120, 120, 120]
-		colTitles = ["File", "Modified", "Config", "Slice Start", "Slice End", "Status"]
+		colWidths = [500, 130, 170, 120, 120, 120, 120, 120]
+		colTitles = ["File", "Modified", "Config", "Filament", "Temperatures", "Slice Start", "Slice End", "Status"]
 		
 		totwidth = 20;
 		for w in colWidths:
@@ -217,7 +217,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		elif col == 1:
 			return self.modTimes[idx]
 		else:
-			return self.slicehistory[idx][col-1]
+			return str(self.slicehistory[idx][col-1])
 
 	def OnGetItemImage(self, item):
 		if item == self.selectedItem:

@@ -113,39 +113,46 @@ class History:
 	def ts(self):
 		now = time.time()
 		return time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(now))
+	
+	def FindInSliceHistory(self, fn):
+		for h in self.sliceHistory:
+			if fn == h[0]:
+				return h
+			
+		return None
 
-	def SliceStart(self, fn, cfgstring):
-		self.sliceHistory.append([fn, cfgstring, self.ts(), "", "Start"])
+	def SliceStart(self, fn, cfgstring, filament, temps):
+		self.sliceHistory.append([fn, cfgstring, filament, temps, self.ts(), "", "Start"])
 		l = len(self.sliceHistory)
 		if l > self.hsize:
 			self.sliceHistory = self.sliceHistory[l-self.hsize:]
 		self.SaveSliceHistory()
 	
 	def SliceComplete(self):
-		self.sliceHistory[-1][3] = self.ts()
-		self.sliceHistory[-1][4] = "Completion"
+		self.sliceHistory[-1][4] = self.ts()
+		self.sliceHistory[-1][5] = "Completion"
 		self.SaveSliceHistory()
 	
 	def SliceCancel(self):
-		self.sliceHistory[-1][3] = self.ts()
-		self.sliceHistory[-1][4] = "Cancel"
+		self.sliceHistory[-1][4] = self.ts()
+		self.sliceHistory[-1][5] = "Cancel"
 		self.SaveSliceHistory()
 	
-	def BatchSliceStart(self, fn, cfgstring):
-		self.sliceHistory.append([fn, cfgstring, self.ts(), "", "Batch Start"])
+	def BatchSliceStart(self, fn, cfgstring, filament, temps):
+		self.sliceHistory.append([fn, cfgstring, filament, temps, self.ts(), "", "Batch Start"])
 		l = len(self.sliceHistory)
 		if l > self.hsize:
 			self.sliceHistory = self.sliceHistory[l-self.hsize:]
 		self.SaveSliceHistory()
 	
 	def BatchSliceComplete(self):
-		self.sliceHistory[-1][3] = self.ts()
-		self.sliceHistory[-1][4] = "Batch Completion"
+		self.sliceHistory[-1][4] = self.ts()
+		self.sliceHistory[-1][5] = "Batch Completion"
 		self.SaveSliceHistory()
 	
 	def BatchSliceCancel(self):
-		self.sliceHistory[-1][3] = self.ts()
-		self.sliceHistory[-1][4] = "Batch Cancel"
+		self.sliceHistory[-1][4] = self.ts()
+		self.sliceHistory[-1][5] = "Batch Cancel"
 		self.SaveSliceHistory()
 
 	def PrintStart(self, fn, prtname):

@@ -479,29 +479,59 @@ class Skeinforge:
 		return chg
 		
 	def getConfigString(self):
-		fd = self.getDimensionInfo()[1]
-		if fd is None:
-			fds = ""
-		else:
-			fds = "[FD:%.2f]" % fd[0]
-
-		return fds + "(" + str(self.vprofile) + ")"
+		return "(" + str(self.vprofile) + ")"
 	
 	def getDimensionInfo(self):
 		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
+		ld = 0
+		fd = 0
 		try:
-			l = list(open(os.path.join(dr, "carve.csv")))
-			for s in l:
-				if s.startswith("Layer Height (mm):"):
-					lh = float(s[18:].strip())
-					break
-			l = list(open(os.path.join(dr, "dimension.csv")))
-			for s in l:
-				if s.startswith("Filament Diameter (mm):"):
-					fd = float(s[23:].strip())
-					break
+			if "layerheight" in self.overrides.keys():
+				lh = self.overrides["layerheight"]
+			else:
+				l = list(open(os.path.join(dr, "carve.csv")))
+				for s in l:
+					if s.startswith("Layer Height (mm):"):
+						lh = float(s[18:].strip())
+						break
+			if "filamentdiam" in self.overrides.keys():
+				fd = self.overrides("filamentdiam")
+			else:
+				l = list(open(os.path.join(dr, "dimension.csv")))
+				for s in l:
+					if s.startswith("Filament Diameter (mm):"):
+						fd = float(s[23:].strip())
+						break
 				
 			return lh, [fd]
+				
+		except:
+			self.log("Unable to open skeinforge profile file for reading: " + dr)
+			return None, None
+	
+	def getTempProfile(self):
+		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
+		bt = 0
+		tp = 0
+		try:
+			if "bedtemperature" in self.overrides.keys():
+				bt = self.overrides["bedtemperature"]
+			else:
+				l = list(open(os.path.join(dr, "chamber.csv")))
+				for s in l:
+					if s.startswith("Bed Temperature (Celcius):"):
+						bt = float(s[26:].strip())
+						break
+			if "temperature" in self.overrides.keys():
+				tp = self.overrides("temperature")
+			else:
+				l = list(open(os.path.join(dr, "temperature.csv")))
+				for s in l:
+					if s.startswith("Object Next Layers Temperature (Celcius):"):
+						tp = float(s[41:].strip())
+						break
+				
+			return bt, [tp]
 				
 		except:
 			self.log("Unable to open skeinforge profile file for reading: " + dr)

@@ -265,15 +265,13 @@ class Cura:
 		cfp.close()
 		
 	def getConfigString(self):
-		fd = self.getDimensionInfo()[1]
-		if fd is None:
-			fds = ""
-		else:
-			fds = "[FD:%.2f]" % fd[0]
-
-		return fds + "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
+		return "(" + str(self.vprinter) + "/" + str(self.vprofile) + ")"
 	
 	def getDimensionInfo(self):
+		fildiamOver = False		
+		if 'filamentdiam' in self.overrides.keys():
+			fildiamOver = True
+			diams = self.overrides['filamentdiam'].split(',')
 		try:
 			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
 			fn = os.path.join(d, str(self.vprofile) + ".ini")
@@ -285,22 +283,40 @@ class Cura:
 			for s in l:
 				if s.startswith("layer_height ="):
 					lh = float(s[14:].strip())
+					if "layerheight" in self.overrides.keys():
+						lh = self.overrides['layerheight']
 				elif s.startswith("filament_diameter ="):
-					dx = float(s[19:].strip())
-					if dx != 0:
-						d0 = dx
+					if fildiamOver:
+						if len(diams) > 0:
+							d0 = diams[0]
+					else:
+						dx = float(s[19:].strip())
+						if dx != 0:
+							d0 = dx
 				elif s.startswith("filament_diameter2 ="):
-					dx = float(s[20:].strip())
-					if dx != 0:
-						d1 = dx
+					if fildiamOver:
+						if len(diams) > 1:
+							d1 = diams[1]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							d1 = dx
 				elif s.startswith("filament_diameter3 ="):
-					dx = float(s[20:].strip())
-					if dx != 0:
-						d2 = dx
+					if fildiamOver:
+						if len(diams) > 2:
+							d2 = diams[2]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							d2 = dx
 				elif s.startswith("filament_diameter4 ="):
-					dx = float(s[20:].strip())
-					if dx != 0:
-						d3 = dx
+					if fildiamOver:
+						if len(diams) > 3:
+							d3 = diams[3]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							d3 = dx
 						
 			fd = []
 			if d0:
@@ -313,6 +329,74 @@ class Cura:
 							fd.append(d3)
 	
 			return lh, fd
+		
+		except:
+			self.log("Unable to open/parse cura profile file ", fn)
+			return None, None
+		
+	def getTempProfile(self):
+		tempOver = False		
+		if 'temperature' in self.overrides.keys():
+			tempOver = True
+			temps = self.overrides['temperature'].split(',')
+			
+		try:
+			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
+			fn = os.path.join(d, str(self.vprofile) + ".ini")
+			l = list(open(fn))
+			t0 = None
+			t1 = None
+			t2 = None
+			t3 = None
+			for s in l:
+				if s.startswith("print_bed_temperature ="):
+					bt = float(s[23:].strip())
+					if "bedtemperature" in self.overrides.keys():
+						bt = self.overrides['bedtemperature']
+				elif s.startswith("print_temperature ="):
+					if tempOver:
+						if len(temps) > 0:
+							t0 = temps[0]
+					else:
+						dx = float(s[19:].strip())
+						if dx != 0:
+							t0 = dx
+				elif s.startswith("print_temperature2 ="):
+					if tempOver:
+						if len(temps) > 1:
+							t1 = temps[1]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							t1 = dx
+				elif s.startswith("print_temperature3 ="):
+					if tempOver:
+						if len(temps) > 2:
+							t2 = temps[2]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							t2 = dx
+				elif s.startswith("print_temperature4 ="):
+					if tempOver:
+						if len(temps) > 3:
+							t3 = temps[3]
+					else:
+						dx = float(s[20:].strip())
+						if dx != 0:
+							t3 = dx
+						
+			tp = []
+			if t0:
+				tp.append(t0)
+				if t1:
+					tp.append(t1)
+					if t2:
+						tp.append(t2)
+						if t3:
+							tp.append(t3)
+	
+			return bt, tp
 		
 		except:
 			self.log("Unable to open/parse cura profile file ", fn)

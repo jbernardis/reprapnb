@@ -408,12 +408,7 @@ class Slic3r:
 		return chg
 		
 	def getConfigString(self):
-		fd = self.getDimensionInfo()[1]
-		if fd is None:
-			fds = ""
-		else:
-			fds = "[FD:%.2f]" % fd[0]
-		return fds + "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + ",".join(self.vfilament) + ")"
+		return "(" + str(self.vprinter) + "/" + str(self.vprint) + "/" + ",".join(self.vfilament) + ")"
 	
 	def getDimensionInfo(self):
 		dProfile = {}
@@ -429,6 +424,22 @@ class Slic3r:
 			return float(dProfile['layer_height']), [float(x) for x in dProfile['filament_diameter'].split(',')]
 		else:
 			self.log("Unable to find dimension information in slicer profile files")
+			return None, None
+	
+	def getTempProfile(self):
+		dProfile = {}
+		if 'filamentfile' in self.parent.settings.keys():
+			dProfile.update(loadProfiles(self.parent.settings['filamentfile'], 
+					['extrusion_multiplier', 'filament_diameter', 'first_layer_temperature', 'temperature']))
+		for k in self.overrides.keys():
+			if k == 'temperature':
+				dProfile['temperature'] = self.overrides[k]
+			if k == 'bedtemperature':
+				dProfile['bed_temperature'] = self.overrides[k]
+		if 'temperature' in dProfile.keys() and 'bed_temperature' in dProfile.keys():
+			return float(dProfile['bed_temperature']), [float(x) for x in dProfile['temperature'].split(',')]
+		else:
+			self.log("Unable to temperature information in slicer profile files")
 			return None, None
 	
 	def buildSliceOutputFile(self, fn):

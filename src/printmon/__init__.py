@@ -832,16 +832,16 @@ class PrintMonitor(wx.Panel):
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.app.pullGCode(self)
 	
-	def forwardModel(self, model, name="", cfgString=None):
+	def forwardModel(self, model, name="", cfg=None, fd=None, tp=None):
 		self.setSDTargetFile(None)
 		
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.reprap.clearPrint()
 		self.model = model
 		self.name = name
-		self.cfgString = cfgString
-		print "need to compare printer filament diam of %.2f" % self.filamentdiameter
-		print "against slicer config string of (" + cfgString + ")"
+		self.cfgString = cfg
+		self.filamentDiam = fd
+		self.tempProfile = tp
 		if self.name == TEMPFILELABEL:
 			self.gcFile = None
 		elif len(self.name) > 40:
@@ -886,7 +886,9 @@ class PrintMonitor(wx.Panel):
 		self.sdpaused = False
 		
 		self.setStatus(PMSTATUS_READY)
-		self.infoPane.setFileInfo(self.name, self.model.duration, len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
+		self.infoPane.setFileInfo(self.name,
+					self.model.duration, self.cfgString, self.filamentDiam, self.tempProfile,
+					len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
 	def setHETarget(self, tool, temp):

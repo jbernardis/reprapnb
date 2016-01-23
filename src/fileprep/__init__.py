@@ -26,6 +26,7 @@ from viewprinthistory import ViewPrintHistory
 from reprap import MAX_EXTRUDERS
 
 from settings import TEMPFILELABEL, BUTTONDIM, BUTTONDIMWIDE, FPSTATUS_IDLE, FPSTATUS_READY, FPSTATUS_READY_DIRTY, FPSTATUS_BUSY, BATCHSL_IDLE, BATCHSL_RUNNING
+from __builtin__ import None
 
 
 wildcard = "G Code (*.gcode)|*.gcode"
@@ -294,6 +295,10 @@ class FilePrepare(wx.Panel):
 		self.activeSlicer = None
 		self.activeBatchSlicer = None
 		self.batchslstatus = BATCHSL_IDLE
+		
+		self.lastSliceConfig = None
+		self.lastSliceFilament = None
+		self.lastSliceTemps = None
 
 		self.drawGCFirst = None;
 		self.drawGCLast = None;
@@ -879,12 +884,12 @@ class FilePrepare(wx.Panel):
 		saveGcFile = self.gcFile
 		self.stlFile = BATCHSTLPATTERN
 		self.gcFile = BATCHGCPATTERN
-		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		cmd = self.slicer.buildSliceCommand()
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 
 		self.stlFile = saveStlFile
 		self.gcFile = saveGcFile
-		self.batchSliceCfg = self.getSlicerConfigString()
+		self.batchSliceCfg, self.batchSliceFilament, self.batchSliceTemp = self.getSlicerInfo()
 		
 		joblist = []
 		
@@ -1034,7 +1039,7 @@ class FilePrepare(wx.Panel):
 				self.activeBatchSlicer = None
 		
 		elif evt.state == BATCHSLICER_STARTFILE:
-			self.history.BatchSliceStart(evt.stlfn, self.batchSliceCfg)
+			self.history.BatchSliceStart(evt.stlfn, self.batchSliceCfg, self.batchSliceFilament, self.batchSliceTemp)
 			self.logger.LogMessage("Batch Slicer: starting file: " + evt.stlfn)
 		
 		elif evt.state == BATCHSLICER_ENDFILE:
@@ -1095,8 +1100,11 @@ class FilePrepare(wx.Panel):
 			if k in ovVals.keys():
 				self.logger.LogMessage("Overriding %s = %s" % (ovUserKeyMap[k], self.overrideValues[k]))
 		
-	def getSlicerConfigString(self):
-		return self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
+	def getSlicerInfo(self):
+		cfg = self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
+		fd = self.slicer.getFilamentString()
+		tp = self.slicer.getTempProfile()
+		return cfg, fd, tp
 	
 	def getStatus(self):
 		st = {}
@@ -1270,15 +1278,15 @@ class FilePrepare(wx.Panel):
 		self.sliceFile(fn, tempFile=True)
 		
 	def sliceFile(self, fn, tempFile = False):
-		self.lastSliceConfig = self.getSlicerConfigString()
-		self.history.SliceStart(fn, self.lastSliceConfig)
 		self.stlFile = fn
 		self.temporaryFile = tempFile
 		self.gcFile = self.slicer.buildSliceOutputFile(fn)
 		#self.logOverrides(self.overrideValues)
 		self.slicer.setOverrides(self.overrideValues)
-		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		cmd = self.slicer.buildSliceCommand()
+		self.lastSliceConfig, self.lastSliceFilament, self.lastSliceTemps = self.getSlicerInfo()
+		self.history.SliceStart(fn, self.lastSliceConfig, self.lastSliceFilament, self.lastSliceTemps)
+		self.lh, self.fd = self.slicer.type.getDimensionInfo()
 		self.activeSlicer = self.slicer
 		self.sliceThread = SlicerThread(self, cmd)
 		self.gcodeLoaded = False
@@ -1378,6 +1386,16 @@ class FilePrepare(wx.Panel):
 		self.enableButtons()
 
 	def loadFile(self, fn):
+		h = self.history.FindInHistory(fn)
+		if not h is None:
+			self.lastSliceConfig = h[1]
+			self.lastSliceFilament = h[2]
+			self.lastSliceTemps = h[3]
+		else:
+			self.lastSliceConfig = None
+			self.lastSliceFilament = None
+			self.lastSliceTemps = None
+			
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
 		self.bOpen.Enable(False)
@@ -1526,7 +1544,7 @@ class FilePrepare(wx.Panel):
 					name = self.gcFile
 					
 				self.logger.LogMessage("Modeling complete - forwarding %s to printer %s" % (name, self.exportTo.prtname))
-				self.exportTo.forwardModel(model, name=name, cfg=self.lastSliceConfig)
+				self.exportTo.forwardModel(model, name=name, cfg=self.lastSliceConfig, fd=self.lastSliceFilament, tp = self.lastSliceTemps)
 				self.exportTo = None
 				self.logger.LogMessage("Forwarding complete")
 				self.enableButtons()
