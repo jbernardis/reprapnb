@@ -163,7 +163,7 @@ class SlicerSettings:
 		
 		fd = self.getDimensionInfo()[1]
 		if fd is None:
-			None
+			return None
 		else:
 			return "%.2f" % fd[0]
 	
@@ -175,6 +175,30 @@ class SlicerSettings:
 			return None
 		
 		return self.type.getDimensionInfo()
+		
+	def getTempProfileString(self):
+		if self.type is None:
+			return None
+		
+		bed, hes = self.type.getTempProfile()
+		
+		if bed is None:
+			strBed = "B:??"
+		else:
+			strBed = "%.1f/%.1f" % (bed[0], bed[1])
+			
+		strHe = ""
+		for t in range(MAX_EXTRUDERS):
+			t = "T%d:" % t
+			if hes[t] is None:
+				t += "??"
+			else:
+				t += "%.1f/%.1f" % (hes[t][0], hes[t][1])
+				
+			if len(strHe) != 0:
+				strHe += ", "
+			strHe += t
+		return strBed + " " + strHe
 		
 	def getTempProfile(self):
 		if self.type is None:

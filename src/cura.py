@@ -4,7 +4,7 @@ import tempfile
 import shlex, subprocess
 import ConfigParser
 
-from settings import BUTTONDIM, SAVE_SETTINGS_FILE
+from settings import BUTTONDIM, SAVE_SETTINGS_FILE, MAX_EXTRUDERS
 
 CBSIZE = 200
 PREFSECTION = 'preference'
@@ -396,7 +396,14 @@ class Cura:
 						if t3:
 							tp.append(t3)
 	
-			return bt, tp
+			rtp = []
+			for i in range(MAX_EXTRUDERS):
+				if i >= len(tp):
+					rtp.append(None)
+				else:
+					rtp.append([tp[i], tp[i]])
+					
+			return [bt, bt], rtp
 		
 		except:
 			self.log("Unable to open/parse cura profile file ", fn)

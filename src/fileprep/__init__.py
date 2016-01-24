@@ -768,16 +768,6 @@ class FilePrepare(wx.Panel):
 			ln += 1
 			self.ipFilament.append(w)
 		
-		text = "Temp Profile: "
-		w, h = dc.GetTextExtent(text)
-		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
-		t.SetFont(ipfont)
-		self.infoPane.Add(t, pos=(ln,0), flag=wx.ALIGN_RIGHT)
-		
-		self.ipTempProf = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipTempProf.SetFont(ipfont)
-		self.infoPane.Add(self.ipTempProf, pos=(ln,1), flag=wx.ALIGN_LEFT)
-		
 		ln += 1
 		text = "G Code Line from/to: "
 		w, h = dc.GetTextExtent(text)
@@ -1132,7 +1122,7 @@ class FilePrepare(wx.Panel):
 	def getSlicerInfo(self):
 		cfg = self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
 		fd = self.slicer.getFilamentString()
-		tp = self.slicer.getTempProfile()
+		tp = self.slicer.getTempProfileString()
 		return cfg, fd, tp
 	
 	def getStatus(self):
@@ -2177,19 +2167,6 @@ class FilePrepare(wx.Panel):
 		lt = time.strftime('%H:%M:%S', time.gmtime(self.layerInfo[5]))
 		tt = time.strftime('%H:%M:%S', time.gmtime(self.model.duration))
 		self.ipPrintTime.SetLabel("%s/%s" % (lt, tt))
-		
-		(bed, hes) = self.model.getTemps()
-		if bed is None:
-			tp = "B:??"
-		else:
-			tp = "B:%.1f" % bed
-		for i in range(MAX_EXTRUDERS):
-			if hes[i] is None:
-				tp += " / T%d:??" % i
-			else:
-				tp += " / T%d:%.1f" % (i, hes[i])
-				
-		self.ipTempProf.SetLabel(tp)
 		
 	def setModified(self, flag=True):
 		self.modified = flag

@@ -180,7 +180,7 @@ class InfoPane (wx.Window):
 	def showFileInfo(self):
 		self.setValue("filename", self.filename)
 		self.setValue("slicecfg", self.slicecfg)
-		self.setValue("filament", self.filament)
+		self.setValue("filament", self.slicefil)
 		self.setValue("temps", self.temps)
 		
 	def setFileInfo(self, filename, slcfg, slfil, sltemp, duration, gcount, layers, zmax, filament, layertimes):
@@ -199,10 +199,10 @@ class InfoPane (wx.Window):
 		self.setValue("slicecfg", self.slicecfg)
 			
 		if slfil is None:
-			self.filament = ""
+			self.slicefil = ""
 		else:
-			self.filament = slfil
-		self.setValue("filament", self.filament)
+			self.slicefil = slfil
+		self.setValue("filament", self.slicefil)
 			
 		if sltemp is None:
 			self.temps = ""

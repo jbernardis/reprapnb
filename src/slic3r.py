@@ -436,11 +436,30 @@ class Slic3r:
 				dProfile['temperature'] = self.overrides[k]
 			if k == 'bedtemperature':
 				dProfile['bed_temperature'] = self.overrides[k]
-		if 'temperature' in dProfile.keys() and 'bed_temperature' in dProfile.keys():
-			return float(dProfile['bed_temperature']), [float(x) for x in dProfile['temperature'].split(',')]
+		if 'first_layer_bed_temperature' in dProfile.keys() and 'bed_temperature' in dProfile.keys():
+			bt = [float(dProfile['first_layer_bed_temperature']), float(dProfile['bed_temperature'])]
+		elif 'bed_temperature' in dProfile.keys():
+			bt = [float(dProfile['bed_temperature']), float(dProfile['bed_temperature'])]
 		else:
-			self.log("Unable to temperature information in slicer profile files")
-			return None, None
+			bt = None
+			
+		flhet = []
+		het = []
+		if 'first_layer_temperature' in dProfile.keys():
+			flhet = [float(x) for x in dProfile['first_layer_temperature'].split(',')]
+		if  'temperature' in dProfile.keys():
+			het = [float(x) for x in dProfile['temperature'].split(',')]
+			
+		rhe = []
+		for i in range(MAX_EXTRUDERS):
+			if i >= len(het):
+				rhe.append(None)
+			elif i>= len(flhet):
+				rhe.append([het[i], het[i]])
+			else:
+				rhe.append([flhet[i], het[i]])
+			
+		return bt, rhe
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + ".gcode"

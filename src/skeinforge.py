@@ -2,7 +2,7 @@ import os
 import wx
 import shlex, subprocess
 
-from settings import BUTTONDIM
+from settings import BUTTONDIM, MAX_EXTRUDERS
 
 CBSIZE = 200
 
@@ -511,16 +511,26 @@ class Skeinforge:
 	
 	def getTempProfile(self):
 		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
-		bt = 0
-		tp = 0
+		bt = None
+		bt1 = None
+		tp = None
+		tp1 = None
 		try:
 			if "bedtemperature" in self.overrides.keys():
 				bt = self.overrides["bedtemperature"]
 			else:
 				l = list(open(os.path.join(dr, "chamber.csv")))
 				for s in l:
+					if s.startswith("Bed Temperature End (Celcius):"):
+						bt = float(s[30:].strip())
+						break
+			if "layer1bedtemperature" in self.overrides.keys():
+				bt1 = self.overrides["layer1bedtemperature"]
+			else:
+				l = list(open(os.path.join(dr, "chamber.csv")))
+				for s in l:
 					if s.startswith("Bed Temperature (Celcius):"):
-						bt = float(s[26:].strip())
+						bt1 = float(s[26:].strip())
 						break
 			if "temperature" in self.overrides.keys():
 				tp = self.overrides("temperature")
@@ -530,12 +540,32 @@ class Skeinforge:
 					if s.startswith("Object Next Layers Temperature (Celcius):"):
 						tp = float(s[41:].strip())
 						break
+			if "layer1temperature" in self.overrides.keys():
+				tp1 = self.overrides("layer1temperature")
+			else:
+				l = list(open(os.path.join(dr, "temperature.csv")))
+				for s in l:
+					if s.startswith("Object First Layer Infill Temperature (Celcius):"):
+						tp1 = float(s[48:].strip())
+						break
 				
-			return bt, [tp]
+			if not bt is None:
+				if bt1 is None:
+					bt = [bt, bt]
+				else:
+					bt = [bt1, bt]
+					
+			if not tp is None:
+				if tp1 is None:
+					tp = [tp, tp]
+				else:
+					tp = [tp1, tp]
+					
+			return bt, [tp] * MAX_EXTRUDERS
 				
 		except:
 			self.log("Unable to open skeinforge profile file for reading: " + dr)
-			return None, None
+			return None, [None] * MAX_EXTRUDERS
 	
 	def buildSliceOutputFile(self, fn):
 		return fn.split('.')[0] + "_export.gcode"
