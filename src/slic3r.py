@@ -420,6 +420,8 @@ class Slic3r:
 		for k in self.overrides.keys():
 			if k == 'layerheight':
 				dProfile['layer_height'] = self.overrides[k]
+			elif k == 'filamentdiam':
+				dProfile['filament_diameter'] = self.verifyListLength(self.overrides[k], dProfile['filament_diameter'])
 		if 'layer_height' in dProfile.keys() and 'filament_diameter' in dProfile.keys():
 			return float(dProfile['layer_height']), [float(x) for x in dProfile['filament_diameter'].split(',')]
 		else:

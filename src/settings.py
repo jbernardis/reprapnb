@@ -185,19 +185,19 @@ class SlicerSettings:
 		if bed is None:
 			strBed = "B:??"
 		else:
-			strBed = "%.1f/%.1f" % (bed[0], bed[1])
+			strBed = "B%.1f/%.1f" % (bed[0], bed[1])
 			
 		strHe = ""
 		for t in range(MAX_EXTRUDERS):
-			t = "T%d:" % t
+			txt = "T%d:" % t
 			if hes[t] is None:
-				t += "??"
+				txt += "??"
 			else:
-				t += "%.1f/%.1f" % (hes[t][0], hes[t][1])
+				txt += "%.1f/%.1f" % (hes[t][0], hes[t][1])
 				
 			if len(strHe) != 0:
 				strHe += ", "
-			strHe += t
+			strHe += txt
 		return strBed + " " + strHe
 		
 	def getTempProfile(self):

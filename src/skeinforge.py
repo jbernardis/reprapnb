@@ -483,7 +483,7 @@ class Skeinforge:
 	
 	def getDimensionInfo(self):
 		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
-		ld = 0
+		lh = 0
 		fd = 0
 		try:
 			if "layerheight" in self.overrides.keys():
