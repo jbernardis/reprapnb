@@ -1058,6 +1058,7 @@ class Composer:
 	def __init__(self, camera, size):
 		self.size = size
 		self.Camera = camera
+		self.running = False
 
 		thread.start_new_thread(self.run, ())
 

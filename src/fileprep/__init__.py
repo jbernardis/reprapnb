@@ -298,6 +298,7 @@ class FilePrepare(wx.Panel):
 		self.lastSliceConfig = None
 		self.lastSliceFilament = None
 		self.lastSliceTemps = None
+		self.sliceTime = ""
 
 		self.drawGCFirst = None;
 		self.drawGCLast = None;
@@ -713,54 +714,64 @@ class FilePrepare(wx.Panel):
 		self.ipSliceTemp.SetFont(ipfont)
 		self.infoPane.Add(self.ipSliceTemp, pos=(7,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Layer Number: "
+		text = "Slice Time: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(8,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipLayerNum = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipLayerNum.SetFont(ipfont)
-		self.infoPane.Add(self.ipLayerNum, pos=(8,1), flag=wx.ALIGN_LEFT)
+		self.ipSliceTime = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipSliceTime.SetFont(ipfont)
+		self.infoPane.Add(self.ipSliceTime, pos=(8,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Height (mm): " 
+		text = "Layer Number: "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(9,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipLayerHeight = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipLayerHeight.SetFont(ipfont)
-		self.infoPane.Add(self.ipLayerHeight, pos=(9,1), flag=wx.ALIGN_LEFT)
-
-		text = "Min/Max X (mm): "
+		self.ipLayerNum = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipLayerNum.SetFont(ipfont)
+		self.infoPane.Add(self.ipLayerNum, pos=(9,1), flag=wx.ALIGN_LEFT)
+		
+		text = "Height (mm): " 
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(10,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipMinMaxX = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipMinMaxX.SetFont(ipfont)
-		self.infoPane.Add(self.ipMinMaxX, pos=(10,1), flag=wx.ALIGN_LEFT)
-		
-		text = "Min/Max Y (mm): "
+		self.ipLayerHeight = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipLayerHeight.SetFont(ipfont)
+		self.infoPane.Add(self.ipLayerHeight, pos=(10,1), flag=wx.ALIGN_LEFT)
+
+		text = "Min/Max X (mm): "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(11,0), flag=wx.ALIGN_RIGHT)
 		
-		self.ipMinMaxY = wx.StaticText(self, wx.ID_ANY, "")
-		self.ipMinMaxY.SetFont(ipfont)
-		self.infoPane.Add(self.ipMinMaxY, pos=(11,1), flag=wx.ALIGN_LEFT)
+		self.ipMinMaxX = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipMinMaxX.SetFont(ipfont)
+		self.infoPane.Add(self.ipMinMaxX, pos=(11,1), flag=wx.ALIGN_LEFT)
 		
-		text = "Filament (mm): "
+		text = "Min/Max Y (mm): "
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
 		t.SetFont(ipfont)
 		self.infoPane.Add(t, pos=(12,0), flag=wx.ALIGN_RIGHT)
 		
+		self.ipMinMaxY = wx.StaticText(self, wx.ID_ANY, "")
+		self.ipMinMaxY.SetFont(ipfont)
+		self.infoPane.Add(self.ipMinMaxY, pos=(12,1), flag=wx.ALIGN_LEFT)
+		
+		text = "Filament (mm): "
+		w, h = dc.GetTextExtent(text)
+		t = wx.StaticText(self, wx.ID_ANY, text, size=(w, h+TEXT_PAD))
+		t.SetFont(ipfont)
+		self.infoPane.Add(t, pos=(13,0), flag=wx.ALIGN_RIGHT)
+		
 		self.ipFilament = []
-		ln = 12
+		ln = 13
 		for i in range(MAX_EXTRUDERS):
 			w = wx.StaticText(self, wx.ID_ANY, "", size=(-1, h+TEXT_PAD))
 			w.SetFont(ipfont)
@@ -1128,7 +1139,10 @@ class FilePrepare(wx.Panel):
 	def getStatus(self):
 		st = {}
 		
-		st['slicer'] = self.getSlicerConfigString()
+		cfg, fd, tp = self.getSlicerConfigInfo()
+		st['slicer'] = cfg
+		st['slicefil'] = str(fd)
+		st['slicetemp'] = str(tp)
 		fn = str(self.stlFile)
 		if self.temporaryFile:
 			fn += " (temporary)"
@@ -1426,6 +1440,11 @@ class FilePrepare(wx.Panel):
 		self.setAllowPulls(False)
 		self.filename = fn
 		self.gcFile = fn
+		try:
+			self.sliceTime = time.ctime(os.path.getmtime(fn))
+		except:
+			self.sliceTime = "??"
+			
 		self.readerThread = ReaderThread(self, fn)
 		if self.temporaryFile:
 			self.logger.LogMessage("Temporary G Code file")
@@ -1467,6 +1486,7 @@ class FilePrepare(wx.Panel):
 			else:
 				self.ipSliceTemp.SetLabel(str(self.lastSliceTemps))
 
+			self.ipSliceTime.SetLabel(self.sliceTime)
 			self.gcode = self.readerThread.getGCode()
 			self.gcodeLoaded = True
 			self.logger.LogMessage("G Code reading complete - building model")
@@ -1578,7 +1598,8 @@ class FilePrepare(wx.Panel):
 					name = self.gcFile
 					
 				self.logger.LogMessage("Modeling complete - forwarding %s to printer %s" % (name, self.exportTo.prtname))
-				self.exportTo.forwardModel(model, name=name, cfg=self.lastSliceConfig, fd=self.lastSliceFilament, tp = self.lastSliceTemps)
+				self.exportTo.forwardModel(model, name=name, cfg=self.lastSliceConfig, fd=self.lastSliceFilament, tp=self.lastSliceTemps,
+										st=self.sliceTime)
 				self.exportTo = None
 				self.logger.LogMessage("Forwarding complete")
 				self.enableButtons()

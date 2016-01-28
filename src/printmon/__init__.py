@@ -58,6 +58,7 @@ class PrintMonitor(wx.Panel):
 		self.manctl = None
 		self.hassd = self.app.settings.printersettings[prtname].hassdcard
 		self.filamentdiameter = self.app.settings.printersettings[prtname].filamentdiam
+		self.sliceTime = ""
 
 		self.M105pending = False
 		self.M27pending = False
@@ -832,7 +833,7 @@ class PrintMonitor(wx.Panel):
 		self.setStatus(PMSTATUS_NOT_READY)
 		self.app.pullGCode(self)
 	
-	def forwardModel(self, model, name="", cfg=None, fd=None, tp=None):
+	def forwardModel(self, model, name="", cfg=None, fd=None, tp=None, st=""):
 		self.setSDTargetFile(None)
 		
 		self.setStatus(PMSTATUS_NOT_READY)
@@ -842,6 +843,7 @@ class PrintMonitor(wx.Panel):
 		self.cfgString = cfg
 		self.filamentDiam = fd
 		self.tempProfile = tp
+		self.sliceTime = st
 		if self.name == TEMPFILELABEL:
 			self.gcFile = None
 		elif len(self.name) > 40:
@@ -887,7 +889,7 @@ class PrintMonitor(wx.Panel):
 		
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name,
-					self.cfgString, self.filamentDiam, self.tempProfile, self.model.duration, 
+					self.cfgString, self.filamentDiam, self.tempProfile, self.sliceTime, self.model.duration, 
 					len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		

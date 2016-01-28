@@ -6,7 +6,7 @@ import os
 from tools import formatElapsed
 from settings import MAX_EXTRUDERS
 
-filetags = { "filename" : "Name:", "slicecfg" : "Slicing Config:", "filament" : "Filament:", "temps" : "Temperatures:" }
+filetags = { "filename" : "Name:", "slicecfg" : "Slicing Config:", "filament" : "Filament:", "temps" : "Temperatures:", "slicetime": "Slice Time:"}
 layertags = { "layer" : "Layer Number:", "minmaxxy": "Min/Max X,Y:", "filament0" : "Filament Usage:", "layertime": "Layer Print Time:", "timeuntil": "Time Until:", "gclines": "G Code Lines:"}
 printtags = { "gcode": "Print Position:", "eta": "Print Times:", "eta2": "", "eta3": ""}
 
@@ -34,7 +34,7 @@ class InfoPane (wx.Window):
 		self.newEta = None
 		self.printLayer = 0
 		
-		self.filetagorder = ["filename", "slicecfg", "filament", "temps"]
+		self.filetagorder = ["filename", "slicecfg", "filament", "temps", "slicetime"]
 		self.layertagorder = ["layer", "minmaxxy"]
 		for i in range(MAX_EXTRUDERS):
 			tag = "filament%d" % i
@@ -111,6 +111,11 @@ class InfoPane (wx.Window):
 		if self.mode == MODE_NORMAL:
 			stat['printmode'] = "Normal Print"
 			stat['filename'] = self.filename
+			stat['slicecfg'] = self.slicecfg
+			stat['filament'] = self.slicefil
+			stat['temps'] = self.temps
+			stat['slicetime'] = self.sliceTime
+
 			stat['currentlayer'] = self.layernbr
 			stat['layers'] = self.layers
 			stat['currentheight'] = self.z
@@ -176,14 +181,16 @@ class InfoPane (wx.Window):
 		self.setValue("slicecfg", "")
 		self.setValue("filament", "")
 		self.setValue("temps", "")
+		self.setValue("slicetime", "")
 		
 	def showFileInfo(self):
 		self.setValue("filename", self.filename)
 		self.setValue("slicecfg", self.slicecfg)
 		self.setValue("filament", self.slicefil)
 		self.setValue("temps", self.temps)
+		self.setValue("slicetime", self.sliceTime)
 		
-	def setFileInfo(self, filename, slcfg, slfil, sltemp, duration, gcount, layers, zmax, filament, layertimes):
+	def setFileInfo(self, filename, slcfg, slfil, sltemp, sltime, duration, gcount, layers, zmax, filament, layertimes):
 		if len(filename) > 60:
 			lfn = os.path.basename(filename)
 		else:
@@ -209,6 +216,9 @@ class InfoPane (wx.Window):
 		else:
 			self.temps = str(sltemp)
 		self.setValue("temps", self.temps)
+		
+		self.sliceTime = sltime
+		self.setValue("slicetime", self.sliceTime)
 
 		self.duration = duration
 		self.gcount = gcount
