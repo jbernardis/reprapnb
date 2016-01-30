@@ -154,18 +154,25 @@ class SliceHistoryCtrl(wx.ListCtrl):
 
 	def setArraySize(self):		
 		if self.hidedupes:
+			# dups are based on contatenation of file name
+			# and slice config (h[0] + h[1])
 			mapFn = {}
 			mapOrder = []
+			mapFnOrder = []
 			for i in range(len(self.slicehistory)):
-				if not self.slicehistory[i][0] in mapOrder:
-					mapOrder.append(self.slicehistory[i][0])
-					mapFn[self.slicehistory[i][0]] = i
+				h = self.slicehistory[i]
+				s = h[0] + ":" + h[1]
+				if not s in mapOrder:
+					mapFn[h[0]] = i
+					mapOrder.append(s)
+					mapFnOrder.append(h[0])
 				
 			self.itemIdx = []
-			for m in mapOrder:
+			for m in mapFnOrder:
 				self.itemIdx.append(mapFn[m])
 		else:
 			self.itemIdx = range(len(self.slicehistory))
+			
 		self.SetItemCount(len(self.itemIdx))
 		
 	def getSelectedFile(self):
