@@ -117,10 +117,18 @@ class History:
 	
 	def FindInSliceHistory(self, fn):
 		for h in self.sliceHistory[::-1]:
+			try:
+				slName = h[1].split(":")[0]
+				print "extracted slicer name (%s) from history" % slName
+			except:
+				slName = None
+				
 			for sl in self.slicers:
-				slin = sl.buildSliceOutputFile(h[0])
-				if fn == slin:
-					return h
+				if sl.getSlicerName() == slName:
+					slin = sl.buildSliceOutputFile(h[0])
+					if fn == slin:
+						print "found matching history file: %s" % slin
+						return h
 			
 		return None
 

@@ -1139,7 +1139,7 @@ class FilePrepare(wx.Panel):
 	def getStatus(self):
 		st = {}
 		
-		cfg, fd, tp = self.getSlicerConfigInfo()
+		cfg, fd, tp = self.getSlicerInfo()
 		st['slicer'] = cfg
 		st['slicefil'] = str(fd)
 		st['slicetemp'] = str(tp)
