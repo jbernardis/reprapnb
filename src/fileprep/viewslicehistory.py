@@ -139,7 +139,7 @@ class SliceHistoryCtrl(wx.ListCtrl):
 		for h in self.slicehistory:
 			try:
 				mt = time.strftime('%y/%m/%d-%H:%M:%S', time.localtime(os.path.getmtime(h[0])))
-				if mt > h[2]:
+				if mt > h[4]:
 					self.fileFlags.append("mod")
 				else:
 					self.fileFlags.append("ok")
@@ -158,17 +158,15 @@ class SliceHistoryCtrl(wx.ListCtrl):
 			# and slice config (h[0] + h[1])
 			mapFn = {}
 			mapOrder = []
-			mapFnOrder = []
 			for i in range(len(self.slicehistory)):
 				h = self.slicehistory[i]
 				s = h[0] + ":" + h[1]
 				if not s in mapOrder:
-					mapFn[h[0]] = i
+					mapFn[s] = i
 					mapOrder.append(s)
-					mapFnOrder.append(h[0])
 				
 			self.itemIdx = []
-			for m in mapFnOrder:
+			for m in mapOrder:
 				self.itemIdx.append(mapFn[m])
 		else:
 			self.itemIdx = range(len(self.slicehistory))
