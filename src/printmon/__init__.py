@@ -893,6 +893,16 @@ class PrintMonitor(wx.Panel):
 					len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
 		
+		if self.filamentDiam != self.filamentdiameter:
+			dlg = wx.MessageDialog(self, 
+				"Model sliced with diameter = %s\nPrinter filament diameter = %s" % 
+				(self.filamentDiam, self.filamentdiameter),
+				'Unequal filament diameters',
+				wx.OK | wx.ICON_INFORMATION)
+			dlg.ShowModal()
+			dlg.Destroy()
+
+		
 	def setHETarget(self, tool, temp):
 		key = 'HE' + str(tool)
 		self.targets[key] = temp
