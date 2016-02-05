@@ -4,6 +4,9 @@ import glob
 import time 
 import pygame.camera
 import thread
+from sys import platform as _platform
+if _platform == "linux" or _platform == "linux2":
+	import termios
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 from pendant import Pendant
@@ -929,6 +932,10 @@ class ConnectionManagerPanel(wx.Panel):
 		port = 	self.lbPort.GetString(self.lbPort.GetSelection())
 		baud = 	self.lbBaud.GetString(self.lbBaud.GetSelection())
 		printer = 	self.lbPrinter.GetString(self.lbPrinter.GetSelection())
+		
+		if self.settings.resetonconnect:
+			self.resetPort(port)
+			
 		self.cm.connect(printer, port, baud)
 		(printers, ports, connections) = self.cm.getLists()
 		self.lbPort.SetItems(ports)
@@ -944,6 +951,14 @@ class ConnectionManagerPanel(wx.Panel):
 		self.loadConnections(connections)
 		self.bDisconnect.Enable(True)
 		self.bReset.Enable(True)
+		
+	def resetPort(self, port):
+		if _platform == "linux" or _platform == "linux2":
+			fp = open(port, "r")
+			new = termios.tcgetattr(fp)
+			new[2] = new[2] | ~termios.CREAD
+			termios.tcsetattr(fp, termios.TCSANOW, new)
+			fp.close()
 		
 	def onClose(self):
 		self.timelapse.delete()

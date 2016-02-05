@@ -244,6 +244,7 @@ class Settings:
 		self.tools = {}
 		self.toolOrder = []
 		self.historysize = 100
+		self.resetonconnect = False
 		self.slicehistoryfile = os.path.join(folder, "slice.history")
 		self.printhistoryfile = os.path.join(folder, "print.history")
 		self.pendantPort = "/dev/pendant"
@@ -285,6 +286,8 @@ class Settings:
 					self.webbase = value
 				elif opt == 'usepopuplog':
 					self.usepopup = parseBoolean(value, True)
+				elif opt == 'resetonconnect':
+					self.resetonconnect = parseBoolean(value, False)
 				elif opt == 'pendantport':
 					self.pendantPort = value
 				elif opt == 'pendantbaud':
@@ -502,6 +505,7 @@ class Settings:
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
 			self.cfg.set(self.section, "historysize", str(self.historysize))
 			self.cfg.set(self.section, "usepopuplog", str(self.usepopup))
+			self.cfg.set(self.section, "resetonconnect", str(self.resetonconnect))
 			self.cfg.set(self.section, "popuplocation", locString[self.popuplocation])
 			self.cfg.set(self.section, "buildarea", str(self.buildarea))
 			self.cfg.set(self.section, "resolution", str(self.resolution))

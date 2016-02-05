@@ -421,7 +421,7 @@ class Slic3r:
 			if k == 'layerheight':
 				dProfile['layer_height'] = self.overrides[k]
 			elif k == 'filamentdiam':
-				dProfile['filament_diameter'] = self.verifyListLength(self.overrides[k], dProfile['filament_diameter'])
+				dProfile['filament_diameter'] = self.verifyListLength('filament diameter', self.overrides[k], dProfile['filament_diameter'])
 		if 'layer_height' in dProfile.keys() and 'filament_diameter' in dProfile.keys():
 			return float(dProfile['layer_height']), [float(x) for x in dProfile['filament_diameter'].split(',')]
 		else:
@@ -513,11 +513,11 @@ class Slic3r:
 		# apply overrides
 		for k in self.overrides.keys():
 			if k == 'filamentdiam':
-				dProfile['filament_diameter'] = self.verifyListLength(self.overrides[k], dProfile['filament_diameter'])
+				dProfile['filament_diameter'] = self.verifyListLength('filament diameter', self.overrides[k], dProfile['filament_diameter'])
 				self.log("Override: filament_diameter = " + dProfile['filament_diameter'])
 				
 			elif k == 'extrusionmult':
-				dProfile['extrusion_multiplier'] = self.verifyListLength(self.overrides[k], dProfile['extrusion_multiplier'])
+				dProfile['extrusion_multiplier'] = self.verifyListLength('extrusion multiplier', self.overrides[k], dProfile['extrusion_multiplier'])
 				self.log("Override: extrusion_multiplier = " + dProfile['extrusion_multiplier'])
 				
 			elif k == 'layerheight':
@@ -565,11 +565,11 @@ class Slic3r:
 				self.log("Override: travel_speed = " + dProfile['travel_speed'])
 				
 			elif k == 'temperature':
-				dProfile['temperature'] = self.verifyListLength(self.overrides[k], dProfile['temperature'])
+				dProfile['temperature'] = self.verifyListLength('temperature', self.overrides[k], dProfile['temperature'])
 				self.log("Override: temperature = " + dProfile['temperature'])
 				
 			elif k == 'layer1temperature':
-				dProfile['first_layer_temperature'] = self.verifyListLength(self.overrides[k], dProfile['first_layer_temperature'])
+				dProfile['first_layer_temperature'] = self.verifyListLength('first layer temperature', self.overrides[k], dProfile['first_layer_temperature'])
 				self.log("Override: first_layer_temperature = " + dProfile['first_layer_temperature'])
 				
 			elif k == 'skirt':
@@ -609,20 +609,20 @@ class Slic3r:
 		self.tempFile = tfn.name
 		self.parent.settings['configfile'] = tfn.name
 		
-	def verifyListLength(self, newList, currentList):
+	def verifyListLength(self, field, newList, currentList):
 		nl = newList.split(',')
 		cl = currentList.split(',')
-		print "Verifying newlist (%s) against current list(%s)" % (newList, currentList)
-		print "lengths after split = ", len(nl), len(cl)
 		
 		if len(nl) == len(cl):
-			print 'Equal lengths'
 			return newList
 		
+		self.log("List length mismatch over-riding %s" % field)
+		self.log("original list has %d values (%s)" % (len(currentList), currentList))
+		self.log("override list has %d values (%s)" % (len(newList), newList))
 		if len(nl) < len(cl):
-			print "not enough new values - using corresponding values from current list"
+			self.log("not enough override values - using corresponding values from current list")
 		else:
-			print "too many values specified - ignoring extra"
+			self.log("too many override values specified - ignoring extra")
 			
 		rl = []
 		for i in range(len(cl)):
@@ -631,6 +631,8 @@ class Slic3r:
 			else:
 				rl.append(cl[i])
 		rs = ','.join(rl)
+		
+		self.log("resulting list: %s" % rs)
 		return rs
 		
 	

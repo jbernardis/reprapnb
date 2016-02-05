@@ -41,9 +41,3 @@ class TimeLapse:
         
     def isRunning(self):
         return self.running
-# 
-# def printer():
-#     print 'ipsem lorem'
-# 
-# t = TimeLapse(5,printer)
-# t.start()
