@@ -260,7 +260,7 @@ def modifyCSV(fn, ovr, logger):
 			restoreCSV(fn)
 			logger("Unable to modify raft.csv")
 			
-	elif bfn == "skirt.csv" and intersection(['skirt', 'adhesion'], ovr.keys()):	
+	elif bfn == "skirt.csv" and intersection(['skirt', 'skirtheight', 'adhesion'], ovr.keys()):	
 		try:	
 			os.rename(fn, fn + ".save")
 			fpCsv = list(open(fn + ".save"))
@@ -279,6 +279,13 @@ def modifyCSV(fn, ovr, logger):
 					else:
 						ns = "Activate Skirt\t"+str(ovr['skirt'])
 						logger("Override: " + ns + " (skirt)")
+				
+				elif s.startswith("Layers To (Index):"):
+					if 'skirtheight' in ovr.keys():
+						ns = "Layers To (Index):\t" + str(ovr['skirtheight'])
+						logger("Override: " + ns + " (skirt)")
+					else:
+						ns = s.rstrip()
 				
 				elif s.startswith("Brim Width:") and 'adhesion' in ovr.keys():	
 					if ovr['adhesion'] == "Brim":
@@ -591,6 +598,7 @@ class Skeinforge:
 		ht["print1speed"] = "Used for ALL Object First Layer Feed and Flow rates (speed).  Values > 2 are assumed to be explicit values and are recalculated as rations"
 		ht["travelspeed"] = "Used directly as Travel Feed Rate (speed)"
 		ht["skirt"] = "Used directly as Activate Skirt (skirt)"
+		ht["skirtheight"] = "Used directly as Skirt Height (skirt)"
 		ht["support"] = "Maps to Support (raft).  Enabled => Everywhere = True, Disabled => None = True"
 		ht["adhesion"] = "Maps to Brim Width (skirt) and Base Layers and Interface Layers (raft) to set either none, brim, or raft adhesion"
 		

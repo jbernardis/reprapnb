@@ -493,6 +493,7 @@ class Slic3r:
 		ht["print1speed"] = "Used directly as slic3r's first_layer_speed setting"
 		ht["travelspeed"] = "Used directly as slic3r's travel_speed setting"
 		ht["skirt"] = "Maps directly to slic3r's skirt setting.  Enable => 2, Disable => 0"
+		ht["skirtheight"] = "Used directly as slic3r's skirt height setting."
 		ht["support"] = "Maps directly to slic3r's support_material setting.  Enable => 1, Disable => 0"
 		ht["adhesion"] = "Chooses between no raft or brim, brim_width=3, and raft_layers=2"
 		
@@ -578,6 +579,10 @@ class Slic3r:
 				else:
 					dProfile['skirts'] = '0'
 				self.log("Override: skirts = " + dProfile['skirts'])
+				
+			elif k == 'skirtheight':
+				dProfile['skirt_height'] = self.overrides[k]
+				self.log("Override: skirt height = " + dProfile['skirtheight'])
 				
 			elif k == 'support':
 				if self.overrides[k] == "True":

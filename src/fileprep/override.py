@@ -3,7 +3,7 @@ import wx
 ovKeyOrder = ['filamentdiam', 'extrusionmult', 'layerheight', 'extrusionwidth', 'infilldensity',
 			'layer1bedtemperature', 'bedtemperature', 'layer1temperature', 'temperature',
 			'printspeed', 'travelspeed', 'print1speed',
-			'support', 'skirt', 'adhesion']
+			'support', 'skirt', 'skirtheight', 'adhesion']
 
 ovUserKeyMap = {'filamentdiam': "Filament Diameter",
 			'extrusionmult': "Extrusion Multiplier",
@@ -19,6 +19,7 @@ ovUserKeyMap = {'filamentdiam': "Filament Diameter",
 			'print1speed' : "Print Speed for Layer 1",
 			'support' : "Support",
 			'skirt' : "Skirt",
+			'skirtheight' : "Skirt Height",
 			'adhesion' : "Adhesion Method"}
 
 
@@ -264,6 +265,22 @@ class Override(wx.Dialog):
 			self.cbOvSkt.SetValue(True)
 			
 		bgrid.Add(self.teOvSkt, pos=(ln,3))
+		
+		ln += 1
+		value = "1"
+		key = "skirtheight"
+		self.cbOvSktHt = wx.CheckBox(self, wx.ID_ANY, "Skirt")
+		self.Bind(wx.EVT_CHECKBOX, self.checkSktHt, self.cbOvSktHt)
+		bgrid.Add(self.cbOvSktHt, pos=(ln, 1))
+		self.teOvSktHt= wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
+		self.teOvSktHt.Enable(False)
+		self.controls[key] = self.teOvSktHt
+		if key in values.keys():
+			self.teOvSktHt.SetValue(values[key])
+			self.teOvSktHt.Enable(True)
+			self.cbOvSktHt.SetValue(True)
+			
+		bgrid.Add(self.teOvSktHt, pos=(ln,3))
 
 		ln += 1
 		value = "None"
@@ -397,6 +414,12 @@ class Override(wx.Dialog):
 		else:
 			self.teOvSkt.Enable(False)
 		
+	def checkSktHt(self, evt):
+		if self.cbOvSktHt.IsChecked():
+			self.teOvSktHt.Enable(True)
+		else:
+			self.teOvSktHt.Enable(False)
+		
 	def checkSpt(self, evt):
 		if self.cbOvSpt.IsChecked():
 			self.teOvSpt.Enable(True)
@@ -452,6 +475,9 @@ class Override(wx.Dialog):
 				r['skirt'] = 'True'
 			else:
 				r['skirt'] = 'False'
+			
+		if self.cbOvSktHt.IsChecked():
+			r['skirtheight'] = self.teOvSktHt.GetValue()
 			
 		if self.cbOvSpt.IsChecked():
 			if self.teOvSpt.IsChecked():

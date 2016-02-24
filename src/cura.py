@@ -430,6 +430,7 @@ class Cura:
 		ht["print1speed"] = "Used directly as cura's bottom_layer_speed setting"
 		ht["travelspeed"] = "Used directly as cura's travel_speed setting"
 		ht["skirt"] = "Maps to cura's skirt_line_count setting.  Enable => 2, Disable => 0"
+		ht["skirtheight"] = "Unused in Cura"
 		ht["support"] = "Maps to cura's support setting.  Enable => Everywhere, Disable => None"
 		ht["adhesion"] = "Used directly for cura's platform_adhesion setting.  None, Brim, or Raft"
 		
