@@ -896,7 +896,7 @@ class PrintMonitor(wx.Panel):
 		if self.modelFilamentDiam is None:		
 			dlg = wx.MessageDialog(self, 
 				"Model sliced with unknown filament\nPrinter filament diameter = %s" % 
-				", ".join(self.filamentdiameter),
+				", ".join(["%.2f" % x for x in self.filamentdiameter]),
 				'Unknown filament diameter',
 				wx.OK | wx.ICON_INFORMATION)
 			dlg.ShowModal()
@@ -906,14 +906,14 @@ class PrintMonitor(wx.Panel):
 			if len(self.modelFilamentDiam) != len(self.filamentdiameter):
 				unequal = True
 			else:
-				for i in range(len(self.modelFilamentDiameter)):
-					if self.modelFilamentDiameter[i] != self.filamentdiameter[i]:
+				for i in range(len(self.modelFilamentDiam)):
+					if self.modelFilamentDiam[i] != self.filamentdiameter[i]:
 						unequal = True
 						
 			if unequal:
 				dlg = wx.MessageDialog(self, 
 					"Model sliced with diameter = %s\nPrinter filament diameter = %s" % 
-					(", ".join(self.modelFilamentDiam), ", ".join(self.filamentdiameter)),
+					(", ".join(["%.2f" % x for x in self.modelFilamentDiam]), ", ".join(["%.2f" % x for x in self.filamentdiameter])),
 					'Unequal filament diameters',
 					wx.OK | wx.ICON_INFORMATION)
 				dlg.ShowModal()

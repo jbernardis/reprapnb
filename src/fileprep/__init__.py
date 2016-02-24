@@ -1144,7 +1144,7 @@ class FilePrepare(wx.Panel):
 		if fd is None:
 			st['slicefil'] = "??"
 		else:
-			st['slicefil'] = ", ".join(fd)
+			st['slicefil'] = ", ".join(["%.2f" % x for x in fd])
 		st['slicetemp'] = str(tp)
 		fn = str(self.stlFile)
 		if self.temporaryFile:
@@ -1482,7 +1482,7 @@ class FilePrepare(wx.Panel):
 			if self.lastSliceFilament is None:
 				self.ipSliceFil.SetLabel("??")
 			else:
-				self.ipSliceFil.SetLabel(", ".join(self.lastSliceFilament))
+				self.ipSliceFil.SetLabel(", ".join(["%.2f" % x for x in self.lastSliceFilament]))
 				
 			if self.lastSliceTemps is None:
 				self.ipSliceTemp.SetLabel("")
