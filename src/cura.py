@@ -271,7 +271,7 @@ class Cura:
 		fildiamOver = False		
 		if 'filamentdiam' in self.overrides.keys():
 			fildiamOver = True
-			diams = self.overrides['filamentdiam'].split(',')
+			diams = [float(x) for x in self.overrides['filamentdiam'].split(',')]
 		try:
 			d = os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir']))
 			fn = os.path.join(d, str(self.vprofile) + ".ini")

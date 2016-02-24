@@ -841,7 +841,7 @@ class PrintMonitor(wx.Panel):
 		self.model = model
 		self.name = name
 		self.cfgString = cfg
-		self.filamentDiam = fd
+		self.modelFilamentDiam = fd
 		self.tempProfile = tp
 		self.sliceTime = st
 		if self.name == TEMPFILELABEL:
@@ -889,18 +889,35 @@ class PrintMonitor(wx.Panel):
 		
 		self.setStatus(PMSTATUS_READY)
 		self.infoPane.setFileInfo(self.name,
-					self.cfgString, self.filamentDiam, self.tempProfile, self.sliceTime, self.model.duration, 
+					self.cfgString, self.modelFilamentDiam, self.tempProfile, self.sliceTime, self.model.duration, 
 					len(self.model), self.layerCount, self.model.zmax, self.model.total_e, self.model.layer_time)
 		self.setLayer(layer)
-		
-		if self.filamentDiam != self.filamentdiameter:
+
+		if self.modelFilamentDiam is None:		
 			dlg = wx.MessageDialog(self, 
-				"Model sliced with diameter = %s\nPrinter filament diameter = %s" % 
-				(self.filamentDiam, self.filamentdiameter),
-				'Unequal filament diameters',
+				"Model sliced with unknown filament\nPrinter filament diameter = %s" % 
+				", ".join(self.filamentdiameter),
+				'Unknown filament diameter',
 				wx.OK | wx.ICON_INFORMATION)
 			dlg.ShowModal()
 			dlg.Destroy()
+		else:
+			unequal = False
+			if len(self.modelFilamentDiam) != len(self.filamentdiameter):
+				unequal = True
+			else:
+				for i in range(len(self.modelFilamentDiameter)):
+					if self.modelFilamentDiameter[i] != self.filamentdiameter[i]:
+						unequal = True
+						
+			if unequal:
+				dlg = wx.MessageDialog(self, 
+					"Model sliced with diameter = %s\nPrinter filament diameter = %s" % 
+					(", ".join(self.modelFilamentDiam), ", ".join(self.filamentdiameter)),
+					'Unequal filament diameters',
+					wx.OK | wx.ICON_INFORMATION)
+				dlg.ShowModal()
+				dlg.Destroy()
 
 		
 	def setHETarget(self, tool, temp):

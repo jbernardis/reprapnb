@@ -157,7 +157,7 @@ class SlicerSettings:
 		
 		return self.type.getConfigString()
 	
-	def getFilamentString(self):
+	def getFilamentInfo(self):
 		if self.type is None:
 			return None
 		
@@ -165,7 +165,7 @@ class SlicerSettings:
 		if fd is None:
 			return None
 		else:
-			return "%.2f" % fd[0]
+			return fd
 	
 	def getSlicerName(self):
 		return self.name
@@ -225,7 +225,7 @@ class PrinterSettings:
 		self.standardbedhi = 110
 		self.standardhelo = 185
 		self.standardhehi = 225
-		self.filamentdiam = "3.0"
+		self.filamentdiam = [3.0]
 
 class Settings:
 	def __init__(self, app, folder):
@@ -407,7 +407,16 @@ class Settings:
 							self.parent.showWarning("Non-integer value in ini file for standardhehi")
 							pt.standardhehi = 225
 					elif opt == 'filamentdiam':
-						pt.filamentdiam = value
+						try:
+							exec("s=%s" % value)
+							if isinstance(s, list):
+								pt.filamentdiam = s
+							else:
+								pt.filamentdiam = [ s ]
+
+						except:
+							pt.filamentdiam = [3.0]
+							
 					elif opt == 'buildarea':
 						try:
 							exec("s=%s" % value)

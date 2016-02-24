@@ -483,11 +483,11 @@ class Skeinforge:
 	
 	def getDimensionInfo(self):
 		dr = os.path.join(os.path.expandvars(os.path.expanduser(self.parent.settings['profiledir'])), str(self.vprofile))
-		lh = 0
-		fd = 0
+		lh = 0.0
+		fd = 0.0
 		try:
 			if "layerheight" in self.overrides.keys():
-				lh = self.overrides["layerheight"]
+				lh = float(self.overrides["layerheight"])
 			else:
 				l = list(open(os.path.join(dr, "carve.csv")))
 				for s in l:
@@ -495,7 +495,10 @@ class Skeinforge:
 						lh = float(s[18:].strip())
 						break
 			if "filamentdiam" in self.overrides.keys():
-				fd = self.overrides("filamentdiam")
+				try:
+					fd = float(self.overrides("filamentdiam"))
+				except:
+					fd = 0.0
 			else:
 				l = list(open(os.path.join(dr, "dimension.csv")))
 				for s in l:

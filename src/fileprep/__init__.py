@@ -1132,7 +1132,7 @@ class FilePrepare(wx.Panel):
 		
 	def getSlicerInfo(self):
 		cfg = self.slicer.getSlicerName() + ": " + self.slicer.getConfigString()
-		fd = self.slicer.getFilamentString()
+		fd = self.slicer.getFilamentInfo()
 		tp = self.slicer.getTempProfileString()
 		return cfg, fd, tp
 	
@@ -1141,7 +1141,10 @@ class FilePrepare(wx.Panel):
 		
 		cfg, fd, tp = self.getSlicerInfo()
 		st['slicer'] = cfg
-		st['slicefil'] = str(fd)
+		if fd is None:
+			st['slicefil'] = "??"
+		else:
+			st['slicefil'] = ", ".join(fd)
 		st['slicetemp'] = str(tp)
 		fn = str(self.stlFile)
 		if self.temporaryFile:
@@ -1477,9 +1480,9 @@ class FilePrepare(wx.Panel):
 				self.ipSliceConfig.SetLabel(self.lastSliceConfig)
 				
 			if self.lastSliceFilament is None:
-				self.ipSliceFil.SetLabel("")
+				self.ipSliceFil.SetLabel("??")
 			else:
-				self.ipSliceFil.SetLabel(str(self.lastSliceFilament))
+				self.ipSliceFil.SetLabel(", ".join(self.lastSliceFilament))
 				
 			if self.lastSliceTemps is None:
 				self.ipSliceTemp.SetLabel("")
