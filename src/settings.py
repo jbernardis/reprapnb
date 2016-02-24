@@ -225,7 +225,7 @@ class PrinterSettings:
 		self.standardbedhi = 110
 		self.standardhelo = 185
 		self.standardhehi = 225
-		self.filamentdiam = 3.0
+		self.filamentdiam = "3.0"
 
 class Settings:
 	def __init__(self, app, folder):
@@ -407,11 +407,7 @@ class Settings:
 							self.parent.showWarning("Non-integer value in ini file for standardhehi")
 							pt.standardhehi = 225
 					elif opt == 'filamentdiam':
-						try:
-							pt.filamentdiam = float(value)
-						except:
-							self.parent.showWarning("Invalid value in ini file for filamentdiam")
-							pt.filamentdiam = 3.0
+						pt.filamentdiam = value
 					elif opt == 'buildarea':
 						try:
 							exec("s=%s" % value)
