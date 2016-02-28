@@ -1,6 +1,8 @@
 1) when finished print to SD and try to exit, it thinks I'm still printing
 2) when I choose a gcode file from the history and load it, the file name does not appear in infopane
 
+test for filament diameter match needs improvement - check numeric value - not string - test multi-values and different sized lists
+
 
 In Progress/Need Testing
   pendant meta-comands (start/stop print eg)
@@ -9,7 +11,7 @@ In Progress/Need Testing
 	- initiate slicer
 
 camera:
-	implement a time-lapse algorithm - need to ask for directory and interval, need to integrate with printmon
+	finish time-lapse algorithm - need to ask for directory and interval, need to integrate with printmon
 	
 in fileprep, savelayer, need to figure out how to properly handle multiple tools when doing axis resets
 

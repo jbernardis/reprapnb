@@ -3,6 +3,7 @@ import wx.lib.newevent
 import re, time, shlex, subprocess
 import os.path
 import thread
+import subprocess
 
 from gcread import GCode
 from gcframe import GcFrame
@@ -15,7 +16,6 @@ from editgcode import EditGCodeDlg
 from stlmerge import StlMergeDlg
 from images import Images
 from tools import formatElapsed 
-from stlview import StlViewer
 from override import Override, ovUserKeyMap, ovKeyOrder
 from slicequeue import SliceQueue
 from gcodequeue import GCodeQueue
@@ -1234,12 +1234,11 @@ class FilePrepare(wx.Panel):
 			return
 		
 	def stlView(self, evt):
-		self.dlgView = StlViewer(self)
-		self.dlgView.CenterOnScreen()
-		self.dlgView.Show()
-		
-	def stlViewExit(self):
-		self.dlgView = None
+		try:
+			subprocess.Popen([self.settings.stlviewer],
+							shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
+		except:
+			self.logger.LogError("Exception occurred trying to spawn STL Viewer process")
 
 	def setSliceMode(self, flag=True):
 		self.sliceMode = flag

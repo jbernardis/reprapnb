@@ -1,9 +1,8 @@
 #!/bin/env python
 import os
 import wx
+import subprocess
 from settings import BUTTONDIM
-from stlview import StlViewer
-
 
 wildcard = "STL (*.stl)|*.stl;*STL|AMF (*.amf.xml, *.amf)|*.amf.xml;*.AMF.XML;*.amf;*.AMF|All files (*.*)|*.*"
 
@@ -229,12 +228,11 @@ class SliceQueue(wx.Dialog):
 					self.bDown.Enable(True)
 		
 	def stlView(self, evt):
-		self.dlgView = StlViewer(self)
-		self.dlgView.CenterOnScreen()
-		self.dlgView.ShowModal()
-		
-	def stlViewExit(self):
-		self.dlgView = None
+		try:
+			subprocess.Popen([self.settings.stlviewer],
+							shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
+		except:
+			self.logger.LogError("Exception occurred trying to spawn STL Viewer process")
 					
 	def doSave(self, evt):
 		self.EndModal(wx.ID_OK)

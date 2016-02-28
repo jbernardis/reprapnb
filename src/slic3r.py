@@ -436,8 +436,12 @@ class Slic3r:
 		for k in self.overrides.keys():
 			if k == 'temperature':
 				dProfile['temperature'] = self.overrides[k]
+			if k == 'layer1temperature':
+				dProfile['first_layer_temperature'] = self.overrides[k]
 			if k == 'bedtemperature':
 				dProfile['bed_temperature'] = self.overrides[k]
+			if k == 'layer1bedtemperature':
+				dProfile['first_layer_bed_temperature'] = self.overrides[k]
 		if 'first_layer_bed_temperature' in dProfile.keys() and 'bed_temperature' in dProfile.keys():
 			bt = [float(dProfile['first_layer_bed_temperature']), float(dProfile['bed_temperature'])]
 		elif 'bed_temperature' in dProfile.keys():

@@ -679,17 +679,11 @@ class ConnectionManagerPanel(wx.Panel):
 		pl = glob.glob('/dev/video*')
 		return pl
 
-	def swap(self):
-		self.Camera = None
-		self.Camera = pygame.camera.Camera(self.CameraPort, (1280, 960))
-
-	
 	def checkCamActive(self, evt):
 		self.camActive = evt.IsChecked()
 		if self.camActive:
 			port = 	self.lbCamPort.GetString(self.lbCamPort.GetSelection())
 			try:
-				self.Camera = pygame.camera.Camera(port, self.resolution)
 				self.CameraPort = port[:]
 				self.bSnapShot.Enable(True)
 				self.bCompose.Enable(True)
@@ -702,7 +696,6 @@ class ConnectionManagerPanel(wx.Panel):
 				dlg.ShowModal()
 				dlg.Destroy()
 
-				self.Camera = None
 				self.CameraPort = None
 				self.cbCamActive.SetValue(False)
 				self.camActive = False
@@ -715,13 +708,13 @@ class ConnectionManagerPanel(wx.Panel):
 			self.bCompose.Enable(False)
 			self.bTimeStart.Enable(False)
 			self.lbCamPort.Enable(True)
-			self.Camera = None
 			self.CameraPort = None
 			
 	def doCompose(self, evt):
 		if self.composeFrame is None:
 			self.CamLock.acquire()
-			self.composeFrame = Composer(self.Camera, self.resolution)
+			camera = pygame.camera.Camera(self.CameraPort, self.resolution)
+			self.composeFrame = Composer(camera, self.resolution)
 			self.composeTimer.Start(100)
 			self.bSnapShot.Enable(False)
 			self.bCompose.Enable(False)
@@ -769,11 +762,12 @@ class ConnectionManagerPanel(wx.Panel):
 			return None
 		
 		self.CamLock.acquire()
+		camera = pygame.camera.Camera(self.CameraPort, self.resolution)
 		try:
-			self.Camera.start()
-			self.Camera.set_controls(brightness=200)
-			image = self.Camera.get_image()
-			self.Camera.stop()
+			camera.start()
+			camera.set_controls(brightness=200)
+			image = camera.get_image()
+			camera.stop()
 		except:
 			wx.CallAfter(self.disconnectCamera)
 			self.CamLock.release()
@@ -785,7 +779,6 @@ class ConnectionManagerPanel(wx.Panel):
 	def disconnectCamera(self):
 		self.logger.LogMessage("Disconnecting camera due to error")
 		self.camActive = False
-		self.Camera = None
 		self.CameraPort = None
 		self.cbCamActive.SetValue(False)
 		self.refreshCamPorts()

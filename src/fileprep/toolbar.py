@@ -60,7 +60,8 @@ class ToolBar(wx.Frame):
 
 				args = shlex.split(str(cmd))
 				try:
-					subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+					subprocess.Popen(args, shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
+
 				except:
 					self.logger.LogError("Exception occurred trying to spawn tool process")
 					return

@@ -208,7 +208,7 @@ class InfoPane (wx.Window):
 		if slfil is None:
 			self.slicefil = "??"
 		else:
-			self.slicefil = ", ".join(["%02f" % x for x in slfil])
+			self.slicefil = ", ".join(["%.2f" % x for x in slfil])
 		self.setValue("filament", self.slicefil)
 			
 		if sltemp is None:

@@ -594,6 +594,7 @@ class SettingsFilePrep:
 		self.showstlbasename = False
 		self.editTrigger = "====="
 		self.plater = "/home/jeff/Programs/Slic3r129/bin/slic3r"
+		self.stlviewer = "/usr/bin/ccViewer"
 		
 		if cfg is None:
 			self.modified = True
@@ -642,6 +643,9 @@ class SettingsFilePrep:
 						
 				elif opt == 'plater':
 					self.plater = value
+						
+				elif opt == 'stlviewer':
+					self.stlviewer = value
 						
 				elif opt == 'toolpathsonly':
 					self.toolpathsonly = parseBoolean(value, False)
@@ -754,6 +758,7 @@ class SettingsFilePrep:
 			self.cfg.set(self.section, "laststldirectory", str(self.laststldirectory))
 			self.cfg.set(self.section, "lastgcdirectory", str(self.lastgcdirectory))
 			self.cfg.set(self.section, "plater", str(self.plater))
+			self.cfg.set(self.section, "stlviewer", str(self.stlviewer))
 			self.cfg.set(self.section, "showprevious", str(self.showprevious))
 			self.cfg.set(self.section, "drawstlgrid", str(self.drawstlgrid))
 			self.cfg.set(self.section, "showmoves", str(self.showmoves))

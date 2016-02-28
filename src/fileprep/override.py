@@ -269,7 +269,7 @@ class Override(wx.Dialog):
 		ln += 1
 		value = "1"
 		key = "skirtheight"
-		self.cbOvSktHt = wx.CheckBox(self, wx.ID_ANY, "Skirt")
+		self.cbOvSktHt = wx.CheckBox(self, wx.ID_ANY, "Skirt Height")
 		self.Bind(wx.EVT_CHECKBOX, self.checkSktHt, self.cbOvSktHt)
 		bgrid.Add(self.cbOvSktHt, pos=(ln, 1))
 		self.teOvSktHt= wx.TextCtrl(self, wx.ID_ANY, value, style=wx.TE_RIGHT)
