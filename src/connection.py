@@ -552,7 +552,7 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
 		
-		szCamera.AddSpacer((10, 10))
+		szCamCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		hb.Add(wx.StaticText(self, wx.ID_ANY, "Interval(sec): "))
@@ -568,7 +568,7 @@ class ConnectionManagerPanel(wx.Panel):
 				self, wx.ID_ANY, "Duration", wx.DefaultPosition, wx.DefaultSize,
 				["Count", "Seconds"], 1, wx.RA_SPECIFY_COLS)
 		
-		hb.Add(self.rdDuration)
+		hb.Add(self.rbDuration)
 		
 		self.tcDuration = wx.TextCtrl(self, -1, "10", size=(80, -1))
 		hb.Add(self.tcDuration)
@@ -583,7 +583,7 @@ class ConnectionManagerPanel(wx.Panel):
 
 
 		
-		szCamera.Add(hb)
+		szCamCtrl.Add(hb)
 		
 		szCamera.AddSpacer((10, 10))
 		szsbCamera.AddSpacer((10, 10))
@@ -627,9 +627,10 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		dType = self.rbDuration.GetSelection()
 		try:
-			dVal = int(self.tcDuration.getValue())
+			print "duration=(%s)" % self.tcDuration.GetValue()
+			dVal = int(self.tcDuration.GetValue())
 		except:
-			dlg = wx.MessageDialog(self, "Invalid Interval Value",
+			dlg = wx.MessageDialog(self, "Invalid duration Value",
 					'Invalid Value', wx.OK | wx.ICON_ERROR)
 	
 			dlg.ShowModal()
@@ -784,11 +785,12 @@ class ConnectionManagerPanel(wx.Panel):
 				else:
 					xd = XMLDoc(xml).getRoot()
 					try:
-						st = xd.status
+						st = str(xd.result)
 					except AttributeError:
 						print "got xml, but can't find status"
 						self.timeLapseEnded()
 					else:
+						print "st=(%s)" % st
 						if st == "idle":
 							print "successfully got idle status"
 							self.timeLapseEnded()

@@ -235,7 +235,7 @@ class WebcamServer:
 		#/connect?device="dev"
 		k = 'device'
 		if not k in q.keys():
-			return {'connect': 'Missing device name'}
+			return {'connect': {'result': 'Missing device name'}}
 
 		self.device = int(q[k][0])	
 		rslt = self.webcam.connect(self.device)
@@ -249,20 +249,20 @@ class WebcamServer:
 
 	def imageType(self, q):
 		if 'type' not in q.keys():
-			return {'imagetype': 'type missing'}
+			return {'imagetype': {'result': 'type missing'}}
 
 		newType = q['type'][0].lower()
 
 		if newType not in ['jpg', 'png']:
-			return {'imagetype': "unsupported image type: %s" % newType}
+			return {'imagetype': {'result': "unsupported image type: %s" % newType}}
 
 		self.imgType = newType
-		return {'imagetype': 'success'}
+		return {'imagetype': {'result': 'success'}}
 	
 	def picture(self, q):
 		#/picture?fn=x
 		if not self.webcam.isConnected():
-			return {'picture': 'not connected'}
+			return {'picture': {'result': 'not connected'}}
 		
 		if 'prefix' in q.keys():
 			prefix = q['prefix'][0]
@@ -287,39 +287,39 @@ class WebcamServer:
 	def timeLapse(self, q):
 		#/timelapse?interval=x&count=x&duration=x
 		if not self.webcam.isConnected():
-			return {'timelapse': 'not connected'}
+			return {'timelapse': {'result': 'not connected'}}
 
 		if self.tlTimer is not None:
-			return {'timelapse': 'timelapse already running'}
+			return {'timelapse': {'result': 'timelapse already running'}}
 
 		if 'interval' not in q.keys():
-			return {'timelapse': 'missing interval'}
+			return {'timelapse': {'result': 'missing interval'}}
 		try:
 			self.interval = int(q['interval'][0])
 		except:
-			return {'timelapse': 'invalid interval'}
+			return {'timelapse': {'result': 'invalid interval'}}
 		if self.interval <= 0:
-			return {'timelapse': 'interval must be > 0'}
+			return {'timelapse': {'result': 'interval must be > 0'}}
 
 		if 'count' in q.keys():
 			try:
 				self.maxIterations = int(q['count'][0])
 			except:
-				return {'timelapse': 'invalid count value'}
+				return {'timelapse': {'result': 'invalid count value'}}
 			if self.maxIterations <= 0:
-				return {'timelapse': 'count must be > 0'}
+				return {'timelapse': {'result': 'count must be > 0'}}
 
 		elif 'duration' in q.keys():
 			try:
 				secs = int(q['duration'][0])
 			except:
-				return {'timelapse': 'invalid duration value'}
+				return {'timelapse': {'result': 'invalid duration value'}}
 			if secs <= 0:
-				return {'timelapse': 'duration must be > 0'}
+				return {'timelapse': {'result': 'duration must be > 0'}}
 			self.maxIterations = int(float(secs)/float(self.interval) + 0.5)
 
 		else:
-			return {'timelapse': 'missing count or duration'}
+			return {'timelapse': {'result': 'missing count or duration'}}
 		
 		if 'prefix' in q.keys():
 			self.tlPrefix = q['prefix'][0]
@@ -339,24 +339,24 @@ class WebcamServer:
 			self.tlTimer = Timer(self.interval, self.doInterval)
 			self.tlTimer.start()
 
-		return {'timelapse': 'started'}
+		return {'timelapse': {'result': 'started'}}
 	
 	def tlpause(self, q):
 		if not self.webcam.isConnected():
-			return {'pause': 'not connected'}
+			return {'pause': {'result': 'not connected'}}
 		
 		if self.pause:
-			return { 'pause': 'timelapse already paused'}
+			return { 'pause': {'result': 'timelapse already paused'}}
 		
 		self.paused = True
 		self.tlTimer.cancel()
 	
 	def tlresume(self, q):
 		if not self.webcam.isConnected():
-			return {'resume': 'not connected'}
+			return {'resume': {'result': 'not connected'}}
 		
 		if not self.pause:
-			return { 'resume': 'timelapse already running'}
+			return { 'resume': {'result': 'timelapse already running'}}
 		
 		self.paused = False
 		self.tlTimer = Timer(self.interval, self.doInterval)
@@ -364,10 +364,10 @@ class WebcamServer:
 		
 	def tlstop(self, q):
 		if not self.webcam.isConnected():
-			return {'stop': 'not connected'}
+			return {'stop': {'result': 'not connected'}}
 
 		if self.tlTimer is None:
-			return {'stop': 'timelapse not running'}
+			return {'stop': {'result': 'timelapse not running'}}
 
 		self.running = False
 		self.pause = True
@@ -397,8 +397,8 @@ class WebcamServer:
 	def getStatus(self, q):
 		#/status
 		if self.tlTimer is None:
-			return {'status': 'idle'}
-		return {'status': 'timelapse running', 'interval': self.interval, 'interations': self.iterations, 'maxiterations': self.maxIterations}
+			return {'status': {'result': 'idle'}}
+		return {'status': {'result': 'timelapse running', 'interval': self.interval, 'interations': self.iteration, 'maxiterations': self.maxIterations}}
 			
 			
 port = 8887
