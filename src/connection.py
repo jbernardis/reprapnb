@@ -26,6 +26,8 @@ TRACE = False
 VISIBLELISTSIZE =  5
 
 TLTICKRATE = 10
+MAXDIRCHARS = 100
+MAXSTATCHARS = 100
 
 
 class Connection:
@@ -556,6 +558,7 @@ class ConnectionManagerPanel(wx.Panel):
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		hb.Add(wx.StaticText(self, wx.ID_ANY, "Interval(sec): "))
+		hb.AddSpacer((20, 20))
 		self.slInterval = wx.Slider(
 			self, wx.ID_ANY, 10, 5, 300, size=(320, -1), 
 			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
@@ -564,24 +567,57 @@ class ConnectionManagerPanel(wx.Panel):
 		self.slInterval.SetPageSize(1)
 		hb.Add(self.slInterval)
 		
+		szCamCtrl.AddSpacer((10, 10))
+		szCamCtrl.Add(hb)
+		
+		szCamCtrl.AddSpacer((10, 10))
+		hb = wx.BoxSizer(wx.HORIZONTAL)
+		
 		self.rbDuration = wx.RadioBox(
 				self, wx.ID_ANY, "Duration", wx.DefaultPosition, wx.DefaultSize,
 				["Count", "Seconds"], 1, wx.RA_SPECIFY_COLS)
 		
 		hb.Add(self.rbDuration)
+		hb.AddSpacer((20, 20))
 		
 		self.tcDuration = wx.TextCtrl(self, -1, "10", size=(80, -1))
-		hb.Add(self.tcDuration)
+		hb.Add(self.tcDuration, 0, wx.TOP, 10)
+		
+		szCamCtrl.AddSpacer((10, 10))
+		szCamCtrl.Add(hb)
+		
+		szCamCtrl.AddSpacer((10, 10))
+		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.bDir = wx.Button(self, wx.ID_ANY, "Dir")
 		hb.Add(self.bDir)
 		self.Bind(wx.EVT_BUTTON, self.setTlDirectory, self.bDir)
+		hb.AddSpacer((20, 20))
+
+		ipfont = wx.Font(10,  wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+		dc = wx.WindowDC(self)
+		dc.SetFont(ipfont)
+		self.tlDir = "."
+		w, h = dc.GetTextExtent("X" * MAXDIRCHARS)
+		w = int(0.75 * w)
+		padding = " " * MAXDIRCHARS
+		self.txtDir = wx.StaticText(self, wx.ID_ANY, self.tlDir + padding, style=wx.ALIGN_LEFT, size=(w, h))
+		self.txtDir.SetFont(ipfont)
+		hb.Add(self.txtDir)
+				
+		szCamCtrl.AddSpacer((10, 10))
+		szCamCtrl.Add(hb)
+		
+		szCamCtrl.AddSpacer((10, 10))
+		hb = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.tlDir = "."
-		self.txtDir = wx.StaticText(self, wx.ID_ANY, self.tlDir)
-		hb.Add(self.txtDir)
-
-
+		w, h = dc.GetTextExtent("X" * MAXSTATCHARS)
+		w = int(0.75 * w)
+		padding = " " * MAXSTATCHARS
+		self.txtTlStatus = wx.StaticText(self, wx.ID_ANY, padding, style=wx.ALIGN_LEFT, size=(w, h))
+		self.txtTlStatus.SetFont(ipfont)
+		hb.Add(self.txtTxtStatus)
 		
 		szCamCtrl.Add(hb)
 		
@@ -619,6 +655,7 @@ class ConnectionManagerPanel(wx.Panel):
 		dlg = wx.DirDialog(self, "Choose a directory for timelapse pictures:")
 		if dlg.ShowModal() == wx.ID_OK:
 			self.tlDir = dlg.GetPath()
+			self.txtDir.SetLabel(self.tlDir)
 
 		dlg.Destroy()
 		
@@ -661,13 +698,16 @@ class ConnectionManagerPanel(wx.Panel):
 		self.timeLapsePaused = False
 		self.timeLapseRunning = False
 		
-		#self.bSnapShot.Enable(True)
+		self.updateTimeLapseStatus("")
 		self.bTimeStart.Enable(True)
 		self.lbCamPort.Enable(True)
 		self.cbCamActive.Enable(True)
 
 		self.bTimePause.Enable(False)
 		self.bTimeStop.Enable(False)
+		
+	def updateTimeLapseStatus(self, text):
+		self.txtTlStatus.SetLabel(text)
 		
 	def doTimeLapsePause(self, evt):
 		self.timeLapsePaused = not self.timeLapsePaused
@@ -776,26 +816,24 @@ class ConnectionManagerPanel(wx.Panel):
 		if self.timeLapseRunning and not self.timeLapsePaused:
 			self.tlTick -= 1
 			if self.tlTick <= 0:
-				print "time lapse running and we hit tltick interval"
 				self.tlTick = TLTICKRATE
 				rc, xml = self.webcam.timelapseStatus()
 				if not rc:
-					print "get status failed"
 					self.timeLapseEnded()
 				else:
 					xd = XMLDoc(xml).getRoot()
 					try:
 						st = str(xd.result)
 					except AttributeError:
-						print "got xml, but can't find status"
 						self.timeLapseEnded()
 					else:
-						print "st=(%s)" % st
 						if st == "idle":
-							print "successfully got idle status"
 							self.timeLapseEnded()
 						else:
-							print "successfully got non-idle status"
+							iteration = int(str(xd.iterations))
+							maxIteration = int(str(xd.maxiterations))
+							statLine = st + "- %d out of %d completed" & (iteration, maxIteration)
+							self.updateTimeLapseStatus(statLine)
 							
 		cxlist = self.cm.getLists()[2]
 		for cx in cxlist:

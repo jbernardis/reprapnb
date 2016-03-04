@@ -143,7 +143,9 @@ class Webcam:
 		if not self.isConnected():
 			return {'result': 'not connected'}
 
+		self.camera.open()
 		rc, img = self.camera.read()
+		self.camera.release()
 		if not rc:
 			return {'result': 'failure'}
 
