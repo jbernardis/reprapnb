@@ -570,7 +570,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
 		
-		szCamCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.rbDuration = wx.RadioBox(
@@ -581,12 +580,11 @@ class ConnectionManagerPanel(wx.Panel):
 		hb.AddSpacer((20, 20))
 		
 		self.tcDuration = wx.TextCtrl(self, -1, "10", size=(80, -1))
-		hb.Add(self.tcDuration, 0, wx.TOP, 10)
+		hb.Add(self.tcDuration, 0, wx.TOP, 30)
 		
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
 		
-		szCamCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.bDir = wx.Button(self, wx.ID_ANY, "Dir")
@@ -608,7 +606,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
 		
-		szCamCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.tlDir = "."
@@ -617,7 +614,7 @@ class ConnectionManagerPanel(wx.Panel):
 		padding = " " * MAXSTATCHARS
 		self.txtTlStatus = wx.StaticText(self, wx.ID_ANY, padding, style=wx.ALIGN_LEFT, size=(w, h))
 		self.txtTlStatus.SetFont(ipfont)
-		hb.Add(self.txtTxtStatus)
+		hb.Add(self.txtTlStatus)
 		
 		szCamCtrl.Add(hb)
 		
@@ -832,7 +829,7 @@ class ConnectionManagerPanel(wx.Panel):
 						else:
 							iteration = int(str(xd.iterations))
 							maxIteration = int(str(xd.maxiterations))
-							statLine = st + "- %d out of %d completed" & (iteration, maxIteration)
+							statLine = st + "- %d out of %d completed" % (iteration, maxIteration)
 							self.updateTimeLapseStatus(statLine)
 							
 		cxlist = self.cm.getLists()[2]

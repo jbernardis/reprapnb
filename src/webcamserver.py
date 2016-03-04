@@ -143,7 +143,7 @@ class Webcam:
 		if not self.isConnected():
 			return {'result': 'not connected'}
 
-		self.camera.open()
+		self.camera.open(self.device)
 		rc, img = self.camera.read()
 		self.camera.release()
 		if not rc:
@@ -400,7 +400,7 @@ class WebcamServer:
 		#/status
 		if self.tlTimer is None:
 			return {'status': {'result': 'idle'}}
-		return {'status': {'result': 'timelapse running', 'interval': self.interval, 'interations': self.iteration, 'maxiterations': self.maxIterations}}
+		return {'status': {'result': 'timelapse running', 'interval': self.interval, 'iterations': self.iteration, 'maxiterations': self.maxIterations}}
 			
 			
 port = 8887
