@@ -11,9 +11,9 @@ import cv2
 
 
 propertyMap = {
-	'saturation':cv2.cv.CV_CAP_PROP_SATURATION,
-	'contrast':cv2.cv.CV_CAP_PROP_CONTRAST,
-	'brightness':cv2.cv.CV_CAP_PROP_BRIGHTNESS}
+	'saturation':cv2.cv.CV_CAP_PROP_SATURATION, #@UndefinedVariable	
+	'contrast':cv2.cv.CV_CAP_PROP_CONTRAST,		#@UndefinedVariable
+	'brightness':cv2.cv.CV_CAP_PROP_BRIGHTNESS} #@UndefinedVariable
 
 def quote(s):
 	return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -155,6 +155,7 @@ class WebcamServer:
 		self.ipport = ipport
 		self.tlTimer = None
 		self.running = True
+		self.pause = False
 		self.cameraFree = Lock()
 
 		self.imgType = "png"
@@ -188,6 +189,12 @@ class WebcamServer:
 			return True, self.picture(query)
 		elif path == "/timelapse":
 			return True, self.timeLapse(query)
+		elif path == "/pause":
+			return True, self.tlpause(query)
+		elif path == "/resume":
+			return True, self.tlresume(query)
+		elif path == "/stop":
+			return True, self.tlstop(query)
 		elif path == "/imagetype":
 			return True, self.imageType(query)
 		elif path == "/status":
@@ -325,6 +332,7 @@ class WebcamServer:
 			self.tlDir = "."
 
 		self.iteration = 0
+		self.pause = False
 		if 'immediate' in q.keys():
 			self.doInterval()
 		else:
@@ -332,8 +340,43 @@ class WebcamServer:
 			self.tlTimer.start()
 
 		return {'timelapse': 'started'}
+	
+	def tlpause(self, q):
+		if not self.webcam.isConnected():
+			return {'pause': 'not connected'}
+		
+		if self.pause:
+			return { 'pause': 'timelapse already paused'}
+		
+		self.paused = True
+		self.tlTimer.cancel()
+	
+	def tlresume(self, q):
+		if not self.webcam.isConnected():
+			return {'resume': 'not connected'}
+		
+		if not self.pause:
+			return { 'resume': 'timelapse already running'}
+		
+		self.paused = False
+		self.tlTimer = Timer(self.interval, self.doInterval)
+		self.tlTimer.start()
+		
+	def tlstop(self, q):
+		if not self.webcam.isConnected():
+			return {'stop': 'not connected'}
+
+		if self.tlTimer is None:
+			return {'stop': 'timelapse not running'}
+
+		self.running = False
+		self.pause = True
+		self.tlTimer = None
 
 	def doInterval(self):
+		if self.pause:
+			return
+		
 		suffix = "-%04d" % self.iteration
 		self.iteration += 1
 

@@ -61,7 +61,7 @@ class Webcam:
 			url = self.urlPrefix + "picture"
 		return  self.send(url)
 
-	def timelapse(self, interval, count=None, duration=None, directory=None, prefix=None):
+	def timelapseStart(self, interval, count=None, duration=None, directory=None, prefix=None):
 		if count is None and duration is None:
 			return False, None
 
@@ -77,6 +77,22 @@ class Webcam:
 			args += "&prefix=%s" % prefix
 
 		url = self.urlPrefix + "timelapse?" + args
+		return self.send(url)
+	
+	def timelapsePause(self):
+		url = self.urlPrefix + "pause"
+		return self.send(url)
+	
+	def timelapseResume(self):
+		url = self.urlPrefix + "resume"
+		return self.send(url)
+	
+	def timelapseStop(self):
+		url = self.urlPrefix + "stop"
+		return self.send(url)
+	
+	def timelapseStatus(self):
+		url = self.urlPrefix + "status"
 		return self.send(url)
 
 	def exit(self):

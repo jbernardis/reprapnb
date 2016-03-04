@@ -5,11 +5,10 @@ import time
 import thread
 from sys import platform as _platform
 if _platform == "linux" or _platform == "linux2":
-	import termios
+	import termios #@UnresolvedImport
 
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 from pendant import Pendant
-from timelapse import TimeLapse
 from webcamclient import Webcam
 from XMLDoc import XMLDoc
 
@@ -25,6 +24,8 @@ PENDANT_COMMAND = 3
 TRACE = False
 
 VISIBLELISTSIZE =  5
+
+TLTICKRATE = 10
 
 
 class Connection:
@@ -328,15 +329,24 @@ class SnapFrame(wx.Frame):
 		mask = wx.Mask(png, wx.BLUE)
 		png.SetMask(mask)
 		
-		wx.StaticBitmap(self, wx.ID_ANY, png, (-1, -1), (png.GetWidth(), png.GetHeight()))
+		sz = wx.BoxSizer(wx.VERTICAL)
+		
+		sz.Add(wx.StaticBitmap(self, wx.ID_ANY, png, (-1, -1), (png.GetWidth(), png.GetHeight())))
+		sz.AddSpacer((10,10))
+		
+		self.cbRetain = wx.CheckBox(self, wx.ID_ANY, "Retain file %s" % picfn)
+		sz.Add(self.cbRetain, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		sz.AddSpacer((10,10))
+		
+		self.SetSizer(sz)
 		self.Fit()
 			
 	def onClose(self, evt):
-		try:
-			print "deleting (%s)" % self.fn
-			os.unlink(self.fn)
-		except:
-			pass
+		if not self.cbRetain.IsChecked():
+			try:
+				os.unlink(self.fn)
+			except:
+				pass
 		self.Destroy()
 
 class ConnectionManagerPanel(wx.Panel):
@@ -346,6 +356,9 @@ class ConnectionManagerPanel(wx.Panel):
 		self.settings = self.app.settings
 		self.logger = self.app.logger
 		self.CameraPort = None
+		self.timeLapsePaused = False
+		self.timeLapseRunning = False
+		self.tlTick = 0
 		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		
@@ -356,10 +369,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		self.pendantActive = False
 		
-		self.webcam = Webcam(9132)  # TODO - this should come from settings
+		self.webcam = Webcam(self.settings.cameraport)
 		
 		self.camActive = False
-		self.resolution = self.settings.resolution
+		self.resolution = self.settings.resolution #TODO: work this back in
 		
 		self.SetBackgroundColour("white")
 
@@ -519,25 +532,58 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bTimeStart.SetToolTipString("Start time lapse photography")
 		hb.AddSpacer((10, 10))
 		hb.Add(self.bTimeStart)
-		self.Bind(wx.EVT_BUTTON, self.doTimeStart, self.bTimeStart)
+		self.Bind(wx.EVT_BUTTON, self.doTimeLapseStart, self.bTimeStart)
 		self.bTimeStart.Enable(False)
 		
 		self.bTimePause = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimepause, size=BUTTONDIM)
 		self.bTimePause.SetToolTipString("Pause/resume time lapse photography")
 		hb.AddSpacer((10, 10))
 		hb.Add(self.bTimePause)
-		self.Bind(wx.EVT_BUTTON, self.doTimePause, self.bTimePause)
+		self.Bind(wx.EVT_BUTTON, self.doTimeLapsePause, self.bTimePause)
 		self.bTimePause.Enable(False)
 		
 		self.bTimeStop = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimestop, size=BUTTONDIM)
 		self.bTimeStop.SetToolTipString("Stop time lapse photography")
 		hb.AddSpacer((10, 10))
 		hb.Add(self.bTimeStop)
-		self.Bind(wx.EVT_BUTTON, self.doTimeStop, self.bTimeStop)
+		self.Bind(wx.EVT_BUTTON, self.doTimeLapseStop, self.bTimeStop)
 		self.bTimeStop.Enable(False)
 		
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
+		
+		szCamera.AddSpacer((10, 10))
+		hb = wx.BoxSizer(wx.HORIZONTAL)
+		
+		hb.Add(wx.StaticText(self, wx.ID_ANY, "Interval(sec): "))
+		self.slInterval = wx.Slider(
+			self, wx.ID_ANY, 10, 5, 300, size=(320, -1), 
+			style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS 
+			)
+		self.slInterval.SetTickFreq(10, 1)
+		self.slInterval.SetPageSize(1)
+		hb.Add(self.slInterval)
+		
+		self.rbDuration = wx.RadioBox(
+				self, wx.ID_ANY, "Duration", wx.DefaultPosition, wx.DefaultSize,
+				["Count", "Seconds"], 1, wx.RA_SPECIFY_COLS)
+		
+		hb.Add(self.rdDuration)
+		
+		self.tcDuration = wx.TextCtrl(self, -1, "10", size=(80, -1))
+		hb.Add(self.tcDuration)
+		
+		self.bDir = wx.Button(self, wx.ID_ANY, "Dir")
+		hb.Add(self.bDir)
+		self.Bind(wx.EVT_BUTTON, self.setTlDirectory, self.bDir)
+
+		self.tlDir = "."
+		self.txtDir = wx.StaticText(self, wx.ID_ANY, self.tlDir)
+		hb.Add(self.txtDir)
+
+
+		
+		szCamera.Add(hb)
 		
 		szCamera.AddSpacer((10, 10))
 		szsbCamera.AddSpacer((10, 10))
@@ -569,11 +615,40 @@ class ConnectionManagerPanel(wx.Panel):
 		self.SetSizer(self.sizer)
 		self.lbCamPort.SetSelection(0)
 		
-	def doTimeStart(self, evt):
-		self.timelapse.start(True)
-		self.timeLapsePaused = False
+	def setTlDirectory(self, evt):
+		dlg = wx.DirDialog(self, "Choose a directory for timelapse pictures:")
+		if dlg.ShowModal() == wx.ID_OK:
+			self.tlDir = dlg.GetPath()
+
+		dlg.Destroy()
 		
-		self.bSnapShot.Enable(False)
+	def doTimeLapseStart(self, evt):
+		interval = self.slInterval.GetValue()
+		
+		dType = self.rbDuration.GetSelection()
+		try:
+			dVal = int(self.tcDuration.getValue())
+		except:
+			dlg = wx.MessageDialog(self, "Invalid Interval Value",
+					'Invalid Value', wx.OK | wx.ICON_ERROR)
+	
+			dlg.ShowModal()
+			dlg.Destroy()
+			return
+			
+		if dType == 0:
+			count = dVal
+			seconds = None
+		else:
+			count = None
+			seconds = dVal
+			
+		self.webcam.timelapseStart(interval, count=count, duration=seconds, directory=self.tlDir)
+		self.timeLapsePaused = False
+		self.timeLapseRunning = True
+		self.tlTick = TLTICKRATE
+		
+		#self.bSnapShot.Enable(False)
 		self.bTimeStart.Enable(False)
 		self.lbCamPort.Enable(False)
 		self.cbCamActive.Enable(False)
@@ -581,15 +656,27 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bTimePause.Enable(True)
 		self.bTimeStop.Enable(True)
 		
-	def doTimePause(self, evt):
+	def timeLapseEnded(self):
+		self.timeLapsePaused = False
+		self.timeLapseRunning = False
+		
+		#self.bSnapShot.Enable(True)
+		self.bTimeStart.Enable(True)
+		self.lbCamPort.Enable(True)
+		self.cbCamActive.Enable(True)
+
+		self.bTimePause.Enable(False)
+		self.bTimeStop.Enable(False)
+		
+	def doTimeLapsePause(self, evt):
 		self.timeLapsePaused = not self.timeLapsePaused
 		if self.timeLapsePaused:
-			self.timelapse.pause()
+			self.webcam.pause()
 		else:
-			self.timelapse.resume()
+			self.webcam.resume()
 			
-	def doTimeStop(self, evt):
-		self.timelapse.stop()
+	def doTimeLapseStop(self, evt):
+		self.webcam.stop()
 		
 		self.bSnapShot.Enable(True)
 		self.bTimeStart.Enable(True)
@@ -664,15 +751,14 @@ class ConnectionManagerPanel(wx.Panel):
 	def doSnapShot(self, evt):
 		picfn = self.snapShot()
 		if picfn is None:
-			dlg = wx.MessageDialog(self, "Error Taking Picture\nCamera Disconnected",
+			dlg = wx.MessageDialog(self, "Error Taking Picture",
 					'Camera Error', wx.OK | wx.ICON_ERROR)
 	
 			dlg.ShowModal()
 			dlg.Destroy()
-			return
-		
-		s = SnapFrame(self, picfn)
-		s.Show()
+		else:
+			s = SnapFrame(self, picfn)
+			s.Show()
 			
 	def snapShot(self, block=True):
 		if not self.camActive:
@@ -685,15 +771,30 @@ class ConnectionManagerPanel(wx.Panel):
 		xd = XMLDoc(xml).getRoot()
 		return str(xd.filename)
 	
-	def disconnectCamera(self):
-		self.logger.LogMessage("Disconnecting camera due to error")
-		self.camActive = False
-		self.webcam.disconnect()
-		self.cbCamActive.SetValue(False)
-		self.refreshCamPorts()
-		self.CameraPort = None
-	
 	def tick(self):
+		if self.timeLapseRunning and not self.timeLapsePaused:
+			self.tlTick -= 1
+			if self.tlTick <= 0:
+				print "time lapse running and we hit tltick interval"
+				self.tlTick = TLTICKRATE
+				rc, xml = self.webcam.timelapseStatus()
+				if not rc:
+					print "get status failed"
+					self.timeLapseEnded()
+				else:
+					xd = XMLDoc(xml).getRoot()
+					try:
+						st = xd.status
+					except AttributeError:
+						print "got xml, but can't find status"
+						self.timeLapseEnded()
+					else:
+						if st == "idle":
+							print "successfully got idle status"
+							self.timeLapseEnded()
+						else:
+							print "successfully got non-idle status"
+							
 		cxlist = self.cm.getLists()[2]
 		for cx in cxlist:
 			cx.tick()

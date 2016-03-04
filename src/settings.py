@@ -254,6 +254,7 @@ class Settings:
 		self.portprefixes = PORTPREFIXLIST
 		self.shares = {}
 		self.resolution = [800, 600]
+		self.cameraport = 8988
 		
 		self.cfg = ConfigParser.ConfigParser()
 		self.cfg.optionxform = str
@@ -341,6 +342,13 @@ class Settings:
 						self.showWarning("Invalid value for history size")
 						self.historysize = 100
 						self.modified = True
+						
+				elif opt == 'cameraport':
+					try:
+						self.cameraport = int(value)
+					except:
+						self.cameraport = 8988
+						self.showWarning("Invalid value (%s) for camera port - using %d" % (value, self.cameraport))
 						
 				elif opt == 'port':
 					try:
@@ -505,6 +513,7 @@ class Settings:
 			self.cfg.set(self.section, "printhistoryfile", str(self.printhistoryfile))
 			self.cfg.set(self.section, "webbase", str(self.webbase))
 			self.cfg.set(self.section, "port", str(self.port))
+			self.cfg.set(self.section, "cameraport", str(self.cameraport))
 			self.cfg.set(self.section, "pendantport", str(self.pendantPort))
 			self.cfg.set(self.section, "pendantbaud", str(self.pendantBaud))
 			self.cfg.set(self.section, "maxloglines", str(self.maxloglines))
