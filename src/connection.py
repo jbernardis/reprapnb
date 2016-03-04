@@ -2,7 +2,6 @@ import os
 import wx.lib.newevent
 import glob
 import time 
-import pygame.camera
 import thread
 from sys import platform as _platform
 if _platform == "linux" or _platform == "linux2":
@@ -11,6 +10,8 @@ if _platform == "linux" or _platform == "linux2":
 from settings import BUTTONDIM, BUTTONDIMLG, RECEIVED_MSG
 from pendant import Pendant
 from timelapse import TimeLapse
+from webcamclient import Webcam
+from XMLDoc import XMLDoc
 
 baudChoices = ["2400", "9600", "19200", "38400", "57600", "115200", "250000"]
 
@@ -318,19 +319,24 @@ class ConnectionManager:
 		return self.disconnectByPort(port)
 	
 class SnapFrame(wx.Frame):
-	def __init__(self, parent, data):
-		self.failed = False
+	def __init__(self, parent, picfn):
+		self.fn = picfn
 		wx.Frame.__init__(self, parent, wx.ID_ANY, "Snapshot", (-1, -1), (-1, -1), wx.DEFAULT_FRAME_STYLE)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
-		s = pygame.image.tostring(data, 'RGB')  # Convert the surface to an RGB string
-		img = wx.ImageFromData(data.get_width(), data.get_height(), s)  # Load this string into a wx image
-		bmp = wx.BitmapFromImage(img)  # Get the image in bitmap form
+		png = wx.Image(picfn, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+		mask = wx.Mask(png, wx.BLUE)
+		png.SetMask(mask)
 		
-		wx.StaticBitmap(self, wx.ID_ANY, bmp, (-1, -1), (bmp.GetWidth(), bmp.GetHeight()))
+		wx.StaticBitmap(self, wx.ID_ANY, png, (-1, -1), (png.GetWidth(), png.GetHeight()))
 		self.Fit()
 			
 	def onClose(self, evt):
+		try:
+			print "deleting (%s)" % self.fn
+			os.unlink(self.fn)
+		except:
+			pass
 		self.Destroy()
 
 class ConnectionManagerPanel(wx.Panel):
@@ -339,6 +345,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.app = app
 		self.settings = self.app.settings
 		self.logger = self.app.logger
+		self.CameraPort = None
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		
 		self.CamLock = thread.allocate_lock()
@@ -348,16 +356,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		self.pendantActive = False
 		
-		pygame.init()
-		pygame.camera.init()
+		self.webcam = Webcam(9132)  # TODO - this should come from settings
 		
 		self.camActive = False
-		self.Camera = None
-		self.CameraPort = None
 		self.resolution = self.settings.resolution
-		self.composeTimer = wx.Timer(self)
-		self.composeFrame = None
-		self.Bind(wx.EVT_TIMER, self.onTimer, self.composeTimer)  
 		
 		self.SetBackgroundColour("white")
 
@@ -508,13 +510,6 @@ class ConnectionManagerPanel(wx.Panel):
 		hb.Add(self.bSnapShot)
 		self.Bind(wx.EVT_BUTTON, self.doSnapShot, self.bSnapShot)
 		self.bSnapShot.Enable(False)
-		
-		self.bCompose = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngCompose, size=BUTTONDIM)
-		self.bCompose.SetToolTipString("Compose the scene")
-		hb.AddSpacer((10, 10))
-		hb.Add(self.bCompose)
-		self.Bind(wx.EVT_BUTTON, self.doCompose, self.bCompose)
-		self.bCompose.Enable(False)
 
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
@@ -574,28 +569,11 @@ class ConnectionManagerPanel(wx.Panel):
 		self.SetSizer(self.sizer)
 		self.lbCamPort.SetSelection(0)
 		
-				
-		self.timelapse = TimeLapse(self.timeLapseInterval)
-		self.timelapse.setInterval(15)
-		
-	def timeLapseInterval(self):
-		pic = self.snapShot()
-		if not pic is None:
-			fbn = "img%s.jpg" % time.strftime('%y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-			fulldir = os.path.join("/tmp", "reprap")
-			try:
-				os.makedirs(fulldir)
-			except:
-				pass
-			path = os.path.join(fulldir, fbn)
-			pygame.image.save(pic, path)
-		
 	def doTimeStart(self, evt):
 		self.timelapse.start(True)
 		self.timeLapsePaused = False
 		
 		self.bSnapShot.Enable(False)
-		self.bCompose.Enable(False)
 		self.bTimeStart.Enable(False)
 		self.lbCamPort.Enable(False)
 		self.cbCamActive.Enable(False)
@@ -614,7 +592,6 @@ class ConnectionManagerPanel(wx.Panel):
 		self.timelapse.stop()
 		
 		self.bSnapShot.Enable(True)
-		self.bCompose.Enable(True)
 		self.bTimeStart.Enable(True)
 		self.lbCamPort.Enable(True)
 		self.cbCamActive.Enable(True)
@@ -632,9 +609,6 @@ class ConnectionManagerPanel(wx.Panel):
 		self.refreshCamPorts()
 			
 	def refreshCamPorts(self):
-		if not self.composeFrame is None:
-			return
-
 		ports = self.getCamPorts()
 		self.lbCamPort.Enable(True)
 		self.lbCamPort.SetItems(ports)
@@ -647,33 +621,25 @@ class ConnectionManagerPanel(wx.Panel):
 					self.cbCamActive.SetValue(True)
 					self.camActive = True
 					self.bSnapShot.Enable(True)
-					self.bCompose.Enable(True)
 					self.bTimeStart.Enable(True)
 				else:
 					self.lbCamPort.SetSelection(0)
 					self.cbCamActive.SetValue(False)
 					self.camActive = False
 					self.bSnapShot.Enable(False)
-					self.bCompose.Enable(False)
 					self.bTimeStart.Enable(False)
-					self.Camera = None
-					self.CameraPort = None
 			else:
 				self.cbCamActive.SetValue(False)
 				self.camActive = False
 				self.bSnapShot.Enable(False)
-				self.bCompose.Enable(False)
 				self.bTimeStart.Enable(False)
 				self.lbCamPort.SetSelection(0)
 		else:
 			self.lbCamPort.Enable(False)
 			self.cbCamActive.Enable(False)
 			self.bSnapShot.Enable(False)
-			self.bCompose.Enable(False)
 			self.bTimeStart.Enable(False)
 			self.camActive = False
-			self.Camera = None
-			self.CameraPort = None
 	
 	def getCamPorts(self):
 		pl = glob.glob('/dev/video*')
@@ -683,67 +649,21 @@ class ConnectionManagerPanel(wx.Panel):
 		self.camActive = evt.IsChecked()
 		if self.camActive:
 			port = 	self.lbCamPort.GetString(self.lbCamPort.GetSelection())
-			try:
-				self.CameraPort = port[:]
-				self.bSnapShot.Enable(True)
-				self.bCompose.Enable(True)
-				self.bTimeStart.Enable(True)
-				self.lbCamPort.Enable(False)
-			except:
-				dlg = wx.MessageDialog(self, "Error Initializing Camera",
-									'Camera Error', wx.OK | wx.ICON_ERROR)
-	
-				dlg.ShowModal()
-				dlg.Destroy()
-
-				self.CameraPort = None
-				self.cbCamActive.SetValue(False)
-				self.camActive = False
-				self.bSnapShot.Enable(False)
-				self.bCompose.Enable(False)
-				self.bTimeStart.Enable(False)
-				self.lbCamPort.Enable(True)
+			self.bSnapShot.Enable(True)
+			self.bTimeStart.Enable(True)
+			self.lbCamPort.Enable(False)
+			self.webcam.connect(port)
+			self.CameraPort = port[:]
 		else:
 			self.bSnapShot.Enable(False)
-			self.bCompose.Enable(False)
 			self.bTimeStart.Enable(False)
 			self.lbCamPort.Enable(True)
+			self.webcam.disconnect()
 			self.CameraPort = None
-			
-	def doCompose(self, evt):
-		if self.composeFrame is None:
-			self.CamLock.acquire()
-			camera = pygame.camera.Camera(self.CameraPort, self.resolution)
-			self.composeFrame = Composer(camera, self.resolution)
-			self.composeTimer.Start(100)
-			self.bSnapShot.Enable(False)
-			self.bCompose.Enable(False)
-			self.bTimeStart.Enable(False)
-			self.lbCamPort.Enable(False)
-			self.cbCamActive.Enable(False)
-
-	def onTimer(self, evt):
-		if self.composeFrame is None:
-			self.closeComposeFrame()
-
-		elif self.composeFrame.isRunning():
-			return
-		else:
-			self.closeComposeFrame()
-
-	def closeComposeFrame(self):
-		self.composeTimer.Stop();
-		self.composeFrame = None
-		self.bSnapShot.Enable(True)
-		self.bCompose.Enable(True)
-		self.bTimeStart.Enable(True)
-		self.lbCamPort.Enable(True)
-		self.cbCamActive.Enable(True)
-		self.CamLock.release()
 
 	def doSnapShot(self, evt):
-		pic = self.snapShot()
-		if pic is None:
+		picfn = self.snapShot()
+		if picfn is None:
 			dlg = wx.MessageDialog(self, "Error Taking Picture\nCamera Disconnected",
 					'Camera Error', wx.OK | wx.ICON_ERROR)
 	
@@ -751,37 +671,27 @@ class ConnectionManagerPanel(wx.Panel):
 			dlg.Destroy()
 			return
 		
-		s = SnapFrame(self, pic)
+		s = SnapFrame(self, picfn)
 		s.Show()
 			
 	def snapShot(self, block=True):
 		if not self.camActive:
 			return None
 		
-		if not block and self.CamLock.locked():
+		rc, xml = self.webcam.picture(directory="pics") # TODO - settings
+		if not rc:
 			return None
-		
-		self.CamLock.acquire()
-		camera = pygame.camera.Camera(self.CameraPort, self.resolution)
-		try:
-			camera.start()
-			camera.set_controls(brightness=200)
-			image = camera.get_image()
-			camera.stop()
-		except:
-			wx.CallAfter(self.disconnectCamera)
-			self.CamLock.release()
-			return None
-
-		self.CamLock.release()
-		return image
+			
+		xd = XMLDoc(xml).getRoot()
+		return str(xd.filename)
 	
 	def disconnectCamera(self):
 		self.logger.LogMessage("Disconnecting camera due to error")
 		self.camActive = False
-		self.CameraPort = None
+		self.webcam.disconnect()
 		self.cbCamActive.SetValue(False)
 		self.refreshCamPorts()
+		self.CameraPort = None
 	
 	def tick(self):
 		cxlist = self.cm.getLists()[2]
@@ -954,7 +864,7 @@ class ConnectionManagerPanel(wx.Panel):
 			fp.close()
 		
 	def onClose(self):
-		self.timelapse.delete()
+		self.webcam.exit()
 		self.cm.disconnectAll()
 		self.bDisconnect.Enable(False)
 
@@ -1060,41 +970,3 @@ class ActiveConnectionCtrl(wx.ListCtrl):
 	
 	def OnGetItemAttr(self, item):
 		return None
-
-
-class Composer:
-	def __init__(self, camera, size):
-		self.size = size
-		self.Camera = camera
-		self.running = False
-
-		thread.start_new_thread(self.run, ())
-
-	def run(self):
-		self.display = pygame.display.set_mode(self.size, 0)
-		pygame.display.set_caption("Compose")
-		self.Camera.start()
-		self.ss = pygame.surface.Surface(self.size, 0, self.display)
-
-		self.running = True
-		while (self.running):
-			events = pygame.event.get()
-			for e in events:
-				if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
-					self.Camera.stop()
-					self.running = False
-			self.flip()
-		pygame.display.quit()
-		
-	def isRunning(self):
-		return self.running
-	
-	def kill(self):
-		self.running = False
-
-	def flip(self):
-		if self.Camera.query_image():
-			self.ss = self.Camera.get_image(self.ss)
-		self.display.blit(self.ss, (0,0))
-		pygame.display.flip()
-

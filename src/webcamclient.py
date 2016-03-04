@@ -1,10 +1,26 @@
 import urllib
+import subprocess
+import socket
 
 class Webcam:
-	def __init__(self, ip, port):
-		self.ip = ip
-		self.port = port
-		self.urlPrefix = "http://%s:%s/" % (ip, port)
+	def __init__(self, port):
+		try:
+			subprocess.Popen(["python", "webcamserver.py", "%d" % port],
+				shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
+		except:
+			print "unable to spawn"
+			self.ableToInit = False
+
+		else:
+			self.ableToInit = True
+			s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			s.connect(('4.2.2.1', 123))
+			self.ip = s.getsockname()[0]
+			self.port = port
+			self.urlPrefix = "http://%s:%s/" % (self.ip, self.port)
+			
+	def webCamOK(self):
+		return self.ableToInit
 
 	def send(self, url):
 		try:
@@ -27,42 +43,25 @@ class Webcam:
 
 		url = self.urlPrefix + "connect?device=%d" % devnum
 		return  self.send(url)
+
+	def disconnect(self):
+		url = self.urlPrefix + "disconnect"
+		return  self.send(url)
 	
-	def fnpicture(self, directory=None, prefix=None, base=None):
+	def picture(self, directory=None, prefix=None):
 		args = ""
 		if directory is not None:
 			args += "&directory=%s" % directory
 		if prefix is not None:
 			args += "&prefix=%s" % prefix
-		if base is not None:
-			args += "&base=%s" % base
 
 		if args != "":
-			url = self.urlPrefix + "fnpicture?" + args[1:]
-			return self.send(url)
-
-		return False, None
-
-	def fntimelapse(self, directory=None, prefix=None, base=None):
-		args = ""
-		if directory is not None:
-			args += "&directory=%s" % directory
-		if prefix is not None:
-			args += "&prefix=%s" % prefix
-		if base is not None:
-			args += "&base=%s" % base
-
-		if args != "":
-			url = self.urlPrefix + "fntimelapse?" + args[1:]
-			return self.send(url)
-
-		return False, None
-
-	def picture(self):
-		url = self.urlPrefix + "picture"
+			url = self.urlPrefix + "picture?" + args[1:]
+		else:
+			url = self.urlPrefix + "picture"
 		return  self.send(url)
 
-	def timelapse(self, interval, count=None, duration=None):
+	def timelapse(self, interval, count=None, duration=None, directory=None, prefix=None):
 		if count is None and duration is None:
 			return False, None
 
@@ -71,6 +70,11 @@ class Webcam:
 			args += "&duration=%d" % duration
 		else:
 			args += "&count=%d" % count
+			
+		if directory is not None:
+			args += "&directory=%s" % directory
+		if prefix is not None:
+			args += "&prefix=%s" % prefix
 
 		url = self.urlPrefix + "timelapse?" + args
 		return self.send(url)

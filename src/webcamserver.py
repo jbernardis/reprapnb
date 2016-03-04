@@ -157,16 +157,6 @@ class WebcamServer:
 		self.running = True
 		self.cameraFree = Lock()
 
-		self.dirPic = "."
-		self.dirTL = "."
-
-		self.fnPicPrefix = "img"
-		self.fnPicFormat = "%ts%"
-		self.fnTLPrefix = "tlimg"
-		self.fnTLFormat = "-%iter%"
-
-		self.tsFormat = "%y-%m-%d-%H-%M-%S"
-		self.iterFormat = "%04d"
 		self.imgType = "png"
 
 		self.webcam = Webcam()
@@ -181,23 +171,6 @@ class WebcamServer:
 		print "HTTP Server started on %s:%d" % (self.ipaddr, self.ipport)
 		self.wcThread.start()
 	
-	def formFileName(self, prefix, base, dn):
-		if "%ts%" in base:
-			timestamp = time.strftime(self.tsFormat, time.localtime(time.time()))
-			base = base.replace("%ts%", timestamp)
-
-		if "%iter%" in base:
-			iterString = self.iterFormat % self.iteration
-			base = base.replace("%iter%", iterString)
-		fn = prefix + base + "." + self.imgType
-
-		try:
-			os.makedirs(dn)
-		except:
-			pass
-
-		return os.path.join(dn, fn)
-
 	def wait(self):
 		self.wcThread.join()
 		print "HTTP Server ended"
@@ -213,12 +186,8 @@ class WebcamServer:
 			return True, self.getProperties(query)
 		elif path == "/picture":
 			return True, self.picture(query)
-		elif path == "/fnpicture":
-			return True, self.fnPicture(query)
 		elif path == "/timelapse":
 			return True, self.timeLapse(query)
-		elif path == "/fntimelapse":
-			return True, self.fnTimeLapse(query)
 		elif path == "/imagetype":
 			return True, self.imageType(query)
 		elif path == "/status":
@@ -271,24 +240,6 @@ class WebcamServer:
 		self.device = None
 		return {'disconnect': rslt}
 
-	def fnPicture(self, q):
-		if 'directory' in q.keys():
-			self.dirPic = q['directory'][0]
-		if 'prefix' in q.keys():
-			self.fnPicPrefix = q['prefix'][0]
-		if 'base' in q.keys():
-			self.fnPicFormat = q['base'][0]
-		return {'fnpicture': 'success'}
-	
-	def fnTimeLapse(self, q):
-		if 'directory' in q.keys():
-			self.dirTL = q['directory'][0]
-		if 'prefix' in q.keys():
-			self.fnTLPrefix = q['prefix'][0]
-		if 'base' in q.keys():
-			self.fnTLFormat = q['base'][0]
-		return {'fntimelapse': 'success'}
-
 	def imageType(self, q):
 		if 'type' not in q.keys():
 			return {'imagetype': 'type missing'}
@@ -305,32 +256,25 @@ class WebcamServer:
 		#/picture?fn=x
 		if not self.webcam.isConnected():
 			return {'picture': 'not connected'}
+		
+		if 'prefix' in q.keys():
+			prefix = q['prefix'][0]
+		else:
+			prefix = "img"
+			
+		if 'directory' in q.keys():
+			directory = q['directory'][0]
+		else:
+			directory = "."
 
-		fn = self.formFileName(self.fnPicPrefix, self.fnPicFormat, self.dirPic)
+		bn = prefix + time.strftime("-%y-%m-%d-%H-%M-%S", time.localtime(time.time())) + "." + self.imgType
 
-		chgProps = False
-		rslt = {}
-		for k in propertyMap.keys():
-			if k in q.keys():
-				if not chgProps:
-					chgProps = True
-					
-					p = self.webcam.getProperties()
-					if not 'properties' in p.keys():
-						return {'picture': p}
-					props = p['properties'].copy()
-				rslt["set-%s" % k] =  self.webcam.setProperty(propertyMap[k], float(q[k][0]))
+		fn = os.path.join(directory, bn)
 
 		self.cameraFree.acquire()
-		rslt.update(self.webcam.picture(fn))
+		rslt = self.webcam.picture(fn)
 		self.cameraFree.release()
 
-		if chgProps:
-			for k in propertyMap.keys():
-				if k in q.keys():
-					kv = propertyMap[k]
-					v = float(props[propertyMap[k]])
-					rslt["reset-%s" % k] = self.webcam.setProperty(kv, v)
 		return {'picture': rslt}
 	
 	def timeLapse(self, q):
@@ -369,6 +313,16 @@ class WebcamServer:
 
 		else:
 			return {'timelapse': 'missing count or duration'}
+		
+		if 'prefix' in q.keys():
+			self.tlPrefix = q['prefix'][0]
+		else:
+			self.tlPrefix = "img"
+			
+		if 'directory' in q.keys():
+			self.tlDir = q['directory'][0]
+		else:
+			self.tlDir = "."
 
 		self.iteration = 0
 		if 'immediate' in q.keys():
@@ -380,9 +334,12 @@ class WebcamServer:
 		return {'timelapse': 'started'}
 
 	def doInterval(self):
+		suffix = "-%04d" % self.iteration
 		self.iteration += 1
 
-		fn = self.formFileName(self.fnTLPrefix, self.fnTLFormat, self.dirTL)
+		bn = self.tlPrefix + suffix + "." + self.imgType
+
+		fn = os.path.join(self.tlDir, bn)
 
 		self.cameraFree.acquire()
 		self.webcam.picture(fn)
