@@ -491,7 +491,8 @@ class ConnectionManagerPanel(wx.Panel):
 		szCamera = wx.BoxSizer(wx.HORIZONTAL)
 		szCamera.AddSpacer((20, 20))
 
-		szCamCtrl = wx.BoxSizer(wx.VERTICAL)
+		sboxCamCtrl = wx.StaticBox(self, -1, "Camera Control")
+		szCamCtrl = wx.StaticBoxSizer(sboxCamCtrl, wx.VERTICAL)
 		szCamCtrl.AddSpacer((20, 20))
 
 		self.cbCamActive = wx.CheckBox(self, wx.ID_ANY, "Activate Camera")
@@ -515,7 +516,6 @@ class ConnectionManagerPanel(wx.Panel):
 		else:
 			self.cbCamActive.Enable(True)
 
-
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		self.bSnapShot = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngSnapshot, size=BUTTONDIM)
 		self.bSnapShot.SetToolTipString("Take a picture")
@@ -526,6 +526,10 @@ class ConnectionManagerPanel(wx.Panel):
 
 		szCamCtrl.AddSpacer((10, 10))
 		szCamCtrl.Add(hb)
+
+		sboxTl = wx.StaticBox(self, wx.ID_ANY, "Time Lapse Control")
+		szTlCtrl = wx.StaticBoxSizer(sboxTl, wx.VERTICAL)
+		szTlCtrl.AddSpacer((20, 20))
 		
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		self.bTimeStart = wx.BitmapButton(self, wx.ID_ANY, self.app.images.pngTimestart, size=BUTTONDIM)
@@ -549,10 +553,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.doTimeLapseStop, self.bTimeStop)
 		self.bTimeStop.Enable(False)
 		
-		szCamCtrl.AddSpacer((10, 10))
-		szCamCtrl.Add(hb)
+		szTlCtrl.AddSpacer((10, 10))
+		szTlCtrl.Add(hb)
 		
-		szCamCtrl.AddSpacer((10, 10))
+		szTlCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
 		hb.Add(wx.StaticText(self, wx.ID_ANY, "Interval(sec): "))
@@ -565,8 +569,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.slInterval.SetPageSize(1)
 		hb.Add(self.slInterval)
 		
-		szCamCtrl.AddSpacer((10, 10))
-		szCamCtrl.Add(hb)
+		szTlCtrl.AddSpacer((10, 10))
+		szTlCtrl.Add(hb)
 		
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
@@ -580,8 +584,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.tcDuration = wx.TextCtrl(self, -1, "10", size=(80, -1))
 		hb.Add(self.tcDuration, 0, wx.TOP, 30)
 		
-		szCamCtrl.AddSpacer((10, 10))
-		szCamCtrl.Add(hb)
+		szTlCtrl.AddSpacer((10, 10))
+		szTlCtrl.Add(hb)
 		
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 		
@@ -601,8 +605,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.txtDir.SetFont(ipfont)
 		hb.Add(self.txtDir)
 				
-		szCamCtrl.AddSpacer((10, 10))
-		szCamCtrl.Add(hb)
+		szTlCtrl.AddSpacer((10, 10))
+		szTlCtrl.Add(hb)
 		
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -614,7 +618,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.txtTlStatus.SetFont(ipfont)
 		hb.Add(self.txtTlStatus)
 		
-		szCamCtrl.Add(hb)
+		szTlCtrl.Add(hb)
 		
 		szCamera.AddSpacer((10, 10))
 		szsbCamera.AddSpacer((10, 10))
@@ -638,6 +642,8 @@ class ConnectionManagerPanel(wx.Panel):
 		sz.Add(szsbCamera)
 		sz.AddSpacer((20, 20))
 		sz.Add(szCamCtrl)
+		sz.AddSpacer((20, 20))
+		sz.Add(szTlCtrl)
 		
 		self.sizer.AddSpacer((50, 50))
 		self.sizer.Add(sz)
