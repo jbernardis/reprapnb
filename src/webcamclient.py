@@ -3,9 +3,9 @@ import subprocess
 import socket
 
 class Webcam:
-	def __init__(self, port):
+	def __init__(self, port, directory):
 		try:
-			subprocess.Popen(["python", "webcamserver.py", "%d" % port],
+			subprocess.Popen(["python", "webcamserver.py", "%d" % port, directory],
 				shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
 		except:
 			print "unable to spawn"

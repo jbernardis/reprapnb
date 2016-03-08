@@ -179,17 +179,19 @@ class Cura:
 
 		self.getProfileOptions()
 		p = self.vprofile
-		if p in self.profilemap.keys():
-			self.parent.settings['profile'] = p
-		else:
-			self.parent.settings['profile'] = None
+		if p not in self.profilemap.keys():
+			p = self.profilemap.keys()[0]
+			self.vprofile = p
+			
+		self.parent.settings['profile'] = p
 
 		self.getPrinterOptions()
 		p = self.vprinter
-		if p in self.printermap.keys():
-			self.parent.settings['printer'] = p
-		else:
-			self.parent.settings['printer'] = None
+		if p not in self.printermap.keys():
+			p = self.printermap.keys()[0]
+			self.vprinter = p
+			
+		self.parent.settings['printer'] = p
 
 	def configSlicer(self):
 		self.getProfileOptions()

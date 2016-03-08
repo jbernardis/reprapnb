@@ -328,8 +328,6 @@ class SnapFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
 		png = wx.Image(picfn, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-		mask = wx.Mask(png, wx.BLUE)
-		png.SetMask(mask)
 		
 		sz = wx.BoxSizer(wx.VERTICAL)
 		
@@ -371,7 +369,7 @@ class ConnectionManagerPanel(wx.Panel):
 		self.pendant = Pendant(self.pendantEvent, self.settings.pendantPort, self.settings.pendantBaud)
 		self.pendantActive = False
 		
-		self.webcam = Webcam(self.settings.cameraport)
+		self.webcam = Webcam(self.settings.cameraport, self.settings.cmdfolder)
 		
 		self.camActive = False
 		self.resolution = self.settings.resolution #TODO: work this back in
@@ -768,7 +766,7 @@ class ConnectionManagerPanel(wx.Panel):
 	
 	def getCamPorts(self):
 		pl = glob.glob('/dev/video*')
-		return pl
+		return sorted(pl)
 
 	def checkCamActive(self, evt):
 		self.camActive = evt.IsChecked()

@@ -153,8 +153,9 @@ class Webcam:
 		return {'result': 'success', 'filename': filename}
 
 class WebcamServer:
-	def __init__(self, ipport):
+	def __init__(self, ipport, basedir):
 		self.ipport = ipport
+		self.basedir = basedir
 		self.tlTimer = None
 		self.running = True
 		self.pause = False
@@ -272,9 +273,13 @@ class WebcamServer:
 			prefix = "img"
 			
 		if 'directory' in q.keys():
-			directory = q['directory'][0]
+			d = q['directory'][0]
+			if d.startswith(os.path.sep):
+				directory = d
+			else:
+				directory = os.path.join(self.basedir, d)
 		else:
-			directory = "."
+			directory = self.basedir
 
 		bn = prefix + time.strftime("-%y-%m-%d-%H-%M-%S", time.localtime(time.time())) + "." + self.imgType
 
@@ -404,12 +409,16 @@ class WebcamServer:
 			
 			
 port = 8887
+basedir = "/tmp"
 if len(sys.argv) > 1:
 	try:
 		port = int(sys.argv[1])
 	except:
 		port = 8887
 
-a = WebcamServer(port)
+if len(sys.argv) > 2:
+	basedir = sys.argv[2]
+
+a = WebcamServer(port, basedir)
 a.wait()
 
