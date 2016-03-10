@@ -870,19 +870,19 @@ class ConnectionManagerPanel(wx.Panel):
 		if vSat == self.vSaturation:
 			vSat = None
 		else:
-			vSat = float(vSat) * 100.0
+			vSat = float(vSat) / 100.0
 			
 		vCon = self.slContrast.GetValue()
 		if vCon == self.vContrast:
 			vCon = None
 		else:
-			vCon = float(vCon) * 100.0
+			vCon = float(vCon) / 100.0
 			
 		vBrt = self.slBrightness.GetValue()
 		if vBrt == self.vBrightness:
 			vBrt = None
 		else:
-			vBrt = float(vBrt) * 100.0
+			vBrt = float(vBrt) / 100.0
 			
 		rc, xml = self.webcam.setProperties(vSat, vCon, vBrt)
 		
