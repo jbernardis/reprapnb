@@ -360,6 +360,10 @@ class ConnectionManagerPanel(wx.Panel):
 		self.timeLapseRunning = False
 		self.tlTick = 0
 		
+		self.vSaturation = -1
+		self.vContrast = -1
+		self.vBrightness = -1
+		
 		wx.Panel.__init__(self, parent, wx.ID_ANY, size=(400, 250))
 		
 		self.CamLock = thread.allocate_lock()
@@ -710,6 +714,7 @@ class ConnectionManagerPanel(wx.Panel):
 		dlg.Destroy()
 		
 	def doTimeLapseStart(self, evt):
+		self.setCamProperties()
 		interval = self.slInterval.GetValue()
 		
 		dType = self.rbDuration.GetSelection()
@@ -831,6 +836,14 @@ class ConnectionManagerPanel(wx.Panel):
 			self.bTimeStart.Enable(not self.timeLapseRunning)
 			self.lbCamPort.Enable(False)
 			self.webcam.connect(port)
+			p = self.getCamProperties()
+			if not p is None:
+				self.slSaturation.SetValue(p[0])
+				self.vSaturation = p[0]
+				self.slContrast.SetValue(p[1])
+				self.vContrast = p[1]
+				self.slBrightness.SetValue(p[2])
+				self.vBrightness = p[2]
 			self.CameraPort = port[:]
 		else:
 			self.bSnapShot.Enable(False)
@@ -840,6 +853,7 @@ class ConnectionManagerPanel(wx.Panel):
 			self.CameraPort = None
 
 	def doSnapShot(self, evt):
+		self.setCamProperties()
 		picfn = self.snapShot()
 		if picfn is None:
 			dlg = wx.MessageDialog(self, "Error Taking Picture",
@@ -850,6 +864,60 @@ class ConnectionManagerPanel(wx.Panel):
 		else:
 			s = SnapFrame(self, picfn)
 			s.Show()
+			
+	def setCamProperties(self):
+		vSat = self.slSaturation.GetValue()
+		if vSat == self.vSaturation:
+			vSat = None
+		else:
+			vSat = float(vSat) * 100.0
+			
+		vCon = self.slContrast.GetValue()
+		if vCon == self.vContrast:
+			vCon = None
+		else:
+			vCon = float(vCon) * 100.0
+			
+		vBrt = self.slBrightness.GetValue()
+		if vBrt == self.vBrightness:
+			vBrt = None
+		else:
+			vBrt = float(vBrt) * 100.0
+			
+		rc, xml = self.webcam.setProperties(vSat, vCon, vBrt)
+		
+			
+	def getCamProperties(self):
+		if not self.camActive:
+			return None
+		
+		rc, xml = self.webcam.getProperties()
+		if not rc:
+			return None
+		
+		xd = XMLDoc(xml).getRoot()
+		try:
+			if str(xd.result) != "success":
+				return None
+		except AttributeError:
+			return None
+		
+		try:
+			sat = float(str(xd.properties.saturation))
+		except:
+			sat = 0.125
+		
+		try:
+			con = float(str(xd.properties.contrast))
+		except:
+			con = 0.125
+		
+		try:
+			brt = float(str(xd.properties.brightness))
+		except:
+			brt = 0.5
+			
+		return (int(sat * 100), int(con * 100), int(brt * 100))
 			
 	def snapShot(self, block=True):
 		if not self.camActive:

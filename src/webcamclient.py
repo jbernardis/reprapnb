@@ -48,6 +48,23 @@ class Webcam:
 		url = self.urlPrefix + "disconnect"
 		return  self.send(url)
 	
+	def getProperties(self):
+		url = self.urlPrefix + "getproperties"
+		return  self.send(url)
+	
+	def setProperties(self, vsat, vcon, vbrt):
+		args = ""
+		if vsat is not None:
+			args += "&saturation=%0.5f" % vsat
+		if vcon is not None:
+			args += "&contrast=%0.5f" % vcon
+		if vbrt is not None:
+			args += "&brightness=%0.5f" % vbrt
+		if args == "":
+			return False, None
+		url = self.urlPrefix + "setproperties?" + args[1:]
+		return self.send(url)
+	
 	def picture(self, directory=None, prefix=None):
 		args = ""
 		if directory is not None:

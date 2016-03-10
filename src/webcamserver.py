@@ -334,9 +334,13 @@ class WebcamServer:
 			self.tlPrefix = "img"
 			
 		if 'directory' in q.keys():
-			self.tlDir = q['directory'][0]
+			d = q['directory'][0]
+			if d.startswith(os.path.sep):
+				self.tlDir = d
+			else:
+				self.tlDis = os.path.join(self.basedir, d)
 		else:
-			self.tlDir = "."
+			self.tlDir = self.basedir
 
 		self.iteration = 0
 		self.pause = False
