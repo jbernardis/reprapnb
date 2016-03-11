@@ -658,7 +658,6 @@ class ConnectionManagerPanel(wx.Panel):
 		szTlCtrl.AddSpacer((10, 10))
 		hb = wx.BoxSizer(wx.HORIZONTAL)
 
-		self.tlDir = "."
 		w, h = dc.GetTextExtent("X" * MAXSTATCHARS)
 		w = int(0.75 * w)
 		padding = " " * MAXSTATCHARS
@@ -719,7 +718,6 @@ class ConnectionManagerPanel(wx.Panel):
 		
 		dType = self.rbDuration.GetSelection()
 		try:
-			print "duration=(%s)" % self.tcDuration.GetValue()
 			dVal = int(self.tcDuration.GetValue())
 		except:
 			dlg = wx.MessageDialog(self, "Invalid duration Value",
@@ -749,6 +747,8 @@ class ConnectionManagerPanel(wx.Panel):
 		self.bTimePause.Enable(True)
 		self.bTimeStop.Enable(True)
 		
+		self.getTLStatus()
+		
 	def timeLapseEnded(self):
 		self.timeLapsePaused = False
 		self.timeLapseRunning = False
@@ -767,12 +767,14 @@ class ConnectionManagerPanel(wx.Panel):
 	def doTimeLapsePause(self, evt):
 		self.timeLapsePaused = not self.timeLapsePaused
 		if self.timeLapsePaused:
-			self.webcam.pause()
+			self.webcam.timelapsePause()
 		else:
-			self.webcam.resume()
+			self.webcam.timelapseResume()
+		
+		self.getTLStatus()
 			
 	def doTimeLapseStop(self, evt):
-		self.webcam.stop()
+		self.webcam.timelapseStop()
 		
 		self.bSnapShot.Enable(True)
 		self.bTimeStart.Enable(True)
@@ -781,6 +783,8 @@ class ConnectionManagerPanel(wx.Panel):
 
 		self.bTimePause.Enable(False)
 		self.bTimeStop.Enable(False)
+		
+		self.getTLStatus()
 
 	def loadConnections(self, cxlist):
 		self.lbConnections.loadConnections(cxlist)
@@ -931,31 +935,35 @@ class ConnectionManagerPanel(wx.Panel):
 		return str(xd.filename)
 	
 	def tick(self):
-		if self.timeLapseRunning and not self.timeLapsePaused:
+		if self.timeLapseRunning:
 			self.tlTick -= 1
 			if self.tlTick <= 0:
 				self.tlTick = TLTICKRATE
-				rc, xml = self.webcam.timelapseStatus()
-				if not rc:
-					self.timeLapseEnded()
-				else:
-					xd = XMLDoc(xml).getRoot()
-					try:
-						st = str(xd.result)
-					except AttributeError:
-						self.timeLapseEnded()
-					else:
-						if st == "idle":
-							self.timeLapseEnded()
-						else:
-							iteration = int(str(xd.iterations))
-							maxIteration = int(str(xd.maxiterations))
-							statLine = st + " - %d out of %d completed" % (iteration, maxIteration)
-							self.updateTimeLapseStatus(statLine)
+				self.getTLStatus()
 							
 		cxlist = self.cm.getLists()[2]
 		for cx in cxlist:
 			cx.tick()
+			
+	def getTLStatus(self):
+		rc, xml = self.webcam.timelapseStatus()
+		if not rc:
+			self.timeLapseEnded()
+		else:
+			xd = XMLDoc(xml).getRoot()
+			try:
+				st = str(xd.result)
+			except AttributeError:
+				self.timeLapseEnded()
+			else:
+				if st == "idle":
+					self.timeLapseEnded()
+				else:
+					iteration = int(str(xd.iterations))
+					maxIteration = int(str(xd.maxiterations))
+					statLine = st + " - %d out of %d completed" % (iteration, maxIteration)
+					self.updateTimeLapseStatus(statLine)
+
 	
 	def assertAllowPulls(self, flag):
 		cxlist = self.cm.getLists()[2]

@@ -156,6 +156,7 @@ class WebcamServer:
 	def __init__(self, ipport, basedir):
 		self.ipport = ipport
 		self.basedir = basedir
+		self.tlDir = basedir
 		self.tlTimer = None
 		self.running = True
 		self.pause = False
@@ -338,7 +339,7 @@ class WebcamServer:
 			if d.startswith(os.path.sep):
 				self.tlDir = d
 			else:
-				self.tlDis = os.path.join(self.basedir, d)
+				self.tlDir = os.path.join(self.basedir, d)
 		else:
 			self.tlDir = self.basedir
 
@@ -358,9 +359,10 @@ class WebcamServer:
 		
 		if self.pause:
 			return { 'pause': {'result': 'timelapse already paused'}}
-		
-		self.paused = True
+
+		self.pause = True
 		self.tlTimer.cancel()
+		return {'pause': {'result': 'success'}}
 	
 	def tlresume(self, q):
 		if not self.webcam.isConnected():
@@ -368,10 +370,11 @@ class WebcamServer:
 		
 		if not self.pause:
 			return { 'resume': {'result': 'timelapse already running'}}
-		
-		self.paused = False
+
+		self.pause = False
 		self.tlTimer = Timer(self.interval, self.doInterval)
 		self.tlTimer.start()
+		return {'resume': {'result': 'success'}}
 		
 	def tlstop(self, q):
 		if not self.webcam.isConnected():
@@ -381,10 +384,14 @@ class WebcamServer:
 			return {'stop': {'result': 'timelapse not running'}}
 
 		self.running = False
-		self.pause = True
+		self.tlTimer.cancel()
 		self.tlTimer = None
+		return {'stop': {'result': 'success'}}
 
 	def doInterval(self):
+		if not self.running:
+			return
+			
 		if self.pause:
 			return
 		
@@ -409,7 +416,11 @@ class WebcamServer:
 		#/status
 		if self.tlTimer is None:
 			return {'status': {'result': 'idle'}}
-		return {'status': {'result': 'timelapse running', 'interval': self.interval, 'iterations': self.iteration, 'maxiterations': self.maxIterations}}
+		if self.pause:
+			res = "timelapse paused"
+		else:
+			res = "timelapse running"
+		return {'status': {'result': res, 'interval': self.interval, 'iterations': self.iteration, 'maxiterations': self.maxIterations}}
 			
 			
 port = 8887
