@@ -100,9 +100,12 @@ class Webcam:
 			self.props[k] = self.camera.get(k)
 		
 			
-		for p in self.pendingProps.keys():
-			self.props[p] = self.pendingProps[p]
-			self.camera.set(p, self.props[p])
+		if len(self.pendingProps.keys()) > 0:
+			self.camera.open(self.device)
+			for p in self.pendingProps.keys():
+				self.props[p] = self.pendingProps[p]
+				self.camera.set(p, self.props[p])
+			self.camera.release()
 			
 		self.pendingProps = {}
 			
@@ -123,7 +126,9 @@ class Webcam:
 	def setProperty(self, p, v):
 		if self.isConnected():
 			self.props[p] = v
+			self.camera.open(self.device)
 			self.camera.set(p, v)
+			self.camera.release()
 		else:
 			self.pendingProps[p] = v
 

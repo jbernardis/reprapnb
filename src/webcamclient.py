@@ -4,20 +4,19 @@ import socket
 
 class Webcam:
 	def __init__(self, port, directory):
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(('4.2.2.1', 123))
+		self.ip = s.getsockname()[0]
+		self.port = port
+		self.urlPrefix = "http://%s:%s/" % (self.ip, self.port)
+		self.send(self.urlPrefix + "exit")
+		self.ableToInit = True
 		try:
 			subprocess.Popen(["python", "webcamserver.py", "%d" % port, directory],
 				shell=False, stdin=None, stdout=None, stderr=None, close_fds=True)
 		except:
 			print "unable to spawn"
 			self.ableToInit = False
-
-		else:
-			self.ableToInit = True
-			s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-			s.connect(('4.2.2.1', 123))
-			self.ip = s.getsockname()[0]
-			self.port = port
-			self.urlPrefix = "http://%s:%s/" % (self.ip, self.port)
 			
 	def webCamOK(self):
 		return self.ableToInit
