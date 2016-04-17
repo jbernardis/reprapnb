@@ -244,6 +244,9 @@ class GCode(object):
 		self.immediatePauseLayers = []
 		self.yieldCounter = 0
 		
+		self.sampleCount = -10 # skip the first 10 samples
+		self.rateValue = 0.0
+		
 		for i in data:
 			self.lines.append(Line(i))
 			
@@ -764,11 +767,17 @@ class GCode(object):
 
 				moveduration = 0.0
 				currenttravel = math.hypot(dx, dy)
+				currentextrude = abs(line.e) if line.relative_e else abs(line.e - laste)
 				if currenttravel == 0:
 					if line.z is not None:
 						currenttravel = abs(line.z) if line.relative else abs(line.z - lastz)
 					elif line.e is not None:
-						currenttravel = abs(line.e) if line.relative_e else abs(line.e - laste)
+						currenttravel = currentextrude
+						
+				elif line.z is None and currentextrude != 0:
+					# we've moved horizontally and extruded at the same time - figure out extrusion rate
+					self.tallyExtrusionRate(currentextrude/currenttravel)
+					
 				# Feedrate hasn't changed, no acceleration/decceleration planned
 				if f == lastf:
 					moveduration = currenttravel / f if f != 0 else 0.
@@ -802,6 +811,16 @@ class GCode(object):
 				if f is not None: lastf = f
 				
 		self.layer_time.append(self.duration-layerbeginduration)
+		
+	def tallyExtrusionRate(self, rate):
+		self.sampleCount += 1
+		if self.sampleCount > 0:
+			self.rateValue += rate
+			
+	def getExtrusionRate(self):
+		if self.sampleCount <= 0:
+			return None
+		return self.rateValue/self.sampleCount
 		
 	def getLayerZ(self, lx):
 		if lx < 0 or lx >= len(self.layer_e):

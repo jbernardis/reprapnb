@@ -3,7 +3,6 @@ import wx.lib.newevent
 import re, time, shlex, subprocess
 import os.path
 import thread
-import subprocess
 
 from gcread import GCode
 from gcframe import GcFrame
@@ -66,7 +65,7 @@ class SlicerThread:
 		return self.running
 
 	def Run(self):
-		args = shlex.split(str(self.cmd))
+		args = shlex.split(str(self.cmd)) 
 		try:
 			p = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
 		except:
@@ -1980,8 +1979,8 @@ class FilePrepare(wx.Panel):
 			dlg.Destroy()
 			return
 		
-		gc = dlg.getValues()
-		self.gcode[self.currentGCLine:self.currentGCLine] = gc
+		gc, GCLine = dlg.getValues()
+		self.gcode[GCLine:GCLine] = gc
 		self.buildModel()
 		
 		self.layerCount = self.model.countLayers()

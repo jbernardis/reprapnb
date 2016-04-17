@@ -3,6 +3,8 @@ import wx
 EXISTING = "existing"
 NEW = "new"
 
+FMT = "%.5f"
+
 class FilamentChangeDlg(wx.Dialog):
 	def __init__(self, parent):
 		self.parent = parent
@@ -28,6 +30,10 @@ class FilamentChangeDlg(wx.Dialog):
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbZLift)
 		self.amtZLift = wx.TextCtrl(self, wx.ID_ANY, "10", size=(125, -1))
 		self.amtZLift.Bind(wx.EVT_KILL_FOCUS, self.updateDlg)
+		
+		scMessage = wx.StaticText(self, wx.ID_ANY, "LCD Message")
+		self.txtLcd = wx.TextCtrl(self, wx.ID_ANY, "Change Filament", size=(125, -1))
+		self.txtLcd.Bind(wx.EVT_KILL_FOCUS, self.updateDlg)
 
 		self.cbHomeX = wx.CheckBox(self, wx.ID_ANY, "X Axis Home")
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbHomeX)
@@ -37,17 +43,29 @@ class FilamentChangeDlg(wx.Dialog):
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbHomeZ)
 		self.cbResetE = wx.CheckBox(self, wx.ID_ANY, "E Axis Reset")
 		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbResetE)
+
+		self.cbEExtra = wx.CheckBox(self, wx.ID_ANY, "Extra filament")
+		self.amtEExtra = wx.TextCtrl(self, wx.ID_ANY, "0.5", size=(125, -1))
+		self.amtEExtra.Bind(wx.EVT_KILL_FOCUS, self.updateDlg)
+		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbEExtra)
 		
 		scText = wx.StaticText(self, wx.ID_ANY, "Lines of Context")
 		self.scContext = wx.SpinCtrl(self, wx.ID_ANY, "")
 		self.scContext.SetRange(1, 10)
 		self.scContext.SetValue(5)
 		self.Bind(wx.EVT_SPINCTRL, self.updateDlg, self.scContext)
+		
+		self.cbFirstLastGC = wx.CheckBox(self, wx.ID_ANY, "Use First GCode line")
+		self.cbFirstLastGC.SetValue(True)
+		self.Bind(wx.EVT_CHECKBOX, self.updateDlg, self.cbFirstLastGC)
 
 		sbox.AddMany([self.cbRetr, (10, 10), self.amtRetr, (20, 20),
 					self.cbZLift, (10, 10), self.amtZLift, (20, 20),
+					scMessage, self.txtLcd, (20, 20),
 					self.cbHomeX, (10, 10), self.cbHomeY, (10, 10), self.cbHomeZ, (20, 20),
-					self.cbResetE, (20, 20), scText, self.scContext])
+					self.cbEExtra, (10, 10), self.amtEExtra, (20, 20),
+					self.cbResetE, (20, 20), 
+					scText, self.scContext, self.cbFirstLastGC])
 		
 		box.Add(sbox, 0, wx.GROW|wx.ALIGN_TOP)
 		
@@ -77,10 +95,14 @@ class FilamentChangeDlg(wx.Dialog):
 		self.updateDlg()
 		
 	def getValues(self):
-		return self.newGCode
+		return self.newGCode, self.insertPoint
 	
-	def updateDlg(self, *arg):	
-		hl = self.parent.currentGCLine	
+	def updateDlg(self, *arg):
+		if self.cbFirstLastGC.IsChecked():
+			hl = self.parent.drawGCFirst
+		else:	
+			hl = self.parent.drawGCLast	
+		self.insertPoint = hl
 		e = self.model.findEValue(hl-1)
 		z = self.layerInfo[0]
 
@@ -97,19 +119,25 @@ class FilamentChangeDlg(wx.Dialog):
 			retr = 2.0
 
 		try:
+			eextra = float(self.amtEExtra.GetValue())
+		except:
+			eextra = 0.5
+
+		try:
 			lift = float(self.amtZLift.GetValue())
 		except:
 			lift = 10.0
 
 		restoreZ = False
 		if self.cbRetr.GetValue():
-			self.newGCode.append("G1 E%.3f" % (e - retr))
+			self.newGCode.append("G1 E" + FMT % (e - retr))
 		if self.cbZLift.GetValue():
-			self.newGCode.append("G1 Z%.3f" % (z + lift))
+			self.newGCode.append("G1 Z" + FMT % (z + lift))
 			restoreZ = True
 			
-		self.newGCode.append("M117 Change Filament")
+		self.newGCode.append("M117 %s" % self.txtLcd.GetValue())
 		self.newGCode.append("@pause")
+		self.newGCode.append("M117 Proceeding...")
 			
 		fX = self.cbHomeX.GetValue()
 		fY = self.cbHomeY.GetValue()
@@ -125,19 +153,25 @@ class FilamentChangeDlg(wx.Dialog):
 			self.newGCode.append("G28%s" % axes)
 			if fZ:
 				restoreZ = True
-				self.newGCode.append("G1 Z%.3f" % (z + 2))
+				self.newGCode.append("G1 Z" + FMT % (z + 2))
+				
+		if self.cbEExtra.IsChecked():
+			self.newGCode.append("G92 E0")
+			self.newGCode.append("G1 E" + FMT % eextra)
+			if not self.cbResetE.IsChecked():
+				self.newGCode.append("G92 E" + FMT % e)
 
 		if self.cbResetE.GetValue():
 			if self.cbRetr.GetValue():
-				self.newGCode.append("G92 E%.3f" % (e - retr))
+				self.newGCode.append("G92 E" + FMT % (e - retr))
 			else:
-				self.newGCode.append("G92 E%.3f" % e)
+				self.newGCode.append("G92 E" + FMT % e)
 			
 		if self.cbRetr.GetValue():
-			self.newGCode.append("G1 E%.3f" % e)
+			self.newGCode.append("G1 E" + FMT % e)
 			
 		if restoreZ:
-			self.newGCode.append("G1 Z%.3f" % z)
+			self.newGCode.append("G1 Z" + FMT % z)
 	
 		self.text.Clear()
 		bg = self.text.GetBackgroundColour()
