@@ -416,7 +416,7 @@ class RepRapParser:
 		self.trpt2re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *B:([0-9\.]+)")
 		self.trpt3re = re.compile(" *T:([0-9\.]+) *E:([0-9\.]+) *W:.*")
 		self.trpt4re = re.compile(" *T: *([0-9\.]+) */ *([0-9\.]+) *B: *([0-9\.]+) */ *([0-9\.]+)")
-		self.locrptre = re.compile("^X:([0-9\.\-]+)Y:([0-9\.\-]+)Z:([0-9\.\-]+)E:([0-9\.\-]+) *Count")
+		self.locrptre = re.compile("^ *X:([0-9\.\-]+) *Y:([0-9\.\-]+) *Z:([0-9\.\-]+) *E:([0-9\.\-]+) *Count")
 		self.speedrptre = re.compile("Fan speed:([0-9]+) Feed Multiply:([0-9]+) Extrude Multiply:([0-9]+)")
 		self.toolchgre = re.compile("Active tool is now T([0-9])")
 		

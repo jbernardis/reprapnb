@@ -9,7 +9,7 @@ wildcard="Firmware Files (*.fw)|*.fw|All Files (*.*)|*.*"
 grpinfo = {'m92' : ['Steps per Unit - M92', 4, ['x', 'y', 'z', 'e'], ['X Steps', 'Y Steps', 'Z Steps', 'E Steps']],
 		'm201' : ['Max Acceleration (mm/s2) - M201', 4, ['x', 'y', 'z', 'e'], ['X Maximum Acceleration', 'Y Maximum Acceleration', 'Z Maximum Acceleration', 'E Maximum Acceleration']],
 		'm203' : ['Max Feed Rates (mm/s) - M203', 4, ['x', 'y', 'z', 'e'], ['X Maximum Feed Rate', 'Y Maximum Feed Rate', 'Z Maximum Feed Rate', 'E Maximum Feed Rate']],
-		'm204' : ['Acceleration - M204', 2, ['p', 'r', 't'], ['Maximum Print Acceleration', 'Maximum Retraction Acceleration', 'Maximum Travel Acceleration']],
+		'm204' : ['Acceleration - M204', 3, ['p', 'r', 't'], ['Maximum Print Acceleration', 'Maximum Retraction Acceleration', 'Maximum Travel Acceleration']],
 		'm205' : ['Advanced - M205', 6, ['s', 't', 'b', 'x', 'z', 'e'], ['Minimum Feed Rate', 'Minimum Travel', 'Minimum Segment Time', 'Maximum XY Jerk', 'Maximum Z Jerk', 'Maximum E Jerk']],
 		'm206' : ['Home offset - M206', 3, ['x', 'y', 'z'], ['X Home Offset', 'Y Home Offset', 'Z Home Offset']],
 		'm301' : ['PID - M301', 3, ['p', 'i', 'd'], ['Proportional Value', 'Integral Value', 'Derivative Value']]}
@@ -364,13 +364,15 @@ class FirmwareDlg(wx.Dialog):
 		btnSizer.Add(btn, 0, wx.ALL, 10)
 		self.buttons.append(btn)
 		
-		self.sizer.Add(btnSizer, pos=(0,0), span=(25,1))
+		self.sizer.Add(btnSizer, pos=(0,0), span=(row,1))
+		self.sizer.AddSpacer((10, 10), pos=(row, 8))
 
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Bind(EVT_FIRMWARE, self.copyEEPromToFlashResume)
 
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
+		self.Fit()
 		
 	def enableButtons(self, flag):
 		for b in self.buttons:
