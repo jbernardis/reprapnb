@@ -771,7 +771,7 @@ class FilePrepare(wx.Panel):
 		
 		self.ipFilament = []
 		ln = 13
-		for i in range(MAX_EXTRUDERS):
+		for i in range(MAX_EXTRUDERS):  # @UnusedVariable
 			w = wx.StaticText(self, wx.ID_ANY, "", size=(-1, h+TEXT_PAD))
 			w.SetFont(ipfont)
 			self.infoPane.Add(w, pos=(ln, 1), flag=wx.ALIGN_LEFT)
@@ -1939,10 +1939,10 @@ class FilePrepare(wx.Panel):
 		info = self.model.getLayerInfo(v[0])
 		sx = info[4][0]
 		# TODO Need to figure out here how to handle multiple tools
-		sTool = self.model.findToolByLine(sx)
+		sTool = self.model.findToolByLine(sx)  # @UnusedVariable
 		info = self.model.getLayerInfo(v[1])
 		ex = info[4][1]
-		eTool = self.model.findToolByLine(ex)
+		eTool = self.model.findToolByLine(ex)  # @UnusedVariable
 		z = info[0]
 		
 		if v[3] or v[4] or v[5]:

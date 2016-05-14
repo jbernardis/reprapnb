@@ -767,7 +767,13 @@ class GCode(object):
 
 				moveduration = 0.0
 				currenttravel = math.hypot(dx, dy)
-				currentextrude = abs(line.e) if line.relative_e else abs(line.e - laste)
+				if line.e is None:
+					currentextrude = 0.0
+				elif line.relative_e:
+					currentextrude = abs(line.e)
+				else:
+					currentextrude =  abs(line.e - laste)
+					
 				if currenttravel == 0:
 					if line.z is not None:
 						currenttravel = abs(line.z) if line.relative else abs(line.z - lastz)

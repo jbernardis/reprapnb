@@ -1,7 +1,7 @@
 1) when finished print to SD and try to exit, it thinks I'm still printing
 2) when I choose a gcode file from the history and load it, the file name does not appear in infopane
 
-test for filament diameter match needs improvement - check numeric value - not string - test multi-values and different sized lists
+update speed report to allow for multiple fans and multiple extruders - update firmware accordingly, upate manctl to allow multiple fans
 
 
 In Progress/Need Testing

@@ -462,10 +462,11 @@ class RepRapParser:
 			return False
 		
 		if 'M204' in msg:
-			S = self.parseG(msg, 'S')
+			P = self.parseG(msg, 'P')
+			R = self.parseG(msg, 'R')
 			T = self.parseG(msg, 'T')
 			if self.firmware is not None:
-				self.firmware.m204(S, T)
+				self.firmware.m204(P, R, T)
 			return False
 		
 		if 'M205' in msg:
@@ -538,6 +539,13 @@ class RepRapParser:
 			evt = PrtMonEvent(event=SD_PRINT_COMPLETE)
 			wx.PostEvent(self.printmon, evt)
 			return False
+		
+		if "busy: processing" in msg:
+			return True
+		
+		m = self.locrptre.search(msg)
+		if m:
+			return True
 
 		m = self.trpt1re.search(msg)
 		if m:
