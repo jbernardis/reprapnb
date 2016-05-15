@@ -6,7 +6,7 @@ import re
 import wx.lib.newevent
 from sys import platform as _platform
 if _platform == "linux" or _platform == "linux2":
-	import termios
+	import termios  # @UnresolvedImport
 
 TRACE = False
 
@@ -541,6 +541,9 @@ class RepRapParser:
 			return False
 		
 		if "busy: processing" in msg:
+			return True
+		
+		if "enqueueing \"" in msg:
 			return True
 		
 		m = self.locrptre.search(msg)
