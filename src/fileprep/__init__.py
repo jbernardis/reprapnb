@@ -495,41 +495,7 @@ class FilePrepare(wx.Panel):
 		self.gcf = GcFrame(self, self.model, self.settings, self.buildarea)
 		self.sizerGraph.Add(self.gcf)
 		self.sizerGraph.AddSpacer((10,10))
-		sz = self.buildarea[1] * self.settings.gcodescale
 
-		self.slideLayer = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 9999, size=(100, sz),
-			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
-		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
-		self.slideLayer.SetRange(1, 10)
-		self.slideLayer.SetValue(1)
-		self.slideLayer.SetPageSize(1);
-		self.slideLayer.Disable()
-		self.sizerGraph.Add(self.slideLayer)
-
-		self.slideGCFirst = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(120, sz),
-			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.slideGCFirst.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCFirst)
-		self.slideGCFirst.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCFirst)
-		self.slideGCFirst.SetRange(1, 10)
-		self.slideGCFirst.SetValue(1)
-		self.slideGCFirst.SetPageSize(1);
-		self.slideGCFirst.Disable()
-		self.sizerGraph.Add(self.slideGCFirst)
-
-		self.slideGCLast = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(120, sz),
-			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.slideGCLast.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCLast)
-		self.slideGCLast.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCLast)
-		self.slideGCLast.SetRange(1, 10)
-		self.slideGCLast.SetValue(10)
-		self.slideGCLast.SetPageSize(1);
-		self.slideGCLast.Disable()
-		self.sizerGraph.Add(self.slideGCLast)
-		
 		self.sizerLeft.Add(self.sizerGraph)
 		self.sizerLeft.AddSpacer((10, 10))
 
@@ -564,6 +530,35 @@ class FilePrepare(wx.Panel):
 		self.sizerOpts.Add(self.cbBuffDC)
 		
 		self.sizerLeft.Add(self.sizerOpts)
+		
+		self.sizerNavigate = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.spinLayer = wx.SpinCtrl(self, wx.ID_ANY, "")
+		self.spinLayer.Bind(wx.EVT_SPINCTRL, self.onSpinLayer)
+		self.spinLayer.Bind(wx.EVT_TEXT, self.onTextLayer)
+		self.spinLayer.SetRange(1, 10)
+		self.spinLayer.SetValue(1)
+		self.spinLayer.Disable()
+		self.sizerNavigate.Add(self.spinLayer)
+
+		self.spinGCFirst = wx.SpinCtrl(self, wx.ID_ANY, "")
+		self.spinGCFirst.Bind(wx.EVT_SPINCTRL, self.onSpinGCFirst)
+		self.spinGCFirst.Bind(wx.EVT_TEXT, self.onTextGCFirst)
+		self.spinGCFirst.SetRange(1, 10)
+		self.spinGCFirst.SetValue(1)
+		self.spinGCFirst.Disable()
+		self.sizerNavigate.Add(self.spinGCFirst)
+
+		self.spinGCLast = wx.SpinCtrl(self, wx.ID_ANY, "")
+		self.spinGCLast.Bind(wx.EVT_SPINCTRL, self.onSpinGCLast)
+		self.spinGCLast.Bind(wx.EVT_TEXT, self.onTextGCLast)
+		self.spinGCLast.SetRange(1, 10)
+		self.spinGCLast.SetValue(10)
+		self.spinGCLast.Disable()
+		self.sizerNavigate.Add(self.spinGCLast)
+		
+		self.sizerLeft.AddSpacer((10, 10))
+		self.sizerLeft.Add(self.sizerNavigate)
 		
 		self.sizerMain.Add(self.sizerLeft)
 		
@@ -1539,32 +1534,22 @@ class FilePrepare(wx.Panel):
 		self.firstGLine = self.layerInfo[4][0]
 		self.lastGLine = self.layerInfo[4][-1]
 		
-		self.slideLayer.SetRange(1, self.layerCount)
-		self.slideLayer.SetValue(layer+1)
-		n = int(self.layerCount/20)
-		if n<1: n=1
-		self.slideLayer.SetTickFreq(n, 1)
-		self.slideLayer.SetPageSize(1)
-		self.slideLayer.Enable()
-		self.slideLayer.Refresh()
+		self.spinLayer.SetRange(1, self.layerCount)
+		self.spinLayer.SetValue(layer+1)
+		self.spinLayer.Enable()
+		self.spinLayer.Refresh()
 		
-		self.slideGCFirst.SetRange(self.firstGLine+1, self.lastGLine+1)
-		self.slideGCFirst.SetValue(self.firstGLine+1)
+		self.spinGCFirst.SetRange(self.firstGLine+1, self.lastGLine+1)
+		self.spinGCFirst.SetValue(self.firstGLine+1)
 		self.drawGCFirst = self.firstGLine
-		self.slideGCLast.SetRange(self.firstGLine+1, self.lastGLine+1)
-		self.slideGCLast.SetValue(self.lastGLine+1)
+		self.spinGCLast.SetRange(self.firstGLine+1, self.lastGLine+1)
+		self.spinGCLast.SetValue(self.lastGLine+1)
 		self.drawGCLast = self.lastGLine
 		
-		n = int((self.lastGLine-self.firstGLine)/20)
-		if n<1: n=1
-		self.slideGCFirst.SetTickFreq(n, 1)
-		self.slideGCFirst.SetPageSize(1)
-		self.slideGCFirst.Enable()
-		self.slideGCFirst.Refresh()
-		self.slideGCLast.SetTickFreq(n, 1)
-		self.slideGCLast.SetPageSize(1)
-		self.slideGCLast.Enable()
-		self.slideGCLast.Refresh()
+		self.spinGCFirst.Enable()
+		self.spinGCFirst.Refresh()
+		self.spinGCLast.Enable()
+		self.spinGCLast.Refresh()
 		
 		self.ipGCodeSource.SetLabel(self.model.lines[self.currentGCLine].orig)
 		self.ipGCodeLine.SetLabel(GCODELINETEXT % (self.currentGCLine+1))
@@ -1686,8 +1671,8 @@ class FilePrepare(wx.Panel):
 		self.buildModel()
 		
 		self.layerCount = self.model.countLayers()
-		self.slideLayer.SetRange(1, self.layerCount)
-		l = self.slideLayer.GetValue()-1
+		self.spinLayer.SetRange(1, self.layerCount)
+		l = self.spinLayer.GetValue()-1
 		self.setLayer(l)
 		self.gcf.setLayer(l)
 		self.setModified(True)
@@ -1976,8 +1961,8 @@ class FilePrepare(wx.Panel):
 		self.buildModel()
 		
 		self.layerCount = self.model.countLayers()
-		self.slideLayer.SetRange(1, self.layerCount)
-		l = self.slideLayer.GetValue()-1
+		self.spinLayer.SetRange(1, self.layerCount)
+		l = self.spinLayer.GetValue()-1
 		self.setLayer(l)
 		self.gcf.setLayer(l)
 		self.setModified(True)
@@ -2019,23 +2004,15 @@ class FilePrepare(wx.Panel):
 		else:
 			self.toolBar.Show()
 		
-	def onMouseGCFirst(self, evt):
-		l = self.slideGCFirst.GetValue()-1
-		if evt.GetWheelRotation() < 0:
-			l += 1
-		else:
-			l -= 1
+	def onTextGCFirst(self, evt):
+		l = self.spinGCFirst.GetValue()-1
 		if l >= self.firstGLine and l < self.lastGLine:
 			self.setGCode(l, None)
 
 		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 		
-	def onMouseGCLast(self, evt):
-		l = self.slideGCLast.GetValue()-1
-		if evt.GetWheelRotation() < 0:
-			l += 1
-		else:
-			l -= 1
+	def onTextGCLast(self, evt):
+		l = self.spinGCLast.GetValue()-1
 		if l > self.firstGLine and l <= self.lastGLine:
 			self.setGCode(None, l)
 
@@ -2070,41 +2047,37 @@ class FilePrepare(wx.Panel):
 				self.drawGCFirst = newFirst
 				self.ipGCodeSource.SetLabel(self.model.lines[newFirst].orig)
 				self.ipGCodeLine.SetLabel(GCODELINETEXT % (newFirst+1))
-				self.slideGCFirst.SetValue(newFirst+1)
+				self.spinGCFirst.SetValue(newFirst+1)
 				if newFirst >= self.drawGCLast:
 					self.drawGCLast = newFirst + 1
-					self.slideGCLast.SetValue(self.drawGCLast + 1)
+					self.spinGCLast.SetValue(self.drawGCLast + 1)
 
 		if not newLast is None:
 			if newLast > self.firstGLine and newLast <= self.lastGLine:
-				self.slideGCLast.SetValue(newLast+1)
+				self.spinGCLast.SetValue(newLast+1)
 				self.drawGCLast = newLast
 				if newLast <= self.drawGCFirst:
 					self.drawGCFirst = newLast - 1
-					self.slideGCFirst.SetValue(self.drawGCFirst + 1)
+					self.spinGCFirst.SetValue(self.drawGCFirst + 1)
 		
 		if newFirst is None and newLast is None:
 			self.ipGCodeSource.SetLabel("")
 			self.ipGCodeLine.SetLabel("")
 		
-	def onMouseLayer(self, evt):
-		l = self.slideLayer.GetValue()-1
-		if evt.GetWheelRotation() < 0:
-			l += 1
-		else:
-			l -= 1
+	def onTextLayer(self, evt):
+		l = self.spinLayer.GetValue()-1
 		if l >= 0 and l < self.layerCount:
 			self.setLayer(l)
 			self.gcf.setLayer(l)
 
 	def onSpinLayer(self, evt):
-		l = evt.EventObject.GetValue()-1
+		l = self.spinLayer.GetValue()-1
 		self.setLayer(l)
 		self.gcf.setLayer(l)
 		
 	def setLayer(self, l):
 		if l >=0 and l < self.layerCount:
-			self.slideLayer.SetValue(l+1)
+			self.spinLayer.SetValue(l+1)
 			
 			self.layerInfo = self.model.getLayerInfo(l)
 			if self.layerInfo is None:
@@ -2117,27 +2090,21 @@ class FilePrepare(wx.Panel):
 			self.drawGCLast = self.layerInfo[4][-1]
 		
 			if self.firstGLine >= self.lastGLine:
-				self.slideGCFirst.SetRange(self.firstGLine+1, self.firstGLine+2)
-				self.slideGCFirst.SetValue(self.firstGLine+1)
-				self.slideGCFirst.Enable(False)
-				self.slideGCLast.SetRange(self.firstGLine+1, self.firstGLine+2)
-				self.slideGCLast.SetValue(self.firstGLine+1)
-				self.slideGCLast.Enable(False)
+				self.spinGCFirst.SetRange(self.firstGLine+1, self.firstGLine+2)
+				self.spinGCFirst.SetValue(self.firstGLine+1)
+				self.spinGCFirst.Enable(False)
+				self.spinGCLast.SetRange(self.firstGLine+1, self.firstGLine+2)
+				self.spinGCLast.SetValue(self.firstGLine+1)
+				self.spinGCLast.Enable(False)
 			else:
-				self.slideGCFirst.SetRange(self.firstGLine+1, self.lastGLine+1)
-				self.slideGCFirst.SetValue(self.firstGLine+1)
-				n = int((self.lastGLine-self.firstGLine)/20)
-				if n<1: n=1
-				self.slideGCFirst.SetTickFreq(n, 1)
-				self.slideGCFirst.SetPageSize(1);
-				self.slideGCFirst.Refresh()
-				self.slideGCFirst.Enable(True)
-				self.slideGCLast.SetRange(self.firstGLine+1, self.lastGLine+1)
-				self.slideGCLast.SetValue(self.lastGLine+1)
-				self.slideGCLast.SetTickFreq(n, 1)
-				self.slideGCLast.SetPageSize(1);
-				self.slideGCLast.Refresh()
-				self.slideGCLast.Enable(True)
+				self.spinGCFirst.SetRange(self.firstGLine+1, self.lastGLine+1)
+				self.spinGCFirst.SetValue(self.firstGLine+1)
+				self.spinGCFirst.Refresh()
+				self.spinGCFirst.Enable(True)
+				self.spinGCLast.SetRange(self.firstGLine+1, self.lastGLine+1)
+				self.spinGCLast.SetValue(self.lastGLine+1)
+				self.spinGCLast.Refresh()
+				self.spinGCLast.Enable(True)
 			
 			self.showLayerInfo(l)
 			
