@@ -1,45 +1,74 @@
 [global]
-printers = mi3,ob1
+printers = cuboid,prism
 lastlogdirectory = /home/jeff
 port = 8989
 maxloglines = 5000
 usepopuplog = True
+resetonconnect = True
+popuplocation = c
+buildarea = [200, 200]
+webbase = /var/www/html/images
+lastmacrodirectory = /home/jeff/reprapnb/macros
+historysize = 100
+slicehistoryfile = /home/jeff/reprapnb/slice.history
+printhistoryfile = /home/jeff/reprapnb/print.history
+pendantport = /dev/pendant
+pendantbaud = 9600
+portprefixes = ['/dev/rr*']
+resolution = [800, 600]
+cameraport = 8988
 
-[printer.ob1]
+[printer.prism]
 nextruders = 1
 buildarea = [200, 200]
 speedcommand = M122
+firmware = MARLIN
+hassdcard = True
+allowscoldextrusion = True
+standardbedlo = 60
+standardbedhi = 110
+standardhelo = 185
+standardhehi = 225
+filamentdiam = 3.0
 
-[printer.mi3]
-nextruders = 2
+[printer.cuboid]
+nextruders = 1
 buildarea = [200, 200]
 speedcommand = M122
+firmware = MARLIN
+hassdcard = True
+allowscoldextrusion = True
+standardbedlo = 60
+standardbedhi = 110
+standardhelo = 205
+standardhehi = 225
+filamentdiam = 1.75
 
 [slicer.slic3r]
-command = /home/jeff/Slic3r/bin/slic3r --load "%config%"  "%stl%" -o "%slicegcode%"
-config = /home/jeff/Slic3r/bin/slic3r
+command = /home/jeff/Programs/Slic3r1.2.9/bin/slic3r --load "%config%"  "%stl%" -o "%slicegcode%"
+config = /home/jeff/Programs/Slic3r1.2.9/bin/slic3r --no-plater
 profiledir = /home/jeff/.Slic3r
-print = normal-tantalus
-printfile = /home/jeff/.Slic3r/print/normal-tantalus.ini
-filament = pla
-filamentfile = /home/jeff/.Slic3r/filament/pla.ini
-printer = ob1
-printerfile = /home/jeff/.Slic3r/printer/ob1.ini
+print = normal with support
+printfile = /home/jeff/.Slic3r/print/normal with support.ini
+filament = ABS
+filamentfile = /home/jeff/.Slic3r/filament/ABS.ini
+printer = prism
+printerfile = /home/jeff/.Slic3r/printer/prism.ini
 
 [slicer.cura]
 command = /usr/bin/cura -i "%config%"  -s "%stl%" -o "%slicegcode%"
 config = /usr/bin/cura
-profile = normalabs
-printer = ob1
-profiledir = /home/jeff/cura/profiles
-curapreferences = /home/jeff/.cura/13.11.2/preferences.ini
+profile = normalpla
+printer = Cuboid
+profiledir = /home/jeff/.cura/profiles
+curapreferences = /home/jeff/.cura/15.04.3/preferences.ini
 
 [slicer.skeinforge]
-command = python /home/jeff/skeinforge/skeinforge_application/skeinforge_utilities/skeinforge_craft.py "%stl%"
-config = python /home/jeff/skeinforge/skeinforge_application/skeinforge.py
+command = python /home/jeff/Programs/skeinforge/skeinforge_application/skeinforge_utilities/skeinforge_craft.py "%stl%"
+config = python /home/jeff/Programs/skeinforge/skeinforge_application/skeinforge.py
 profiledir = ~/.skeinforge/profiles/extrusion
 profilefile = /home/jeff/.skeinforge/profiles/extrusion.csv
-profile = ABS
+profile = PLA175
 
 [fileprep]
 slicers = cura,slic3r,skeinforge
@@ -47,17 +76,23 @@ slicer = slic3r
 gcodescale = 3
 laststldirectory = /netgear/documents/stl files
 lastgcdirectory = /netgear/documents/stl files
+plater = /home/jeff/Programs/Slic3r1.2.9/bin/slic3r
 showprevious = False
 showmoves = False
 usebuffereddc = True
 acceleration = 1000.0
-drawstlgrid = False
-
-[plater]
-stlscale = 2
-laststldirectory = /netgear/documents/stl files
-autoarrange = True
 drawstlgrid = True
+toolpathsonly = True
+batchaddgcode = True
+stlqueue = 
+gcodequeue = 
+showstlbasename = True
+showgcbasename = False
+showslicehistbasename = False
+showprinthistbasename = False
+edittrigger = -----
+showslicehisthidedupes = True
+stlviewer = /usr/bin/ccViewer
 
 [manualctl]
 xyspeed = 2000
@@ -70,20 +105,31 @@ gcodescale = 3
 showprevious = False
 showmoves = False
 usebuffereddc = True
+toolpathsonly = True
 
 [macros]
-macro.1 = Fan On,fanon.gcode
-macro.2 = Park,park.gcode
-macro.3 = Agitate,agitate.gcode
+macro.1 = Park,/home/jeff/reprapnb/macros/park.gcode
+macro.2 = Front Left,/home/jeff/reprapnb/macros/frontleft.gcode
+macro.3 = Front Right,/home/jeff/reprapnb/macros/frontright.gcode
+macro.4 = Center,/home/jeff/reprapnb/macros/center.gcode
+macro.5 = Rear Left,/home/jeff/reprapnb/macros/rearleft.gcode
+macro.6 = Rear Right,/home/jeff/reprapnb/macros/rearright.gcode
 
 [tools]
-openscad=Design,OpenScad,/usr/lbin/openscad
-meshlab=MeshLab,/usr/lbin/meshlab
-inkscape=InkScape,/bin/inkscape
-gimp=GIMP,/usr/local/bin/gimb-2.8
-freecad=FreeCAD,/usr/bin/freecad
-slic3r=Slicers,Slic3r,/usr/local/bin/slic3r
-cura=Cura,/usr/bin/cura
-skeinforge=Skeinforge,/usr/bin/skeinforge
+freecad = Design,FreeCAD,/usr/bin/freecad
+openscad = OpenScad,/bin/sh /home/jeff/bin/openscad.sh
+inkscape = InkScape,/usr/bin/inkscape
+gimp = GIMP,/usr/bin/gimp
+blender = Blender,/home/jeff/Programs/blender-2.77/blender
+meshmixer = Mesh,MeshMixer,/usr/bin/meshmixer
+cloudcompare = CloudCompare,/usr/bin/CloudCompare
+meshlab = MeshLab,/usr/bin/meshlab
+netfabb-basic = Netfabb,/home/jeff/Programs/netfabb-free_7.3.0/netfabb_free
+slic3r = Slicers,Slic3r,/home/jeff/Programs/Slic3r1.2.9/bin/slic3r
+craftware = CraftWare,wine "c:\\Program files\\CraftWare\\CraftWare.exe"
+cura = Cura,/usr/bin/cura
+skeinforge = Skeinforge,python /home/jeff/Programs/skeinforge/skeinforge_application/skeinforge.py
 
+[shares]
+stlfiles = /netgear/documents/stl files
 
