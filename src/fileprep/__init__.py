@@ -2008,15 +2008,13 @@ class FilePrepare(wx.Panel):
 		l = self.spinGCFirst.GetValue()-1
 		if l >= self.firstGLine and l < self.lastGLine:
 			self.setGCode(l, None)
-
-		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 		
 	def onTextGCLast(self, evt):
 		l = self.spinGCLast.GetValue()-1
 		if l > self.firstGLine and l <= self.lastGLine:
 			self.setGCode(None, l)
-
-		self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
+			self.gcf.setGCode(self.drawGCFirst, self.drawGCLast)
 
 	def onSpinGCFirst(self, evt):
 		l = evt.EventObject.GetValue()-1
