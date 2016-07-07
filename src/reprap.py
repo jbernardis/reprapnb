@@ -786,8 +786,14 @@ class RepRap:
 		if self.port is not None and self.baud is not None:
 			self.priQ = Queue.Queue(0)
 			self.mainQ = Queue.Queue(0)
-			self.printer = Serial(self.port, self.baud, timeout=2)
-		
+			try:
+				self.printer = Serial(self.port, self.baud, timeout=2)
+				return True
+			except:
+				pass
+
+		return False
+
 	def bind(self, win, handler):
 		win.Bind(EVT_REPRAP_UPDATE, handler)
 		self.sender = SendThread(win, self.printer, self.firmware, self.priQ, self.mainQ)

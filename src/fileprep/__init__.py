@@ -532,6 +532,9 @@ class FilePrepare(wx.Panel):
 		self.sizerLeft.Add(self.sizerOpts)
 		
 		self.sizerNavigate = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.sizerNavigate.Add(wx.StaticText(self, wx.ID_ANY, "Layer #:"))
+		self.sizerNavigate.AddSpacer((10, 10))
 		
 		self.spinLayer = wx.SpinCtrl(self, wx.ID_ANY, "")
 		self.spinLayer.Bind(wx.EVT_SPINCTRL, self.onSpinLayer)
@@ -541,6 +544,10 @@ class FilePrepare(wx.Panel):
 		self.spinLayer.Disable()
 		self.sizerNavigate.Add(self.spinLayer)
 
+		self.sizerNavigate.AddSpacer((10, 10))
+		self.sizerNavigate.Add(wx.StaticText(self, wx.ID_ANY, "GCode from:"))
+		self.sizerNavigate.AddSpacer((10, 10))
+
 		self.spinGCFirst = wx.SpinCtrl(self, wx.ID_ANY, "")
 		self.spinGCFirst.Bind(wx.EVT_SPINCTRL, self.onSpinGCFirst)
 		self.spinGCFirst.Bind(wx.EVT_TEXT, self.onTextGCFirst)
@@ -548,6 +555,10 @@ class FilePrepare(wx.Panel):
 		self.spinGCFirst.SetValue(1)
 		self.spinGCFirst.Disable()
 		self.sizerNavigate.Add(self.spinGCFirst)
+
+		self.sizerNavigate.AddSpacer((10, 10))
+		self.sizerNavigate.Add(wx.StaticText(self, wx.ID_ANY, "To:"))
+		self.sizerNavigate.AddSpacer((10, 10))
 
 		self.spinGCLast = wx.SpinCtrl(self, wx.ID_ANY, "")
 		self.spinGCLast.Bind(wx.EVT_SPINCTRL, self.onSpinGCLast)

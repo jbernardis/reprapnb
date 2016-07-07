@@ -38,10 +38,13 @@ class Connection:
 		self.port = port
 		self.parser = RepRapParser(self.app)
 		self.reprap = RepRap(self.app, printer)
-		self.reprap.connect(port, baud)
+		self.connected = self.reprap.connect(port, baud)
 		self.prtmon = None
 		self.manctl = None
 		self.pendantConnected = False
+
+	def isConnected(self):
+		return self.connected
 
 	def hasPendant(self):
 		return self.pendantConnected
@@ -207,6 +210,10 @@ class ConnectionManager:
 	
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)
+		if not cx.isConnected():
+			self.logger.LogMessage("Unable to connect to port %s" % port)
+			return False
+
 		self.connections.append(cx)
 		if len(self.connections) == 1:
 			self.pendantConnection = cx
@@ -221,6 +228,7 @@ class ConnectionManager:
 		self.printerList.remove(printer)
 		(pm, mc) = self.app.addPages(printer, cx.reprap)
 		cx.setNBPages(pm, mc)
+		return True
 		
 	def connectionByPrinter(self, printer):
 		try:
@@ -407,7 +415,11 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbPort = wx.ListBox(self, wx.ID_ANY, (-1, -1),  (270, 120), ports, wx.LB_SINGLE)
 		self.lbPort.SetFont(f)
 		self.lbPort.SetToolTipString("Choose the port to which to connect")
-		self.lbPort.SetSelection(0)
+		if len(ports) == 0:
+			self.lbPort.Disable()
+		else:
+			self.lbPort.Enable()
+			self.lbPort.SetSelection(0)
 		sz.Add(self.lbPort)
 		szRow.Add(sz)
 		szRow.AddSpacer((10, 10))
@@ -512,7 +524,11 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbCamPort = wx.ListBox(self, wx.ID_ANY, (-1, -1),  (270, 120), ports, wx.LB_SINGLE)
 		self.lbCamPort.SetFont(f)
 		self.lbCamPort.SetToolTipString("Choose the port to which to connect")
-		self.lbCamPort.SetSelection(0)
+		if len(ports) == 0:
+			self.lbCamPort.Disable()
+		else:
+			self.lbCamPort.Enable()
+			self.lbCamPort.SetSelection(0)
 		szCamera.AddSpacer((10, 10))
 		szCamera.Add(self.lbCamPort)
 		
@@ -702,7 +718,7 @@ class ConnectionManagerPanel(wx.Panel):
 
 		self.sizer.AddSpacer((20, 20))
 		self.SetSizer(self.sizer)
-		self.lbCamPort.SetSelection(0)
+		#self.lbCamPort.SetSelection(0)
 		
 	def setTlDirectory(self, evt):
 		dlg = wx.DirDialog(self, "Choose a directory for timelapse pictures:")
@@ -797,10 +813,10 @@ class ConnectionManagerPanel(wx.Panel):
 			
 	def refreshCamPorts(self):
 		ports = self.getCamPorts()
-		self.lbCamPort.Enable(True)
 		self.lbCamPort.SetItems(ports)
 
 		if len(ports) >= 1:
+			self.lbCamPort.Enable(True)
 			self.cbCamActive.Enable(True)
 			if self.CameraPort is not None:
 				if self.CameraPort in ports:
@@ -935,7 +951,10 @@ class ConnectionManagerPanel(wx.Panel):
 			return None
 			
 		xd = XMLDoc(xml).getRoot()
-		return str(xd.filename)
+		try:
+			return str(xd.filename)
+		except:
+			return None
 	
 	def tick(self):
 		if self.timeLapseRunning:
@@ -988,9 +1007,11 @@ class ConnectionManagerPanel(wx.Panel):
 		self.lbPort.SetItems(ports)
 		if len(ports) >= 1:
 			self.bConnect.Enable(True)
+			self.lbPort.Enable(True)
 			self.lbPort.SetSelection(0)
 		else:
 			self.bConnect.Enable(False)
+			self.lbPort.Enable(False)
 			
 		self.refreshCamPorts()
 			
@@ -1109,7 +1130,9 @@ class ConnectionManagerPanel(wx.Panel):
 		if self.settings.resetonconnect:
 			self.resetPort(port)
 			
-		self.cm.connect(printer, port, baud)
+		if not self.cm.connect(printer, port, baud):
+			return
+
 		(printers, ports, connections) = self.cm.getLists()
 		self.lbPort.SetItems(ports)
 		if len(ports) == 0:
@@ -1127,11 +1150,14 @@ class ConnectionManagerPanel(wx.Panel):
 		
 	def resetPort(self, port):
 		if _platform == "linux" or _platform == "linux2":
-			fp = open(port, "r")
-			new = termios.tcgetattr(fp)
-			new[2] = new[2] | ~termios.CREAD
-			termios.tcsetattr(fp, termios.TCSANOW, new)
-			fp.close()
+			try:
+				fp = open(port, "r")
+				new = termios.tcgetattr(fp)
+				new[2] = new[2] | ~termios.CREAD
+				termios.tcsetattr(fp, termios.TCSANOW, new)
+				fp.close()
+			except:
+				pass
 		
 	def onClose(self):
 		self.webcam.exit()
