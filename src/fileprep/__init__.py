@@ -363,6 +363,11 @@ class FilePrepare(wx.Panel):
 		self.bView.SetToolTipString("Launch the STL/AMF file viewer")
 		self.sizerSlice.Add(self.bView)
 		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
+	
+		self.bToolbox = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToolbox, size=BUTTONDIM)
+		self.bToolbox.SetToolTipString("Open/Show the toolbox")
+		self.sizerSlice.Add(self.bToolbox)
+		self.Bind(wx.EVT_BUTTON, self.showToolBox, self.bToolbox)
 
 		self.sizerSlice.AddSpacer((20, 20))
 		
@@ -471,12 +476,17 @@ class FilePrepare(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
 		self.sizerBtns.AddSpacer((20, 20))
-	
-		self.bToolbox = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToolbox, size=BUTTONDIM)
-		self.bToolbox.SetToolTipString("Open/Show the toolbox")
-		self.sizerBtns.Add(self.bToolbox)
-		self.Bind(wx.EVT_BUTTON, self.showToolBox, self.bToolbox)
 		
+		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIMWIDE)
+		self.bSliceHist.SetToolTipString("View slicing history")
+		self.sizerBtns.Add(self.bSliceHist)
+		self.Bind(wx.EVT_BUTTON, self.doViewSliceHistory, self.bSliceHist)
+		
+		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIMWIDE)
+		self.bPrintHist.SetToolTipString("View printing history")
+		self.sizerBtns.Add(self.bPrintHist)
+		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
+
 		self.sizerLeft.Add(self.sizerBtns)
 		self.sizerLeft.AddSpacer((20,20))
 		
@@ -488,7 +498,7 @@ class FilePrepare(wx.Panel):
 		sz = self.buildarea[1] * self.settings.gcodescale
 
 		self.slideLayer = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 9999, size=(50, sz),
+			self, wx.ID_ANY, 1, 1, 9999, size=(100, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
 		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
@@ -499,7 +509,7 @@ class FilePrepare(wx.Panel):
 		self.sizerGraph.Add(self.slideLayer)
 
 		self.slideGCFirst = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(60, sz),
+			self, wx.ID_ANY, 1, 1, 99999, size=(120, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideGCFirst.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCFirst)
 		self.slideGCFirst.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCFirst)
@@ -510,7 +520,7 @@ class FilePrepare(wx.Panel):
 		self.sizerGraph.Add(self.slideGCFirst)
 
 		self.slideGCLast = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 99999, size=(60, sz),
+			self, wx.ID_ANY, 1, 1, 99999, size=(120, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideGCLast.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinGCLast)
 		self.slideGCLast.Bind(wx.EVT_MOUSEWHEEL, self.onMouseGCLast)
@@ -555,24 +565,6 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerLeft.Add(self.sizerOpts)
 		
-		self.sizerHistBtns = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerHistBtns.AddSpacer((195, 20))
-			
-		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIMWIDE)
-		self.bSliceHist.SetToolTipString("View slicing history")
-		self.sizerHistBtns.Add(self.bSliceHist)
-		self.Bind(wx.EVT_BUTTON, self.doViewSliceHistory, self.bSliceHist)
-		
-		self.sizerHistBtns.AddSpacer((20, 20))
-			
-		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIMWIDE)
-		self.bPrintHist.SetToolTipString("View printing history")
-		self.sizerHistBtns.Add(self.bPrintHist)
-		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
-		
-		#self.sizerLeft.Add(self.sizerHistBtns, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
-		self.sizerLeft.AddSpacer((5,5))
-		self.sizerLeft.Add(self.sizerHistBtns)
 		self.sizerMain.Add(self.sizerLeft)
 		
 		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)

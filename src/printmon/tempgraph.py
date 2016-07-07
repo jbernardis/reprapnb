@@ -32,15 +32,16 @@ class TempGraph (wx.Window):
 		
 		self.targets = []
 		
-		sz = [x * scale + 100 for x in [MAXX, MAXY]]
+		#sz = [x * scale + 100 for x in [MAXX, MAXY]]
+		sz = [MAXX * scale + 140, MAXY * scale + 40]
 		wx.Window.__init__(self,parent,wx.ID_ANY,size=sz,style=wx.SIMPLE_BORDER)
 		
 		self.graph = Graph(self, settings)
 		
 		self.sizerMain = wx.GridBagSizer()
 		self.sizerMain.AddSpacer((10,10), pos=(0,1))
-		self.sizerMain.AddSpacer((40,40), pos=(2,0))
-		self.sizerMain.AddSpacer((80,40), pos=(2,2))
+		self.sizerMain.AddSpacer((40,40), pos=(1,0))
+		self.sizerMain.AddSpacer((40,10), pos=(1,2))
 		self.sizerMain.Add(self.graph, pos=(1,1))
 		self.SetSizer(self.sizerMain)
 		self.Layout()

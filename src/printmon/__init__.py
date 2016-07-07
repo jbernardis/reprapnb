@@ -172,7 +172,7 @@ class PrintMonitor(wx.Panel):
 		sz = self.buildarea[1] * self.settings.gcodescale
 		
 		self.slideLayer = wx.Slider(
-			self, wx.ID_ANY, 1, 1, 9999, size=(80, sz),
+			self, wx.ID_ANY, 1, 1, 9999, size=(150, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
 		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
 		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)

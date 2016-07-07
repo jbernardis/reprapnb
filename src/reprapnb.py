@@ -87,6 +87,7 @@ class MainFrame(wx.Frame):
 		
 		self.nb = wx.Notebook(p, size=(NBWIDTH, NBHEIGHT), style=wx.NB_TOP)
 		self.nb.AssignImageList(self.nbil)
+		self.Show()
 
 		self.logger = Logger(self.nb, self)
 		self.pgGCodeRef = GCRef(self.nb, self, cmd_folder)
