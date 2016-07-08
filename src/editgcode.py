@@ -28,10 +28,10 @@ def findallpos(regexp, mstr):
 
 class myEditor(editor.Editor):
 	def __init__(self, parent, iD):
+		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
 		self.parent = parent
 		self.findData = wx.FindReplaceData()
 		self.findData.SetFlags(0x01)
-		editor.Editor.__init__(self, parent, iD, style=wx.SUNKEN_BORDER)
 
 	def BindFindEvents(self, win):
 		win.Bind(wx.EVT_FIND, self.OnFind)
@@ -187,15 +187,18 @@ class EditGCodeDlg(wx.Dialog):
 	def __init__(self, parent, gcode, title, closeHandler):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, "Edit GCode: "+title, size=(800, 804))
 		self.closeHandler = closeHandler
+		self.startGCode = gcode		
 		
+		wx.CallAfter(self.finishInit)
+
+	def finishInit(self):
 		self.ed = myEditor(self, -1)
 		box = wx.BoxSizer(wx.VERTICAL)
 		box.Add(self.ed, 1, wx.ALL|wx.GROW, 1)
 		self.SetSizer(box)
 		self.SetAutoLayout(True)
 
-		self.startGCode = gcode		
-		self.editbuffer = gcode[:]
+		self.editbuffer = self.startGCode[:]
 
 		self.ed.SetText(self.editbuffer)
 
@@ -214,6 +217,7 @@ class EditGCodeDlg(wx.Dialog):
 		self.Bind(wx.EVT_CLOSE, self.doCancel)
 		
 		box.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+		self.Layout()
 
 	def doSave(self, evt):
 		self.closeHandler(True)
@@ -222,7 +226,7 @@ class EditGCodeDlg(wx.Dialog):
 		if self.hasChanged():
 			askok = wx.MessageDialog(self, "Are you Sure you want to Cancel and lose your changes?",
 				'Lose Changes', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
-			
+	
 			rc = askok.ShowModal()
 			askok.Destroy()
 			

@@ -20,7 +20,7 @@ class ModifyTempsDlg(wx.Dialog):
 		self.heDelta = [0, 0]
 		
 		sizer = wx.BoxSizer(wx.VERTICAL)
-		slidesizer = wx.GridSizer(rows=1, cols=2)
+		slidesizer = wx.GridSizer(rows=1, cols=4)
 		profbtnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		btnsizer = wx.StdDialogButtonSizer()
 
@@ -56,7 +56,7 @@ class ModifyTempsDlg(wx.Dialog):
 		self.he0Temp.SetFont(ipfont)
 		slidesizer.Add(self.he0Temp, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 40)
 		
-		if not self.hotends[1] is None:
+		if len(self.hotends) > 1:
 			self.modHE1 = wx.Slider(
 				self, wx.ID_ANY, 0, MINHE, MAXHE, size=(150, -1),
 				style = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
@@ -134,7 +134,7 @@ class ModifyTempsDlg(wx.Dialog):
 		self.he0Temp.SetLabel(s)
 		self.modHE0.SetValue(self.heDelta[0])
 
-		if not self.hotends[1] is None:
+		if len(self.hotends) > 1:
 			if self.heDelta[1] != 0:
 				changes = True
 			s = "%.1f / %.1f" % (self.hotends[1], self.hotends[1]+self.heDelta[1])

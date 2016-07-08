@@ -339,38 +339,32 @@ class FilePrepare(wx.Panel):
 		self.Bind(EVT_READER_UPDATE, self.readerUpdate)
 		self.Bind(EVT_MODELER_UPDATE, self.modelerUpdate)
 
-		self.sizerMain = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerMain.AddSpacer((20, 20))
+		self.sizerMain = wx.BoxSizer(wx.VERTICAL)
+		self.sizerMain.AddSpacer((10, 10))
 		
-		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
-		self.sizerLeft.AddSpacer((20, 20))
-		self.sizerRight = wx.BoxSizer(wx.VERTICAL)
-		self.sizerRight.AddSpacer((20, 20))
-		
-		self.sizerSlice = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerBtns1 = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerBtns1.AddSpacer((10, 10))
 
 		self.bSlice = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlice, size=BUTTONDIM)
-		self.sizerSlice.Add(self.bSlice)
+		self.sizerBtns1.Add(self.bSlice)
 		self.Bind(wx.EVT_BUTTON, self.fileSlice, self.bSlice)
 		self.setSliceMode(True)
 		
 		self.bPlate = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPlater, size=BUTTONDIM)
 		self.bPlate.SetToolTipString("Arrange multiple objects on a plate")
-		self.sizerSlice.Add(self.bPlate)
+		self.sizerBtns1.Add(self.bPlate)
 		self.Bind(wx.EVT_BUTTON, self.doPlater, self.bPlate)
 
 		self.bView = wx.BitmapButton(self, wx.ID_ANY, self.images.pngView, size=BUTTONDIM)
 		self.bView.SetToolTipString("Launch the STL/AMF file viewer")
-		self.sizerSlice.Add(self.bView)
+		self.sizerBtns1.Add(self.bView)
 		self.Bind(wx.EVT_BUTTON, self.stlView, self.bView)
 	
 		self.bToolbox = wx.BitmapButton(self, wx.ID_ANY, self.images.pngToolbox, size=BUTTONDIM)
 		self.bToolbox.SetToolTipString("Open/Show the toolbox")
-		self.sizerSlice.Add(self.bToolbox)
+		self.sizerBtns1.Add(self.bToolbox)
 		self.Bind(wx.EVT_BUTTON, self.showToolBox, self.bToolbox)
 
-		self.sizerSlice.AddSpacer((20, 20))
-		
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		dc = wx.WindowDC(self)
 		dc.SetFont(f)
@@ -379,18 +373,18 @@ class FilePrepare(wx.Panel):
 		w, h = dc.GetTextExtent(text)
 		t = wx.StaticText(self, wx.ID_ANY, text, style=wx.ALIGN_RIGHT, size=(w, h))
 		t.SetFont(f)
-		self.sizerSlice.Add(t, flag=wx.EXPAND | wx.ALL, border=10)
+		self.sizerBtns1.Add(t, flag=wx.EXPAND | wx.ALL, border=10)
 	
 		self.cbSlicer = wx.ComboBox(self, wx.ID_ANY, self.settings.slicer, (-1, -1), (120, -1), self.settings.slicers, wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.cbSlicer.SetFont(f)
 		self.cbSlicer.SetToolTipString("Choose which slicer to use")
-		self.sizerSlice.Add(self.cbSlicer, flag=wx.TOP, border=10)
+		self.sizerBtns1.Add(self.cbSlicer, flag=wx.TOP, border=10)
 		self.cbSlicer.SetStringSelection(self.settings.slicer)
 		self.Bind(wx.EVT_COMBOBOX, self.doChooseSlicer, self.cbSlicer)
 
 		self.bSliceCfg = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicecfg, size=BUTTONDIM)
 		self.bSliceCfg.SetToolTipString("Configure Chosen Slicer")
-		self.sizerSlice.Add(self.bSliceCfg)
+		self.sizerBtns1.Add(self.bSliceCfg)
 		self.Bind(wx.EVT_BUTTON, self.doSliceConfig, self.bSliceCfg)
 	
 		text = self.slicer.type.getConfigString()
@@ -400,94 +394,180 @@ class FilePrepare(wx.Panel):
 		self.tSlicerCfg = wx.StaticText(self, wx.ID_ANY, " " * MAXCFGCHARS, style=wx.ALIGN_RIGHT, size=(w, h))
 		self.tSlicerCfg.SetFont(f)
 		self.updateSlicerConfigString(text)
-		self.sizerSlice.Add(self.tSlicerCfg, flag=wx.EXPAND | wx.ALL, border=10)
+		self.sizerBtns1.Add(self.tSlicerCfg, flag=wx.EXPAND | wx.ALL, border=10)
 		
-		self.sizerLeft.Add(self.sizerSlice)
-		self.sizerLeft.AddSpacer((10,10))
+		self.sizerBtns1.AddSpacer(BUTTONDIM)
+		self.sizerBtns1.AddSpacer((10, 10))
 		
-		self.sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
+		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
+		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
+		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
+		self.sizerBtns1.Add(self.bSliceQ)
+		self.sizerBtns1.AddSpacer((10, 10))
+		
+		stlqlen = len(self.settings.stlqueue)
+		self.bSliceStart = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStartbatch, size=BUTTONDIM)
+		self.bSliceStart.SetToolTipString("Begin batch slicing")
+		self.Bind(wx.EVT_BUTTON, self.doBeginSlice, self.bSliceStart)
+		self.sizerBtns1.Add(self.bSliceStart)
+		self.sizerBtns1.AddSpacer((10, 10))
+		self.bSliceStart.Enable(stlqlen != 0)
+
+		self.bSlicePause = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPause, size=BUTTONDIM)
+		self.bSlicePause.SetToolTipString("Pause batch slicing after the current file completes")
+		self.Bind(wx.EVT_BUTTON, self.doPauseSlice, self.bSlicePause)
+		self.sizerBtns1.Add(self.bSlicePause)
+		self.sizerBtns1.AddSpacer((10, 10))
+		self.bSlicePause.Enable(False)
+
+		self.bSliceStop = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStop, size=BUTTONDIM)
+		self.bSliceStop.SetToolTipString("Stop batch slicing immediately")
+		self.Bind(wx.EVT_BUTTON, self.doStopSlice, self.bSliceStop)
+		self.sizerBtns1.Add(self.bSliceStop)
+		self.sizerBtns1.AddSpacer((10, 10))
+		self.bSliceStop.Enable(False)
+
+		self.bSliceNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
+		self.Bind(wx.EVT_BUTTON, self.doNextSlice, self.bSliceNext)
+		self.sizerBtns1.Add(self.bSliceNext)
+		self.sizerBtns1.AddSpacer((10, 10))
+		self.bSliceNext.Enable(stlqlen != 0)
+			
+		self.sizerBtns1.AddSpacer((5,5))
+		
+		szt = wx.BoxSizer(wx.VERTICAL)			
+		self.tSliceQLen = wx.StaticText(self, wx.ID_ANY, "")
+		szt.Add(self.tSliceQLen)
+		self.setSliceQLen(stlqlen)
+		
+		self.cbAddBatch = wx.CheckBox(self, wx.ID_ANY, "Add to G Code Queue")
+		self.cbAddBatch.SetToolTipString("Add the files created by batch slicing to the G Code Queue")
+		self.Bind(wx.EVT_CHECKBOX, self.checkAddBatch, self.cbAddBatch)
+		self.cbAddBatch.SetValue(self.settings.batchaddgcode)
+		szt.Add(self.cbAddBatch)
+		
+		self.sizerBtns1.Add(szt)
+
+		self.sizerMain.Add(self.sizerBtns1)
+		self.sizerMain.AddSpacer((10, 10))
+		
+
+		self.sizerBtns2 = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizerBtns2.AddSpacer((10, 10))
 		
 		self.bMerge = wx.BitmapButton(self, wx.ID_ANY, self.images.pngMerge, size=BUTTONDIM)
 		self.bMerge.SetToolTipString("Merge 2 or more STL files into an AMF file")
-		self.sizerBtns.Add(self.bMerge)
+		self.sizerBtns2.Add(self.bMerge)
 		self.Bind(wx.EVT_BUTTON, self.fileMerge, self.bMerge)
 		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns2.AddSpacer((20, 20))
 		
 		self.bOpen = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFileopen, size=BUTTONDIM)
 		self.bOpen.SetToolTipString("Open a G Code file directly")
-		self.sizerBtns.Add(self.bOpen)
+		self.sizerBtns2.Add(self.bOpen)
 		self.Bind(wx.EVT_BUTTON, self.fileOpen, self.bOpen)
 		
 		self.bSave = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFilesave, size=BUTTONDIM)
 		self.bSave.SetToolTipString("Save the modified G Code file")
-		self.sizerBtns.Add(self.bSave)
+		self.sizerBtns2.Add(self.bSave)
 		self.Bind(wx.EVT_BUTTON, self.fileSave, self.bSave)
 		self.bSave.Enable(False)
 		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns2.AddSpacer((20, 20))
 		
 		self.bSaveLayer = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSavelayers, size=BUTTONDIM)
 		self.bSaveLayer.SetToolTipString("Save specific layers out of this G Code")
-		self.sizerBtns.Add(self.bSaveLayer)
+		self.sizerBtns2.Add(self.bSaveLayer)
 		self.Bind(wx.EVT_BUTTON, self.editSaveLayer, self.bSaveLayer)
 		self.bSaveLayer.Enable(False)
 		
 		self.bFilamentChange = wx.BitmapButton(self, wx.ID_ANY, self.images.pngFilchange, size=BUTTONDIM)
 		self.bFilamentChange.SetToolTipString("Insert G Code at the current location to change filament")
-		self.sizerBtns.Add(self.bFilamentChange)
+		self.sizerBtns2.Add(self.bFilamentChange)
 		self.Bind(wx.EVT_BUTTON, self.editFilamentChange, self.bFilamentChange)
 		self.bFilamentChange.Enable(False)
 		
 		self.bShift = wx.BitmapButton(self, wx.ID_ANY, self.images.pngShift, size=BUTTONDIM)
 		self.bShift.SetToolTipString("Shift object(s) in X and/or Y directions")
-		self.sizerBtns.Add(self.bShift)
+		self.sizerBtns2.Add(self.bShift)
 		self.Bind(wx.EVT_BUTTON, self.shiftModel, self.bShift)
 		self.bShift.Enable(False)
 		
 		self.bTempProf = wx.BitmapButton(self, wx.ID_ANY, self.images.pngModtemp, size=BUTTONDIM)
 		self.bTempProf.SetToolTipString("Modify Temperatures")
-		self.sizerBtns.Add(self.bTempProf)
+		self.sizerBtns2.Add(self.bTempProf)
 		self.Bind(wx.EVT_BUTTON, self.modifyTemps, self.bTempProf)
 		self.bTempProf.Enable(False)
 		
 		self.bSpeedProf = wx.BitmapButton(self, wx.ID_ANY, self.images.pngModspeed, size=BUTTONDIM)
 		self.bSpeedProf.SetToolTipString("Modify print speeds")
-		self.sizerBtns.Add(self.bSpeedProf)
+		self.sizerBtns2.Add(self.bSpeedProf)
 		self.Bind(wx.EVT_BUTTON, self.modifySpeeds, self.bSpeedProf)
 		self.bSpeedProf.Enable(False)
 		
 		self.bEdit = wx.BitmapButton(self, wx.ID_ANY, self.images.pngEdit, size=BUTTONDIM)
 		self.bEdit.SetToolTipString("Edit the G Code")
-		self.sizerBtns.Add(self.bEdit)
+		self.sizerBtns2.Add(self.bEdit)
 		self.Bind(wx.EVT_BUTTON, self.editGCode, self.bEdit)
 		self.bEdit.Enable(False)
 		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns2.AddSpacer((20, 20))
 	
 		self.bZoomIn = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomin, size=BUTTONDIM)
 		self.bZoomIn.SetToolTipString("Zoom the view in")
-		self.sizerBtns.Add(self.bZoomIn)
+		self.sizerBtns2.Add(self.bZoomIn)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomIn, self.bZoomIn)
 		
 		self.bZoomOut = wx.BitmapButton(self, wx.ID_ANY, self.images.pngZoomout, size=BUTTONDIM)
 		self.bZoomOut.SetToolTipString("Zoom the view out")
-		self.sizerBtns.Add(self.bZoomOut)
+		self.sizerBtns2.Add(self.bZoomOut)
 		self.Bind(wx.EVT_BUTTON, self.viewZoomOut, self.bZoomOut)
 		
-		self.sizerBtns.AddSpacer((20, 20))
+		self.sizerBtns2.AddSpacer((20, 20))
 		
 		self.bSliceHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngSlicehist, size=BUTTONDIMWIDE)
 		self.bSliceHist.SetToolTipString("View slicing history")
-		self.sizerBtns.Add(self.bSliceHist)
+		self.sizerBtns2.Add(self.bSliceHist)
 		self.Bind(wx.EVT_BUTTON, self.doViewSliceHistory, self.bSliceHist)
 		
 		self.bPrintHist = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPrinthist, size=BUTTONDIMWIDE)
 		self.bPrintHist.SetToolTipString("View printing history")
-		self.sizerBtns.Add(self.bPrintHist)
+		self.sizerBtns2.Add(self.bPrintHist)
 		self.Bind(wx.EVT_BUTTON, self.doViewPrintHistory, self.bPrintHist)
 
-		self.sizerLeft.Add(self.sizerBtns)
+		self.sizerBtns2.AddSpacer((111, 10))
+
+		self.bAddGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngAdd, size=BUTTONDIM)
+		self.bAddGCodeQ.SetToolTipString("Add the current file to the G Code queue")
+		self.Bind(wx.EVT_BUTTON, self.doAddGCodeQueue, self.bAddGCodeQ)
+		self.sizerBtns2.Add(self.bAddGCodeQ)
+		self.sizerBtns2.AddSpacer((10, 10))
+		self.bAddGCodeQ.Enable(False)
+		
+		self.bGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
+		self.bGCodeQ.SetToolTipString("Manage G Code queue")
+		self.Bind(wx.EVT_BUTTON, self.doGCodeQueue, self.bGCodeQ)
+		self.sizerBtns2.Add(self.bGCodeQ)
+		self.sizerBtns2.AddSpacer((10, 10))
+
+		gcqlen = len(self.settings.gcodequeue)
+		self.bGCodeNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
+		self.Bind(wx.EVT_BUTTON, self.doNextGCode, self.bGCodeNext)
+		self.sizerBtns2.Add(self.bGCodeNext)
+		self.sizerBtns2.AddSpacer((10, 10))
+		self.bGCodeNext.Enable(gcqlen != 0)
+		
+		szt = wx.BoxSizer(wx.VERTICAL)			
+		self.tGCodeQLen = wx.StaticText(self, wx.ID_ANY, "")
+		szt.Add(self.tGCodeQLen)
+		self.setGCodeQLen(gcqlen)
+		
+		self.sizerBtns2.Add(szt)
+
+		self.sizerMain.Add(self.sizerBtns2)
+
+		self.sizerLeft = wx.BoxSizer(wx.VERTICAL)
+
 		self.sizerLeft.AddSpacer((20,20))
 		
 		self.sizerGraph = wx.BoxSizer(wx.HORIZONTAL)
@@ -570,96 +650,6 @@ class FilePrepare(wx.Panel):
 		
 		self.sizerLeft.AddSpacer((10, 10))
 		self.sizerLeft.Add(self.sizerNavigate)
-		
-		self.sizerMain.Add(self.sizerLeft)
-		
-		self.sizerQueues = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizerQueues2 = wx.BoxSizer(wx.HORIZONTAL)
-		
-		self.sizerQueues.AddSpacer(BUTTONDIM)
-		self.sizerQueues.AddSpacer((10, 10))
-		
-		self.bSliceQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngBatchslice, size=BUTTONDIMWIDE)
-		self.bSliceQ.SetToolTipString("Manage batch slicing queue")
-		self.Bind(wx.EVT_BUTTON, self.doBatchSlice, self.bSliceQ)
-		self.sizerQueues.Add(self.bSliceQ)
-		self.sizerQueues.AddSpacer((10, 10))
-		
-		stlqlen = len(self.settings.stlqueue)
-		self.bSliceStart = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStartbatch, size=BUTTONDIM)
-		self.bSliceStart.SetToolTipString("Begin batch slicing")
-		self.Bind(wx.EVT_BUTTON, self.doBeginSlice, self.bSliceStart)
-		self.sizerQueues.Add(self.bSliceStart)
-		self.sizerQueues.AddSpacer((10, 10))
-		self.bSliceStart.Enable(stlqlen != 0)
-
-		self.bSlicePause = wx.BitmapButton(self, wx.ID_ANY, self.images.pngPause, size=BUTTONDIM)
-		self.bSlicePause.SetToolTipString("Pause batch slicing after the current file completes")
-		self.Bind(wx.EVT_BUTTON, self.doPauseSlice, self.bSlicePause)
-		self.sizerQueues.Add(self.bSlicePause)
-		self.sizerQueues.AddSpacer((10, 10))
-		self.bSlicePause.Enable(False)
-
-		self.bSliceStop = wx.BitmapButton(self, wx.ID_ANY, self.images.pngStop, size=BUTTONDIM)
-		self.bSliceStop.SetToolTipString("Stop batch slicing immediately")
-		self.Bind(wx.EVT_BUTTON, self.doStopSlice, self.bSliceStop)
-		self.sizerQueues.Add(self.bSliceStop)
-		self.sizerQueues.AddSpacer((10, 10))
-		self.bSliceStop.Enable(False)
-
-		self.bSliceNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
-		self.Bind(wx.EVT_BUTTON, self.doNextSlice, self.bSliceNext)
-		self.sizerQueues.Add(self.bSliceNext)
-		self.sizerQueues.AddSpacer((10, 10))
-		self.bSliceNext.Enable(stlqlen != 0)
-			
-		self.sizerQueues.AddSpacer((5,5))
-		
-		szt = wx.BoxSizer(wx.VERTICAL)			
-		self.tSliceQLen = wx.StaticText(self, wx.ID_ANY, "")
-		szt.Add(self.tSliceQLen)
-		self.setSliceQLen(stlqlen)
-		
-		self.cbAddBatch = wx.CheckBox(self, wx.ID_ANY, "Add to G Code Queue")
-		self.cbAddBatch.SetToolTipString("Add the files created by batch slicing to the G Code Queue")
-		self.Bind(wx.EVT_CHECKBOX, self.checkAddBatch, self.cbAddBatch)
-		self.cbAddBatch.SetValue(self.settings.batchaddgcode)
-		szt.Add(self.cbAddBatch)
-		
-		self.sizerQueues.Add(szt)
-		
-		self.bAddGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngAdd, size=BUTTONDIM)
-		self.bAddGCodeQ.SetToolTipString("Add the current file to the G Code queue")
-		self.Bind(wx.EVT_BUTTON, self.doAddGCodeQueue, self.bAddGCodeQ)
-		self.sizerQueues2.Add(self.bAddGCodeQ)
-		self.sizerQueues2.AddSpacer((10, 10))
-		self.bAddGCodeQ.Enable(False)
-		
-		self.bGCodeQ = wx.BitmapButton(self, wx.ID_ANY, self.images.pngGcodequeue, size=BUTTONDIMWIDE)
-		self.bGCodeQ.SetToolTipString("Manage G Code queue")
-		self.Bind(wx.EVT_BUTTON, self.doGCodeQueue, self.bGCodeQ)
-		self.sizerQueues2.Add(self.bGCodeQ)
-		self.sizerQueues2.AddSpacer((10, 10))
-
-		gcqlen = len(self.settings.gcodequeue)
-		self.bGCodeNext = wx.BitmapButton(self, wx.ID_ANY, self.images.pngNext, size=BUTTONDIM)
-		self.Bind(wx.EVT_BUTTON, self.doNextGCode, self.bGCodeNext)
-		self.sizerQueues2.Add(self.bGCodeNext)
-		self.sizerQueues2.AddSpacer((10, 10))
-		self.bGCodeNext.Enable(gcqlen != 0)
-		
-		szt = wx.BoxSizer(wx.VERTICAL)			
-		self.tGCodeQLen = wx.StaticText(self, wx.ID_ANY, "")
-		szt.Add(self.tGCodeQLen)
-		self.setGCodeQLen(gcqlen)
-		
-		self.sizerQueues2.Add(szt)
-
-		
-		self.sizerRight.Add(self.sizerQueues, 0, wx.LEFT, 1)
-		self.sizerRight.AddSpacer((5, 5))
-		self.sizerRight.Add(self.sizerQueues2, 0, wx.LEFT, 1)
-		self.sizerRight.AddSpacer((20, 20))
 		
 		self.infoPane = wx.GridBagSizer()
 		t = wx.StaticText(self, wx.ID_ANY, "G Code Preparation")
@@ -808,6 +798,8 @@ class FilePrepare(wx.Panel):
 		self.ipGCodeSource.SetFont(ipfont)
 		self.infoPane.Add(self.ipGCodeSource, pos=(ln+1, 0), span=(1, 2), flag=wx.ALIGN_LEFT)
 
+		self.sizerRight = wx.BoxSizer(wx.VERTICAL)
+
 		self.sizerRight.Add(self.infoPane)
 		self.sizerRight.AddSpacer((5,5))
 
@@ -834,7 +826,14 @@ class FilePrepare(wx.Panel):
 		self.sizerRight.Add(ovsizer)
 		self.displayOverrides(self.getOverrideSummary(self.overrideValues))
 	
-		self.sizerMain.Add(self.sizerRight)
+		self.sizerBody = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.sizerBody.AddSpacer((100, 20))
+		self.sizerBody.Add(self.sizerLeft)
+		self.sizerBody.AddSpacer((70, 20))
+		self.sizerBody.Add(self.sizerRight)
+
+		self.sizerMain.Add(self.sizerBody)
 		
 		self.SetSizer(self.sizerMain)
 		self.Layout()
