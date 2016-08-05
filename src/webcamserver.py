@@ -7,13 +7,15 @@ import sys
 from threading import Thread, Timer, Lock
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+import sys
+sys.path.append("/usr/local/lib/python2.7/site-packages/")
 import cv2
 
 
 propertyMap = {
-	'saturation':cv2.cv.CV_CAP_PROP_SATURATION, #@UndefinedVariable	
-	'contrast':cv2.cv.CV_CAP_PROP_CONTRAST,		#@UndefinedVariable
-	'brightness':cv2.cv.CV_CAP_PROP_BRIGHTNESS} #@UndefinedVariable
+	'saturation':cv2.CAP_PROP_SATURATION,
+	'contrast':cv2.CAP_PROP_CONTRAST,
+	'brightness':cv2.CAP_PROP_BRIGHTNESS}
 
 def quote(s):
 	return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
