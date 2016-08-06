@@ -8,7 +8,6 @@ from threading import Thread, Timer, Lock
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import sys
-sys.path.append("/usr/local/lib/python2.7/site-packages/")
 import cv2
 
 
