@@ -42,6 +42,9 @@ class Connection:
 		self.prtmon = None
 		self.manctl = None
 		self.pendantConnected = False
+		
+	def getPrinter(self):
+		return self.printer
 
 	def isConnected(self):
 		return self.connected
@@ -201,12 +204,14 @@ class ConnectionManager:
 			self.pendantConnection = None
 			for c in self.connections:
 				c.setPendant(False)
+			self.app.setPendantConnection(None)
 		else:
 			self.pendantIndex = cx
 			if not self.pendantConnection is None:
 				self.pendantConnection.setPendant(False)
 			self.pendantConnection = self.connections[cx]
 			self.pendantConnection.setPendant(True)
+			self.app.setPendantConnection(self.connections[cx].printer)
 	
 	def connect(self, printer, port, baud):
 		cx = Connection(self.app, printer, port, baud)

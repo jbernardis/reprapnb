@@ -678,6 +678,7 @@ class GCode(object):
 		moveduration = 0.0
 		layerbeginduration = 0.0
 		layercount=0
+		retractioncount = 0
 		relative=False
 		relative_e=False
 		
@@ -749,6 +750,10 @@ class GCode(object):
 					e=laste
 				elif relative_e:
 					e+=laste
+				retraction = False
+				if e < laste:
+					retraction = True
+					retractioncount += 1
 					
 				f = line.f
 				if f is None or f == 0: 
@@ -806,6 +811,8 @@ class GCode(object):
 				self.duration += moveduration
 	
 				if z != lastz:
+					print "%d retractions on layer %s" % (retractioncount, layercount)
+					retractioncount = 0
 					layercount +=1
 					self.layer_time.append(self.duration-layerbeginduration)
 					layerbeginduration = self.duration
@@ -817,6 +824,7 @@ class GCode(object):
 				if f is not None: lastf = f
 				
 		self.layer_time.append(self.duration-layerbeginduration)
+		print "%d retractions on final layer %d" % (retractioncount, layercount)
 		
 	def tallyExtrusionRate(self, rate):
 		self.sampleCount += 1

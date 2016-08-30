@@ -183,6 +183,12 @@ class MainFrame(wx.Frame):
 			if text == self.nb.GetPageText(i):
 				return i
 		return None
+	
+	def setPendantConnection(self, printer):
+		if printer is None:
+			print "clear pendant connection information"
+		else:
+			print "set pendant connection to printer (%s)" % printer
 		
 	def hiLiteLogTab(self, flag):
 		if flag:
