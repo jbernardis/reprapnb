@@ -5,8 +5,8 @@ MAXY = 250
 
 scale = 1.5
 			
-dk_Gray = wx.Colour(79, 79, 79)
-lt_Gray = wx.Colour(138, 138, 138)
+dk_Gray = wx.Colour(224, 224, 224)
+lt_Gray = wx.Colour(224, 224, 224)
 
 colors = { "Bed": "cyan", "HE0": "red", "HE1": "orange", "HE2": "yellow"}
 columns = { "Bed": 150, "HE0": 50, "HE1": 80, "HE2": 110}
@@ -128,7 +128,7 @@ class Graph (wx.Window):
 		self.Update()
 			
 	def drawGraph(self, dc):
-		dc.SetBackground(wx.Brush("black"))
+		dc.SetBackground(wx.Brush(wx.Colour(255, 255, 255)))
 		dc.Clear()
 		
 		self.drawGrid(dc)

@@ -1273,7 +1273,10 @@ class FilePrepare(wx.Panel):
 		self.logger.LogMessage("Beginning forwarding to print monitor")
 		self.status = FPSTATUS_BUSY
 		self.app.updateFilePrepStatus(self.status, self.batchslstatus)
-		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, self.fd, self.settings.acceleration)
+		fd = self.lastSliceFilament
+		if fd is None:
+			fd = self.fd
+		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, fd, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
@@ -1489,7 +1492,7 @@ class FilePrepare(wx.Panel):
 			self.gcodeLoaded = True
 			self.logger.LogMessage("G Code reading complete - building model")
 			self.setModified(False)		
-			self.buildModel()
+			self.buildModel(fd=self.lastSliceFilament)
 		
 			if self.temporaryFile:
 				self.addGCodeQueueEnable(False)
@@ -1526,9 +1529,11 @@ class FilePrepare(wx.Panel):
 			self.logger.LogError("unknown reader thread state: %s" % evt.state)
 
 
-	def buildModel(self, layer=0):
+	def buildModel(self, layer=0, fd=None):
 		self.exporting = False
-		self.modelerThread = ModelerThread(self, self.gcode, layer, self.lh, self.fd, self.settings.acceleration)
+		if fd is None:
+			fd = self.fd
+		self.modelerThread = ModelerThread(self, self.gcode, layer, self.lh, fd, self.settings.acceleration)
 		self.modelerThread.Start()
 		
 	def getModelData(self, layer=0):

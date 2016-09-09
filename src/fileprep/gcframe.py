@@ -10,8 +10,9 @@ def triangulate(p1, p2):
 	return d
 
 #orange = wx.Colour(237, 139, 33)
-dk_Gray = wx.Colour(79, 79, 79)
-lt_Gray = wx.Colour(138, 138, 138)
+dk_Gray = wx.Colour(224, 224, 224)
+lt_Gray = wx.Colour(128, 128, 128)
+black = wx.Colour(0, 0, 0)
 
 toolColor = ["blue", "green", "cyan"]
 
@@ -37,7 +38,7 @@ class GcFrame (wx.Window):
 		self.shiftY = 0
 		self.toolPathsOnly = self.settings.toolpathsonly
 		
-		sz = [x * self.scale for x in self.buildarea]
+		sz = [(x+1) * self.scale for x in self.buildarea]
 		
 		wx.Window.__init__(self,parent,size=sz)
 		
@@ -222,7 +223,7 @@ class GcFrame (wx.Window):
 			self.Update()
 		
 	def drawGraph(self, dc, lyr):
-		dc.SetBackground(wx.Brush("black"))
+		dc.SetBackground(wx.Brush(wx.Colour(255, 255, 255)))
 		dc.Clear()
 		
 		self.drawGrid(dc)
@@ -235,8 +236,10 @@ class GcFrame (wx.Window):
 		yright = (self.buildarea[1] - self.offsety)*self.zoom*self.scale
 		if yright > self.buildarea[1]*self.scale: yright = self.buildarea[1]*self.scale
 
-		for x in range(0, self.buildarea[0], 10):
-			if x%50 == 0:
+		for x in range(0, self.buildarea[0]+1, 10):
+			if x == 0 or x == self.buildarea[0]:
+				dc.SetPen(wx.Pen(black, 1))
+			elif x%50 == 0:
 				dc.SetPen(wx.Pen(lt_Gray, 1))
 			else:
 				dc.SetPen(wx.Pen(dk_Gray, 1))
@@ -250,7 +253,9 @@ class GcFrame (wx.Window):
 		xbottom = (self.buildarea[0] - self.offsetx)*self.zoom*self.scale
 		if xbottom > self.buildarea[0]*self.scale: xbottom = self.buildarea[0]*self.scale
 
-		for y in range(0, self.buildarea[1], 10):
+		for y in range(0, self.buildarea[1]+1, 10):
+			if y == 0 or y == self.buildarea[1]:
+				dc.SetPen(wx.Pen(black, 1))
 			if y%50 == 0:
 				dc.SetPen(wx.Pen(lt_Gray, 1))
 			else:
@@ -313,7 +318,7 @@ class GcFrame (wx.Window):
 			(xc, yc) = self.transform(px, self.buildarea[1]-py)
 			(xt, yt) = self.transform(px-0.354, self.buildarea[1]-(py-0.354))
 			(xb, yb) = self.transform(px+0.354, self.buildarea[1]-(py+0.354))
-			dc.SetPen(wx.Pen("white", 2))
+			dc.SetPen(wx.Pen("black", 2))
 			dc.DrawLine(xc, yt, xc, yb)
 			dc.DrawLine(xt, yc, xb, yc)
 			dc.DrawLine(xt, yt, xb, yb)
@@ -334,7 +339,7 @@ class GcFrame (wx.Window):
 			if not self.settings.showmoves:
 				return
 			
-			c = "white"	
+			c = "black"	
 
 		else:
 			c = toolColor[t]
@@ -352,7 +357,7 @@ class GcFrame (wx.Window):
 				
 		if p[3] is not None and p[3] < prev[3]: # retraction
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
-			dc.SetPen(wx.Pen("white", w))
+			dc.SetPen(wx.Pen("black", w))
 			dc.DrawLine(x1, y1, x1, y1)
 
 	def transform(self, ptx, pty):

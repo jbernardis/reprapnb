@@ -1,10 +1,12 @@
 import wx
+black = wx.Colour(0, 0, 0)
 
 MAXZOOM = 10
 ZOOMDELTA = 0.1
 			
-dk_Gray = wx.Colour(79, 79, 79)
-lt_Gray = wx.Colour(138, 138, 138)
+dk_Gray = wx.Colour(224, 224, 224)
+lt_Gray = wx.Colour(128, 128, 128)
+black = wx.Colour(0, 0, 0)
 
 def setColor(a,b):
 	res = []
@@ -43,7 +45,7 @@ class GcmFrame (wx.Window):
 		self.printPosition = 0
 		self.toolPathsOnly = self.settings.toolpathsonly
 		
-		sz = [x * self.scale for x in self.buildarea]
+		sz = [(x+1) * self.scale for x in self.buildarea]
 		
 		wx.Window.__init__(self,parent,size=sz)
 		
@@ -248,7 +250,7 @@ class GcmFrame (wx.Window):
 		self.clearGraph(dc)
 		
 	def clearGraph(self, dc):
-		dc.SetBackground(wx.Brush("black"))
+		dc.SetBackground(wx.Brush(wx.Colour(255, 255, 255)))
 		dc.Clear()
 		
 		self.drawGrid(dc)
@@ -265,8 +267,10 @@ class GcmFrame (wx.Window):
 		yright = (self.buildarea[1] - self.offsety)*self.zoom*self.scale
 		if yright > self.buildarea[1]*self.scale: yright = self.buildarea[1]*self.scale
 
-		for x in range(0, self.buildarea[0], 10):
-			if x%50 == 0:
+		for x in range(0, self.buildarea[0]+1, 10):
+			if x == 0 or x == self.buildarea[0]:
+				dc.SetPen(wx.Pen(black, 1))
+			elif x%50 == 0:
 				dc.SetPen(wx.Pen(lt_Gray, 1))
 			else:
 				dc.SetPen(wx.Pen(dk_Gray, 1))
@@ -280,8 +284,10 @@ class GcmFrame (wx.Window):
 		xbottom = (self.buildarea[0] - self.offsetx)*self.zoom*self.scale
 		if xbottom > self.buildarea[0]*self.scale: xbottom = self.buildarea[0]*self.scale
 
-		for y in range(0, self.buildarea[1], 10):
-			if y%50 == 0:
+		for y in range(0, self.buildarea[1]+1, 10):
+			if y == 0 or y == self.buildarea[1]:
+				dc.SetPen(wx.Pen(black, 1))
+			elif y%50 == 0:
 				dc.SetPen(wx.Pen(lt_Gray, 1))
 			else:
 				dc.SetPen(wx.Pen(dk_Gray, 1))
@@ -340,7 +346,7 @@ class GcmFrame (wx.Window):
 			if p[6] <= self.printPosition:
 				c = "dimgray"	
 			else:
-				c = "white"
+				c = "black"
 
 		elif p[6] <= self.printPosition:
 			c = drawnColor(t, self.printPosition - p[6])
@@ -363,7 +369,7 @@ class GcmFrame (wx.Window):
 				
 		if p[3] is not None and p[3] < prev[3] and self.settings.showmoves:
 			(x1, y1) = self.transform(p[0], self.buildarea[1]-p[1])
-			dc.SetPen(wx.Pen("white", w))
+			dc.SetPen(wx.Pen("black", w))
 			dc.DrawLine(x1, y1, x1, y1)
 					
 
