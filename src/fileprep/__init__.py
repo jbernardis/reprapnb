@@ -233,13 +233,14 @@ MODELER_FINISHED = 2
 MODELER_CANCELLED = 3
 
 class ModelerThread:
-	def __init__(self, win, gcode, layer, lh, fd, acceleration):
+	def __init__(self, win, gcode, layer, lh, fd, acceleration, retractiontime):
 		self.win = win
 		self.gcode = gcode
 		self.layer = layer
 		self.lh = lh
 		self.fd = fd
 		self.acceleration = acceleration
+		self.retractiontime = retractiontime
 		self.running = False
 		self.cancelled = False
 		self.model = None
@@ -264,7 +265,7 @@ class ModelerThread:
 	def Run(self):
 		evt = ModelerEvent(msg = "Processing...", state = MODELER_RUNNING)
 		wx.PostEvent(self.win, evt)
-		self.model = GCode(self.gcode, self.lh, self.fd, self.acceleration)
+		self.model = GCode(self.gcode, self.lh, self.fd, self.acceleration, self.retractiontime)
 		evt = ModelerEvent(msg = None, state = MODELER_FINISHED)
 		wx.PostEvent(self.win, evt)	
 		self.running = False
@@ -1263,7 +1264,7 @@ class FilePrepare(wx.Panel):
 		self.allowPulls = flag
 		self.app.assertAllowPulls(flag)
 	
-	def pullGCode(self, printmon):
+	def pullGCode(self, printmon, acceleration, retractiontime):
 		if not self.allowPulls:
 			return
 		self.disableButtons()
@@ -1276,7 +1277,7 @@ class FilePrepare(wx.Panel):
 		fd = self.lastSliceFilament
 		if fd is None:
 			fd = self.fd
-		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, fd, self.settings.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, 0, self.lh, fd, acceleration, retractiontime)
 		self.modelerThread.Start()
 		
 	def fileSlice(self, event):
@@ -1533,7 +1534,7 @@ class FilePrepare(wx.Panel):
 		self.exporting = False
 		if fd is None:
 			fd = self.fd
-		self.modelerThread = ModelerThread(self, self.gcode, layer, self.lh, fd, self.settings.acceleration)
+		self.modelerThread = ModelerThread(self, self.gcode, layer, self.lh, fd, self.settings.acceleration, 0)
 		self.modelerThread.Start()
 		
 	def getModelData(self, layer=0):

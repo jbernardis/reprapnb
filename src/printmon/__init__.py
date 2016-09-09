@@ -51,13 +51,14 @@ class PrintMonitor(wx.Panel):
 		self.model = None
 		self.cfgString = None
 		self.app = app
-		self.buildarea = self.app.settings.printersettings[prtname].buildarea
+		self.prtsettings = self.app.settings.printersettings[prtname]
+		self.buildarea = self.prtsettings.buildarea
 		self.prtname = prtname
 		self.history = history
 		self.reprap = reprap
 		self.manctl = None
-		self.hassd = self.app.settings.printersettings[prtname].hassdcard
-		self.filamentdiameter = self.app.settings.printersettings[prtname].filamentdiam
+		self.hassd = self.prtsettings.hassdcard
+		self.filamentdiameter = self.prtsettings.filamentdiam
 		self.sliceTime = ""
 
 		self.M105pending = False
@@ -831,7 +832,7 @@ class PrintMonitor(wx.Panel):
 		
 	def doPull(self, evt):
 		self.setStatus(PMSTATUS_NOT_READY)
-		self.app.pullGCode(self)
+		self.app.pullGCode(self, self.prtsettings.acceleration, self.prtsettings.retractiontime)
 	
 	def forwardModel(self, model, name="", cfg=None, fd=None, tp=None, st=""):
 		self.setSDTargetFile(None)

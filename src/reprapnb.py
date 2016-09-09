@@ -374,8 +374,8 @@ class MainFrame(wx.Frame):
 	def sendToFilePrep(self, fn):
 		self.pgFilePrep.loadTempSTL(fn)
 		
-	def pullGCode(self, printmon):
-		self.pgFilePrep.pullGCode(printmon)
+	def pullGCode(self, printmon, acceleration, retractiontime):
+		self.pgFilePrep.pullGCode(printmon, acceleration, retractiontime)
 		
 	def currentPullStatus(self):
 		return self.allowPulls

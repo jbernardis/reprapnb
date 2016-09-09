@@ -235,10 +235,11 @@ class Layer:
 					
 
 class GCode(object):
-	def __init__(self, data, lh, fd, acceleration=1500):
+	def __init__(self, data, lh, fd, acceleration=1500, retractiontime=0):
 		self.lh = lh
 		self.frad = [x/2 * x/2 * math.pi for x in fd]
 		self.acceleration = acceleration
+		self.retractiontime = retractiontime
 		self.lines = []
 		self.pendingPauseLayers = []
 		self.immediatePauseLayers = []
@@ -811,11 +812,13 @@ class GCode(object):
 				self.duration += moveduration
 	
 				if z != lastz:
-					print "%d retractions on layer %s" % (retractioncount, layercount)
+					layertime = self.duration - layerbeginduration + (retractioncount * self.retractiontime)/1000.0
+					self.layer_time.append(layertime)
+					layerbeginduration = self.duration
+					print "layer %d time %d includes %d milliseconds/retraction for %d retractions" % (
+								layercount, layertime, self.retractiontime, retractioncount)
 					retractioncount = 0
 					layercount +=1
-					self.layer_time.append(self.duration-layerbeginduration)
-					layerbeginduration = self.duration
 	
 				if x is not None: lastx = x
 				if y is not None: lasty = y
@@ -823,8 +826,10 @@ class GCode(object):
 				if e is not None: laste = e
 				if f is not None: lastf = f
 				
-		self.layer_time.append(self.duration-layerbeginduration)
-		print "%d retractions on final layer %d" % (retractioncount, layercount)
+		layertime = self.duration - layerbeginduration + (retractioncount * self.retractiontime)/1000.0
+		self.layer_time.append(layertime)
+		print "final layer %d time %d includes %d milliseconds/retraction for %d retractions" % (
+					layercount, layertime, self.retractiontime, retractioncount)
 		
 	def tallyExtrusionRate(self, rate):
 		self.sampleCount += 1

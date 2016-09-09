@@ -226,6 +226,8 @@ class PrinterSettings:
 		self.standardhelo = 185
 		self.standardhehi = 225
 		self.filamentdiam = [3.0]
+		self.acceleration = 1500
+		self.retractiontime = 0
 
 class Settings:
 	def __init__(self, app, folder):
@@ -414,6 +416,18 @@ class Settings:
 						except:
 							self.parent.showWarning("Non-integer value in ini file for standardhehi")
 							pt.standardhehi = 225
+					elif opt == 'acceleration':
+						try:
+							pt.acceleration = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for acceleration")
+							pt.acceleration = 1500
+					elif opt == 'retractiontime':
+						try:
+							pt.retractiontime = int(value)
+						except:
+							self.parent.showWarning("Non-integer value in ini file for retractiontime")
+							pt.retractiontime = 0
 					elif opt == 'filamentdiam':
 						try:
 							exec("s=%s" % value)
@@ -542,6 +556,8 @@ class Settings:
 				self.cfg.set(sc, "standardbedhi", str(pt.standardbedhi))
 				self.cfg.set(sc, "standardhelo", str(pt.standardhelo))
 				self.cfg.set(sc, "standardhehi", str(pt.standardhehi))
+				self.cfg.set(sc, "acceleration", str(pt.acceleration))
+				self.cfg.set(sc, "retractiontime", str(pt.retractiontime))
 
 			section = "macros"
 			try:
