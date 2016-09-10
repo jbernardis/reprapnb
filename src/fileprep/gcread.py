@@ -812,7 +812,8 @@ class GCode(object):
 				self.duration += moveduration
 	
 				if z != lastz:
-					layertime = self.duration - layerbeginduration + (retractioncount * self.retractiontime)/1000.0
+					self.duration += (retractioncount * self.retractiontime)/1000.0
+					layertime = self.duration - layerbeginduration
 					self.layer_time.append(layertime)
 					layerbeginduration = self.duration
 					print "layer %d time %d includes %d milliseconds/retraction for %d retractions" % (
@@ -826,7 +827,8 @@ class GCode(object):
 				if e is not None: laste = e
 				if f is not None: lastf = f
 				
-		layertime = self.duration - layerbeginduration + (retractioncount * self.retractiontime)/1000.0
+		self.duration += (retractioncount * self.retractiontime)/1000.0
+		layertime = self.duration - layerbeginduration
 		self.layer_time.append(layertime)
 		print "final layer %d time %d includes %d milliseconds/retraction for %d retractions" % (
 					layercount, layertime, self.retractiontime, retractioncount)

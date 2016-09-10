@@ -391,8 +391,6 @@ class ConnectionManagerPanel(wx.Panel):
 		self.camActive = False
 		self.resolution = self.settings.resolution #TODO: work this back in
 		
-		self.SetBackgroundColour("white")
-
 		f = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		dc = wx.WindowDC(self)
 		dc.SetFont(f)

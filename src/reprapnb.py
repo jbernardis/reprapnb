@@ -31,6 +31,7 @@ PRTMON_TAB_TEXT = "Print Monitor: %s"
 
 NBWIDTH = 1500
 NBHEIGHT = 930
+bkgd = wx.Colour(146, 219, 140)
 
 class MainFrame(wx.Frame):
 	def __init__(self):
@@ -86,12 +87,16 @@ class MainFrame(wx.Frame):
 		sizerBtns = wx.BoxSizer(wx.HORIZONTAL)
 		
 		self.nb = wx.Notebook(p, size=(NBWIDTH, NBHEIGHT), style=wx.NB_TOP)
+		self.nb.SetBackgroundColour(bkgd)
 		self.nb.AssignImageList(self.nbil)
 		self.Show()
 
 		self.logger = Logger(self.nb, self)
+		self.logger.SetBackgroundColour(bkgd)
 		self.pgGCodeRef = GCRef(self.nb, self, cmd_folder)
+		self.pgGCodeRef.SetBackgroundColour(bkgd)
 		self.pgConnMgr = ConnectionManagerPanel(self.nb, self)
+		self.pgConnMgr.SetBackgroundColour(bkgd)
 	
 		self.pxLogger = 0
 		self.pxGCodeRef = 1
@@ -99,6 +104,7 @@ class MainFrame(wx.Frame):
 		self.pxConnMgr = 3
 
 		self.pgFilePrep = FilePrepare(self.nb, self, self.history)
+		self.pgFilePrep.SetBackgroundColour(bkgd)
 
 		self.nb.AddPage(self.logger, LOGGER_TAB_TEXT, imageId=-1)
 		self.nb.AddPage(self.pgGCodeRef, GCREF_TAB_TEXT, imageId=-1)
@@ -139,7 +145,9 @@ class MainFrame(wx.Frame):
 		
 	def addPages(self, printer, reprap):
 		mc = self.pgManCtl[printer] = ManualControl(self.nb, self, printer, reprap)
+		mc.SetBackgroundColour(bkgd)
 		pm = self.pgPrtMon[printer] = PrintMonitor(self.nb, self, printer, reprap, self.history)
+		pm.SetBackgroundColour(bkgd)
 		self.connected[printer] = True
 		self.printing[printer] = False
 		pm.setManCtl(mc)
@@ -147,8 +155,8 @@ class MainFrame(wx.Frame):
 		mcText = MANCTL_TAB_TEXT % printer
 		pmText = PRTMON_TAB_TEXT % printer
 		self.pxManCtl[printer] = self.nb.GetPageCount()
-		self.nb.AddPage(self.pgManCtl[printer], mcText)
-		self.nb.AddPage(self.pgPrtMon[printer], pmText, imageId=self.nbilNotReadyIdx)
+		self.nb.AddPage(mc, mcText)
+		self.nb.AddPage(pm, pmText, imageId=self.nbilNotReadyIdx)
 		self.pgPrinters[printer] = (mcText, pmText)
 		return (pm, mc)
 		
