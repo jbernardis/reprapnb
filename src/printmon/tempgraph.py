@@ -8,7 +8,7 @@ scale = 1.5
 dk_Gray = wx.Colour(224, 224, 224)
 lt_Gray = wx.Colour(224, 224, 224)
 
-colors = { "Bed": "cyan", "HE0": "red", "HE1": "orange", "HE2": "yellow"}
+colors = { "Bed": "blue", "HE0": "red", "HE1": "orange", "HE2": "yellow"}
 columns = { "Bed": 150, "HE0": 50, "HE1": 80, "HE2": 110}
 rowOffset = { "Bed": 30, "HE0": 0, "HE1": 20, "HE2": 40}
 

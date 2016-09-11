@@ -17,13 +17,13 @@ def setColor(a,b):
 
 dcMat = [setColor([255,0,0], [135,0,0]), setColor([253,111,17], [119,55,15]), setColor([253,245,30], [117,113,28])]
 	
-def drawnColor(tool, distance):
+def printedColor(tool, distance):
 	d = distance
 	if d > 100:
 		d = 100
 	return dcMat[tool][d]
 
-undrawnColors = ["blue", "green", "cyan"]
+unprintedColors = ["blue", "green", "cyan"]
 
 class GcmFrame (wx.Window):
 	def __init__(self, parent, model, settings, buildarea):
@@ -349,9 +349,9 @@ class GcmFrame (wx.Window):
 				c = "black"
 
 		elif p[6] <= self.printPosition:
-			c = drawnColor(t, self.printPosition - p[6])
+			c = printedColor(t, self.printPosition - p[6])
 		else:
-			c = undrawnColors[t]
+			c = unprintedColors[t]
 					
 		if background:
 			c = "dimgray"
