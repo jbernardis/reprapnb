@@ -175,8 +175,7 @@ class PrintMonitor(wx.Panel):
 		self.slideLayer = wx.Slider(
 			self, wx.ID_ANY, 1, 1, 9999, size=(150, sz),
 			style = wx.SL_VERTICAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-		self.slideLayer.Bind(wx.EVT_SCROLL_CHANGED, self.onSpinLayer)
-		self.slideLayer.Bind(wx.EVT_MOUSEWHEEL, self.onMouseLayer)
+		self.slideLayer.Bind(wx.EVT_SCROLL, self.onSpinLayer)
 		self.slideLayer.SetRange(1, 10)
 		self.slideLayer.SetValue(1)
 		self.slideLayer.SetPageSize(1);
@@ -759,16 +758,6 @@ class PrintMonitor(wx.Panel):
 				lt = self.model.layer_time[l]
 			self.infoPane.setPrintInfo(pos, l, gcl, lt)
 		
-	def onMouseLayer(self, evt):
-		l = self.slideLayer.GetValue()-1
-		if evt.GetWheelRotation() < 0:
-			l += 1
-		else:
-			l -= 1
-		if l >= 0 and l < self.layerCount:
-			self.gcf.setLayer(l)
-			self.setLayer(l)
-
 	def onSpinLayer(self, evt):
 		l = evt.EventObject.GetValue()-1
 		self.gcf.setLayer(l)

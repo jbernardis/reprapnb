@@ -31,7 +31,7 @@ PRTMON_TAB_TEXT = "Print Monitor: %s"
 
 NBWIDTH = 1500
 NBHEIGHT = 930
-bkgd = wx.Colour(209, 209, 209)
+bkgd = wx.Colour(229, 214, 169)
 
 class MainFrame(wx.Frame):
 	def __init__(self):
